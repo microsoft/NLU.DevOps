@@ -1,7 +1,5 @@
-﻿﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.28010.2046
-MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Playground\Playground.csproj", "{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}"

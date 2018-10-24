@@ -29,12 +29,14 @@ namespace LanguageUnderstanding.Models
         /// </summary>
         /// <returns>A task to await the resulting labeled utterances.</returns>
         /// <param name="utterances">Unlabeled utterances to test on.</param>
-        Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances);
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken);
 
         /// <summary>
         /// Cleans up the language understanding service.
         /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A task to await the cleanup operation.</returns>
-        Task CleanupAsync();
+        Task CleanupAsync(CancellationToken cancellationToken);
     }
 }

@@ -1,15 +1,16 @@
-using NUnit.Framework;
-using FluentAssertions;
-using LanguageUnderstanding.Models;
-using System.IO;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 namespace LanguageUnderstanding.Loaders.Tests
 {
-    [TestFixture]
-    public class LoadersTestFunctions
-    {
+    using System.IO;
+    using FluentAssertions;
+    using Models;
+    using NUnit.Framework;
 
-        #region Loaders_TestEntitiesFunction
+    [TestFixture]
+    internal class LoadersTestFunctions
+    {
         [Test]
         public void TestEntitiesFunction()
         {
@@ -19,9 +20,7 @@ namespace LanguageUnderstanding.Loaders.Tests
             entities[1].Kind.Should().Be(EntityTypeKind.Simple);
             entities[1].Name.Should().Be("FlightType");
         }
-        #endregion
 
-        #region Loaders_TestUtterancesFunction
         [Test]
         public void TestUtterancesFunction()
         {
@@ -34,6 +33,5 @@ namespace LanguageUnderstanding.Loaders.Tests
             utterances[0].Entities[0].MatchToken.Should().Be("Egypt");
             utterances[0].Entities[0].MatchIndex.Should().Be(0);
         }
-        #endregion
     }
 }

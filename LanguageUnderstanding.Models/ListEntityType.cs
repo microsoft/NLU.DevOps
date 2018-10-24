@@ -15,7 +15,7 @@ namespace LanguageUnderstanding.Models
         /// </summary>
         /// <param name="name">Entity type name.</param>
         /// <param name="values">List of entity type values.</param>
-        public ListEntityType(string name, IReadOnlyList<string> values)
+        public ListEntityType(string name, IReadOnlyList<SynonymSet> values)
             : base(name)
         {
             this.Values = values;
@@ -25,7 +25,7 @@ namespace LanguageUnderstanding.Models
         /// Gets the list of entity type values.
         /// </summary>
         /// <value>The values.</value>
-        public IReadOnlyList<string> Values { get; }
+        public IReadOnlyList<SynonymSet> Values { get; }
 
         /// <inheritdoc />
         public override EntityTypeKind Kind => EntityTypeKind.List;

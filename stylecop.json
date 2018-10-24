@@ -10,6 +10,7 @@
     "documentationRules": {
       "companyName": "Microsoft Corporation",
       "copyrightText": "Copyright (c) {companyName}. All rights reserved.\nLicensed under the MIT License.",
+      "documentInternalElements": false,
       "xmlHeader": false
     }
   }
