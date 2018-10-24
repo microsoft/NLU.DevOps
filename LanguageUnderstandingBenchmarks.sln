@@ -1,9 +1,14 @@
-
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
+VisualStudioVersion = 15.0.28010.2046
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "Playground\Playground.csproj", "{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Playground\Playground.csproj", "{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Loaders", "LanguageUnderstanding.Loaders\LanguageUnderstanding.Loaders.csproj", "{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Loaders.Tests", "LanguageUnderstanding.Loaders.Tests\LanguageUnderstanding.Loaders.Tests.csproj", "{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,5 +24,19 @@ Global
 		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4C328166-A5C2-4187-BA52-238E8B12A3DC}
 	EndGlobalSection
 EndGlobal
