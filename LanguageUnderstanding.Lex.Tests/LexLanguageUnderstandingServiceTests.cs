@@ -330,6 +330,19 @@ namespace LanguageUnderstanding.Lex.Tests
             }
         }
 
+        [Test]
+        public async Task CleanupCallsDeleteBot()
+        {
+            var botName = Guid.NewGuid().ToString();
+            var mockClient = new MockLexClient();
+            using (var lex = new LexLanguageUnderstandingService(botName, TemplatesDirectory, mockClient))
+            {
+                await lex.CleanupAsync();
+                mockClient.Requests.OfType<DeleteBotRequest>().Count().Should().Be(1);
+                mockClient.Requests.OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
+            }
+        }
+
         private static string GetPayloadJson(Stream payloadStream)
         {
             using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read, true))

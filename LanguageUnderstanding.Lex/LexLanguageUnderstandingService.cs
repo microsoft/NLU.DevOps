@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 namespace LanguageUnderstanding.Lex
@@ -165,7 +165,12 @@ namespace LanguageUnderstanding.Lex
         /// <inheritdoc />
         public Task CleanupAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var deleteBotRequest = new DeleteBotRequest
+            {
+                Name = this.BotName,
+            };
+
+            return this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken);
         }
 
         /// <inheritdoc />
