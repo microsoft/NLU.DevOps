@@ -35,8 +35,8 @@ namespace LanguageUnderstanding.Models
         /// <summary>
         /// Cleans up the language understanding service.
         /// </summary>
-        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A task to await the cleanup operation.</returns>
+        /// <param name="cancellationToken">Cancellation token.</param>
         Task CleanupAsync(CancellationToken cancellationToken);
     }
 }

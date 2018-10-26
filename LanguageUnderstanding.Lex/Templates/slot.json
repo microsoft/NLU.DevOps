@@ -1,0 +1,16 @@
+﻿{
+  "name": "",
+  "slotConstraint": "Optional",
+  "slotType": "",
+  "valueElicitationPrompt": {
+    "messages": [
+      {
+        "contentType": "PlainText",
+        "content": "e.g. What thing?"
+      }
+    ],
+    "maxAttempts": 2
+  },
+  "priority": 1,
+  "sampleUtterances": []
+}

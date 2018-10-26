@@ -12,5 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj" />
+    <ProjectReference Include="..\LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj" />
+    <ProjectReference Include="..\LanguageUnderstanding.Loaders\LanguageUnderstanding.Loaders.csproj" />
   </ItemGroup>
 </Project>
