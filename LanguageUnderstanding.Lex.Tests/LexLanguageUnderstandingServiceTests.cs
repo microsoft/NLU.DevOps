@@ -21,6 +21,7 @@ namespace LanguageUnderstanding.Lex.Tests
     internal class LexLanguageUnderstandingServiceTests
     {
         private const string TemplatesDirectory = "Templates";
+        private static readonly TimeSpan Epsilon = TimeSpan.FromMilliseconds(100);
 
         [Test]
         public void ThrowsArgumentNull()
@@ -200,7 +201,7 @@ namespace LanguageUnderstanding.Lex.Tests
                    .ToArray();
 
                 var difference = requests[1].Timestamp - requests[0].Timestamp;
-                difference.Should().BeGreaterThan(TimeSpan.FromSeconds(2));
+                difference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
             }
         }
 
@@ -295,7 +296,7 @@ namespace LanguageUnderstanding.Lex.Tests
                    .ToArray();
 
                 var difference = requests[2].Timestamp - requests[1].Timestamp;
-                difference.Should().BeGreaterThan(TimeSpan.FromSeconds(2));
+                difference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
             }
         }
 
