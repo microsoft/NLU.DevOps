@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\StyleCop.props" />
+  <Import Project="..\CodeCoverage.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <IsPackable>false</IsPackable>
@@ -17,9 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(PojectDir)models\**" 
-          CopyToOutputDirectory="PreserveNewest"
-          LinkBase="models\" />
+    <None Include="$(ProjectDir)models\**" CopyToOutputDirectory="PreserveNewest" LinkBase="models\" />
   </ItemGroup>
 
   <ItemGroup>
