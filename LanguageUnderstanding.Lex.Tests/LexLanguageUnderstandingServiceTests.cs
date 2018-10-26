@@ -343,6 +343,58 @@ namespace LanguageUnderstanding.Lex.Tests
             }
         }
 
+        [Test]
+        public async Task AddsListSlotTypesToImportJson()
+        {
+            var mockClient = new MockLexClient();
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            {
+                var originalValueListEntityTypeName = Guid.NewGuid().ToString();
+                var topResolutionListEntityTypeName = Guid.NewGuid().ToString();
+                var originalValueListEntityTypeCanonicalForm = Guid.NewGuid().ToString();
+                var topResolutionListEntityTypeCanonicalForm = Guid.NewGuid().ToString();
+                var topResolutionListEntityTypeSynonym = Guid.NewGuid().ToString();
+
+                var originalValueListEntityType = new ListEntityType(
+                    originalValueListEntityTypeName,
+                    new[] { new SynonymSet(originalValueListEntityTypeCanonicalForm, null) });
+
+                var topResolutionListEntityTypeValues = new[]
+                {
+                    new SynonymSet(
+                        topResolutionListEntityTypeCanonicalForm,
+                        new[] { topResolutionListEntityTypeSynonym }),
+                };
+
+                var topResolutionListEntityType = new ListEntityType(
+                    topResolutionListEntityTypeName,
+                    topResolutionListEntityTypeValues);
+
+                var entityTypes = new[] { originalValueListEntityType, topResolutionListEntityType };
+                var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
+                await lex.TrainAsync(new[] { utterance }, entityTypes);
+
+                var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
+                var payloadJson = GetPayloadJson(startImportRequest.Payload);
+                var payload = JObject.Parse(payloadJson);
+
+                // assert slot types are created
+                payload.SelectToken(".resource.slotTypes").Count().Should().Be(2);
+                payload.SelectToken(".resource.slotTypes[0].name").Value<string>().Should().Be(originalValueListEntityTypeName);
+                payload.SelectToken(".resource.slotTypes[0].valueSelectionStrategy").Value<string>().Should().Be(SlotValueSelectionStrategy.ORIGINAL_VALUE);
+                payload.SelectToken(".resource.slotTypes[0].enumerationValues").Count().Should().Be(1);
+                payload.SelectToken(".resource.slotTypes[0].enumerationValues[0].value").Value<string>().Should().Be(originalValueListEntityTypeCanonicalForm);
+                payload.SelectToken(".resource.slotTypes[0].enumerationValues[0].synonyms").Count().Should().Be(0);
+
+                payload.SelectToken(".resource.slotTypes[1].name").Value<string>().Should().Be(topResolutionListEntityTypeName);
+                payload.SelectToken(".resource.slotTypes[1].valueSelectionStrategy").Value<string>().Should().Be(SlotValueSelectionStrategy.TOP_RESOLUTION);
+                payload.SelectToken(".resource.slotTypes[1].enumerationValues").Count().Should().Be(1);
+                payload.SelectToken(".resource.slotTypes[1].enumerationValues[0].value").Value<string>().Should().Be(topResolutionListEntityTypeCanonicalForm);
+                payload.SelectToken(".resource.slotTypes[1].enumerationValues[0].synonyms").Count().Should().Be(1);
+                payload.SelectToken(".resource.slotTypes[1].enumerationValues[0].synonyms[0]").Value<string>().Should().Be(topResolutionListEntityTypeSynonym);
+            }
+        }
+
         private static string GetPayloadJson(Stream payloadStream)
         {
             using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read, true))

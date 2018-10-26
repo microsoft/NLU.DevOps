@@ -271,7 +271,28 @@ namespace LanguageUnderstanding.Lex
 
         private JToken CreateSlotType(ListEntityType entityType)
         {
-            throw new NotImplementedException();
+            // Create a new intent with the given name
+            var slotTypeJsonString = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "slotType.json"));
+            var slotTypeJson = JObject.Parse(slotTypeJsonString);
+            slotTypeJson.SelectToken(".name").Replace(entityType.Name);
+
+            // If any values have synonyms, use TOP_RESOLUTION, otherwise use ORIGINAL_VALUE
+            var valueSelectionStrategy = entityType.Values.Any(synonymSet => synonymSet.Synonyms?.Count > 0)
+                ? SlotValueSelectionStrategy.TOP_RESOLUTION
+                : SlotValueSelectionStrategy.ORIGINAL_VALUE;
+            slotTypeJson.SelectToken(".valueSelectionStrategy").Replace(valueSelectionStrategy.Value);
+
+            // Add enumeration values
+            var enumerationValues = entityType.Values
+                .Select(synonymSet => new JObject
+                {
+                    { "value", synonymSet.CanonicalForm },
+                    { "synonyms", JArray.FromObject(synonymSet.Synonyms ?? Array.Empty<string>()) },
+                });
+            var slotTypesArray = (JArray)slotTypeJson.SelectToken(".enumerationValues");
+            slotTypesArray.AddRange(enumerationValues);
+
+            return slotTypeJson;
         }
 
         private async Task PollBotImportStatusAsync(GetImportRequest getImportRequest, CancellationToken cancellationToken)
