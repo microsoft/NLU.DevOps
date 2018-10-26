@@ -36,6 +36,39 @@ namespace LanguageUnderstanding.Models
         }
 
         /// <summary>
+        /// Tests the language understanding service.
+        /// </summary>
+        /// <returns>A task to await the resulting labeled utterances.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="utterances">Unlabeled utterance to test on.</param>
+        public static Task<IEnumerable<LabeledUtterance>> TestAsync(this ILanguageUnderstandingService instance, params string[] utterances)
+        {
+            return instance.TestAsync((IEnumerable<string>)utterances);
+        }
+
+        /// <summary>
+        /// Tests the language understanding service using speech.
+        /// </summary>
+        /// <returns>A task to await the resulting labeled utterances.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="speechFiles">Speech files to test on.</param>
+        public static Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(this ILanguageUnderstandingService instance, IEnumerable<string> speechFiles)
+        {
+            return instance.TestSpeechAsync(speechFiles, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Tests the language understanding service using speech.
+        /// </summary>
+        /// <returns>A task to await the resulting labeled utterances.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="speechFiles">Speech files to test on.</param>
+        public static Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(this ILanguageUnderstandingService instance, params string[] speechFiles)
+        {
+            return instance.TestSpeechAsync((IEnumerable<string>)speechFiles);
+        }
+
+        /// <summary>
         /// Cleans up the language understanding service.
         /// </summary>
         /// <returns>A task to await the cleanup operation.</returns>

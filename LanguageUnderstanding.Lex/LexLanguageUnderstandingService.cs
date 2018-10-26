@@ -163,6 +163,12 @@ namespace LanguageUnderstanding.Lex
         }
 
         /// <inheritdoc />
+        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
         public Task CleanupAsync(CancellationToken cancellationToken)
         {
             var deleteBotRequest = new DeleteBotRequest

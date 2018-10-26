@@ -33,6 +33,14 @@ namespace LanguageUnderstanding.Models
         Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken);
 
         /// <summary>
+        /// Tests the language understanding service using speech.
+        /// </summary>
+        /// <returns>A task to await the resulting labeled utterances.</returns>
+        /// <param name="speechFiles">Speech files to test on.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Cleans up the language understanding service.
         /// </summary>
         /// <returns>A task to await the cleanup operation.</returns>
