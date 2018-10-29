@@ -7,6 +7,7 @@ namespace LanguageUnderstanding.Lex
     using System.Threading.Tasks;
     using Amazon;
     using Amazon.Lex;
+    using Amazon.Lex.Model;
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
     using Amazon.Runtime;
@@ -36,6 +37,11 @@ namespace LanguageUnderstanding.Lex
         public Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)
         {
             return this.LexModelClient.GetImportAsync(request, cancellationToken);
+        }
+
+        public Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken)
+        {
+            return this.LexClient.PostContentAsync(request, cancellationToken);
         }
 
         public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)

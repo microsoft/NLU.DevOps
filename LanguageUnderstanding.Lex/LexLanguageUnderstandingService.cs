@@ -14,6 +14,7 @@ namespace LanguageUnderstanding.Lex
     using System.Threading;
     using System.Threading.Tasks;
     using Amazon;
+    using Amazon.Lex.Model;
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
     using Amazon.Runtime;
@@ -75,6 +76,16 @@ namespace LanguageUnderstanding.Lex
             if (entityTypes == null)
             {
                 throw new ArgumentNullException(nameof(entityTypes));
+            }
+
+            if (utterances.Any(utterance => utterance == null))
+            {
+                throw new ArgumentException("Utterances must not be null.", nameof(utterances));
+            }
+
+            if (entityTypes.Any(entityType => entityType == null))
+            {
+                throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
             }
 
             // Create a new bot with the given name
@@ -163,9 +174,49 @@ namespace LanguageUnderstanding.Lex
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
+        public async Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (speechFiles == null)
+            {
+                throw new ArgumentNullException(nameof(speechFiles));
+            }
+
+            var results = new List<LabeledUtterance>();
+
+            // TODO: determine number of utterances that can be tested in parallel
+            foreach (var speechFile in speechFiles)
+            {
+                if (speechFile == null)
+                {
+                    throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
+                }
+
+                using (var stream = File.OpenRead(speechFile))
+                {
+                    var postContentRequest = new PostContentRequest
+                    {
+                        BotAlias = "$LATEST",
+                        BotName = this.BotName,
+                        UserId = "User",
+                        Accept = "text/plain; charset=utf-8",
+                        ContentType = "audio/l16; rate=16000; channels=1",
+                        InputStream = stream,
+                    };
+
+                    var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken);
+                    var slots = postContentResponse.Slots != null
+                        ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
+                            .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                            .ToList()
+                        : null;
+                    results.Add(new LabeledUtterance(
+                        postContentResponse.InputTranscript,
+                        postContentResponse.IntentName,
+                        slots));
+                }
+            }
+
+            return results;
         }
 
         /// <inheritdoc />

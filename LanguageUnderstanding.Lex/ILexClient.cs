@@ -6,6 +6,7 @@ namespace LanguageUnderstanding.Lex
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using Amazon.Lex.Model;
     using Amazon.LexModelBuildingService.Model;
 
     /// <summary>
@@ -36,6 +37,14 @@ namespace LanguageUnderstanding.Lex
         /// <param name="request">Request.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Calls the 'PostContent' action on Lex.
+        /// </summary>
+        /// <returns>Task to await the bot response.</returns>
+        /// <param name="request">Request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken);
 
         /// <summary>
         /// Calls the 'PutBot' action on Lex.

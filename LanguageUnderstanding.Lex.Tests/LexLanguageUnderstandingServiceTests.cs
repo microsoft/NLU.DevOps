@@ -8,8 +8,10 @@ namespace LanguageUnderstanding.Lex.Tests
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Amazon.Lex.Model;
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
     using FluentAssertions;
@@ -36,9 +38,17 @@ namespace LanguageUnderstanding.Lex.Tests
             using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, new MockLexClient()))
             {
                 var nullUtterances = new Func<Task>(() => service.TrainAsync(null, Array.Empty<EntityType>()));
+                var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>()));
                 var nullEntityTypes = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), null));
+                var nullEntityTypeItem = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null }));
+                var nullSpeechFiles = new Func<Task>(() => service.TestSpeechAsync(default(IEnumerable<string>)));
+                var nullSpeechFileItem = new Func<Task>(() => service.TestSpeechAsync(null));
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
+                nullUtteranceItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
+                nullEntityTypeItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
+                nullSpeechFiles.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFiles");
+                nullSpeechFileItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFiles");
             }
         }
 
@@ -395,6 +405,45 @@ namespace LanguageUnderstanding.Lex.Tests
             }
         }
 
+        [Test]
+        public async Task TestsWithSpeech()
+        {
+            var intent = Guid.NewGuid().ToString();
+            var transcript = Guid.NewGuid().ToString();
+            var entityType = Guid.NewGuid().ToString();
+            var entityValue = Guid.NewGuid().ToString();
+            var mockClient = new MockLexClient();
+            mockClient.CurrentPostContentResponse.IntentName = intent;
+            mockClient.CurrentPostContentResponse.InputTranscript = transcript;
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            {
+                // slots response will be null in this first request
+                // using a text file because we don't need to work with real audio
+                var results = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"));
+
+                // assert reads content from file (file contents are "hello world")
+                var request = mockClient.Requests.OfType<PostContentRequest>().Single();
+                using (var reader = new StreamReader(request.InputStream))
+                {
+                    reader.ReadToEnd().Should().Be("hello world");
+                }
+
+                // assert results
+                results.Count().Should().Be(1);
+                results.First().Intent.Should().Be(intent);
+                results.First().Text.Should().Be(transcript);
+                results.First().Entities.Should().BeNull();
+
+                // test with valid slots response
+                mockClient.CurrentPostContentResponse.Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
+                results = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"));
+                results.Count().Should().Be(1);
+                results.First().Entities.Count().Should().Be(1);
+                results.First().Entities[0].EntityType.Should().Be(entityType);
+                results.First().Entities[0].EntityValue.Should().Be(entityValue);
+            }
+        }
+
         private static string GetPayloadJson(Stream payloadStream)
         {
             using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read, true))
@@ -406,10 +455,6 @@ namespace LanguageUnderstanding.Lex.Tests
 
         private class MockLexClient : ILexClient
         {
-            public IEnumerable<object> Requests => this.RequestsInternal.Select(tuple => tuple.Item1);
-
-            public IEnumerable<Tuple<object, DateTimeOffset>> TimestampedRequests => this.RequestsInternal;
-
             public GetBotResponse CurrentGetBotResponse { get; set; } = new GetBotResponse
             {
                 AbortStatement = new Statement { Messages = { new Message() } },
@@ -417,16 +462,22 @@ namespace LanguageUnderstanding.Lex.Tests
                 Status = Status.READY,
             };
 
+            public GetImportResponse CurrentGetImportResponse { get; set; } = new GetImportResponse();
+
+            public PostContentResponse CurrentPostContentResponse { get; set; } = new PostContentResponse();
+
             public StartImportResponse CurrentStartImportResponse { get; set; } = new StartImportResponse
             {
                 ImportStatus = ImportStatus.COMPLETE,
             };
 
-            public GetImportResponse CurrentGetImportResponse { get; set; } = new GetImportResponse();
-
             public Action OnDispose { get; set; }
 
             public Action<object> OnRequest { get; set; }
+
+            public IEnumerable<object> Requests => this.RequestsInternal.Select(tuple => tuple.Item1);
+
+            public IEnumerable<Tuple<object, DateTimeOffset>> TimestampedRequests => this.RequestsInternal;
 
             private List<Tuple<object, DateTimeOffset>> RequestsInternal { get; } = new List<Tuple<object, DateTimeOffset>>();
 
@@ -448,6 +499,26 @@ namespace LanguageUnderstanding.Lex.Tests
                 return Task.FromResult(this.CurrentGetImportResponse);
             }
 
+            public Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken)
+            {
+                var streamCopy = new MemoryStream();
+                request.InputStream.CopyTo(streamCopy);
+                streamCopy.Position = 0;
+                var requestCopy = new PostContentRequest
+                {
+                    Accept = request.Accept,
+                    BotAlias = request.BotAlias,
+                    BotName = request.BotName,
+                    ContentType = request.ContentType,
+                    InputStream = streamCopy,
+                    UserId = request.UserId,
+                };
+
+                this.ProcessRequest(requestCopy);
+
+                return Task.FromResult(this.CurrentPostContentResponse);
+            }
+
             public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)
             {
                 this.ProcessRequest(request);
@@ -458,6 +529,7 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 var streamCopy = new MemoryStream();
                 request.Payload.CopyTo(streamCopy);
+                streamCopy.Position = 0;
                 var requestCopy = new StartImportRequest
                 {
                     MergeStrategy = request.MergeStrategy,
@@ -478,6 +550,13 @@ namespace LanguageUnderstanding.Lex.Tests
                     .OfType<StartImportRequest>()
                     .ToList()
                     .ForEach(request => request.Payload.Dispose());
+
+                // Dispose each copy of the PostContentRequest input stream
+                this.RequestsInternal
+                    .Select(tuple => tuple.Item1)
+                    .OfType<PostContentRequest>()
+                    .ToList()
+                    .ForEach(request => request.InputStream.Dispose());
 
                 this.OnDispose?.Invoke();
             }

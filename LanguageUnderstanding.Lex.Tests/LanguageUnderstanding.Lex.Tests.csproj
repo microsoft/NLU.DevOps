@@ -20,4 +20,9 @@
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="assets\sample.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
