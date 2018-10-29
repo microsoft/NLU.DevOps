@@ -13,13 +13,13 @@ namespace LanguageUnderstanding.Models
         /// </summary>
         /// <param name="entityType">Entity type name.</param>
         /// <param name="entityValue">Entity value, generally a canonical form of the entity.</param>
-        /// <param name="matchText">Matching token in the utterance.</param>
+        /// <param name="matchText">Matching text in the utterance.</param>
         /// <param name="matchIndex">Occurrence index of matching token in the utterance.</param>
         public Entity(string entityType, string entityValue, string matchText, int matchIndex)
         {
             this.EntityType = entityType;
             this.EntityValue = entityValue;
-            this.MatchToken = matchText;
+            this.MatchText = matchText;
             this.MatchIndex = matchIndex;
         }
 
@@ -34,9 +34,9 @@ namespace LanguageUnderstanding.Models
         public string EntityValue { get; }
 
         /// <summary>
-        /// Gets the matching token in the utterance.
+        /// Gets the matching text in the utterance.
         /// </summary>
-        public string MatchToken { get; }
+        public string MatchText { get; }
 
         /// <summary>
         /// Gets the occurrence index of matching token in the utterance.

@@ -1,12 +1,12 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Playground\Playground.csproj", "{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "Playground\Playground.csproj", "{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Loaders", "LanguageUnderstanding.Loaders\LanguageUnderstanding.Loaders.csproj", "{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Json", "LanguageUnderstanding.Json\LanguageUnderstanding.Json.csproj", "{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Loaders.Tests", "LanguageUnderstanding.Loaders.Tests\LanguageUnderstanding.Loaders.Tests.csproj", "{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Json.Tests", "LanguageUnderstanding.Json.Tests\LanguageUnderstanding.Json.Tests.csproj", "{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Lex", "LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj", "{26972FE8-130F-479B-B8A5-58BC8DD7A308}"
 EndProject

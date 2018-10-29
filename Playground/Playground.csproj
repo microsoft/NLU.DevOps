@@ -13,6 +13,6 @@
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj" />
     <ProjectReference Include="..\LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj" />
-    <ProjectReference Include="..\LanguageUnderstanding.Loaders\LanguageUnderstanding.Loaders.csproj" />
+    <ProjectReference Include="..\LanguageUnderstanding.Json\LanguageUnderstanding.Json.csproj" />
   </ItemGroup>
 </Project>

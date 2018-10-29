@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\LanguageUnderstanding.Loaders.Tests.xml</DocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\LanguageUnderstanding.Json.Tests.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LanguageUnderstanding.Loaders\LanguageUnderstanding.Loaders.csproj" />
+    <ProjectReference Include="..\LanguageUnderstanding.Json\LanguageUnderstanding.Json.csproj" />
   </ItemGroup>
 
 </Project>

@@ -244,7 +244,7 @@ namespace LanguageUnderstanding.Lex
                 foreach (var entity in utterance.Entities)
                 {
                     // Match against original text, avoid matching partial contractions
-                    var match = new Regex($"\\b{entity.MatchToken}\\b(?!'\\w)")
+                    var match = new Regex($"\\b{entity.MatchText}\\b(?!'\\w)")
                         .Match(utterance.Text);
 
                     // Iterate to the correct match
@@ -259,7 +259,7 @@ namespace LanguageUnderstanding.Lex
                     }
 
                     // Replace the matching token with the slot indicator
-                    text = new Regex(entity.MatchToken)
+                    text = new Regex(entity.MatchText)
                         .Replace(text, $"{{{entity.EntityType}}}", 1, match.Index);
                 }
             }

@@ -15,5 +15,4 @@
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj" />
   </ItemGroup>
-
 </Project>
