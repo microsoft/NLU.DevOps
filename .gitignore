@@ -39,3 +39,6 @@ Thumbs.db
 
 # dotCover
 *.dotCover
+
+# Local appsettings
+appsettings.local.json

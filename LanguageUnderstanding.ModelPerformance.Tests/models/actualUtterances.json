@@ -1,0 +1,19 @@
+﻿[
+  {
+    "text": "Book me a flight to Cairo",
+    "intent": "BookFlight",
+    "entities": [
+      {
+        "entityType": "City",
+        "entityValue": "Cairo",
+        "matchText": null,
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "entities": [],
+    "intent": "None",
+    "text": "Order me 2 pizzas"
+  }
+]

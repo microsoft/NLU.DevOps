@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Lex",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Lex.Tests", "LanguageUnderstanding.Lex.Tests\LanguageUnderstanding.Lex.Tests.csproj", "{87AEDCAE-F7D4-4F63-8586-280CAC75CEF3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.ModelPerformance.Tests", "LanguageUnderstanding.ModelPerformance.Tests\LanguageUnderstanding.ModelPerformance.Tests.csproj", "{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{87AEDCAE-F7D4-4F63-8586-280CAC75CEF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87AEDCAE-F7D4-4F63-8586-280CAC75CEF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87AEDCAE-F7D4-4F63-8586-280CAC75CEF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
