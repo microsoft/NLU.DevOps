@@ -44,6 +44,11 @@ namespace LanguageUnderstanding.Lex
             return this.LexClient.PostContentAsync(request, cancellationToken);
         }
 
+        public Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
+        {
+            return this.LexClient.PostTextAsync(request, cancellationToken);
+        }
+
         public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)
         {
             return this.LexModelClient.PutBotAsync(request, cancellationToken);

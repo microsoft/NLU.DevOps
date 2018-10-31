@@ -47,6 +47,14 @@ namespace LanguageUnderstanding.Lex
         Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken);
 
         /// <summary>
+        /// Calls the 'PostText' action on Lex.
+        /// </summary>
+        /// <returns>Task to await the bot response.</returns>
+        /// <param name="request">Request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Calls the 'PutBot' action on Lex.
         /// </summary>
         /// <returns>Task to await the operation.</returns>

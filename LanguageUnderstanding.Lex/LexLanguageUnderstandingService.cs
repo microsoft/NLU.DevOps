@@ -168,9 +168,44 @@ namespace LanguageUnderstanding.Lex
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
+        public async Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (utterances == null)
+            {
+                throw new ArgumentNullException(nameof(utterances));
+            }
+
+            var results = new List<LabeledUtterance>();
+
+            // TODO: determine number of utterances that can be tested in parallel
+            foreach (var utterance in utterances)
+            {
+                if (utterance == null)
+                {
+                    throw new ArgumentException("Utterance must not be null.", nameof(utterance));
+                }
+
+                var postTextRequest = new PostTextRequest
+                {
+                    BotAlias = "$LATEST",
+                    BotName = this.BotName,
+                    InputText = utterance,
+                    UserId = "User",
+                };
+
+                var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken);
+                var entities = postTextResponse.Slots?
+                    .Where(entity => entity.Value != null)
+                    .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                    .ToList();
+
+                results.Add(new LabeledUtterance(
+                    utterance,
+                    postTextResponse.IntentName,
+                    entities));
+            }
+
+            return results;
         }
 
         /// <inheritdoc />
@@ -209,6 +244,7 @@ namespace LanguageUnderstanding.Lex
                             .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
                             .ToList()
                         : null;
+
                     results.Add(new LabeledUtterance(
                         postContentResponse.InputTranscript,
                         postContentResponse.IntentName,

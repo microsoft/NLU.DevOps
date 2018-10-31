@@ -43,12 +43,16 @@ namespace LanguageUnderstanding.Lex.Tests
                 var nullEntityTypeItem = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null }));
                 var nullSpeechFiles = new Func<Task>(() => service.TestSpeechAsync(default(IEnumerable<string>)));
                 var nullSpeechFileItem = new Func<Task>(() => service.TestSpeechAsync(null));
+                var nullTestUtterances = new Func<Task>(() => service.TestAsync(default(IEnumerable<string>)));
+                var nullTestUtterancesItem = new Func<Task>(() => service.TestAsync(null));
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtteranceItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullEntityTypeItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
                 nullSpeechFiles.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFiles");
                 nullSpeechFileItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFiles");
+                nullTestUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
+                nullTestUtterancesItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
             }
         }
 
@@ -444,6 +448,41 @@ namespace LanguageUnderstanding.Lex.Tests
             }
         }
 
+        [Test]
+        public async Task CreatesLabeledUtterances()
+        {
+            var text = Guid.NewGuid().ToString();
+            var intent = Guid.NewGuid().ToString();
+            var entityType = Guid.NewGuid().ToString();
+            var entityValue = Guid.NewGuid().ToString();
+            var slots = new Dictionary<string, string>
+            {
+                { entityType, entityValue },
+            };
+
+            var mockClient = new MockLexClient
+            {
+                CurrentPostTextResponse = new PostTextResponse
+                {
+                    IntentName = intent,
+                },
+            };
+
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            {
+                var responses = await lex.TestAsync(new[] { text });
+                responses.Count().Should().Be(1);
+                responses.First().Text.Should().Be(text);
+                responses.First().Intent.Should().Be(intent);
+                responses.First().Entities.Should().BeEmpty();
+
+                mockClient.CurrentPostTextResponse.Slots = slots;
+                responses = await lex.TestAsync(new[] { text });
+                responses.First().Entities[0].EntityType.Should().Be(entityType);
+                responses.First().Entities[0].EntityValue.Should().Be(entityValue);
+            }
+        }
+
         private static string GetPayloadJson(Stream payloadStream)
         {
             using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read, true))
@@ -465,6 +504,8 @@ namespace LanguageUnderstanding.Lex.Tests
             public GetImportResponse CurrentGetImportResponse { get; set; } = new GetImportResponse();
 
             public PostContentResponse CurrentPostContentResponse { get; set; } = new PostContentResponse();
+
+            public PostTextResponse CurrentPostTextResponse { get; set; } = new PostTextResponse();
 
             public StartImportResponse CurrentStartImportResponse { get; set; } = new StartImportResponse
             {
@@ -517,6 +558,12 @@ namespace LanguageUnderstanding.Lex.Tests
                 this.ProcessRequest(requestCopy);
 
                 return Task.FromResult(this.CurrentPostContentResponse);
+            }
+
+            public Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
+            {
+                this.ProcessRequest(request);
+                return Task.FromResult(this.CurrentPostTextResponse);
             }
 
             public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)
