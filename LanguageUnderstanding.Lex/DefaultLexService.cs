@@ -24,6 +24,11 @@ namespace LanguageUnderstanding.Lex
 
         private AmazonLexModelBuildingServiceClient LexModelClient { get; }
 
+        public Task DeleteBotAliasAsync(DeleteBotAliasRequest request, CancellationToken cancellationToken)
+        {
+            return this.LexModelClient.DeleteBotAliasAsync(request, cancellationToken);
+        }
+
         public Task DeleteBotAsync(DeleteBotRequest request, CancellationToken cancellationToken)
         {
             return this.LexModelClient.DeleteBotAsync(request, cancellationToken);
@@ -47,6 +52,11 @@ namespace LanguageUnderstanding.Lex
         public Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
         {
             return this.LexClient.PostTextAsync(request, cancellationToken);
+        }
+
+        public Task PutBotAliasAsync(PutBotAliasRequest request, CancellationToken cancellationToken)
+        {
+            return this.LexModelClient.PutBotAliasAsync(request, cancellationToken);
         }
 
         public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)

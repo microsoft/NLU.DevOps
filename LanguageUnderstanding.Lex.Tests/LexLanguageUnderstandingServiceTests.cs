@@ -28,14 +28,16 @@ namespace LanguageUnderstanding.Lex.Tests
         [Test]
         public void ThrowsArgumentNull()
         {
-            var nullBotName = new Action(() => new LexLanguageUnderstandingService(null, string.Empty, default(ILexClient)));
-            var nullTemplatesDirectory = new Action(() => new LexLanguageUnderstandingService(string.Empty, null, default(ILexClient)));
-            var nullLexClient = new Action(() => new LexLanguageUnderstandingService(string.Empty, string.Empty, default(ILexClient)));
+            var nullBotName = new Action(() => new LexLanguageUnderstandingService(null, string.Empty, string.Empty, default(ILexClient)));
+            var nullBotAlias = new Action(() => new LexLanguageUnderstandingService(string.Empty, null, string.Empty, default(ILexClient)));
+            var nullTemplatesDirectory = new Action(() => new LexLanguageUnderstandingService(string.Empty, string.Empty, null, default(ILexClient)));
+            var nullLexClient = new Action(() => new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, default(ILexClient)));
             nullBotName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botName");
+            nullBotAlias.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botAlias");
             nullTemplatesDirectory.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("templatesDirectory");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, new MockLexClient()))
+            using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, new MockLexClient()))
             {
                 var nullUtterances = new Func<Task>(() => service.TrainAsync(null, Array.Empty<EntityType>()));
                 var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>()));
@@ -61,7 +63,7 @@ namespace LanguageUnderstanding.Lex.Tests
         {
             var text = "foo";
             var match = "bar";
-            using (var service = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, new MockLexClient()))
+            using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, new MockLexClient()))
             {
                 var entityType = new BuiltinEntityType(string.Empty, string.Empty);
                 var entity = new Entity(string.Empty, string.Empty, match, 0);
@@ -77,9 +79,8 @@ namespace LanguageUnderstanding.Lex.Tests
             var text = "hello world";
             var intent = Guid.NewGuid().ToString();
             var entityTypeName = "Planet";
-            var botName = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(botName, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -97,7 +98,7 @@ namespace LanguageUnderstanding.Lex.Tests
             var entityTypeName = "Planet";
             var botName = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(botName, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(botName, string.Empty, TemplatesDirectory, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -144,9 +145,8 @@ namespace LanguageUnderstanding.Lex.Tests
             string sampleUtterance)
         {
             var intent = Guid.NewGuid().ToString();
-            var botName = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(botName, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -169,19 +169,11 @@ namespace LanguageUnderstanding.Lex.Tests
         {
             var importId = Guid.NewGuid().ToString();
 
-            var mockClient = new MockLexClient
-            {
-                CurrentStartImportResponse = new StartImportResponse
-                {
-                    ImportId = importId,
-                    ImportStatus = ImportStatus.IN_PROGRESS,
-                },
-                CurrentGetImportResponse = new GetImportResponse
-                {
-                    ImportId = importId,
-                    ImportStatus = ImportStatus.IN_PROGRESS,
-                },
-            };
+            var mockClient = new MockLexClient();
+            mockClient.Get<StartImportResponse>().ImportId = importId;
+            mockClient.Get<StartImportResponse>().ImportStatus = ImportStatus.IN_PROGRESS;
+            mockClient.Get<GetImportResponse>().ImportId = importId;
+            mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.IN_PROGRESS;
 
             // Wait for the second GetImport action to set status to complete
             var count = 0;
@@ -189,13 +181,13 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 if (request is GetImportRequest && ++count == 2)
                 {
-                    mockClient.CurrentGetImportResponse.ImportStatus = ImportStatus.COMPLETE;
+                    mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.COMPLETE;
                 }
             }
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -229,21 +221,12 @@ namespace LanguageUnderstanding.Lex.Tests
                 Guid.NewGuid().ToString(),
             };
 
-            var mockClient = new MockLexClient
-            {
-                CurrentStartImportResponse = new StartImportResponse
-                {
-                    ImportId = importId,
-                    ImportStatus = ImportStatus.FAILED,
-                },
-                CurrentGetImportResponse = new GetImportResponse
-                {
-                    ImportId = importId,
-                    ImportStatus = ImportStatus.FAILED,
-                },
-            };
-
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            var mockClient = new MockLexClient();
+            mockClient.Get<StartImportResponse>().ImportId = importId;
+            mockClient.Get<StartImportResponse>().ImportStatus = ImportStatus.FAILED;
+            mockClient.Get<GetImportResponse>().ImportId = importId;
+            mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.FAILED;
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -252,7 +235,7 @@ namespace LanguageUnderstanding.Lex.Tests
                 importFails.Should().Throw<InvalidOperationException>().And.Message.Should().BeEmpty();
 
                 // Failure reason is concatenated in message
-                mockClient.CurrentGetImportResponse.FailureReason = failureReason;
+                mockClient.Get<GetImportResponse>().FailureReason = failureReason;
                 var expectedMessage = string.Join(Environment.NewLine, failureReason);
                 importFails.Should().Throw<InvalidOperationException>().And.Message.Should().Be(expectedMessage);
             }
@@ -267,7 +250,7 @@ namespace LanguageUnderstanding.Lex.Tests
                 OnDispose = () => handle.Set(),
             };
 
-            var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, mockClient);
+            var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, mockClient);
             service.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
@@ -277,7 +260,7 @@ namespace LanguageUnderstanding.Lex.Tests
         public async Task WaitsForBuildCompletion()
         {
             var mockClient = new MockLexClient();
-            mockClient.CurrentGetBotResponse.Status = Status.BUILDING;
+            mockClient.Get<GetBotResponse>().Status = Status.BUILDING;
 
             // Wait for the third GetBot action to set status to complete
             var count = 0;
@@ -285,13 +268,13 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 if (request is GetBotRequest && ++count == 3)
                 {
-                    mockClient.CurrentGetBotResponse.Status = Status.READY;
+                    mockClient.Get<GetBotResponse>().Status = Status.READY;
                 }
             }
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>());
@@ -318,7 +301,7 @@ namespace LanguageUnderstanding.Lex.Tests
         public void BuildFailureThrowsInvalidOperation()
         {
             var mockClient = new MockLexClient();
-            mockClient.CurrentGetBotResponse.Status = Status.BUILDING;
+            mockClient.Get<GetBotResponse>().Status = Status.BUILDING;
 
             // Wait for the second GetBot action to set status to failed
             var count = 0;
@@ -326,32 +309,35 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 if (request is GetBotRequest && ++count == 2)
                 {
-                    mockClient.CurrentGetBotResponse.Status = Status.FAILED;
+                    mockClient.Get<GetBotResponse>().Status = Status.FAILED;
                 }
             }
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 var buildFailed = new Func<Task>(() => lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()));
                 buildFailed.Should().Throw<InvalidOperationException>();
 
                 count = 0;
-                mockClient.CurrentGetBotResponse.Status = Status.NOT_BUILT;
+                mockClient.Get<GetBotResponse>().Status = Status.NOT_BUILT;
                 buildFailed.Should().Throw<InvalidOperationException>();
             }
         }
 
         [Test]
-        public async Task CleanupCallsDeleteBot()
+        public async Task CleanupCallsLexActions()
         {
             var botName = Guid.NewGuid().ToString();
+            var botAlias = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(botName, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(botName, botAlias, TemplatesDirectory, mockClient))
             {
                 await lex.CleanupAsync();
+                mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
+                mockClient.Requests.OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
                 mockClient.Requests.OfType<DeleteBotRequest>().Count().Should().Be(1);
                 mockClient.Requests.OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
             }
@@ -361,7 +347,7 @@ namespace LanguageUnderstanding.Lex.Tests
         public async Task AddsListSlotTypesToImportJson()
         {
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var originalValueListEntityTypeName = Guid.NewGuid().ToString();
                 var topResolutionListEntityTypeName = Guid.NewGuid().ToString();
@@ -417,9 +403,9 @@ namespace LanguageUnderstanding.Lex.Tests
             var entityType = Guid.NewGuid().ToString();
             var entityValue = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            mockClient.CurrentPostContentResponse.IntentName = intent;
-            mockClient.CurrentPostContentResponse.InputTranscript = transcript;
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            mockClient.Get<PostContentResponse>().IntentName = intent;
+            mockClient.Get<PostContentResponse>().InputTranscript = transcript;
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
@@ -439,7 +425,7 @@ namespace LanguageUnderstanding.Lex.Tests
                 results.First().Entities.Should().BeNull();
 
                 // test with valid slots response
-                mockClient.CurrentPostContentResponse.Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
+                mockClient.Get<PostContentResponse>().Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
                 results = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"));
                 results.Count().Should().Be(1);
                 results.First().Entities.Count().Should().Be(1);
@@ -460,15 +446,9 @@ namespace LanguageUnderstanding.Lex.Tests
                 { entityType, entityValue },
             };
 
-            var mockClient = new MockLexClient
-            {
-                CurrentPostTextResponse = new PostTextResponse
-                {
-                    IntentName = intent,
-                },
-            };
-
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, TemplatesDirectory, mockClient))
+            var mockClient = new MockLexClient();
+            mockClient.Get<PostTextResponse>().IntentName = intent;
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var responses = await lex.TestAsync(new[] { text });
                 responses.Count().Should().Be(1);
@@ -476,10 +456,106 @@ namespace LanguageUnderstanding.Lex.Tests
                 responses.First().Intent.Should().Be(intent);
                 responses.First().Entities.Should().BeEmpty();
 
-                mockClient.CurrentPostTextResponse.Slots = slots;
+                mockClient.Get<PostTextResponse>().Slots = slots;
                 responses = await lex.TestAsync(new[] { text });
                 responses.First().Entities[0].EntityType.Should().Be(entityType);
                 responses.First().Entities[0].EntityValue.Should().Be(entityValue);
+            }
+        }
+
+        [Test]
+        public async Task RunsTestsInParallel()
+        {
+            var mockClient = new MockLexClient();
+            var degreeOfParallelism = 3;
+
+            var requestCount = 0;
+            var countdownEvent = new CountdownEvent(degreeOfParallelism);
+            var taskCompletionSource = new TaskCompletionSource<bool>();
+            Task onRequestAsync(object request)
+            {
+                if (request is PostTextRequest)
+                {
+                    countdownEvent.Signal();
+                    requestCount++;
+                    return taskCompletionSource.Task;
+                }
+
+                return Task.CompletedTask;
+            }
+
+            mockClient.OnRequestAsync = onRequestAsync;
+
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, mockClient))
+            {
+                // Send number of utterances greater than the max parallelism
+                var utteranceCount = degreeOfParallelism + 1;
+                var utterances = Enumerable.Repeat(string.Empty, utteranceCount);
+                var task = lex.TestAsync(utterances);
+
+                // Should receive max parallel requests within 5 seconds
+                countdownEvent.Wait(5000).Should().BeTrue();
+
+                // At most max parallel requests have been made
+                requestCount.Should().Be(degreeOfParallelism);
+
+                // Do not block future requests
+                mockClient.OnRequestAsync = null;
+
+                // Release blocked requests
+                taskCompletionSource.SetResult(true);
+
+                // Assert results count
+                var results = await task;
+                results.Count().Should().Be(utteranceCount);
+            }
+        }
+
+        [Test]
+        [Category("LongRunning")]
+        public void DeleteBotAliasRetries()
+        {
+            var mockClient = new MockLexClient();
+
+            // Wait for the second GetBot action to set status to failed
+            var shouldThrow = true;
+            var throwOnce = true;
+            var conflictException = new Amazon.LexModelBuildingService.Model.ConflictException(string.Empty);
+            void onRequest(object request)
+            {
+                if (request is DeleteBotAliasRequest && shouldThrow)
+                {
+                    shouldThrow = !throwOnce;
+                    throw conflictException;
+                }
+            }
+
+            mockClient.OnRequest = onRequest;
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            {
+                var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
+                var buildModel = new Func<Task>(() => lex.CleanupAsync());
+
+                buildModel.Should().NotThrow<Amazon.LexModelBuildingService.Model.ConflictException>();
+
+                // Assert two DeleteBotAliasRequest actions occur
+                mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(2);
+
+                // Assert that the time difference is at least five seconds
+                var requests = mockClient.TimestampedRequests
+                    .Where(tuple => tuple.Item1 is DeleteBotAliasRequest)
+                    .Select(tuple => new
+                    {
+                        Request = (DeleteBotAliasRequest)tuple.Item1,
+                        Timestamp = tuple.Item2
+                    })
+                   .ToArray();
+                var difference = requests[1].Timestamp - requests[0].Timestamp;
+                difference.Should().BeGreaterThan(TimeSpan.FromSeconds(10) - Epsilon);
+
+                shouldThrow = true;
+                throwOnce = false;
+                buildModel.Should().Throw<Amazon.LexModelBuildingService.Model.ConflictException>().And.Should().Be(conflictException);
             }
         }
 
@@ -494,27 +570,26 @@ namespace LanguageUnderstanding.Lex.Tests
 
         private class MockLexClient : ILexClient
         {
-            public GetBotResponse CurrentGetBotResponse { get; set; } = new GetBotResponse
+            public MockLexClient()
             {
-                AbortStatement = new Statement { Messages = { new Message() } },
-                ClarificationPrompt = new Prompt { Messages = { new Message() } },
-                Status = Status.READY,
-            };
+                this.Set(new GetBotResponse
+                {
+                    AbortStatement = new Statement { Messages = { new Message() } },
+                    ClarificationPrompt = new Prompt { Messages = { new Message() } },
+                    Status = Status.READY,
+                });
 
-            public GetImportResponse CurrentGetImportResponse { get; set; } = new GetImportResponse();
-
-            public PostContentResponse CurrentPostContentResponse { get; set; } = new PostContentResponse();
-
-            public PostTextResponse CurrentPostTextResponse { get; set; } = new PostTextResponse();
-
-            public StartImportResponse CurrentStartImportResponse { get; set; } = new StartImportResponse
-            {
-                ImportStatus = ImportStatus.COMPLETE,
-            };
+                this.Set(new StartImportResponse
+                {
+                    ImportStatus = ImportStatus.COMPLETE,
+                });
+            }
 
             public Action OnDispose { get; set; }
 
             public Action<object> OnRequest { get; set; }
+
+            public Func<object, Task> OnRequestAsync { get; set; }
 
             public IEnumerable<object> Requests => this.RequestsInternal.Select(tuple => tuple.Item1);
 
@@ -522,25 +597,48 @@ namespace LanguageUnderstanding.Lex.Tests
 
             private List<Tuple<object, DateTimeOffset>> RequestsInternal { get; } = new List<Tuple<object, DateTimeOffset>>();
 
+            private IDictionary<Type, object> Responses { get; } = new Dictionary<Type, object>();
+
+            public void Set<T>(T instance)
+            {
+                this.Responses[typeof(T)] = instance;
+            }
+
+            public T Get<T>()
+                where T : new()
+            {
+                if (!this.Responses.TryGetValue(typeof(T), out var result))
+                {
+                    result = new T();
+                    this.Responses.Add(typeof(T), result);
+                }
+
+                return (T)result;
+            }
+
+            public Task DeleteBotAliasAsync(DeleteBotAliasRequest request, CancellationToken cancellationToken)
+            {
+                return this.ProcessRequestAsync(request);
+            }
+
             public Task DeleteBotAsync(DeleteBotRequest request, CancellationToken cancellationToken)
             {
-                this.ProcessRequest(request);
-                return Task.CompletedTask;
+                return this.ProcessRequestAsync(request);
             }
 
-            public Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
+            public async Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
             {
-                this.ProcessRequest(request);
-                return Task.FromResult(this.CurrentGetBotResponse);
+                await this.ProcessRequestAsync(request);
+                return this.Get<GetBotResponse>();
             }
 
-            public Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)
+            public async Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)
             {
-                this.ProcessRequest(request);
-                return Task.FromResult(this.CurrentGetImportResponse);
+                await this.ProcessRequestAsync(request);
+                return this.Get<GetImportResponse>();
             }
 
-            public Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken)
+            public async Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken)
             {
                 var streamCopy = new MemoryStream();
                 request.InputStream.CopyTo(streamCopy);
@@ -555,24 +653,28 @@ namespace LanguageUnderstanding.Lex.Tests
                     UserId = request.UserId,
                 };
 
-                this.ProcessRequest(requestCopy);
+                await this.ProcessRequestAsync(requestCopy);
 
-                return Task.FromResult(this.CurrentPostContentResponse);
+                return this.Get<PostContentResponse>();
             }
 
-            public Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
+            public async Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
             {
-                this.ProcessRequest(request);
-                return Task.FromResult(this.CurrentPostTextResponse);
+                await this.ProcessRequestAsync(request);
+                return this.Get<PostTextResponse>();
+            }
+
+            public Task PutBotAliasAsync(PutBotAliasRequest request, CancellationToken cancellationToken)
+            {
+                return this.ProcessRequestAsync(request);
             }
 
             public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)
             {
-                this.ProcessRequest(request);
-                return Task.CompletedTask;
+                return this.ProcessRequestAsync(request);
             }
 
-            public Task<StartImportResponse> StartImportAsync(StartImportRequest request, CancellationToken cancellationToken)
+            public async Task<StartImportResponse> StartImportAsync(StartImportRequest request, CancellationToken cancellationToken)
             {
                 var streamCopy = new MemoryStream();
                 request.Payload.CopyTo(streamCopy);
@@ -584,9 +686,9 @@ namespace LanguageUnderstanding.Lex.Tests
                     ResourceType = request.ResourceType,
                 };
 
-                this.ProcessRequest(requestCopy);
+                await this.ProcessRequestAsync(requestCopy);
 
-                return Task.FromResult(this.CurrentStartImportResponse);
+                return this.Get<StartImportResponse>();
             }
 
             public void Dispose()
@@ -608,10 +710,11 @@ namespace LanguageUnderstanding.Lex.Tests
                 this.OnDispose?.Invoke();
             }
 
-            private void ProcessRequest(object request)
+            private Task ProcessRequestAsync(object request)
             {
-                this.OnRequest?.Invoke(request);
                 this.RequestsInternal.Add(Tuple.Create(request, DateTimeOffset.Now));
+                this.OnRequest?.Invoke(request);
+                return this.OnRequestAsync?.Invoke(request) ?? Task.CompletedTask;
             }
         }
     }

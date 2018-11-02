@@ -15,6 +15,14 @@ namespace LanguageUnderstanding.Lex
     public interface ILexClient : IDisposable
     {
         /// <summary>
+        /// Calls the 'DeleteBotAlias' action on Lex.
+        /// </summary>
+        /// <returns>Task to await the operation.</returns>
+        /// <param name="request">Request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task DeleteBotAliasAsync(DeleteBotAliasRequest request, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Calls the 'DeleteBot' action on Lex.
         /// </summary>
         /// <returns>Task to await the operation.</returns>
@@ -53,6 +61,14 @@ namespace LanguageUnderstanding.Lex
         /// <param name="request">Request.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Calls the 'PutBotAlias' action on Lex.
+        /// </summary>
+        /// <returns>Task to await the operation.</returns>
+        /// <param name="request">Request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task PutBotAliasAsync(PutBotAliasRequest request, CancellationToken cancellationToken);
 
         /// <summary>
         /// Calls the 'PutBot' action on Lex.

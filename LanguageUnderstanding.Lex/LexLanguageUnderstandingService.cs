@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 namespace LanguageUnderstanding.Lex
@@ -27,22 +27,28 @@ namespace LanguageUnderstanding.Lex
     /// </summary>
     public class LexLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
     {
+        private const int DegreeOfParallelism = 3;
+        private const int RetryCount = 5;
+
         private static readonly TimeSpan GetImportDelay = TimeSpan.FromSeconds(2);
         private static readonly TimeSpan GetBotDelay = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LexLanguageUnderstandingService"/> class.
         /// </summary>
         /// <param name="botName">Bot name.</param>
+        /// <param name="botAlias">Bot alias.</param>
         /// <param name="templatesDirectory">Templates directory.</param>
         /// <param name="credentials">Credentials.</param>
         /// <param name="regionEndpoint">Region endpoint.</param>
         public LexLanguageUnderstandingService(
             string botName,
+            string botAlias,
             string templatesDirectory,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, templatesDirectory, new DefaultLexService(credentials, regionEndpoint))
+            : this(botName, botAlias, templatesDirectory, new DefaultLexService(credentials, regionEndpoint))
         {
         }
 
@@ -50,16 +56,20 @@ namespace LanguageUnderstanding.Lex
         /// Initializes a new instance of the <see cref="LexLanguageUnderstandingService"/> class.
         /// </summary>
         /// <param name="botName">Bot name.</param>
+        /// <param name="botAlias">Bot alias.</param>
         /// <param name="templatesDirectory">Templates directory.</param>
         /// <param name="lexClient">Lex client.</param>
-        public LexLanguageUnderstandingService(string botName, string templatesDirectory, ILexClient lexClient)
+        public LexLanguageUnderstandingService(string botName, string botAlias, string templatesDirectory, ILexClient lexClient)
         {
             this.BotName = botName ?? throw new ArgumentNullException(nameof(botName));
+            this.BotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
             this.TemplatesDirectory = templatesDirectory ?? throw new ArgumentNullException(nameof(templatesDirectory));
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
 
         private string BotName { get; }
+
+        private string BotAlias { get; }
 
         private string TemplatesDirectory { get; }
 
@@ -67,6 +77,122 @@ namespace LanguageUnderstanding.Lex
 
         /// <inheritdoc />
         public async Task TrainAsync(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
+        {
+            // Validate arguments
+            ValidateArguments(utterances, entityTypes);
+
+            // Create the bot
+            await this.CreateBotAsync(cancellationToken);
+
+            // Generate the bot configuration
+            var importJson = this.CreateImportJson(utterances, entityTypes);
+
+            // Import the bot configuration
+            await this.ImportBotAsync(importJson, cancellationToken);
+
+            // Build the bot
+            await this.BuildBotAsync(cancellationToken);
+
+            // Publish the bot
+            await this.PublishBotAsync(cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
+        {
+            if (utterances == null)
+            {
+                throw new ArgumentNullException(nameof(utterances));
+            }
+
+            async Task<LabeledUtterance> selector(string utterance, int index)
+            {
+                if (utterance == null)
+                {
+                    throw new ArgumentException("Utterance must not be null.", nameof(utterance));
+                }
+
+                var postTextRequest = new PostTextRequest
+                {
+                    BotAlias = this.BotAlias,
+                    BotName = this.BotName,
+                    UserId = $"User{index}",
+                    InputText = utterance,
+                };
+
+                var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken);
+                var entities = postTextResponse.Slots?
+                    .Where(slot => slot.Value != null)
+                    .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                    .ToList();
+
+                return new LabeledUtterance(
+                    utterance,
+                    postTextResponse.IntentName,
+                    entities);
+            }
+
+            return SelectAsync(utterances, selector);
+        }
+
+        /// <inheritdoc />
+        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
+        {
+            if (speechFiles == null)
+            {
+                throw new ArgumentNullException(nameof(speechFiles));
+            }
+
+            async Task<LabeledUtterance> selector(string speechFile, int index)
+            {
+                if (speechFile == null)
+                {
+                    throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
+                }
+
+                using (var stream = File.OpenRead(speechFile))
+                {
+                    var postContentRequest = new PostContentRequest
+                    {
+                        BotAlias = this.BotAlias,
+                        BotName = this.BotName,
+                        UserId = $"User{index}",
+                        Accept = "text/plain; charset=utf-8",
+                        ContentType = "audio/l16; rate=16000; channels=1",
+                        InputStream = stream,
+                    };
+
+                    var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken);
+                    var slots = postContentResponse.Slots != null
+                        ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
+                            .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                            .ToList()
+                        : null;
+
+                    return new LabeledUtterance(
+                        postContentResponse.InputTranscript,
+                        postContentResponse.IntentName,
+                        slots);
+                }
+            }
+
+            return SelectAsync(speechFiles, selector);
+        }
+
+        /// <inheritdoc />
+        public async Task CleanupAsync(CancellationToken cancellationToken)
+        {
+            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAliasAsync, cancellationToken);
+            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAsync, cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            this.LexClient.Dispose();
+        }
+
+        private static void ValidateArguments(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
         {
             if (utterances == null)
             {
@@ -87,189 +213,6 @@ namespace LanguageUnderstanding.Lex
             {
                 throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
             }
-
-            // Create a new bot with the given name
-            var botJson = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "bot.json"));
-            var putBotRequest = JsonConvert.DeserializeObject<PutBotRequest>(botJson);
-            putBotRequest.Name = this.BotName;
-            putBotRequest.CreateVersion = true;
-            await this.LexClient.PutBotAsync(putBotRequest, cancellationToken);
-
-            // Add name to imports JSON template
-            var importJsonTemplate = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "import.json"));
-            var importJson = JObject.Parse(importJsonTemplate);
-            importJson.SelectToken(".resource.name").Replace(this.BotName);
-
-            // Add intents to imports JSON template
-            var intents = utterances
-                .GroupBy(utterance => utterance.Intent)
-                .Select(group => this.CreateIntent(group.Key, group, entityTypes));
-            Debug.Assert(importJson.SelectToken(".resource.intents") is JArray, "Import template includes intents JSON array.");
-            var intentsArray = (JArray)importJson.SelectToken(".resource.intents");
-            intentsArray.AddRange(intents);
-
-            // Add slot types to imports JSON template
-            var slotTypes = entityTypes
-                .OfType<ListEntityType>()
-                .Select(entityType => this.CreateSlotType(entityType));
-            Debug.Assert(importJson.SelectToken(".resource.slotTypes") is JArray, "Import template includes slotTypes JSON array.");
-            var slotTypesArray = (JArray)importJson.SelectToken(".resource.slotTypes");
-            slotTypesArray.AddRange(slotTypes);
-
-            using (var stream = new MemoryStream())
-            {
-                // Generate zip archive with imports JSON
-                await this.WriteJsonZipAsync(stream, importJson, cancellationToken);
-
-                // Call StartImport action on Amazon Lex
-                var startImportRequest = new StartImportRequest
-                {
-                    MergeStrategy = MergeStrategy.OVERWRITE_LATEST,
-                    Payload = stream,
-                    ResourceType = ResourceType.BOT,
-                };
-
-                var startImportResponse = await this.LexClient.StartImportAsync(startImportRequest, cancellationToken);
-
-                // If the import is not complete, wait for import to complete
-                if (startImportResponse.ImportStatus != ImportStatus.COMPLETE)
-                {
-                    var getImportRequest = new GetImportRequest
-                    {
-                        ImportId = startImportResponse.ImportId,
-                    };
-
-                    // Poll for COMPLETE import status
-                    await this.PollBotImportStatusAsync(getImportRequest, cancellationToken);
-                }
-            }
-
-            // Get latest configuration from GetBot action
-            var getBotRequest = new GetBotRequest
-            {
-                Name = this.BotName,
-                VersionOrAlias = "$LATEST",
-            };
-            var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken);
-
-            // Call PutBot with the latest GetBot response
-            var putBotBuildRequest = JObject.FromObject(getBotResponse).ToObject<PutBotRequest>();
-            putBotBuildRequest.CreateVersion = true;
-            putBotBuildRequest.ProcessBehavior = ProcessBehavior.BUILD;
-
-            // Workaround for error received from Lex client
-            putBotBuildRequest.AbortStatement.Messages.First().GroupNumber = 1;
-            putBotBuildRequest.ClarificationPrompt.Messages.First().GroupNumber = 1;
-
-            await this.LexClient.PutBotAsync(putBotBuildRequest, cancellationToken);
-
-            // Poll for READY status
-            await this.PollBotReadyStatusAsync(getBotRequest, cancellationToken);
-        }
-
-        /// <inheritdoc />
-        public async Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
-        {
-            if (utterances == null)
-            {
-                throw new ArgumentNullException(nameof(utterances));
-            }
-
-            var results = new List<LabeledUtterance>();
-
-            // TODO: determine number of utterances that can be tested in parallel
-            foreach (var utterance in utterances)
-            {
-                if (utterance == null)
-                {
-                    throw new ArgumentException("Utterance must not be null.", nameof(utterance));
-                }
-
-                var postTextRequest = new PostTextRequest
-                {
-                    BotAlias = "$LATEST",
-                    BotName = this.BotName,
-                    InputText = utterance,
-                    UserId = "User",
-                };
-
-                var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken);
-                var entities = postTextResponse.Slots?
-                    .Where(entity => entity.Value != null)
-                    .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
-                    .ToList();
-
-                results.Add(new LabeledUtterance(
-                    utterance,
-                    postTextResponse.IntentName,
-                    entities));
-            }
-
-            return results;
-        }
-
-        /// <inheritdoc />
-        public async Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
-        {
-            if (speechFiles == null)
-            {
-                throw new ArgumentNullException(nameof(speechFiles));
-            }
-
-            var results = new List<LabeledUtterance>();
-
-            // TODO: determine number of utterances that can be tested in parallel
-            foreach (var speechFile in speechFiles)
-            {
-                if (speechFile == null)
-                {
-                    throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
-                }
-
-                using (var stream = File.OpenRead(speechFile))
-                {
-                    var postContentRequest = new PostContentRequest
-                    {
-                        BotAlias = "$LATEST",
-                        BotName = this.BotName,
-                        UserId = "User",
-                        Accept = "text/plain; charset=utf-8",
-                        ContentType = "audio/l16; rate=16000; channels=1",
-                        InputStream = stream,
-                    };
-
-                    var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken);
-                    var slots = postContentResponse.Slots != null
-                        ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
-                            .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
-                            .ToList()
-                        : null;
-
-                    results.Add(new LabeledUtterance(
-                        postContentResponse.InputTranscript,
-                        postContentResponse.IntentName,
-                        slots));
-                }
-            }
-
-            return results;
-        }
-
-        /// <inheritdoc />
-        public Task CleanupAsync(CancellationToken cancellationToken)
-        {
-            var deleteBotRequest = new DeleteBotRequest
-            {
-                Name = this.BotName,
-            };
-
-            return this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken);
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            this.LexClient.Dispose();
         }
 
         private static string CreateSampleUtterance(LabeledUtterance utterance)
@@ -301,6 +244,113 @@ namespace LanguageUnderstanding.Lex
             }
 
             return text;
+        }
+
+        private static async Task WriteJsonZipAsync(Stream stream, JToken importJson, CancellationToken cancellationToken)
+        {
+            using (var zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, true))
+            {
+                var zipEntry = zipArchive.CreateEntry("import.json");
+                using (var entryStream = zipEntry.Open())
+                {
+                    var importJsonString = importJson.ToString();
+                    var importJsonBytes = Encoding.UTF8.GetBytes(importJsonString);
+                    await entryStream.WriteAsync(importJsonBytes, 0, importJsonBytes.Length, cancellationToken);
+                }
+            }
+
+            // Reset stream to initial position
+            stream.Position = 0;
+        }
+
+        private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, int, Task<TResult>> selector)
+        {
+            var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
+            var results = new TResult[items.Count()];
+            var tasks = new List<Task<Tuple<int, TResult>>>(DegreeOfParallelism);
+
+            async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
+            {
+                var result = await selector(item, i);
+                return Tuple.Create(i, result);
+            }
+
+            foreach (var indexedItem in indexedItems)
+            {
+                if (tasks.Count == DegreeOfParallelism)
+                {
+                    var task = await Task.WhenAny(tasks);
+                    tasks.Remove(task);
+                    var result = await task;
+                    results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
+                }
+
+                tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
+            }
+
+            await Task.WhenAll(tasks);
+            foreach (var task in tasks)
+            {
+                var result = await task;
+                results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
+            }
+
+            return results;
+        }
+
+        private static async Task RetryAsync<TException>(Func<CancellationToken, Task> actionAsync, CancellationToken cancellationToken)
+            where TException : Exception
+        {
+            var count = 0;
+            while (count++ < RetryCount)
+            {
+                try
+                {
+                    await actionAsync(cancellationToken);
+                    return;
+                }
+                catch (TException)
+                when (count < RetryCount)
+                {
+                    await Task.Delay(RetryDelay, cancellationToken);
+                }
+            }
+        }
+
+        private Task CreateBotAsync(CancellationToken cancellationToken)
+        {
+            // Create a new bot with the given name
+            var botJson = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "bot.json"));
+            var putBotRequest = JsonConvert.DeserializeObject<PutBotRequest>(botJson);
+            putBotRequest.Name = this.BotName;
+            putBotRequest.CreateVersion = true;
+            return this.LexClient.PutBotAsync(putBotRequest, cancellationToken);
+        }
+
+        private JToken CreateImportJson(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
+        {
+            // Add name to imports JSON template
+            var importJsonTemplate = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "import.json"));
+            var importJson = JObject.Parse(importJsonTemplate);
+            importJson.SelectToken(".resource.name").Replace(this.BotName);
+
+            // Add intents to imports JSON template
+            var intents = utterances
+                .GroupBy(utterance => utterance.Intent)
+                .Select(group => this.CreateIntent(group.Key, group, entityTypes));
+            Debug.Assert(importJson.SelectToken(".resource.intents") is JArray, "Import template includes intents JSON array.");
+            var intentsArray = (JArray)importJson.SelectToken(".resource.intents");
+            intentsArray.AddRange(intents);
+
+            // Add slot types to imports JSON template
+            var slotTypes = entityTypes
+                .OfType<ListEntityType>()
+                .Select(entityType => this.CreateSlotType(entityType));
+            Debug.Assert(importJson.SelectToken(".resource.slotTypes") is JArray, "Import template includes slotTypes JSON array.");
+            var slotTypesArray = (JArray)importJson.SelectToken(".resource.slotTypes");
+            slotTypesArray.AddRange(slotTypes);
+
+            return importJson;
         }
 
         private JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
@@ -382,8 +432,38 @@ namespace LanguageUnderstanding.Lex
             return slotTypeJson;
         }
 
-        private async Task PollBotImportStatusAsync(GetImportRequest getImportRequest, CancellationToken cancellationToken)
+        private async Task ImportBotAsync(JToken importJson, CancellationToken cancellationToken)
         {
+            using (var stream = new MemoryStream())
+            {
+                // Generate zip archive with imports JSON
+                await WriteJsonZipAsync(stream, importJson, cancellationToken);
+
+                // Call StartImport action on Amazon Lex
+                var startImportRequest = new StartImportRequest
+                {
+                    MergeStrategy = MergeStrategy.OVERWRITE_LATEST,
+                    Payload = stream,
+                    ResourceType = ResourceType.BOT,
+                };
+
+                var startImportResponse = await this.LexClient.StartImportAsync(startImportRequest, cancellationToken);
+
+                // If the import is not complete, poll until import is complete
+                if (startImportResponse.ImportStatus != ImportStatus.COMPLETE)
+                {
+                    await this.PollBotImportStatusAsync(startImportResponse.ImportId, cancellationToken);
+                }
+            }
+        }
+
+        private async Task PollBotImportStatusAsync(string importId, CancellationToken cancellationToken)
+        {
+            var getImportRequest = new GetImportRequest
+            {
+                ImportId = importId,
+            };
+
             while (true)
             {
                 // Check the status of the import operation
@@ -407,12 +487,44 @@ namespace LanguageUnderstanding.Lex
             }
         }
 
-        private async Task PollBotReadyStatusAsync(GetBotRequest request, CancellationToken cancellationToken)
+        private async Task BuildBotAsync(CancellationToken cancellationToken)
         {
+            // Get the latest bot configuration
+            var getBotRequest = new GetBotRequest
+            {
+                Name = this.BotName,
+                VersionOrAlias = "$LATEST",
+            };
+
+            var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken);
+
+            // Call PutBot with the latest GetBot response
+            var putBotBuildRequest = JObject.FromObject(getBotResponse).ToObject<PutBotRequest>();
+            putBotBuildRequest.CreateVersion = true;
+            putBotBuildRequest.ProcessBehavior = ProcessBehavior.BUILD;
+
+            // Workaround for error received from Lex client
+            putBotBuildRequest.AbortStatement.Messages.First().GroupNumber = 1;
+            putBotBuildRequest.ClarificationPrompt.Messages.First().GroupNumber = 1;
+
+            await this.LexClient.PutBotAsync(putBotBuildRequest, cancellationToken);
+
+            // Poll for until bot is ready
+            await this.PollBotReadyStatusAsync(cancellationToken);
+        }
+
+        private async Task PollBotReadyStatusAsync(CancellationToken cancellationToken)
+        {
+            var getBotRequest = new GetBotRequest
+            {
+                Name = this.BotName,
+                VersionOrAlias = "$LATEST",
+            };
+
             // Wait for Ready status
             while (true)
             {
-                var getBotResponse = await this.LexClient.GetBotAsync(request, cancellationToken);
+                var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken);
                 if (getBotResponse.Status == Status.READY)
                 {
                     break;
@@ -434,21 +546,54 @@ namespace LanguageUnderstanding.Lex
             }
         }
 
-        private async Task WriteJsonZipAsync(Stream stream, JToken importJson, CancellationToken cancellationToken)
+        private async Task DeleteBotAliasAsync(CancellationToken cancellationToken)
         {
-            using (var zipArchive = new ZipArchive(stream, ZipArchiveMode.Create, true))
+            try
             {
-                var zipEntry = zipArchive.CreateEntry("import.json");
-                using (var entryStream = zipEntry.Open())
+                var deleteBotAliasRequest = new DeleteBotAliasRequest
                 {
-                    var importJsonString = importJson.ToString();
-                    var importJsonBytes = Encoding.UTF8.GetBytes(importJsonString);
-                    await entryStream.WriteAsync(importJsonBytes, 0, importJsonBytes.Length, cancellationToken);
-                }
-            }
+                    BotName = this.BotName,
+                    Name = this.BotAlias,
+                };
 
-            // Reset stream to initial position
-            stream.Position = 0;
+                await this.LexClient.DeleteBotAliasAsync(deleteBotAliasRequest, cancellationToken);
+            }
+            catch (Amazon.LexModelBuildingService.Model.NotFoundException)
+            {
+                // Likely that no bot alias was published
+                // TODO: log that this exception occurred
+            }
+        }
+
+        private async Task DeleteBotAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var deleteBotRequest = new DeleteBotRequest
+                {
+                    Name = this.BotName,
+                };
+
+                await this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken);
+            }
+            catch (Amazon.LexModelBuildingService.Model.NotFoundException)
+            {
+                // Likely that bot was not created
+                // TODO: log that this exception occurred
+            }
+        }
+
+        private async Task PublishBotAsync(CancellationToken cancellationToken)
+        {
+            // Creates an alias that can be used for testing
+            var putBotAliasRequest = new PutBotAliasRequest
+            {
+                BotName = this.BotName,
+                BotVersion = "$LATEST",
+                Name = this.BotAlias,
+            };
+
+            await this.LexClient.PutBotAliasAsync(putBotAliasRequest, cancellationToken);
         }
     }
 }
