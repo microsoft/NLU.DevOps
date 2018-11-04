@@ -53,8 +53,8 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
-            var expectedUtterances = Serialization.ReadUtterances(expectedPath);
-            var actualUtterances = Serialization.ReadUtterances(actualPath);
+            var expectedUtterances = Serialization.Read<List<LabeledUtterance>>(expectedPath);
+            var actualUtterances = Serialization.Read<List<LabeledUtterance>>(actualPath);
 
             if (expectedUtterances.Count != actualUtterances.Count)
             {

@@ -25,7 +25,7 @@ namespace LanguageUnderstanding.Lex
     /// <summary>
     /// Language understanding service for Amazon Lex.
     /// </summary>
-    public class LexLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
+    public class LexLanguageUnderstandingService : ILanguageUnderstandingService
     {
         private const int DegreeOfParallelism = 3;
         private const int RetryCount = 5;
@@ -67,9 +67,15 @@ namespace LanguageUnderstanding.Lex
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
 
-        private string BotName { get; }
+        /// <summary>
+        /// Gets the name of the bot.
+        /// </summary>
+        public string BotName { get; }
 
-        private string BotAlias { get; }
+        /// <summary>
+        /// Gets the bot alias.
+        /// </summary>
+        public string BotAlias { get; }
 
         private string TemplatesDirectory { get; }
 

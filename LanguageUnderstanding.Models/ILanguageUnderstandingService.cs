@@ -3,6 +3,7 @@
 
 namespace LanguageUnderstanding.Models
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace LanguageUnderstanding.Models
     /// <summary>
     /// Language understanding service interface.
     /// </summary>
-    public interface ILanguageUnderstandingService
+    public interface ILanguageUnderstandingService : IDisposable
     {
         /// <summary>
         /// Trains the language understanding service.

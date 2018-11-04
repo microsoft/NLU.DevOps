@@ -4,8 +4,8 @@
 namespace LanguageUnderstanding.Json
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
+    using System.Text;
     using Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -16,40 +16,69 @@ namespace LanguageUnderstanding.Json
     /// </summary>
     public static class Serialization
     {
+        private static Lazy<JsonSerializerSettings> LazyJsonSerializerSettings =>
+            new Lazy<JsonSerializerSettings>(() => new JsonSerializerSettings
+            {
+                Converters = { new EntityTypesJsonConverter() },
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            });
+
         /// <summary>
-        /// Returns list of entities from file.
+        /// Reads JSON value from a file.
         /// </summary>
+        /// <typeparam name="T">Type of value to read.</typeparam>
         /// <param name="filePath">File path.</param>
-        /// <returns>List of entities.</returns>
-        public static IReadOnlyList<EntityType> ReadEntities(string filePath)
+        /// <returns>JSON data parsed into object.</returns>
+        public static T Read<T>(string filePath)
         {
-            var jsonEntities = File.ReadAllText(filePath);
-            return JsonConvert.DeserializeObject<List<EntityType>>(jsonEntities, new EntityTypesJsonConverter());
+            using (var stream = File.OpenRead(filePath))
+            {
+                return Read<T>(stream);
+            }
         }
 
         /// <summary>
-        /// Returns list of utterances from file.
+        /// Reads JSON value from a stream.
         /// </summary>
-        /// <param name="filePath">File path.</param>
-        /// <returns>List of utterances.</returns>
-        public static IReadOnlyList<LabeledUtterance> ReadUtterances(string filePath)
+        /// <typeparam name="T">Type of value to read.</typeparam>
+        /// <param name="stream">File path.</param>
+        /// <returns>JSON data parsed into object.</returns>
+        public static T Read<T>(Stream stream)
         {
-            var jsonUtterences = File.ReadAllText(filePath);
-            var utterances = JsonConvert.DeserializeObject<List<LabeledUtterance>>(jsonUtterences);
-            return utterances;
+            using (var streamReader = new StreamReader(stream, Encoding.UTF8, true, 4096, true))
+            {
+                var jsonEntities = streamReader.ReadToEnd();
+                return JsonConvert.DeserializeObject<T>(jsonEntities, LazyJsonSerializerSettings.Value);
+            }
         }
 
         /// <summary>
-        /// Writes the list of utterances to a file.
+        /// Writes the value as JSON to a file.
         /// </summary>
+        /// <typeparam name="T">Type of value.</typeparam>
         /// <param name="filePath">File path.</param>
-        /// <param name="utterances">List of utterances.</param>
-        public static void WriteUtterances(string filePath, IReadOnlyList<LabeledUtterance> utterances)
+        /// <param name="value">Value to write.</param>
+        public static void Write<T>(string filePath, T value)
         {
-            var settings = new JsonSerializerSettings();
-            settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-            var jsonUtterances = JsonConvert.SerializeObject(utterances, settings);
-            File.WriteAllText(filePath, jsonUtterances);
+            using (var stream = File.OpenWrite(filePath))
+            {
+                Write(stream, value);
+            }
+        }
+
+        /// <summary>
+        /// Writes the value as JSON to a file.
+        /// </summary>
+        /// <typeparam name="T">Type of value.</typeparam>
+        /// <param name="stream">Stream.</param>
+        /// <param name="value">Value to write.</param>
+        public static void Write<T>(Stream stream, T value)
+        {
+            var jsonUtterances = JsonConvert.SerializeObject(value, Formatting.Indented, LazyJsonSerializerSettings.Value);
+            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8, 4096, true))
+            {
+                streamWriter.Write(jsonUtterances);
+            }
         }
 
         private class EntityTypesJsonConverter : JsonConverter

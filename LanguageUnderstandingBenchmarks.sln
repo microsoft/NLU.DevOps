@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Model
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Luis.Tests", "LanguageUnderstanding.Luis.Tests\LanguageUnderstanding.Luis.Tests.csproj", "{280B55DA-272D-44D5-AE73-8730CA96EC0B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.CommandLine", "LanguageUnderstanding.CommandLine\LanguageUnderstanding.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{280B55DA-272D-44D5-AE73-8730CA96EC0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{280B55DA-272D-44D5-AE73-8730CA96EC0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{280B55DA-272D-44D5-AE73-8730CA96EC0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
