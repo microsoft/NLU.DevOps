@@ -4,6 +4,7 @@
 # build
 [Oo]bj/
 [Bb]in/
+[Oo]ut/
 packages/
 TestResults/
 
