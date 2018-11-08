@@ -5,8 +5,10 @@ namespace LanguageUnderstanding.Luis
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Models;
@@ -17,7 +19,7 @@ namespace LanguageUnderstanding.Luis
     /// Train, test, and cleanup a LUIS model.
     /// Implementation of <see cref="ILanguageUnderstandingService"/>
     /// </summary>
-    public class LuisLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
+    public sealed class LuisLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
     {
         /// <summary> The protocol used in LUIS http requests. </summary>
         private const string Protocol = "https://";
@@ -27,6 +29,9 @@ namespace LanguageUnderstanding.Luis
 
         /// <summary> Base path for LUIS API calls. </summary>
         private const string BasePath = "/luis/api/v2.0/apps/";
+
+        /// <summary> Base path for LUIS queries. </summary>
+        private const string QueryBasePath = "/luis/v2.0/apps/";
 
         /// <summary> LUIS application name. </summary>
         private readonly string appName;
@@ -41,7 +46,7 @@ namespace LanguageUnderstanding.Luis
         private readonly string region;
 
         /// <summary> Http utility to make http requests to LUIS. </summary>
-        private readonly ILuisClient luisHttpUtils;
+        private readonly ILuisClient luisClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
@@ -70,7 +75,7 @@ namespace LanguageUnderstanding.Luis
             this.appID = appId ?? throw new ArgumentNullException(nameof(appId));
             this.appVersion = appVersion ?? throw new ArgumentNullException(nameof(appVersion));
             this.region = region ?? throw new ArgumentNullException(nameof(region));
-            this.luisHttpUtils = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
+            this.luisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
         /// <summary> Gets host for LUIS API calls. </summary>
@@ -107,35 +112,35 @@ namespace LanguageUnderstanding.Luis
             {
                 if (utterance == null)
                 {
-                    throw new ArgumentNullException(nameof(utterance));
+                    throw new ArgumentException("Utterance must not be null.", nameof(utterances));
                 }
 
                 intents.Add(utterance.Intent);
             }
 
-            var intentArray = (JArray)model.GetValue("intents");
+            var intentArray = (JArray)model["intents"];
             foreach (var intent in intents)
             {
-                if (string.IsNullOrEmpty(intent))
-                {
-                    throw new ArgumentNullException(nameof(intent));
-                }
-
                 intentArray.Add(new JObject(new JProperty("name", intent)));
             }
 
             // Add utterances to model
             var luisUtterances = utterances.Select(item => new LuisLabeledUtterance(item));
-            var utteranceArray = (JArray)model.GetValue("utterances");
+            var utteranceArray = (JArray)model["utterances"];
             foreach (var luisUtterance in luisUtterances)
             {
                 utteranceArray.Add(JObject.FromObject(luisUtterance));
             }
 
             // Add entities to model
-            var entityArray = (JArray)model.GetValue("entities");
-            foreach (EntityType entityType in entityTypes)
+            var entityArray = (JArray)model["entities"];
+            foreach (var entityType in entityTypes)
             {
+                if (entityType == null)
+                {
+                    throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
+                }
+
                 switch (entityType.Kind)
                 {
                     case EntityTypeKind.Simple:
@@ -154,15 +159,31 @@ namespace LanguageUnderstanding.Luis
             importResponse.EnsureSuccessStatusCode();
 
             // Train
-            var uri = $"{this.Host}{this.AppVersionPath}train";
-            var trainResponse = await this.luisHttpUtils.PostAsync(uri, null, cancellationToken);
+            var uri = new Uri($"{this.Host}{this.AppVersionPath}train");
+            var trainResponse = await this.luisClient.PostAsync(uri, null, cancellationToken);
             trainResponse.EnsureSuccessStatusCode();
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
+        public async Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (utterances == null)
+            {
+                throw new ArgumentNullException(nameof(utterances));
+            }
+
+            var labeledUtterances = new List<LabeledUtterance>();
+            foreach (var utterance in utterances)
+            {
+                var uri = new Uri($"{this.Host}{QueryBasePath}{this.appID}?q={utterance}");
+                var response = await this.luisClient.GetAsync(uri, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                var json = await response.Content.ReadAsStringAsync();
+                var labeledUtterance = PredictionToLabeledUtterance(utterance, json);
+                labeledUtterances.Add(labeledUtterance);
+            }
+
+            return labeledUtterances;
         }
 
         /// <inheritdoc />
@@ -174,15 +195,55 @@ namespace LanguageUnderstanding.Luis
         /// <inheritdoc />
         public async Task CleanupAsync(CancellationToken cancellationToken)
         {
-            var uri = $"{this.Host}{this.AppVersionPath}";
-            var cleanupResponse = await this.luisHttpUtils.DeleteAsync(uri, cancellationToken);
+            var uri = new Uri($"{this.Host}{this.AppVersionPath}");
+            var cleanupResponse = await this.luisClient.DeleteAsync(uri, cancellationToken);
             cleanupResponse.EnsureSuccessStatusCode();
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            this.luisHttpUtils.Dispose();
+            this.luisClient.Dispose();
+        }
+
+        /// <summary>
+        /// Converts a prediction request response from Luis into a <see cref="LabeledUtterance"/>.
+        /// </summary>
+        /// <returns>A <see cref="LabeledUtterance"/>.</returns>
+        /// <param name="utterance">The utterance that Luis evaluated.</param>
+        /// <param name="json">The prediction request response.</param>
+        internal static LabeledUtterance PredictionToLabeledUtterance(string utterance, string json)
+        {
+            var jsonObject = JObject.Parse(json);
+            var text = jsonObject.Value<string>("query");
+            var intent = jsonObject.SelectToken(".topScoringIntent.intent").Value<string>();
+
+            var array = (JArray)jsonObject["entities"];
+            var entities = new List<Entity>(array.Count);
+            foreach (var item in array)
+            {
+                var entityType = item.Value<string>("type");
+                string entityValue = item.Value<string>("entity");
+                int startCharIndex = item.Value<int>("startCharIndex");
+                int endCharIndex = item.Value<int>("endCharIndex");
+
+                var matchText = text.Substring(startCharIndex, endCharIndex - startCharIndex + 1);
+                var matches = Regex.Matches(utterance, matchText);
+                int matchIndex = -1;
+                for (var i = 0; i < matches.Count; ++i)
+                {
+                    if (matches[i].Index == startCharIndex)
+                    {
+                        matchIndex = i;
+                        break;
+                    }
+                }
+
+                Debug.Assert(matchIndex >= 0, "Invalid LUIS response.");
+                entities.Add(new Entity(entityType, entityValue, matchText, matchIndex));
+            }
+
+            return new LabeledUtterance(text, intent, entities);
         }
 
         /// <summary>
@@ -219,9 +280,9 @@ namespace LanguageUnderstanding.Luis
         /// <param name="cancellationToken">Cancellation token.</param>
         private Task<HttpResponseMessage> ImportVersionAsync(JObject model, CancellationToken cancellationToken)
         {
-            var uri = $"{this.Host}{this.AppIdPath}versions/import?versionId={this.appVersion}";
+            var uri = new Uri($"{this.Host}{this.AppIdPath}versions/import?versionId={this.appVersion}");
             var requestBody = model.ToString(Formatting.None);
-            return this.luisHttpUtils.PostAsync(uri, requestBody, cancellationToken);
+            return this.luisClient.PostAsync(uri, requestBody, cancellationToken);
         }
     }
 }

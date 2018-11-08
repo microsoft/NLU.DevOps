@@ -115,7 +115,7 @@ namespace LanguageUnderstanding.Lex
             {
                 if (utterance == null)
                 {
-                    throw new ArgumentException("Utterance must not be null.", nameof(utterance));
+                    throw new ArgumentException("Utterance must not be null.", nameof(utterances));
                 }
 
                 var postTextRequest = new PostTextRequest
@@ -228,24 +228,12 @@ namespace LanguageUnderstanding.Lex
             {
                 foreach (var entity in utterance.Entities)
                 {
-                    // Match against original text, avoid matching partial contractions
-                    var match = new Regex($"\\b{entity.MatchText}\\b(?!'\\w)")
-                        .Match(utterance.Text);
-
-                    // Iterate to the correct match
-                    for (var i = 0; i < entity.MatchIndex; ++i)
-                    {
-                        match = match.NextMatch();
-                    }
-
-                    if (!match.Success)
-                    {
-                        throw new InvalidOperationException("Unable to find matching entity.");
-                    }
+                    // Match in original text
+                    var index = entity.StartCharIndexInText(utterance.Text);
 
                     // Replace the matching token with the slot indicator
                     text = new Regex(entity.MatchText)
-                        .Replace(text, $"{{{entity.EntityType}}}", 1, match.Index);
+                        .Replace(text, $"{{{entity.EntityType}}}", 1, index);
                 }
             }
 

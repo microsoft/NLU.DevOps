@@ -12,7 +12,7 @@ namespace LanguageUnderstanding.Lex
     using Amazon.LexModelBuildingService.Model;
     using Amazon.Runtime;
 
-    internal class DefaultLexService : ILexClient
+    internal sealed class DefaultLexService : ILexClient
     {
         public DefaultLexService(AWSCredentials credentials, RegionEndpoint regionEndpoint)
         {

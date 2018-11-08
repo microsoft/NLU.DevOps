@@ -134,8 +134,9 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        [TestCase("food foo", "foo", "x", 0, "food {x}")]
-        [TestCase("foo'd foo", "foo", "x", 0, "foo'd {x}")]
+        [TestCase("food foo", "foo", "x", 0, "{x}d foo")]
+        [TestCase("foo'd foo", "foo", "x", 0, "{x}'d foo")]
+        [TestCase("foo'd foo", "foo", "x", 1, "foo'd {x}")]
         [TestCase("foo foo foo", "foo", "x", 2, "foo foo {x}")]
         public async Task ReplacesCorrectTokensInSampleUtterances(
             string text,
@@ -428,7 +429,7 @@ namespace LanguageUnderstanding.Lex.Tests
                 mockClient.Get<PostContentResponse>().Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
                 results = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"));
                 results.Count().Should().Be(1);
-                results.First().Entities.Count().Should().Be(1);
+                results.First().Entities.Count.Should().Be(1);
                 results.First().Entities[0].EntityType.Should().Be(entityType);
                 results.First().Entities[0].EntityValue.Should().Be(entityValue);
             }

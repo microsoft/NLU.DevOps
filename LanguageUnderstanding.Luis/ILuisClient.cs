@@ -19,7 +19,7 @@ namespace LanguageUnderstanding.Luis
         /// <returns>A Task to await the HTTP request response.</returns>
         /// <param name="uri">The URI.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<HttpResponseMessage> GetAsync(string uri, CancellationToken cancellationToken);
+        Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken);
 
         /// <summary>
         /// Sends a POST request as an async operation.
@@ -28,7 +28,7 @@ namespace LanguageUnderstanding.Luis
         /// <param name="uri">The URI.</param>
         /// <param name="requestBody">Request body.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<HttpResponseMessage> PostAsync(string uri, string requestBody, CancellationToken cancellationToken);
+        Task<HttpResponseMessage> PostAsync(Uri uri, string requestBody, CancellationToken cancellationToken);
 
         /// <summary>
         /// Sends a DELETE request as an async operation.
@@ -36,6 +36,6 @@ namespace LanguageUnderstanding.Luis
         /// <returns>A Task to await the HTTP request response.</returns>
         /// <param name="uri">The URI.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<HttpResponseMessage> DeleteAsync(string uri, CancellationToken cancellationToken);
+        Task<HttpResponseMessage> DeleteAsync(Uri uri, CancellationToken cancellationToken);
     }
 }

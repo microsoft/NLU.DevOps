@@ -12,7 +12,7 @@ namespace LanguageUnderstanding.Luis
     /// <summary>
     /// Assists in making http requests to LUIS.
     /// </summary>
-    internal class LuisClient : ILuisClient
+    internal sealed class LuisClient : ILuisClient
     {
         /// <summary>
         /// Subscription key header for LUIS requests.
@@ -44,23 +44,23 @@ namespace LanguageUnderstanding.Luis
         internal string AuthoringKey { get; }
 
         /// <inheritdoc />
-        public async Task<HttpResponseMessage> GetAsync(string uri, CancellationToken cancellationToken)
+        public async Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken)
         {
             using (var request = new HttpRequestMessage())
             {
                 request.Method = HttpMethod.Get;
-                request.RequestUri = new Uri(uri);
+                request.RequestUri = uri;
                 return await this.client.SendAsync(request, cancellationToken);
             }
         }
 
         /// <inheritdoc />
-        public async Task<HttpResponseMessage> PostAsync(string uri, string requestBody, CancellationToken cancellationToken)
+        public async Task<HttpResponseMessage> PostAsync(Uri uri, string requestBody, CancellationToken cancellationToken)
         {
             using (var request = new HttpRequestMessage())
             {
                 request.Method = HttpMethod.Post;
-                request.RequestUri = new Uri(uri);
+                request.RequestUri = uri;
 
                 if (!string.IsNullOrEmpty(requestBody))
                 {
@@ -72,7 +72,7 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <inheritdoc />
-        public async Task<HttpResponseMessage> DeleteAsync(string uri, CancellationToken cancellationToken)
+        public async Task<HttpResponseMessage> DeleteAsync(Uri uri, CancellationToken cancellationToken)
         {
             using (var request = new HttpRequestMessage())
             {

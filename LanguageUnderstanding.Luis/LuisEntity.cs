@@ -3,7 +3,6 @@
 
 namespace LanguageUnderstanding.Luis
 {
-    using System.Text.RegularExpressions;
     using Models;
     using Newtonsoft.Json;
 
@@ -66,27 +65,9 @@ namespace LanguageUnderstanding.Luis
         /// <param name="utterance">Utterance in which the entity occurs.</param>
         public static LuisEntity FromEntity(Entity entity, string utterance)
         {
-            var startCharIndex = MatchIndexToStartCharIndex(utterance, entity.MatchText, entity.MatchIndex);
+            var startCharIndex = entity.StartCharIndexInText(utterance);
             var endCharIndex = startCharIndex + entity.MatchText.Length - 1;
             return new LuisEntity(entity.EntityType, startCharIndex, endCharIndex);
-        }
-
-        /// <summary>
-        /// Converts <see cref="Entity.MatchIndex"/> used in <see cref="Entity"/> to the <see cref="StartCharIndex"/> used in <see cref="LuisEntity"/>
-        /// </summary>
-        /// <returns>Starting character index of the <paramref name="matchText"/>.</returns>
-        /// <param name="utterance">Utterance where the entity occurs.</param>
-        /// <param name="matchText">Matching text in the utterance.</param>
-        /// <param name="matchIndex">Occurrence index of the <paramref name="matchText"/>.</param>
-        private static int MatchIndexToStartCharIndex(string utterance, string matchText, int matchIndex)
-        {
-            var matches = Regex.Match(utterance, string.Format(@"\b{0}\b", matchText));
-            for (var i = 0; i < matchIndex; ++i)
-            {
-                matches = matches.NextMatch();
-            }
-
-            return matches.Index;
         }
     }
 }
