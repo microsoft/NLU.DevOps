@@ -28,8 +28,9 @@ namespace LanguageUnderstanding.CommandLine.Test
         {
             this.Log("Running tests against NLU service... ", false);
             var testUtterances = Serialization.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+            var entityTypes = Serialization.Read<List<EntityType>>(this.Options.EntityTypesPath);
             var unlabeledTests = testUtterances.Select(utterance => utterance.Text);
-            var testResults = await this.LanguageUnderstandingService.TestAsync(unlabeledTests);
+            var testResults = await this.LanguageUnderstandingService.TestAsync(unlabeledTests, entityTypes);
             this.Log("Done.");
 
             var stream = this.Options.OutputPath != null

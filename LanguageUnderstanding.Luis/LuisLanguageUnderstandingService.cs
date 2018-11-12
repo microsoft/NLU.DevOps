@@ -210,21 +210,39 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
+        public async Task<IEnumerable<LabeledUtterance>> TestAsync(
+            IEnumerable<string> utterances,
+            IEnumerable<EntityType> entityTypes,
+            CancellationToken cancellationToken)
         {
             if (utterances == null)
             {
                 throw new ArgumentNullException(nameof(utterances));
             }
 
+            if (entityTypes == null)
+            {
+                throw new ArgumentNullException(nameof(entityTypes));
+            }
+
+            if (entityTypes.Any(entityType => entityType == null))
+            {
+                throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
+            }
+
             var labeledUtterances = new List<LabeledUtterance>();
             foreach (var utterance in utterances)
             {
+                if (utterance == null)
+                {
+                    throw new ArgumentException("Utterances must not be null.", nameof(utterances));
+                }
+
                 var uri = new Uri($"{this.Host}{QueryBasePath}{this.AppId}?q={utterance}");
                 var response = await this.LuisClient.GetAsync(uri, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
-                var labeledUtterance = PredictionToLabeledUtterance(utterance, json);
+                var labeledUtterance = PredictionToLabeledUtterance(utterance, json, entityTypes);
                 labeledUtterances.Add(labeledUtterance);
             }
 
@@ -232,7 +250,10 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
+        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(
+            IEnumerable<string> speechFiles,
+            IEnumerable<EntityType> entityTypes,
+            CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
@@ -255,10 +276,15 @@ namespace LanguageUnderstanding.Luis
         /// Converts a prediction request response from Luis into a <see cref="LabeledUtterance"/>.
         /// </summary>
         /// <returns>A <see cref="LabeledUtterance"/>.</returns>
-        /// <param name="utterance">The utterance that Luis evaluated.</param>
-        /// <param name="json">The prediction request response.</param>
-        private static LabeledUtterance PredictionToLabeledUtterance(string utterance, string json)
+        /// <param name="utterance">Utterance that Luis evaluated.</param>
+        /// <param name="json">Prediction request response.</param>
+        /// <param name="entityTypes">Entity types included in the model.</param>
+        private static LabeledUtterance PredictionToLabeledUtterance(string utterance, string json, IEnumerable<EntityType> entityTypes)
         {
+            var renamedEntityTypes = entityTypes
+                .OfType<BuiltinEntityType>()
+                .ToDictionary(entityType => $"builtin.{entityType.BuiltinId}", entityType => entityType.Name);
+
             var jsonObject = JObject.Parse(json);
             var text = jsonObject.Value<string>("query");
             var intent = jsonObject.SelectToken(".topScoringIntent.intent").Value<string>();
@@ -268,6 +294,11 @@ namespace LanguageUnderstanding.Luis
             foreach (var item in array)
             {
                 var entityType = item.Value<string>("type");
+                if (renamedEntityTypes.TryGetValue(entityType, out var renamedEntityType))
+                {
+                    entityType = renamedEntityType;
+                }
+
                 string entityValue = item.Value<string>("entity");
                 int startCharIndex = item.Value<int>("startCharIndex");
                 int endCharIndex = item.Value<int>("endCharIndex");

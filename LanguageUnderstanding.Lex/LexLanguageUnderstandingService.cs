@@ -104,11 +104,16 @@ namespace LanguageUnderstanding.Lex
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, CancellationToken cancellationToken)
+        public Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
         {
             if (utterances == null)
             {
                 throw new ArgumentNullException(nameof(utterances));
+            }
+
+            if (entityTypes == null)
+            {
+                throw new ArgumentNullException(nameof(entityTypes));
             }
 
             async Task<LabeledUtterance> selector(string utterance, int index)
@@ -142,11 +147,16 @@ namespace LanguageUnderstanding.Lex
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, CancellationToken cancellationToken)
+        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
         {
             if (speechFiles == null)
             {
                 throw new ArgumentNullException(nameof(speechFiles));
+            }
+
+            if (entityTypes == null)
+            {
+                throw new ArgumentNullException(nameof(entityTypes));
             }
 
             async Task<LabeledUtterance> selector(string speechFile, int index)

@@ -57,14 +57,18 @@ namespace LanguageUnderstanding.Luis.Tests
                 Func<Task> nullUtterance = () => luis.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>());
                 Func<Task> nullEntityTypes = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), null);
                 Func<Task> nullEntityType = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null });
-                Func<Task> nullTestUtterances = () => luis.TestAsync(default(IEnumerable<string>));
-                Func<Task> nullTestUtterance = () => luis.TestAsync(null);
+                Func<Task> nullTestUtterances = () => luis.TestAsync(null, Array.Empty<EntityType>());
+                Func<Task> nullTestUtterance = () => luis.TestAsync(new string[] { null }, Array.Empty<EntityType>());
+                Func<Task> nullTestEntityTypes = () => luis.TestAsync(Array.Empty<string>(), null);
+                Func<Task> nullTestEntityType = () => luis.TestAsync(Array.Empty<string>(), new EntityType[] { null });
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
                 nullTestUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullTestUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
+                nullTestEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
+                nullTestEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
             }
         }
 
@@ -411,7 +415,47 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
             {
-                var result = await luis.TestAsync(test);
+                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
+                result.Count().Should().Be(1);
+                result.First().Text.Should().Be(test);
+                result.First().Intent.Should().Be("intent");
+                result.First().Entities.Count.Should().Be(1);
+                result.First().Entities.First().EntityType.Should().Be("type");
+                result.First().Entities.First().EntityValue.Should().Be("entity");
+                result.First().Entities.First().MatchText.Should().Be("the");
+                result.First().Entities.First().MatchIndex.Should().Be(1);
+            }
+        }
+
+        [Test]
+        public async Task TestWithBuiltinEntity()
+        {
+            var appName = string.Empty;
+            var appId = Guid.NewGuid().ToString();
+            var versionId = string.Empty;
+            var test = "the quick brown fox jumped over the lazy dog";
+            var region = "westus";
+
+            var mockClient = new MockLuisClient
+            {
+                OnRequestResponse = request =>
+                {
+                    if (request.Uri.Contains(test))
+                    {
+                        return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
+                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"builtin.test\",\"startCharIndex\":32," +
+                            "\"endCharIndex\":34}]}";
+                    }
+
+                    return null;
+                },
+            };
+
+            var entityType = new BuiltinEntityType("type", "test");
+
+            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            {
+                var result = await luis.TestAsync(new[] { test }, new[] { entityType });
                 result.Count().Should().Be(1);
                 result.First().Text.Should().Be(test);
                 result.First().Intent.Should().Be("intent");
@@ -447,7 +491,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
             {
-                Func<Task> callTestAsync = () => luis.TestAsync(test);
+                Func<Task> callTestAsync = () => luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
                 callTestAsync.Should().Throw<HttpRequestException>();
             }
         }

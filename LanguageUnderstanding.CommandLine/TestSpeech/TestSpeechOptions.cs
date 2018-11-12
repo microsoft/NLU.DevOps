@@ -11,6 +11,9 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
         public string UtterancesPath { get; set; }
 
+        [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = true)]
+        public string EntityTypesPath { get; set; }
+
         [Option('d', "directory", HelpText = "Path to recordings directory.", Required = true)]
         public string RecordingsDirectory { get; set; }
 
