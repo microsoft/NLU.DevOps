@@ -19,26 +19,13 @@ namespace LanguageUnderstanding.Luis
         /// </summary>
         /// <param name="text">Text of the utterance.</param>
         /// <param name="intent">Intent of the utterance.</param>
-        /// <param name="entityLabels">Entities referenced in the utterance.</param>
+        /// <param name="entities">Entities referenced in the utterance.</param>
         [JsonConstructor]
-        public LuisLabeledUtterance(string text, string intent, IReadOnlyList<LuisEntity> entityLabels)
+        public LuisLabeledUtterance(string text, string intent, IReadOnlyList<LuisEntity> entities)
         {
             this.Text = text;
             this.Intent = intent;
-            this.LuisEntities = entityLabels ?? Array.Empty<LuisEntity>();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LuisLabeledUtterance"/> class.
-        /// </summary>
-        /// <param name="that">A <see cref="LabeledUtterance"/>.</param>
-        public LuisLabeledUtterance(LabeledUtterance that)
-        {
-            this.Text = that.Text;
-            this.Intent = that.Intent;
-            this.LuisEntities = that.Entities
-                .Select(entity => LuisEntity.FromEntity(entity, that.Text))
-                .ToList();
+            this.LuisEntities = entities ?? Array.Empty<LuisEntity>();
         }
 
         /// <summary>
@@ -58,5 +45,23 @@ namespace LanguageUnderstanding.Luis
         /// </summary>
         [JsonProperty("entities")]
         public IReadOnlyList<LuisEntity> LuisEntities { get; }
+
+        /// <summary>
+        /// Converts a <see cref="LabeledUtterance"/> to <see cref="LuisLabeledUtterance"/>.
+        /// </summary>
+        /// <returns>A <see cref="LuisLabeledUtterance"/>.</returns>
+        /// <param name="utterance"><see cref="LabeledUtterance"/> being converted.</param>
+        /// <param name="entityTypes">Entity type configuration for the utterances.</param>
+        public static LuisLabeledUtterance FromLabeledUtterance(LabeledUtterance utterance, IEnumerable<EntityType> entityTypes)
+        {
+            var text = utterance.Text;
+
+            var entities = from entity in utterance.Entities
+                           let entityType = entityTypes.First(item => item.Name == entity.EntityType)
+                           where entityType.Kind != EntityTypeKind.Builtin
+                           select LuisEntity.FromEntity(entity, text, entityType);
+
+            return new LuisLabeledUtterance(text, utterance.Intent, entities.ToList());
+        }
     }
 }

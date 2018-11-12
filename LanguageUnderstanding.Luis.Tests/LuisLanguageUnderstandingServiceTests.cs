@@ -72,11 +72,10 @@ namespace LanguageUnderstanding.Luis.Tests
         public void LuisEntityInitializes()
         {
             var entityType = "Location";
-            var entityValue = "City";
             var startCharIndex = 2;
             var endCharIndex = 8;
-            var luisEntity = new LuisEntity(entityType, entityValue, startCharIndex, endCharIndex);
-            luisEntity.EntityName.Should().Be("Location::City");
+            var luisEntity = new LuisEntity(entityType, startCharIndex, endCharIndex);
+            luisEntity.EntityName.Should().Be("Location");
             luisEntity.StartCharIndex.Should().Be(startCharIndex);
             luisEntity.EndCharIndex.Should().Be(endCharIndex);
         }
@@ -84,54 +83,25 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public void LuisEntitySerializes()
         {
-            string expected = "{\"entity\":\"Location::City\",\"startCharIndex\":2,\"endCharIndex\":8}";
-            LuisEntity luisEntity = new LuisEntity("Location", "City", 2, 8);
-            string actual = JsonConvert.SerializeObject(luisEntity);
-            actual.Should().Be(expected);
-        }
-
-        [Test]
-        public void LuisEntityDeserializes()
-        {
-            var expected = new LuisEntity("Location", "City", 2, 8);
-            var json = "{\"entity\":\"Location::City\",\"startCharIndex\":2,\"endCharIndex\":8}";
-            var actual = JsonConvert.DeserializeObject<LuisEntity>(json);
-            this.luisEntityComparer.Equals(actual, expected).Should().BeTrue();
-        }
-
-        [Test]
-        public void LuisEntityListSerializes()
-        {
-            var expected = "[{\"entity\":\"Location::City\",\"startCharIndex\":2,\"endCharIndex\":8}]";
-            var luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("Location", "City", 2, 8),
-            };
-
-            var actual = JsonConvert.SerializeObject(luisEntities);
-            actual.Should().Be(expected);
-        }
-
-        [Test]
-        public void LuisEntityListDeserializes()
-        {
-            var expected = new List<LuisEntity>
-            {
-                new LuisEntity("Location", "City", 2, 8),
-            };
-
-            var json = "[{\"entity\":\"Location::City\",\"startCharIndex\":2,\"endCharIndex\":8}]";
-            var actual = JsonConvert.DeserializeObject<IReadOnlyList<LuisEntity>>(json);
-            actual.Should().BeEquivalentTo(expected);
+            var entityType = "Location";
+            var startCharIndex = 2;
+            var endCharIndex = 8;
+            var luisEntity = new LuisEntity(entityType, startCharIndex, endCharIndex);
+            var actualString = JsonConvert.SerializeObject(luisEntity);
+            var actual = JObject.Parse(actualString);
+            actual.Value<string>("entity").Should().Be(entityType);
+            actual.Value<int>("startCharIndex").Should().Be(2);
+            actual.Value<int>("endCharIndex").Should().Be(8);
         }
 
         [Test]
         public void EntityConvertsToLuisEntity()
         {
             var utterance = "Engineer is the job I want!";
-            var entity = new Entity("String", string.Empty, "Engineer", 0);
+            var entity = new Entity("String", null, "Engineer", 0);
             var expected = new LuisEntity("String", 0, 7);
-            var actual = LuisEntity.FromEntity(entity, utterance);
+            var entityType = new SimpleEntityType("String");
+            var actual = LuisEntity.FromEntity(entity, utterance, entityType);
             this.luisEntityComparer.Equals(actual, expected).Should().BeTrue();
         }
 
@@ -157,39 +127,26 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public void LuisLabeledUtteranceSerializes()
         {
-            var expected = "{\"text\":\"My name is Bill Gates.\",\"intent\":\"updateName\"," +
-                "\"entities\":[{\"entity\":\"Name::First\",\"startCharIndex\":11,\"endCharIndex\":" +
-                "14},{\"entity\":\"Name::Last\",\"startCharIndex\":16,\"endCharIndex\":20}]}";
             var text = "My name is Bill Gates.";
             var intent = "updateName";
             var luisEntities = new List<LuisEntity>
             {
-                new LuisEntity("Name::First", 11, 14),
-                new LuisEntity("Name::Last", 16, 20),
+                new LuisEntity("FirstName", 11, 14),
+                new LuisEntity("LastName", 16, 20),
             };
 
             var luisLabeledUtterance = new LuisLabeledUtterance(text, intent, luisEntities);
-            var actual = JsonConvert.SerializeObject(luisLabeledUtterance);
-            actual.Should().Be(expected);
-        }
-
-        [Test]
-        public void LuisLabeledUtteranceDeserializes()
-        {
-            var text = "My name is Bill Gates.";
-            var intent = "updateName";
-            var luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("Name::First", 11, 14),
-                new LuisEntity("Name::Last", 16, 20),
-            };
-
-            var expected = new LuisLabeledUtterance(text, intent, luisEntities);
-            var json = "{\"text\":\"My name is Bill Gates.\",\"intent\":\"updateName\"," +
-                "\"entityLabels\":[{\"entityName\":\"Name::First\",\"startCharIndex\":11,\"endCharIndex\":" +
-                "14},{\"entityName\":\"Name::Last\",\"startCharIndex\":16,\"endCharIndex\":20}]}";
-            var actual = JsonConvert.DeserializeObject<LuisLabeledUtterance>(json);
-            this.luisLabeledUtteranceComparer.Equals(actual, expected).Should().BeTrue();
+            var actualString = JsonConvert.SerializeObject(luisLabeledUtterance);
+            var actual = JObject.Parse(actualString);
+            actual.Value<string>("text").Should().Be(text);
+            actual.Value<string>("intent").Should().Be(intent);
+            actual["entities"].As<JArray>().Count.Should().Be(2);
+            actual.SelectToken(".entities[0].entity").Value<string>().Should().Be(luisEntities[0].EntityName);
+            actual.SelectToken(".entities[0].startCharIndex").Value<int>().Should().Be(luisEntities[0].StartCharIndex);
+            actual.SelectToken(".entities[0].endCharIndex").Value<int>().Should().Be(luisEntities[0].EndCharIndex);
+            actual.SelectToken(".entities[1].entity").Value<string>().Should().Be(luisEntities[1].EntityName);
+            actual.SelectToken(".entities[1].startCharIndex").Value<int>().Should().Be(luisEntities[1].StartCharIndex);
+            actual.SelectToken(".entities[1].endCharIndex").Value<int>().Should().Be(luisEntities[1].EndCharIndex);
         }
 
         [Test]
@@ -199,68 +156,27 @@ namespace LanguageUnderstanding.Luis.Tests
             var intent = "updateName";
             List<LuisEntity> luisEntities = new List<LuisEntity>
             {
-                new LuisEntity("Name::First", 11, 14),
-                new LuisEntity("Name::Last", 16, 20),
+                new LuisEntity("FirstName", 11, 14),
+                new LuisEntity("LastName", 16, 20),
             };
 
             var expected = new LuisLabeledUtterance(text, intent, luisEntities);
 
             var entities = new List<Entity>
             {
-                new Entity("Name::First", string.Empty, "Bill", 0),
-                new Entity("Name::Last", string.Empty, "Gates", 0),
+                new Entity("FirstName", null, "Bill", 0),
+                new Entity("LastName", null, "Gates", 0),
+            };
+
+            var entityTypes = new[]
+            {
+                new SimpleEntityType("FirstName"),
+                new SimpleEntityType("LastName"),
             };
 
             var labeledUtterance = new LabeledUtterance(text, intent, entities);
-            var actual = new LuisLabeledUtterance(labeledUtterance);
+            var actual = LuisLabeledUtterance.FromLabeledUtterance(labeledUtterance, entityTypes);
             this.luisLabeledUtteranceComparer.Equals(actual, expected).Should().BeTrue();
-        }
-
-        [Test]
-        public void LuisLabeledUtteranceListSerializes()
-        {
-            var expected = "[{\"text\":\"My name is Bill Gates.\",\"intent\":\"updateName\"," +
-                "\"entities\":[{\"entity\":\"Name::First\",\"startCharIndex\":11,\"endCharIndex\":" +
-                "14},{\"entity\":\"Name::Last\",\"startCharIndex\":16,\"endCharIndex\":20}]}]";
-
-            var text = "My name is Bill Gates.";
-            var intent = "updateName";
-            var luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("Name::First", 11, 14),
-                new LuisEntity("Name::Last", 16, 20),
-            };
-
-            var luisLabeledUtterances = new List<LuisLabeledUtterance>
-            {
-                new LuisLabeledUtterance(text, intent, luisEntities),
-            };
-
-            var actual = JsonConvert.SerializeObject(luisLabeledUtterances);
-            actual.Should().Be(expected);
-        }
-
-        [Test]
-        public void LuisLabeledUtteranceListDeserializes()
-        {
-            var text = "My name is Bill Gates.";
-            var intent = "updateName";
-            var luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("Name::First", 11, 14),
-                new LuisEntity("Name::Last", 16, 20),
-            };
-
-            var expected = new List<LuisLabeledUtterance>
-            {
-                new LuisLabeledUtterance(text, intent, luisEntities),
-            };
-
-            var json = "[{\"text\":\"My name is Bill Gates.\",\"intent\":\"updateName\"," +
-                "\"entityLabels\":[{\"entityName\":\"Name::First\",\"startCharIndex\":11,\"endCharIndex\":" +
-                "14},{\"entityName\":\"Name::Last\",\"startCharIndex\":16,\"endCharIndex\":20}]}]";
-            var actual = JsonConvert.DeserializeObject<List<LuisLabeledUtterance>>(json);
-            actual.Should().BeEquivalentTo(expected);
         }
 
         [Test]
@@ -459,7 +375,7 @@ namespace LanguageUnderstanding.Luis.Tests
             var appId = Guid.NewGuid().ToString();
             var versionId = string.Empty;
             var region = "westus";
-            var cleanupUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/{versionId}/";
+            var cleanupUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/";
             var expectedUris = new string[] { cleanupUri };
             var mockClient = new MockLuisClient();
             using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))

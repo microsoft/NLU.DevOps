@@ -10,6 +10,7 @@ namespace LanguageUnderstanding.CommandLine
     using Amazon;
     using Amazon.Runtime;
     using LanguageUnderstanding.Lex;
+    using LanguageUnderstanding.Luis;
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json.Linq;
@@ -25,6 +26,14 @@ namespace LanguageUnderstanding.CommandLine
         private const string LexSecretKeyBase64ConfigurationKey = "AWS_SECRET_KEY_BASE64";
         private const string LexRegionConfigurationKey = "AWS_REGION";
 
+        private const string LuisServiceId = "luis";
+        private const string LuisPrefixConfigurationKey = "LUIS_PREFIX";
+        private const string LuisAppNameConfigurationKey = "LUIS_APP_NAME";
+        private const string LuisAppIdConfigurationKey = "LUIS_APP_ID";
+        private const string LuisAppVersionConfigurationKey = "LUIS_APP_VERSION";
+        private const string LuisAuthoringKeyConfigurationKey = "LUIS_AUTHORING_KEY";
+        private const string LuisAuthoringRegionConfigurationKey = "LUIS_AUTHORING_REGION";
+
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
 
@@ -33,35 +42,56 @@ namespace LanguageUnderstanding.CommandLine
             IConfiguration configuration,
             JToken serviceConfiguration)
         {
-            if (service == LexServiceId)
+            switch (service)
             {
-                return CreateLex(configuration, serviceConfiguration);
+                case LexServiceId:
+                    return CreateLex(configuration, serviceConfiguration);
+                case LuisServiceId:
+                    return CreateLuis(configuration, serviceConfiguration);
+                default:
+                    throw new ArgumentException($"Invalid service type '{service}'.", nameof(service));
             }
-
-            throw new ArgumentException($"Invalid service type '{service}'.", nameof(service));
         }
 
         public static JToken GetServiceConfiguration(string service, ILanguageUnderstandingService instance)
         {
-            if (service == LexServiceId)
+            switch (service)
             {
-                return GetLexConfig((LexLanguageUnderstandingService)instance);
+                case LexServiceId:
+                    return GetLexConfig((LexLanguageUnderstandingService)instance);
+                case LuisServiceId:
+                    return GetLuisConfig((LuisLanguageUnderstandingService)instance);
+                default:
+                    throw new ArgumentException($"Invalid service type '{service}'.", nameof(service));
             }
-
-            throw new ArgumentException($"Invalid service type '{service}'.", nameof(service));
         }
 
         private static ILanguageUnderstandingService CreateLex(
             IConfiguration configuration,
             JToken serviceConfiguration)
         {
-            var userDefinedName = serviceConfiguration?[LexBotNameConfigurationKey].ToString() ?? configuration[LexBotNameConfigurationKey];
+            var userDefinedName = GetValue(serviceConfiguration, configuration, LexBotNameConfigurationKey);
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
-            var userDefinedAlias = serviceConfiguration?[LexBotAliasConfigurationKey].ToString() ?? configuration[LexBotAliasConfigurationKey];
+            var userDefinedAlias = GetValue(serviceConfiguration, configuration, LexBotAliasConfigurationKey);
             var botAlias = userDefinedAlias ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
             return new LexLanguageUnderstandingService(botName, botAlias, TemplatesPath, credentials, regionEndpoint);
+        }
+
+        private static ILanguageUnderstandingService CreateLuis(
+            IConfiguration configuration,
+            JToken serviceConfiguration)
+        {
+            var userDefinedName = GetValue(serviceConfiguration, configuration, LuisAppNameConfigurationKey);
+            var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
+            var appId = GetValue(serviceConfiguration, configuration, LuisAppIdConfigurationKey);
+            var appVersion = GetValue(serviceConfiguration, configuration, LuisAppVersionConfigurationKey);
+            var region = configuration[LuisAuthoringRegionConfigurationKey];
+            var authoringKey = configuration[LuisAuthoringKeyConfigurationKey];
+            return appId != null
+                ? new LuisLanguageUnderstandingService(appName, appId, appVersion, region, authoringKey)
+                : new LuisLanguageUnderstandingService(appName, region, authoringKey);
         }
 
         private static RegionEndpoint GetRegionEndpoint(string region)
@@ -93,6 +123,21 @@ namespace LanguageUnderstanding.CommandLine
                 { LexBotNameConfigurationKey, instance.BotName },
                 { LexBotAliasConfigurationKey, instance.BotAlias },
             };
+        }
+
+        private static JToken GetLuisConfig(LuisLanguageUnderstandingService instance)
+        {
+            return new JObject
+            {
+                { LuisAppNameConfigurationKey, instance.AppName },
+                { LuisAppIdConfigurationKey, instance.AppId },
+                { LuisAppVersionConfigurationKey, instance.AppVersion },
+            };
+        }
+
+        private static string GetValue(JToken serviceConfiguration, IConfiguration configuration, string configurationKey)
+        {
+            return serviceConfiguration?[configurationKey].ToString() ?? configuration[configurationKey];
         }
 
         private static string GetRandomName(string prefix)

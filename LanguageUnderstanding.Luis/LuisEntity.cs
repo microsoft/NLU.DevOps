@@ -26,20 +26,6 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LuisEntity"/> class.
-        /// </summary>
-        /// <param name="entityType">Entity type name.</param>
-        /// <param name="entityValue">Entity value, generally a canonical form of the entity.</param>
-        /// <param name="startCharIndex">Starting index of matching token in the utterance.</param>
-        /// <param name="endCharIndex">Ending index of matching token in the utterance.</param>
-        public LuisEntity(string entityType, string entityValue, int startCharIndex, int endCharIndex)
-        {
-            this.EntityName = entityType + "::" + entityValue;
-            this.StartCharIndex = startCharIndex;
-            this.EndCharIndex = endCharIndex;
-        }
-
-        /// <summary>
         /// Gets the entity label specifically needed for LUIS.
         /// </summary>
         [JsonProperty("entity")]
@@ -63,11 +49,18 @@ namespace LanguageUnderstanding.Luis
         /// <returns>A <see cref="LuisEntity"/>.</returns>
         /// <param name="entity"><see cref="Entity"/> being converted.</param>
         /// <param name="utterance">Utterance in which the entity occurs.</param>
-        public static LuisEntity FromEntity(Entity entity, string utterance)
+        /// <param name="entityType">Entity type.</param>
+        public static LuisEntity FromEntity(Entity entity, string utterance, EntityType entityType)
         {
             var startCharIndex = entity.StartCharIndexInText(utterance);
             var endCharIndex = startCharIndex + entity.MatchText.Length - 1;
-            return new LuisEntity(entity.EntityType, startCharIndex, endCharIndex);
+
+            // Builtin entities do not use a custom label
+            var entityName = entityType is BuiltinEntityType builtinEntityType
+                ? builtinEntityType.BuiltinId
+                : entity.EntityType;
+
+            return new LuisEntity(entityName, startCharIndex, endCharIndex);
         }
     }
 }
