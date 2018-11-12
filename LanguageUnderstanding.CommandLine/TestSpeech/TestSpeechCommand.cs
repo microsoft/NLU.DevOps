@@ -11,7 +11,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
     using Json;
     using LanguageUnderstanding.Models;
 
-    internal class TestSpeechCommand : ConfigCommand<TestSpeechOptions>
+    internal class TestSpeechCommand : BaseCommand<TestSpeechOptions>
     {
         public TestSpeechCommand(TestSpeechOptions options)
             : base(options)

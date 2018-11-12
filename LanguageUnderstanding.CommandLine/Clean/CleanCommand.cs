@@ -5,7 +5,7 @@ namespace LanguageUnderstanding.CommandLine.Clean
 {
     using Models;
 
-    internal class CleanCommand : ConfigCommand<CleanOptions>
+    internal class CleanCommand : BaseCommand<CleanOptions>
     {
         public CleanCommand(CleanOptions options)
             : base(options)

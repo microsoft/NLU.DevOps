@@ -37,17 +37,14 @@ namespace LanguageUnderstanding.CommandLine
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
 
-        public static ILanguageUnderstandingService Create(
-            string service,
-            IConfiguration configuration,
-            JToken serviceConfiguration)
+        public static ILanguageUnderstandingService Create(string service, IConfiguration configuration)
         {
             switch (service)
             {
                 case LexServiceId:
-                    return CreateLex(configuration, serviceConfiguration);
+                    return CreateLex(configuration);
                 case LuisServiceId:
-                    return CreateLuis(configuration, serviceConfiguration);
+                    return CreateLuis(configuration);
                 default:
                     throw new ArgumentException($"Invalid service type '{service}'.", nameof(service));
             }
@@ -66,27 +63,23 @@ namespace LanguageUnderstanding.CommandLine
             }
         }
 
-        private static ILanguageUnderstandingService CreateLex(
-            IConfiguration configuration,
-            JToken serviceConfiguration)
+        private static ILanguageUnderstandingService CreateLex(IConfiguration configuration)
         {
-            var userDefinedName = GetValue(serviceConfiguration, configuration, LexBotNameConfigurationKey);
+            var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
-            var userDefinedAlias = GetValue(serviceConfiguration, configuration, LexBotAliasConfigurationKey);
+            var userDefinedAlias = configuration[LexBotAliasConfigurationKey];
             var botAlias = userDefinedAlias ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
             return new LexLanguageUnderstandingService(botName, botAlias, TemplatesPath, credentials, regionEndpoint);
         }
 
-        private static ILanguageUnderstandingService CreateLuis(
-            IConfiguration configuration,
-            JToken serviceConfiguration)
+        private static ILanguageUnderstandingService CreateLuis(IConfiguration configuration)
         {
-            var userDefinedName = GetValue(serviceConfiguration, configuration, LuisAppNameConfigurationKey);
+            var userDefinedName = configuration[LuisAppNameConfigurationKey];
             var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
-            var appId = GetValue(serviceConfiguration, configuration, LuisAppIdConfigurationKey);
-            var appVersion = GetValue(serviceConfiguration, configuration, LuisAppVersionConfigurationKey);
+            var appId = configuration[LuisAppIdConfigurationKey];
+            var appVersion = configuration[LuisAppVersionConfigurationKey];
             var region = configuration[LuisAuthoringRegionConfigurationKey];
             var authoringKey = configuration[LuisAuthoringKeyConfigurationKey];
             return appId != null
@@ -133,11 +126,6 @@ namespace LanguageUnderstanding.CommandLine
                 { LuisAppIdConfigurationKey, instance.AppId },
                 { LuisAppVersionConfigurationKey, instance.AppVersion },
             };
-        }
-
-        private static string GetValue(JToken serviceConfiguration, IConfiguration configuration, string configurationKey)
-        {
-            return serviceConfiguration?[configurationKey].ToString() ?? configuration[configurationKey];
         }
 
         private static string GetRandomName(string prefix)

@@ -11,7 +11,7 @@ namespace LanguageUnderstanding.CommandLine.Test
     using Json;
     using LanguageUnderstanding.Models;
 
-    internal class TestCommand : ConfigCommand<TestOptions>
+    internal class TestCommand : BaseCommand<TestOptions>
     {
         public TestCommand(TestOptions options)
             : base(options)

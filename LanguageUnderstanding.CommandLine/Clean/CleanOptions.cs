@@ -6,7 +6,7 @@ namespace LanguageUnderstanding.CommandLine.Clean
     using global::CommandLine;
 
     [Verb("clean", HelpText = "Cleans up the NLU service.")]
-    internal class CleanOptions : ConfigOptions
+    internal class CleanOptions : BaseOptions
     {
     }
 }

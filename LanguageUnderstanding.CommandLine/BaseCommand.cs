@@ -7,7 +7,6 @@ namespace LanguageUnderstanding.CommandLine
     using System.IO;
     using Microsoft.Extensions.Configuration;
     using Models;
-    using Newtonsoft.Json.Linq;
 
     internal abstract class BaseCommand<TOptions> : ICommand
         where TOptions : BaseOptions
@@ -25,9 +24,7 @@ namespace LanguageUnderstanding.CommandLine
 
         protected ILanguageUnderstandingService LanguageUnderstandingService => this.LazyLanguageUnderstandingService.Value;
 
-        protected virtual JToken ServiceConfiguration { get; }
-
-        private Lazy<IConfiguration> LazyConfiguration => new Lazy<IConfiguration>(GetConfiguration);
+        private Lazy<IConfiguration> LazyConfiguration => new Lazy<IConfiguration>(this.CreateConfiguration);
 
         private Lazy<ILanguageUnderstandingService> LazyLanguageUnderstandingService { get; }
 
@@ -47,16 +44,16 @@ namespace LanguageUnderstanding.CommandLine
             {
                 if (newline)
                 {
-                    Console.Error.WriteLine(message);
+                    Console.WriteLine(message);
                 }
                 else
                 {
-                    Console.Error.Write(message);
+                    Console.Write(message);
                 }
             }
         }
 
-        private static IConfiguration GetConfiguration()
+        private IConfiguration CreateConfiguration()
         {
             var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory);
@@ -66,6 +63,11 @@ namespace LanguageUnderstanding.CommandLine
                 configurationBuilder.AddJsonFile("appsettings.local.json");
             }
 
+            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json")))
+            {
+                configurationBuilder.AddJsonFile($"appsettings.{this.Options.Service}.json");
+            }
+
             return configurationBuilder
                 .AddEnvironmentVariables()
                 .Build();
@@ -73,10 +75,7 @@ namespace LanguageUnderstanding.CommandLine
 
         private ILanguageUnderstandingService CreateLanguageUnderstandingService()
         {
-            return LanguageUnderstandingServiceFactory.Create(
-                this.Options.Service,
-                this.Configuration,
-                this.ServiceConfiguration);
+            return LanguageUnderstandingServiceFactory.Create(this.Options.Service, this.Configuration);
         }
     }
 }

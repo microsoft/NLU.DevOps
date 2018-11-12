@@ -6,7 +6,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
     using global::CommandLine;
 
     [Verb("test-speech", HelpText = "Runs test cases against the NLU service.")]
-    internal class TestSpeechOptions : ConfigOptions
+    internal class TestSpeechOptions : BaseOptions
     {
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
         public string UtterancesPath { get; set; }

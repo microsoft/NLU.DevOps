@@ -14,7 +14,7 @@ namespace LanguageUnderstanding.CommandLine.Train
         [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = true)]
         public string EntityTypesPath { get; set; }
 
-        [Option('o', "write-config", HelpText = "Flag to write configuration to standard output.", Required = false)]
+        [Option('o', "overwrite-config", HelpText = "Flag to (over)write NLU service configuration.", Required = false)]
         public bool WriteConfig { get; set; }
     }
 }
