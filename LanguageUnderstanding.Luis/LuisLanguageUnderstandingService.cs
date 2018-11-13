@@ -207,6 +207,9 @@ namespace LanguageUnderstanding.Luis
             var uri = new Uri($"{this.Host}{this.AppVersionPath}train");
             var trainResponse = await this.LuisClient.PostAsync(uri, null, cancellationToken);
             trainResponse.EnsureSuccessStatusCode();
+
+            // Publish
+            await this.PublishAsync(cancellationToken);
         }
 
         /// <inheritdoc />
@@ -320,6 +323,23 @@ namespace LanguageUnderstanding.Luis
             }
 
             return new LabeledUtterance(text, intent, entities);
+        }
+
+        /// <summary>
+        /// Publish Luis model based on version number.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Void task</returns>
+        private async Task PublishAsync(CancellationToken cancellationToken)
+        {
+            // Publish
+            var body = new JObject();
+            body.Add("versionId", this.AppVersion);
+            body.Add("isStaging", false);
+            body.Add("region", this.Region);
+            var uri = new Uri($"{this.Host}{this.AppIdPath}publish");
+            var publishResponse = await this.LuisClient.PostAsync(uri, body.ToString(), cancellationToken);
+            publishResponse.EnsureSuccessStatusCode();
         }
 
         /// <summary>
