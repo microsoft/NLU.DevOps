@@ -42,6 +42,7 @@ namespace LanguageUnderstanding.Luis.Tests
             Action nullAppId = () => new LuisLanguageUnderstandingService(string.Empty, null, string.Empty, string.Empty, string.Empty);
             Action nullAppVersion = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, null, string.Empty, string.Empty);
             Action nullRegion = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, null, string.Empty);
+            Action nullRegionClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, null, new MockLuisClient());
             Action nullAuthoringKey = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, string.Empty, default(string));
             Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, string.Empty, default(ILuisClient));
             nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
@@ -94,8 +95,8 @@ namespace LanguageUnderstanding.Luis.Tests
             var actualString = JsonConvert.SerializeObject(luisEntity);
             var actual = JObject.Parse(actualString);
             actual.Value<string>("entity").Should().Be(entityType);
-            actual.Value<int>("startCharIndex").Should().Be(2);
-            actual.Value<int>("endCharIndex").Should().Be(8);
+            actual.Value<int>("startIndex").Should().Be(2);
+            actual.Value<int>("endIndex").Should().Be(8);
         }
 
         [Test]
@@ -146,11 +147,11 @@ namespace LanguageUnderstanding.Luis.Tests
             actual.Value<string>("intent").Should().Be(intent);
             actual["entities"].As<JArray>().Count.Should().Be(2);
             actual.SelectToken(".entities[0].entity").Value<string>().Should().Be(luisEntities[0].EntityName);
-            actual.SelectToken(".entities[0].startCharIndex").Value<int>().Should().Be(luisEntities[0].StartCharIndex);
-            actual.SelectToken(".entities[0].endCharIndex").Value<int>().Should().Be(luisEntities[0].EndCharIndex);
+            actual.SelectToken(".entities[0].startIndex").Value<int>().Should().Be(luisEntities[0].StartCharIndex);
+            actual.SelectToken(".entities[0].endIndex").Value<int>().Should().Be(luisEntities[0].EndCharIndex);
             actual.SelectToken(".entities[1].entity").Value<string>().Should().Be(luisEntities[1].EntityName);
-            actual.SelectToken(".entities[1].startCharIndex").Value<int>().Should().Be(luisEntities[1].StartCharIndex);
-            actual.SelectToken(".entities[1].endCharIndex").Value<int>().Should().Be(luisEntities[1].EndCharIndex);
+            actual.SelectToken(".entities[1].startIndex").Value<int>().Should().Be(luisEntities[1].StartCharIndex);
+            actual.SelectToken(".entities[1].endIndex").Value<int>().Should().Be(luisEntities[1].EndCharIndex);
         }
 
         [Test]
@@ -227,7 +228,7 @@ namespace LanguageUnderstanding.Luis.Tests
             var failUri = default(string);
             var mockClient = new MockLuisClient
             {
-                OnRequestResponse = request =>
+                OnHttpResponse = request =>
                 {
                     if (request.Uri == failUri)
                     {
@@ -354,15 +355,15 @@ namespace LanguageUnderstanding.Luis.Tests
                 bookUtterance.Should().NotBeNull();
                 bookUtterance.Value<string>("text").Should().Be(utterances[0].Text);
                 bookUtterance.SelectToken(".entities[0].entity").Value<string>().Should().Be(utterances[0].Entities[0].EntityType);
-                bookUtterance.SelectToken(".entities[0].startCharIndex").Value<int>().Should().Be(5);
-                bookUtterance.SelectToken(".entities[0].endCharIndex").Value<int>().Should().Be(6);
+                bookUtterance.SelectToken(".entities[0].startIndex").Value<int>().Should().Be(5);
+                bookUtterance.SelectToken(".entities[0].endIndex").Value<int>().Should().Be(6);
 
                 var cancelUtterance = importUtterances.FirstOrDefault(token => token.Value<string>("intent") == utterances[1].Intent);
                 cancelUtterance.Should().NotBeNull();
                 cancelUtterance.Value<string>("text").Should().Be(utterances[1].Text);
                 cancelUtterance.SelectToken(".entities[0].entity").Value<string>().Should().Be(utterances[1].Entities[0].EntityType);
-                cancelUtterance.SelectToken(".entities[0].startCharIndex").Value<int>().Should().Be(10);
-                cancelUtterance.SelectToken(".entities[0].endCharIndex").Value<int>().Should().Be(15);
+                cancelUtterance.SelectToken(".entities[0].startIndex").Value<int>().Should().Be(10);
+                cancelUtterance.SelectToken(".entities[0].endIndex").Value<int>().Should().Be(15);
 
                 // Expect 2 entities
                 var entities = jsonBody.SelectToken(".entities").As<JArray>();
@@ -400,13 +401,13 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var mockClient = new MockLuisClient
             {
-                OnRequestResponse = request =>
+                OnHttpResponse = request =>
                 {
                     if (request.Uri.Contains(test))
                     {
                         return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startCharIndex\":32," +
-                            "\"endCharIndex\":34}]}";
+                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startIndex\":32," +
+                            "\"endIndex\":34}]}";
                     }
 
                     return null;
@@ -428,6 +429,40 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
+        public async Task TestSpeech()
+        {
+            var appName = string.Empty;
+            var appId = Guid.NewGuid().ToString();
+            var versionId = string.Empty;
+            var test = "the quick brown fox jumped over the lazy dog entity";
+            var region = "westus";
+            var jsonString = "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
+                        "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startIndex\":45," +
+                        "\"endIndex\":50}]}";
+
+            var mockClient = new MockLuisClient
+            {
+                OnRecognizeSpeechResponse = (speechFile) =>
+                {
+                    return jsonString;
+                }
+            };
+
+            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            {
+                var result = await luis.TestSpeechAsync(new string[] { "somefile" }, new List<EntityType>(), CancellationToken.None);
+                result.Count().Should().Be(1);
+                result.First().Text.Should().Be(test);
+                result.First().Intent.Should().Be("intent");
+                result.First().Entities.Count.Should().Be(1);
+                result.First().Entities.First().EntityType.Should().Be("type");
+
+                result.First().Entities.First().MatchText.Should().Be("entity");
+                result.First().Entities.First().MatchIndex.Should().Be(0);
+            }
+        }
+
+        [Test]
         public async Task TestWithBuiltinEntity()
         {
             var appName = string.Empty;
@@ -438,13 +473,13 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var mockClient = new MockLuisClient
             {
-                OnRequestResponse = request =>
+                OnHttpResponse = request =>
                 {
                     if (request.Uri.Contains(test))
                     {
                         return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"builtin.test\",\"startCharIndex\":32," +
-                            "\"endCharIndex\":34}]}";
+                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"builtin.test\",\"startIndex\":32," +
+                            "\"endIndex\":34}]}";
                     }
 
                     return null;
@@ -478,7 +513,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var mockClient = new MockLuisClient
             {
-                OnRequestResponse = request =>
+                OnHttpResponse = request =>
                 {
                     if (request.Uri.Contains(test))
                     {
@@ -505,7 +540,7 @@ namespace LanguageUnderstanding.Luis.Tests
         private sealed class MockLuisClient : ILuisClient
         {
             /// <summary>
-            /// Gets a string that can be returned in <see cref="OnRequestResponse"/> to return a failure.
+            /// Gets a string that can be returned in <see cref="OnHttpResponse"/> to return a failure.
             /// </summary>
             public static string FailString { get; } = Guid.NewGuid().ToString();
 
@@ -522,7 +557,12 @@ namespace LanguageUnderstanding.Luis.Tests
             /// <summary>
             /// Gets or sets callback when a request is made against the LUIS client.
             /// </summary>
-            public Func<LuisRequest, string> OnRequestResponse { get; set; }
+            public Func<LuisRequest, string> OnHttpResponse { get; set; }
+
+            /// <summary>
+            /// Gets or sets callback when a recognizeSpeech request is made against the LUIS client.
+            /// </summary>
+            public Func<string, string> OnRecognizeSpeechResponse { get; set; }
 
             /// <summary>
             /// Gets a collection of requests made against the LUIS client.
@@ -537,6 +577,12 @@ namespace LanguageUnderstanding.Luis.Tests
                     Method = HttpMethod.Get.Method,
                     Uri = uri.OriginalString,
                 });
+            }
+
+            /// <inheritdoc />
+            public Task<string> RecognizeSpeechAsync(string appId, string speechFile)
+            {
+                return Task.FromResult(this.OnRecognizeSpeechResponse.Invoke(speechFile));
             }
 
             /// <inheritdoc />
@@ -574,7 +620,7 @@ namespace LanguageUnderstanding.Luis.Tests
             {
                 this.RequestsInternal.Add(request);
                 this.OnRequest?.Invoke(request);
-                var response = this.OnRequestResponse?.Invoke(request);
+                var response = this.OnHttpResponse?.Invoke(request);
                 var statusCode = response != FailString
                     ? HttpStatusCode.OK
                     : HttpStatusCode.InternalServerError;

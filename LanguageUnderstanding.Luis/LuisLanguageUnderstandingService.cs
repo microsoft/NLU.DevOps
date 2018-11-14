@@ -21,6 +21,9 @@ namespace LanguageUnderstanding.Luis
     /// </summary>
     public sealed class LuisLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
     {
+        /// <summary>Maximum number of tasks that are running simultaneously. </summary>
+        private const int DegreeOfParallelism = 3;
+
         /// <summary> The protocol used in LUIS http requests. </summary>
         private const string Protocol = "https://";
 
@@ -40,7 +43,7 @@ namespace LanguageUnderstanding.Luis
         /// <param name="region">LUIS region.</param>
         /// <param name="authoringKey">LUIS authoring key.</param>
         public LuisLanguageUnderstandingService(string appName, string region, string authoringKey)
-            : this(appName, region, new LuisClient(authoringKey != null ? authoringKey : throw new ArgumentNullException(nameof(authoringKey))))
+            : this(appName, region, CreateDefaultLuisClient(region, authoringKey))
         {
         }
 
@@ -66,7 +69,7 @@ namespace LanguageUnderstanding.Luis
         /// <param name="region">LUIS region.</param>
         /// <param name="authoringKey">LUIS authoring key.</param>
         public LuisLanguageUnderstandingService(string appName, string appId, string appVersion, string region, string authoringKey)
-            : this(appName, appId, appVersion, region, new LuisClient(authoringKey != null ? authoringKey : throw new ArgumentNullException(nameof(authoringKey))))
+            : this(appName, appId, appVersion, region, CreateDefaultLuisClient(region, authoringKey))
         {
         }
 
@@ -245,7 +248,7 @@ namespace LanguageUnderstanding.Luis
                 var response = await this.LuisClient.GetAsync(uri, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
-                var labeledUtterance = PredictionToLabeledUtterance(utterance, json, entityTypes);
+                var labeledUtterance = PredictionToLabeledUtterance(json, entityTypes);
                 labeledUtterances.Add(labeledUtterance);
             }
 
@@ -258,7 +261,23 @@ namespace LanguageUnderstanding.Luis
             IEnumerable<EntityType> entityTypes,
             CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            if (speechFiles == null)
+            {
+                throw new ArgumentNullException(nameof(speechFiles));
+            }
+
+            async Task<LabeledUtterance> selector(string speechFile, int index)
+            {
+                if (speechFile == null)
+                {
+                    throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
+                }
+
+                var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile);
+                return PredictionToLabeledUtterance(jsonResult, entityTypes);
+            }
+
+            return SelectAsync(speechFiles, selector);
         }
 
         /// <inheritdoc />
@@ -279,10 +298,9 @@ namespace LanguageUnderstanding.Luis
         /// Converts a prediction request response from Luis into a <see cref="LabeledUtterance"/>.
         /// </summary>
         /// <returns>A <see cref="LabeledUtterance"/>.</returns>
-        /// <param name="utterance">Utterance that Luis evaluated.</param>
         /// <param name="json">Prediction request response.</param>
         /// <param name="entityTypes">Entity types included in the model.</param>
-        private static LabeledUtterance PredictionToLabeledUtterance(string utterance, string json, IEnumerable<EntityType> entityTypes)
+        private static LabeledUtterance PredictionToLabeledUtterance(string json, IEnumerable<EntityType> entityTypes)
         {
             var renamedEntityTypes = entityTypes
                 .OfType<BuiltinEntityType>()
@@ -303,11 +321,11 @@ namespace LanguageUnderstanding.Luis
                 }
 
                 string entityValue = item.Value<string>("entity");
-                int startCharIndex = item.Value<int>("startCharIndex");
-                int endCharIndex = item.Value<int>("endCharIndex");
+                int startCharIndex = item.Value<int>("startIndex");
+                int endCharIndex = item.Value<int>("endIndex");
 
                 var matchText = text.Substring(startCharIndex, endCharIndex - startCharIndex + 1);
-                var matches = Regex.Matches(utterance, matchText);
+                var matches = Regex.Matches(text, matchText);
                 int matchIndex = -1;
                 for (var i = 0; i < matches.Count; ++i)
                 {
@@ -323,6 +341,62 @@ namespace LanguageUnderstanding.Luis
             }
 
             return new LabeledUtterance(text, intent, entities);
+        }
+
+        /// <summary>
+        /// Async Select implementation
+        /// </summary>
+        /// <typeparam name="T">type of items</typeparam>
+        /// <typeparam name="TResult">type of mapped item</typeparam>
+        /// <param name="items">List of items</param>
+        /// <param name="selector">Function that accepts item and index of an item in the list</param>
+        /// <returns>results</returns>
+        private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, int, Task<TResult>> selector)
+        {
+            var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
+            var results = new TResult[items.Count()];
+            var tasks = new List<Task<Tuple<int, TResult>>>(DegreeOfParallelism);
+
+            async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
+            {
+                var result = await selector(item, i);
+                return Tuple.Create(i, result);
+            }
+
+            foreach (var indexedItem in indexedItems)
+            {
+                if (tasks.Count == DegreeOfParallelism)
+                {
+                    var task = await Task.WhenAny(tasks);
+                    tasks.Remove(task);
+                    var result = await task;
+                    results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
+                }
+
+                tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
+            }
+
+            await Task.WhenAll(tasks);
+            foreach (var task in tasks)
+            {
+                var result = await task;
+                results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Creates the default LUIS client.
+        /// </summary>
+        /// <returns>The default LUIS client.</returns>
+        /// <param name="region">LUIS region.</param>
+        /// <param name="authoringKey">LUIS authoring key.</param>
+        private static ILuisClient CreateDefaultLuisClient(string region, string authoringKey)
+        {
+            return new LuisClient(
+                authoringKey ?? throw new ArgumentNullException(nameof(authoringKey)),
+                region ?? throw new ArgumentNullException(nameof(region)));
         }
 
         /// <summary>

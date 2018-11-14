@@ -37,5 +37,13 @@ namespace LanguageUnderstanding.Luis
         /// <param name="uri">The URI.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<HttpResponseMessage> DeleteAsync(Uri uri, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Performs speech recognition on LUIS using the given audio file.
+        /// </summary>
+        /// <param name="appId">LUIS app ID.</param>
+        /// <param name="speechFile">Path to file.</param>
+        /// <returns>JSON string result from LUIS recognition.</returns>
+        Task<string> RecognizeSpeechAsync(string appId, string speechFile);
     }
 }
