@@ -3,6 +3,9 @@
 
 namespace LanguageUnderstanding.CommandLine.Clean
 {
+    using System;
+    using System.IO;
+    using System.Threading.Tasks;
     using Models;
 
     internal class CleanCommand : BaseCommand<CleanOptions>
@@ -14,10 +17,21 @@ namespace LanguageUnderstanding.CommandLine.Clean
 
         public override int Main()
         {
-            this.Log("Cleaning NLU service... ", false);
-            this.LanguageUnderstandingService.CleanupAsync().Wait();
-            this.Log("Done.");
+            this.RunAsync().Wait();
             return 0;
+        }
+
+        private async Task RunAsync()
+        {
+            this.Log("Cleaning NLU service... ", false);
+            await this.LanguageUnderstandingService.CleanupAsync();
+            this.Log("Done.");
+
+            if (this.Options.DeleteConfig)
+            {
+                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
+                File.Delete(configPath);
+            }
         }
     }
 }

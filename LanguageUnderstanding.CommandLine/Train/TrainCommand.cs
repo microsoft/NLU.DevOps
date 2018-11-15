@@ -25,20 +25,25 @@ namespace LanguageUnderstanding.CommandLine.Train
 
         private async Task RunAsync()
         {
-            this.Log("Training NLU service... ", false);
-            var trainingUtterances = Serialization.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-            var entityTypes = Serialization.Read<List<EntityType>>(this.Options.EntityTypesPath);
-            await this.LanguageUnderstandingService.TrainAsync(trainingUtterances, entityTypes);
-            this.Log("Done.");
-
-            if (this.Options.WriteConfig)
+            try
             {
-                var serviceConfiguration = LanguageUnderstandingServiceFactory.GetServiceConfiguration(
-                    this.Options.Service,
-                    this.LanguageUnderstandingService);
+                this.Log("Training NLU service... ", false);
+                var trainingUtterances = Serialization.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+                var entityTypes = Serialization.Read<List<EntityType>>(this.Options.EntityTypesPath);
+                await this.LanguageUnderstandingService.TrainAsync(trainingUtterances, entityTypes);
+                this.Log("Done.");
+            }
+            finally
+            {
+                if (this.Options.WriteConfig)
+                {
+                    var serviceConfiguration = LanguageUnderstandingServiceFactory.GetServiceConfiguration(
+                        this.Options.Service,
+                        this.LanguageUnderstandingService);
 
-                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
-                await File.WriteAllTextAsync(configPath, serviceConfiguration.ToString());
+                    var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
+                    await File.WriteAllTextAsync(configPath, serviceConfiguration.ToString());
+                }
             }
         }
     }
