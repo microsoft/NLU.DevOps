@@ -7,6 +7,7 @@ namespace LanguageUnderstanding.Luis
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Text.RegularExpressions;
     using System.Threading;
@@ -35,6 +36,9 @@ namespace LanguageUnderstanding.Luis
 
         /// <summary> Base path for LUIS queries. </summary>
         private const string QueryBasePath = "/luis/v2.0/apps/";
+
+        /// <summary> The delay to use to throttle LUIS queries. </summary>
+        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
@@ -245,11 +249,21 @@ namespace LanguageUnderstanding.Luis
                 }
 
                 var uri = new Uri($"{this.Host}{QueryBasePath}{this.AppId}?q={utterance}");
-                var response = await this.LuisClient.GetAsync(uri, cancellationToken);
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync();
-                var labeledUtterance = PredictionToLabeledUtterance(json, entityTypes);
-                labeledUtterances.Add(labeledUtterance);
+                while (true)
+                {
+                    var response = await this.LuisClient.GetAsync(uri, cancellationToken);
+                    if (response.StatusCode == (HttpStatusCode)429)
+                    {
+                        await Task.Delay(ThrottleQueryDelay, cancellationToken);
+                        continue;
+                    }
+
+                    response.EnsureSuccessStatusCode();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var labeledUtterance = PredictionToLabeledUtterance(json, entityTypes);
+                    labeledUtterances.Add(labeledUtterance);
+                    break;
+                }
             }
 
             return labeledUtterances;
