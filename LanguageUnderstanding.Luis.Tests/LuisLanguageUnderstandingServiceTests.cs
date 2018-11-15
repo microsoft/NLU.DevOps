@@ -33,26 +33,14 @@ namespace LanguageUnderstanding.Luis.Tests
         /// </summary>
         private readonly LuisLabeledUtteranceComparer luisLabeledUtteranceComparer = new LuisLabeledUtteranceComparer();
 
-        /* LuisEntity Tets. */
-
         [Test]
         public void ArgumentNullChecks()
         {
-            Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, string.Empty, string.Empty);
-            Action nullAppId = () => new LuisLanguageUnderstandingService(string.Empty, null, string.Empty, string.Empty, string.Empty);
-            Action nullAppVersion = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, null, string.Empty, string.Empty);
-            Action nullRegion = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, null, string.Empty);
-            Action nullRegionClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, null, new MockLuisClient());
-            Action nullAuthoringKey = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, string.Empty, default(string));
-            Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, string.Empty, default(ILuisClient));
-            nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
-            nullAppId.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appId");
-            nullAppVersion.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appVersion");
-            nullRegion.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("region");
-            nullAuthoringKey.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("authoringKey");
+            Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, false, string.Empty, string.Empty, new MockLuisClient());
+            Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, false, string.Empty, string.Empty, default(ILuisClient));
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
-            using (var luis = new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty))
+            using (var luis = GetTestLuisBuilder().Build())
             {
                 Func<Task> nullUtterances = () => luis.TrainAsync(null, Array.Empty<EntityType>());
                 Func<Task> nullUtterance = () => luis.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>());
@@ -187,14 +175,15 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public async Task TrainEmptyModel()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
-            var region = "westus";
-            var importUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/import?versionId={versionId}";
-            var trainUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/{versionId}/train";
             var mockClient = new MockLuisClient();
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.IsStaging = true;
+            builder.AppVersion = Guid.NewGuid().ToString();
+            builder.LuisClient = mockClient;
+            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
+            var trainUri = $"{GetVersionUriBase(builder)}/train";
+            var publishUri = $"{GetAuthoringUriBase(builder)}/publish";
+            using (var luis = builder.Build())
             {
                 var utterances = Enumerable.Empty<LabeledUtterance>();
                 var entityTypes = Enumerable.Empty<EntityType>();
@@ -203,28 +192,32 @@ namespace LanguageUnderstanding.Luis.Tests
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == importUri);
                 importRequest.Should().NotBeNull();
-                var jsonBody = JObject.Parse(importRequest.Body);
+                var importBody = JObject.Parse(importRequest.Body);
 
                 // Expects 3 intents
-                var intents = jsonBody.SelectToken(".intents").As<JArray>();
+                var intents = importBody.SelectToken(".intents").As<JArray>();
                 intents.Count.Should().Be(1);
                 intents.FirstOrDefault(token => token.Value<string>("name") == "None").Should().NotBeNull();
 
                 // Assert train request
                 var trainRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == trainUri);
                 trainRequest.Should().NotBeNull();
+
+                // Assert publish request
+                var publishRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == publishUri);
+                publishRequest.Should().NotBeNull();
+                var publishBody = JObject.Parse(publishRequest.Body);
+
+                // Expects publish settings:
+                publishBody["isStaging"].Value<bool>().Should().Be(builder.IsStaging);
+                publishBody["versionId"].Value<string>().Should().Be(builder.AppVersion);
+                publishBody["region"].Value<string>().Should().Be(builder.EndpointRegion);
             }
         }
 
         [Test]
         public void TrainFailuresThrowException()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
-            var region = "westus";
-            var importUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/import?versionId={versionId}";
-            var trainUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/{versionId}/train";
             var failUri = default(string);
             var mockClient = new MockLuisClient
             {
@@ -239,7 +232,13 @@ namespace LanguageUnderstanding.Luis.Tests
                 },
             };
 
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
+            var trainUri = $"{GetVersionUriBase(builder)}/train";
+            var publishUri = $"{GetAuthoringUriBase(builder)}/publish";
+
+            using (var luis = builder.Build())
             {
                 var utterances = Enumerable.Empty<LabeledUtterance>();
                 var entityTypes = Enumerable.Empty<EntityType>();
@@ -251,6 +250,9 @@ namespace LanguageUnderstanding.Luis.Tests
                 failUri = trainUri;
                 callTrainAsync.Should().Throw<HttpRequestException>();
 
+                failUri = publishUri;
+                callTrainAsync.Should().Throw<HttpRequestException>();
+
                 failUri = null;
                 callTrainAsync.Should().NotThrow<HttpRequestException>();
             }
@@ -259,13 +261,11 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public async Task TrainModelWithUtterances()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
-            var region = "westus";
-            var importUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/import?versionId={versionId}";
             var mockClient = new MockLuisClient();
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
+            using (var luis = builder.Build())
             {
                 var utterances = new[]
                 {
@@ -307,13 +307,11 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public async Task TrainModelWithUtterancesAndSimpleEntities()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
-            var region = "westus";
-            var importUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/versions/import?versionId={versionId}";
             var mockClient = new MockLuisClient();
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
+            using (var luis = builder.Build())
             {
                 var utterances = new[]
                 {
@@ -376,28 +374,23 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public async Task CleanupModel()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
-            var region = "westus";
-            var cleanupUri = $"https://{region}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{appId}/";
-            var expectedUris = new string[] { cleanupUri };
             var mockClient = new MockLuisClient();
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            var cleanupUri = $"{GetAuthoringUriBase(builder)}/";
+            using (var luis = builder.Build())
             {
                 await luis.CleanupAsync();
-                mockClient.Requests.FirstOrDefault(request => request.Uri == cleanupUri).Should().NotBeNull();
+                var cleanupRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == cleanupUri);
+                cleanupRequest.Should().NotBeNull();
+                cleanupRequest.Method.Should().Be(HttpMethod.Delete.Method);
             }
         }
 
         [Test]
         public async Task TestModel()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
             var test = "the quick brown fox jumped over the lazy dog";
-            var region = "westus";
 
             var mockClient = new MockLuisClient
             {
@@ -414,7 +407,10 @@ namespace LanguageUnderstanding.Luis.Tests
                 },
             };
 
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
                 result.Count().Should().Be(1);
@@ -431,14 +427,10 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public async Task TestSpeech()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
             var test = "the quick brown fox jumped over the lazy dog entity";
-            var region = "westus";
             var jsonString = "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                        "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startIndex\":45," +
-                        "\"endIndex\":50}]}";
+                "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startIndex\":45," +
+                "\"endIndex\":50}]}";
 
             var mockClient = new MockLuisClient
             {
@@ -448,7 +440,10 @@ namespace LanguageUnderstanding.Luis.Tests
                 }
             };
 
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
             {
                 var result = await luis.TestSpeechAsync(new string[] { "somefile" }, new List<EntityType>(), CancellationToken.None);
                 result.Count().Should().Be(1);
@@ -465,11 +460,7 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public async Task TestWithBuiltinEntity()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
             var test = "the quick brown fox jumped over the lazy dog";
-            var region = "westus";
 
             var mockClient = new MockLuisClient
             {
@@ -488,7 +479,10 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var entityType = new BuiltinEntityType("type", "test");
 
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(new[] { test }, new[] { entityType });
                 result.Count().Should().Be(1);
@@ -505,11 +499,7 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public void TestFailedThrowsException()
         {
-            var appName = string.Empty;
-            var appId = Guid.NewGuid().ToString();
-            var versionId = string.Empty;
             var test = "the quick brown fox jumped over the lazy dog";
-            var region = "westus";
 
             var mockClient = new MockLuisClient
             {
@@ -524,11 +514,37 @@ namespace LanguageUnderstanding.Luis.Tests
                 },
             };
 
-            using (var luis = new LuisLanguageUnderstandingService(appName, appId, versionId, region, mockClient))
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
             {
                 Func<Task> callTestAsync = () => luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
                 callTestAsync.Should().Throw<HttpRequestException>();
             }
+        }
+
+        private static LuisLanguageUnderstandingServiceBuilder GetTestLuisBuilder()
+        {
+            return new LuisLanguageUnderstandingServiceBuilder
+            {
+                AppName = "test",
+                AppId = Guid.NewGuid().ToString(),
+                AppVersion = "0.1",
+                AuthoringRegion = "westus",
+                EndpointRegion = "eastus",
+                LuisClient = new MockLuisClient(),
+            };
+        }
+
+        private static string GetAuthoringUriBase(LuisLanguageUnderstandingServiceBuilder builder)
+        {
+            return $"https://{builder.AuthoringRegion}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{builder.AppId}";
+        }
+
+        private static string GetVersionUriBase(LuisLanguageUnderstandingServiceBuilder builder)
+        {
+            return $"{GetAuthoringUriBase(builder)}/versions/{builder.AppVersion}";
         }
 
         /// <summary>

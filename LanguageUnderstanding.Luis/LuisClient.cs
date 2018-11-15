@@ -26,8 +26,9 @@ namespace LanguageUnderstanding.Luis
         /// Initializes a new instance of the <see cref="LuisClient"/> class.
         /// </summary>
         /// <param name="authoringKey">LUIS authoring key.</param>
-        /// <param name="region">LUIS region.</param>
-        public LuisClient(string authoringKey, string region)
+        /// <param name="endpointKey">LUIS endpoint key.</param>
+        /// <param name="endpointRegion">LUIS endpoint region.</param>
+        public LuisClient(string authoringKey, string endpointKey, string endpointRegion)
         {
             this.HttpClient = new HttpClient
             {
@@ -37,7 +38,7 @@ namespace LanguageUnderstanding.Luis
                 }
             };
 
-            this.LazySpeechConfig = new Lazy<SpeechConfig>(() => SpeechConfig.FromSubscription(authoringKey, region));
+            this.LazySpeechConfig = new Lazy<SpeechConfig>(() => SpeechConfig.FromSubscription(endpointKey, endpointRegion));
         }
 
         /// <summary> Gets the HTTP client configured with the LUIS subscription key header.</summary>

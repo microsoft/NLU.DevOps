@@ -44,53 +44,20 @@ namespace LanguageUnderstanding.Luis
         /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
         /// </summary>
         /// <param name="appName">LUIS application name.</param>
-        /// <param name="region">LUIS region.</param>
-        /// <param name="authoringKey">LUIS authoring key.</param>
-        public LuisLanguageUnderstandingService(string appName, string region, string authoringKey)
-            : this(appName, region, CreateDefaultLuisClient(region, authoringKey))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
-        /// </summary>
-        /// <param name="appName">LUIS application name.</param>
-        /// <param name="region">LUIS region.</param>
-        /// <param name="luisClient">LUIS client.</param>
-        public LuisLanguageUnderstandingService(string appName, string region, ILuisClient luisClient)
-        {
-            this.AppName = appName ?? throw new ArgumentNullException(nameof(appName));
-            this.Region = region ?? throw new ArgumentNullException(nameof(region));
-            this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
-        /// </summary>
-        /// <param name="appName">LUIS application name.</param>
         /// <param name="appId">LUIS application id.</param>
         /// <param name="appVersion">LUIS application version.</param>
-        /// <param name="region">LUIS region.</param>
-        /// <param name="authoringKey">LUIS authoring key.</param>
-        public LuisLanguageUnderstandingService(string appName, string appId, string appVersion, string region, string authoringKey)
-            : this(appName, appId, appVersion, region, CreateDefaultLuisClient(region, authoringKey))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
-        /// </summary>
-        /// <param name="appName">LUIS application name.</param>
-        /// <param name="appId">LUIS application id.</param>
-        /// <param name="appVersion">LUIS application version.</param>
-        /// <param name="region">LUIS region.</param>
+        /// <param name="isStaging">Signals whether to use the staging endpoint.</param>
+        /// <param name="authoringRegion">LUIS authoring region.</param>
+        /// <param name="endpointRegion">LUIS endpoint region.</param>
         /// <param name="luisClient">LUIS client.</param>
-        public LuisLanguageUnderstandingService(string appName, string appId, string appVersion, string region, ILuisClient luisClient)
+        internal LuisLanguageUnderstandingService(string appName, string appId, string appVersion, bool isStaging, string authoringRegion, string endpointRegion, ILuisClient luisClient)
         {
             this.AppName = appName ?? throw new ArgumentNullException(nameof(appName));
-            this.AppId = appId ?? throw new ArgumentNullException(nameof(appId));
-            this.AppVersion = appVersion ?? throw new ArgumentNullException(nameof(appVersion));
-            this.Region = region ?? throw new ArgumentNullException(nameof(region));
+            this.AppId = appId;
+            this.AppVersion = appVersion ?? "0.2";
+            this.IsStaging = isStaging;
+            this.AuthoringRegion = authoringRegion;
+            this.EndpointRegion = endpointRegion;
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
@@ -107,16 +74,27 @@ namespace LanguageUnderstanding.Luis
         /// <summary>
         /// Gets the LUIS app version.
         /// </summary>
-        public string AppVersion { get; private set; }
+        public string AppVersion { get; }
 
-        /// <summary> Gets the LUIS application region. </summary>
-        private string Region { get; }
+        /// <summary>
+        /// Gets a value indicating whether the LUIS app is staging.
+        /// </summary>
+        public bool IsStaging { get; }
+
+        /// <summary> Gets the LUIS authoring region. </summary>
+        private string AuthoringRegion { get; }
+
+        /// <summary> Gets the LUIS endpoint region. </summary>
+        private string EndpointRegion { get; }
 
         /// <summary> Gets the client to make HTTP requests to LUIS. </summary>
         private ILuisClient LuisClient { get; }
 
         /// <summary> Gets host for LUIS API calls.</summary>
-        private string Host => $"{Protocol}{this.Region}{Domain}";
+        private string AuthoringHost => $"{Protocol}{this.AuthoringRegion}{Domain}";
+
+        /// <summary> Gets host for LUIS API calls.</summary>
+        private string EndpointHost => $"{Protocol}{this.EndpointRegion}{Domain}";
 
         /// <summary> Gets full path for LUIS API calls. Contains appId.</summary>
         private string AppIdPath => $"{BasePath}{this.AppId}/";
@@ -140,12 +118,12 @@ namespace LanguageUnderstanding.Luis
                 throw new ArgumentNullException(nameof(entityTypes));
             }
 
+            Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
+
             // Create application if not passed in.
             if (this.AppId == null)
             {
-                Debug.Assert(this.AppVersion == null, "App version must be null if app ID is not set.");
                 this.AppId = await this.CreateAppAsync(cancellationToken);
-                this.AppVersion = "0.2";
             }
 
             // Get boilerplate JObject
@@ -211,12 +189,12 @@ namespace LanguageUnderstanding.Luis
             importResponse.EnsureSuccessStatusCode();
 
             // Train
-            var uri = new Uri($"{this.Host}{this.AppVersionPath}train");
+            var uri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
             var trainResponse = await this.LuisClient.PostAsync(uri, null, cancellationToken);
             trainResponse.EnsureSuccessStatusCode();
 
             // Publish
-            await this.PublishAsync(cancellationToken);
+            await this.PublishAppAsync(cancellationToken);
         }
 
         /// <inheritdoc />
@@ -240,6 +218,8 @@ namespace LanguageUnderstanding.Luis
                 throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
             }
 
+            Debug.Assert(this.EndpointRegion != null, "Builder will not instantiate without endpoint region.");
+
             var labeledUtterances = new List<LabeledUtterance>();
             foreach (var utterance in utterances)
             {
@@ -248,7 +228,8 @@ namespace LanguageUnderstanding.Luis
                     throw new ArgumentException("Utterances must not be null.", nameof(utterances));
                 }
 
-                var uri = new Uri($"{this.Host}{QueryBasePath}{this.AppId}?q={utterance}");
+                var staging = this.IsStaging ? "&staging=true" : string.Empty;
+                var uri = new Uri($"{this.EndpointHost}{QueryBasePath}{this.AppId}?q={utterance}{staging}");
                 while (true)
                 {
                     var response = await this.LuisClient.GetAsync(uri, cancellationToken);
@@ -297,7 +278,8 @@ namespace LanguageUnderstanding.Luis
         /// <inheritdoc />
         public async Task CleanupAsync(CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.Host}{this.AppIdPath}");
+            Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
+            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}");
             var cleanupResponse = await this.LuisClient.DeleteAsync(uri, cancellationToken);
             cleanupResponse.EnsureSuccessStatusCode();
         }
@@ -401,36 +383,6 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <summary>
-        /// Creates the default LUIS client.
-        /// </summary>
-        /// <returns>The default LUIS client.</returns>
-        /// <param name="region">LUIS region.</param>
-        /// <param name="authoringKey">LUIS authoring key.</param>
-        private static ILuisClient CreateDefaultLuisClient(string region, string authoringKey)
-        {
-            return new LuisClient(
-                authoringKey ?? throw new ArgumentNullException(nameof(authoringKey)),
-                region ?? throw new ArgumentNullException(nameof(region)));
-        }
-
-        /// <summary>
-        /// Publish Luis model based on version number.
-        /// </summary>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>Void task</returns>
-        private async Task PublishAsync(CancellationToken cancellationToken)
-        {
-            // Publish
-            var body = new JObject();
-            body.Add("versionId", this.AppVersion);
-            body.Add("isStaging", false);
-            body.Add("region", this.Region);
-            var uri = new Uri($"{this.Host}{this.AppIdPath}publish");
-            var publishResponse = await this.LuisClient.PostAsync(uri, body.ToString(), cancellationToken);
-            publishResponse.EnsureSuccessStatusCode();
-        }
-
-        /// <summary>
         /// Create skeleton JSON for a LUIS model.
         /// </summary>
         /// <returns>A JSON object with all necessary properties for a LUIS model.</returns>
@@ -470,7 +422,7 @@ namespace LanguageUnderstanding.Luis
                 { "culture", "en-us" },
             };
 
-            var uri = new Uri($"{this.Host}{BasePath}");
+            var uri = new Uri($"{this.AuthoringHost}{BasePath}");
             var requestBody = requestJson.ToString(Formatting.None);
             var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken);
             httpResponse.EnsureSuccessStatusCode();
@@ -487,9 +439,29 @@ namespace LanguageUnderstanding.Luis
         /// <param name="cancellationToken">Cancellation token.</param>
         private Task<HttpResponseMessage> ImportVersionAsync(JObject model, CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.Host}{this.AppIdPath}versions/import?versionId={this.AppVersion}");
+            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}versions/import?versionId={this.AppVersion}");
             var requestBody = model.ToString(Formatting.None);
             return this.LuisClient.PostAsync(uri, requestBody, cancellationToken);
+        }
+
+        /// <summary>
+        /// Creates a new app for LUIS.
+        /// </summary>
+        /// <returns>A task to wait on the completion of the async operation.</returns>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        private async Task PublishAppAsync(CancellationToken cancellationToken)
+        {
+            var requestJson = new JObject
+            {
+                { "versionId", this.AppVersion },
+                { "isStaging", this.IsStaging },
+                { "region", this.EndpointRegion },
+            };
+
+            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}publish");
+            var requestBody = requestJson.ToString(Formatting.None);
+            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken);
+            httpResponse.EnsureSuccessStatusCode();
         }
     }
 }

@@ -33,6 +33,8 @@ namespace LanguageUnderstanding.CommandLine
         private const string LuisAppVersionConfigurationKey = "LUIS_APP_VERSION";
         private const string LuisAuthoringKeyConfigurationKey = "LUIS_AUTHORING_KEY";
         private const string LuisAuthoringRegionConfigurationKey = "LUIS_AUTHORING_REGION";
+        private const string LuisEndpointRegionConfigurationKey = "LUIS_ENDPOINT_REGION";
+        private const string LuisIsStagingConfigurationKey = "LUIS_IS_STAGING";
 
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
@@ -78,13 +80,22 @@ namespace LanguageUnderstanding.CommandLine
         {
             var userDefinedName = configuration[LuisAppNameConfigurationKey];
             var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
-            var appId = configuration[LuisAppIdConfigurationKey];
-            var appVersion = configuration[LuisAppVersionConfigurationKey];
-            var region = configuration[LuisAuthoringRegionConfigurationKey];
-            var authoringKey = configuration[LuisAuthoringKeyConfigurationKey];
-            return appId != null
-                ? new LuisLanguageUnderstandingService(appName, appId, appVersion, region, authoringKey)
-                : new LuisLanguageUnderstandingService(appName, region, authoringKey);
+
+            var isStagingString = configuration[LuisIsStagingConfigurationKey];
+            var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;
+
+            var builder = new LuisLanguageUnderstandingServiceBuilder
+            {
+                AppName = appName,
+                AppId = configuration[LuisAppIdConfigurationKey],
+                AppVersion = configuration[LuisAppVersionConfigurationKey],
+                AuthoringRegion = configuration[LuisAuthoringRegionConfigurationKey],
+                EndpointRegion = configuration[LuisEndpointRegionConfigurationKey],
+                IsStaging = isStaging,
+                AuthoringKey = configuration[LuisAuthoringKeyConfigurationKey],
+            };
+
+            return builder.Build();
         }
 
         private static RegionEndpoint GetRegionEndpoint(string region)
@@ -125,6 +136,7 @@ namespace LanguageUnderstanding.CommandLine
                 { LuisAppNameConfigurationKey, instance.AppName },
                 { LuisAppIdConfigurationKey, instance.AppId },
                 { LuisAppVersionConfigurationKey, instance.AppVersion },
+                { LuisIsStagingConfigurationKey, instance.IsStaging },
             };
         }
 
