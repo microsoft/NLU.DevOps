@@ -29,9 +29,9 @@ namespace LanguageUnderstanding.Lex
     {
         private const int DegreeOfParallelism = 3;
         private const int RetryCount = 5;
+        private const int GetBotDelaySeconds = 2;
+        private const int GetImportDelaySeconds = 2;
 
-        private static readonly TimeSpan GetImportDelay = TimeSpan.FromSeconds(2);
-        private static readonly TimeSpan GetBotDelay = TimeSpan.FromSeconds(2);
         private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(10);
 
         /// <summary>
@@ -468,6 +468,7 @@ namespace LanguageUnderstanding.Lex
                 ImportId = importId,
             };
 
+            var count = 0;
             while (true)
             {
                 // Check the status of the import operation
@@ -486,8 +487,9 @@ namespace LanguageUnderstanding.Lex
                     throw new InvalidOperationException(exceptionMessage);
                 }
 
-                // If in progress, delay
-                await Task.Delay(GetImportDelay, cancellationToken);
+                // If in progress, delay with linear backoff
+                var delay = TimeSpan.FromSeconds(GetImportDelaySeconds * ++count);
+                await Task.Delay(delay, cancellationToken);
             }
         }
 
@@ -526,6 +528,7 @@ namespace LanguageUnderstanding.Lex
             };
 
             // Wait for Ready status
+            var count = 0;
             while (true)
             {
                 var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken);
@@ -546,7 +549,9 @@ namespace LanguageUnderstanding.Lex
                         $"Expected bot to have '{Status.BUILDING}', instead found '{getBotResponse.Status}'.");
                 }
 
-                await Task.Delay(GetBotDelay, cancellationToken);
+                // If building, delay with linear backoff
+                var delay = TimeSpan.FromSeconds(GetBotDelaySeconds * ++count);
+                await Task.Delay(delay, cancellationToken);
             }
         }
 
