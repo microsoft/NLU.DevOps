@@ -345,13 +345,13 @@ namespace LanguageUnderstanding.Luis
                     entityType = renamedEntityType;
                 }
 
-                string entityValue = item.Value<string>("entity");
-                int startCharIndex = item.Value<int>("startIndex");
-                int endCharIndex = item.Value<int>("endIndex");
+                var entityValue = GetEntityValue(item);
+                var startCharIndex = item.Value<int>("startIndex");
+                var endCharIndex = item.Value<int>("endIndex");
 
-                var matchText = text.Substring(startCharIndex, endCharIndex - startCharIndex + 1);
+                var matchText = item.Value<string>("entity");
                 var matches = Regex.Matches(text, matchText);
-                int matchIndex = -1;
+                var matchIndex = -1;
                 for (var i = 0; i < matches.Count; ++i)
                 {
                     if (matches[i].Index == startCharIndex)
@@ -366,6 +366,32 @@ namespace LanguageUnderstanding.Luis
             }
 
             return new LabeledUtterance(text, intent, entities);
+        }
+
+        /// <summary>
+        /// Retrieves entity value from "resolution" field of LUIS entity.
+        /// </summary>
+        /// <param name="entityJson">LUIS entity</param>
+        /// <returns><see cref="string"/> entity value if it exists in resolution field or null</returns>
+        private static string GetEntityValue(JToken entityJson)
+        {
+            var resolution = entityJson["resolution"];
+            if (resolution == null)
+            {
+                return null;
+            }
+
+            var value = resolution.Value<string>("value");
+            if (value != null)
+            {
+                return value;
+            }
+
+            // TODO: choose "the best" entity value from resolution.
+            var resolvedValue = resolution["values"][0];
+            return resolvedValue is JObject resolvedObject
+                ? resolvedObject.Value<string>("value")
+                : resolvedValue.Value<string>();
         }
 
         /// <summary>

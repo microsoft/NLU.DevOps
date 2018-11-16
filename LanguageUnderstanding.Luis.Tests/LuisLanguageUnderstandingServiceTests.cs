@@ -404,7 +404,7 @@ namespace LanguageUnderstanding.Luis.Tests
                     if (request.Uri.Contains(test))
                     {
                         return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startIndex\":32," +
+                            "\"entities\":[{\"entity\":\"the\",\"type\":\"type\",\"startIndex\":32," +
                             "\"endIndex\":34}]}";
                     }
 
@@ -423,9 +423,83 @@ namespace LanguageUnderstanding.Luis.Tests
                 result.First().Intent.Should().Be("intent");
                 result.First().Entities.Count.Should().Be(1);
                 result.First().Entities.First().EntityType.Should().Be("type");
-                result.First().Entities.First().EntityValue.Should().Be("entity");
+                result.First().Entities.First().EntityValue.Should().Be(default(string));
                 result.First().Entities.First().MatchText.Should().Be("the");
                 result.First().Entities.First().MatchIndex.Should().Be(1);
+            }
+        }
+
+        [Test]
+        public async Task TestModelWithEntityResolution()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var mockClient = new MockLuisClient
+            {
+                OnHttpRequestResponse = request =>
+                {
+                    if (request.Uri.Contains(test))
+                    {
+                        return @"{
+                                ""query"": ""the quick brown fox jumped over the lazy dog today"",
+                                ""topScoringIntent"": {
+                                    ""intent"": ""Calendar.Add"",
+                                    ""score"": 0.718678534
+                                },
+                                ""entities"": [
+                                    {
+                                        ""entity"": ""today"",
+                                        ""type"": ""builtin.datetimeV2.date"",
+                                        ""startIndex"": 45,
+                                        ""endIndex"": 49,
+                                        ""resolution"": {
+                                            ""values"": [
+                                                {
+                                                    ""timex"": ""2018-11-16"",
+                                                    ""type"": ""date"",
+                                                    ""value"": ""2018-11-16""
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        ""entity"": ""brown fox"",
+                                        ""type"": ""builtin.personName"",
+                                        ""startIndex"": 10,
+                                        ""endIndex"": 18,
+                                        ""resolution"": {
+                                            ""values"": [
+                                                ""Fox""
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        ""entity"": ""the"",
+                                        ""type"": ""thetype"",
+                                        ""startIndex"": 0,
+                                        ""endIndex"": 2,
+                                        ""resolution"": {
+                                            ""value"": ""THE""
+                                        }
+                                    }
+                                ]
+                            }";
+                    }
+
+                    return null;
+                },
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
+                result.First().Entities.Count.Should().Be(3);
+                result.First().Entities[0].EntityValue.Should().Be("2018-11-16");
+                result.First().Entities[1].EntityValue.Should().Be("Fox");
+                result.First().Entities[2].EntityValue.Should().Be("THE");
             }
         }
 
@@ -474,7 +548,7 @@ namespace LanguageUnderstanding.Luis.Tests
                     if (request.Uri.Contains(test))
                     {
                         return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                            "\"entities\":[{\"entity\":\"entity\",\"type\":\"builtin.test\",\"startIndex\":32," +
+                            "\"entities\":[{\"entity\":\"the\",\"type\":\"builtin.test\",\"startIndex\":32," +
                             "\"endIndex\":34}]}";
                     }
 
@@ -495,7 +569,7 @@ namespace LanguageUnderstanding.Luis.Tests
                 result.First().Intent.Should().Be("intent");
                 result.First().Entities.Count.Should().Be(1);
                 result.First().Entities.First().EntityType.Should().Be("type");
-                result.First().Entities.First().EntityValue.Should().Be("entity");
+                result.First().Entities.First().EntityValue.Should().Be(default(string));
                 result.First().Entities.First().MatchText.Should().Be("the");
                 result.First().Entities.First().MatchIndex.Should().Be(1);
             }
