@@ -100,7 +100,7 @@ namespace LanguageUnderstanding.CommandLine
 
         private static RegionEndpoint GetRegionEndpoint(string region)
         {
-            return RegionEndpoint.EnumerableAllRegions.First(r => r.SystemName == region);
+            return RegionEndpoint.EnumerableAllRegions.FirstOrDefault(r => r.SystemName == region);
         }
 
         private static string GetSecretKey(IConfiguration configuration)
