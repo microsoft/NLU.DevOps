@@ -24,6 +24,11 @@ namespace LanguageUnderstanding.Luis.Tests
     internal class LuisLanguageUnderstandingServiceTests
     {
         /// <summary>
+        /// Epsilon used to accomodate for clock accuracy.
+        /// </summary>
+        private static readonly TimeSpan Epsilon = TimeSpan.FromMilliseconds(100);
+
+        /// <summary>
         /// Compares two <see cref="LuisEntity"/> instances.
         /// </summary>
         private readonly LuisEntityComparer luisEntityComparer = new LuisEntityComparer();
@@ -221,7 +226,7 @@ namespace LanguageUnderstanding.Luis.Tests
             var failUri = default(string);
             var mockClient = new MockLuisClient
             {
-                OnHttpResponse = request =>
+                OnHttpRequestResponse = request =>
                 {
                     if (request.Uri == failUri)
                     {
@@ -394,7 +399,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var mockClient = new MockLuisClient
             {
-                OnHttpResponse = request =>
+                OnHttpRequestResponse = request =>
                 {
                     if (request.Uri.Contains(test))
                     {
@@ -464,7 +469,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var mockClient = new MockLuisClient
             {
-                OnHttpResponse = request =>
+                OnHttpRequestResponse = request =>
                 {
                     if (request.Uri.Contains(test))
                     {
@@ -503,7 +508,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var mockClient = new MockLuisClient
             {
-                OnHttpResponse = request =>
+                OnHttpRequestResponse = request =>
                 {
                     if (request.Uri.Contains(test))
                     {
@@ -521,6 +526,82 @@ namespace LanguageUnderstanding.Luis.Tests
             {
                 Func<Task> callTestAsync = () => luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
                 callTestAsync.Should().Throw<HttpRequestException>();
+            }
+        }
+
+        [Test]
+        public async Task TrainingStatusDelayBetweenPolling()
+        {
+            var count = 0;
+            string[] statusArray = { "Queued", "InProgress", "Success" };
+            var mockClient = new MockLuisClient
+            {
+                OnHttpRequestResponse = request =>
+                {
+                    if (IsTrainStatusRequest(request))
+                    {
+                        var json = new JObject
+                        {
+                            { "details", new JObject { { "status", statusArray[count++] } } }
+                        };
+
+                        return $"[{json.ToString()}]";
+                    }
+
+                    return null;
+                },
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>());
+
+                // Ensure correct number of training status requests are made.
+                mockClient.Requests.Where(IsTrainStatusRequest).Count().Should().Be(statusArray.Length);
+
+                // Ensure 2 second delay between requests
+                var previousRequest = mockClient.TimestampedRequests.Where(t => IsTrainStatusRequest(t.Instance)).First();
+                for (var i = 1; i < statusArray.Length; ++i)
+                {
+                    var request = mockClient.TimestampedRequests.Where(t => IsTrainStatusRequest(t.Instance)).Skip(i).First();
+                    var timeDifference = request.Timestamp - previousRequest.Timestamp;
+                    previousRequest = request;
+                    timeDifference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
+                }
+            }
+        }
+
+        [Test]
+        public void TrainingFailedThrowsInvalidOperation()
+        {
+            var mockClient = new MockLuisClient
+            {
+                OnHttpRequestResponse = request =>
+                {
+                    if (IsTrainStatusRequest(request))
+                    {
+                        var json = new JObject
+                        {
+                            { "details", new JObject { { "status", "Fail" } } }
+                        };
+
+                        return $"[{json.ToString()}]";
+                    }
+
+                    return null;
+                },
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>());
+                trainAsync.Should().Throw<InvalidOperationException>();
             }
         }
 
@@ -547,6 +628,29 @@ namespace LanguageUnderstanding.Luis.Tests
             return $"{GetAuthoringUriBase(builder)}/versions/{builder.AppVersion}";
         }
 
+        private static bool IsTrainStatusRequest(LuisRequest request)
+        {
+            return request.Method == HttpMethod.Get.Method
+                && request.Uri.EndsWith("train", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// A helper class for creating <see cref="Timestamped{T}"/> instances.
+        /// </summary>
+        private static class Timestamped
+        {
+            /// <summary>
+            /// Create the timestamped instance.
+            /// </summary>
+            /// <returns>The timestamped instance.</returns>
+            /// <param name="instance">Instance.</param>
+            /// <typeparam name="T">The type of instance.</typeparam>
+            public static Timestamped<T> Create<T>(T instance)
+            {
+                return new Timestamped<T>(instance);
+            }
+        }
+
         /// <summary>
         /// Mock version of <see cref="ILuisClient"/> for testing.
         /// Enables the verification of LUIS http requests. Returns a
@@ -556,24 +660,29 @@ namespace LanguageUnderstanding.Luis.Tests
         private sealed class MockLuisClient : ILuisClient
         {
             /// <summary>
-            /// Gets a string that can be returned in <see cref="OnHttpResponse"/> to return a failure.
+            /// Gets a string that can be returned in <see cref="OnHttpRequestResponse"/> to return a failure.
             /// </summary>
             public static string FailString { get; } = Guid.NewGuid().ToString();
 
             /// <summary>
             /// Gets a collection of requests made against the LUIS client.
             /// </summary>
-            public IReadOnlyList<LuisRequest> Requests => this.RequestsInternal;
+            public IEnumerable<LuisRequest> Requests => this.RequestsInternal.Select(t => t.Instance);
+
+            /// <summary>
+            /// Gets a collection of requests made against the LUIS client.
+            /// </summary>
+            public IEnumerable<Timestamped<LuisRequest>> TimestampedRequests => this.RequestsInternal;
 
             /// <summary>
             /// Gets or sets callback when a request is made against the LUIS client.
             /// </summary>
-            public Action<LuisRequest> OnRequest { get; set; }
+            public Action<LuisRequest> OnHttpRequest { get; set; }
 
             /// <summary>
             /// Gets or sets callback when a request is made against the LUIS client.
             /// </summary>
-            public Func<LuisRequest, string> OnHttpResponse { get; set; }
+            public Func<LuisRequest, string> OnHttpRequestResponse { get; set; }
 
             /// <summary>
             /// Gets or sets callback when a recognizeSpeech request is made against the LUIS client.
@@ -583,7 +692,7 @@ namespace LanguageUnderstanding.Luis.Tests
             /// <summary>
             /// Gets a collection of requests made against the LUIS client.
             /// </summary>
-            private List<LuisRequest> RequestsInternal { get; } = new List<LuisRequest>();
+            private List<Timestamped<LuisRequest>> RequestsInternal { get; } = new List<Timestamped<LuisRequest>>();
 
             /// <inheritdoc />
             public Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken)
@@ -634,12 +743,21 @@ namespace LanguageUnderstanding.Luis.Tests
             /// <returns>HTTP response.</returns>
             private Task<HttpResponseMessage> ProcessRequest(LuisRequest request)
             {
-                this.RequestsInternal.Add(request);
-                this.OnRequest?.Invoke(request);
-                var response = this.OnHttpResponse?.Invoke(request);
+                this.RequestsInternal.Add(Timestamped.Create(request));
+                this.OnHttpRequest?.Invoke(request);
+                var response = this.OnHttpRequestResponse?.Invoke(request);
+
+                // Check for failure string and set 500 response
                 var statusCode = response != FailString
                     ? HttpStatusCode.OK
                     : HttpStatusCode.InternalServerError;
+
+                // Return an empty array for train status GET requests
+                if (response == null && IsTrainStatusRequest(request))
+                {
+                    response = "[]";
+                }
+
                 var httpResponse = new HttpResponseMessage(statusCode);
                 if (response != null)
                 {
@@ -709,6 +827,33 @@ namespace LanguageUnderstanding.Luis.Tests
             {
                 throw new NotImplementedException();
             }
+        }
+
+        /// <summary>
+        /// A helper class for timestamping values.
+        /// </summary>
+        /// <typeparam name="T">Type of instance.</typeparam>
+        private sealed class Timestamped<T>
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Timestamped{T}"/> class.
+            /// </summary>
+            /// <param name="instance">Instance.</param>
+            public Timestamped(T instance)
+            {
+                this.Instance = instance;
+                this.Timestamp = DateTimeOffset.Now;
+            }
+
+            /// <summary>
+            /// Gets the instance.
+            /// </summary>
+            public T Instance { get; }
+
+            /// <summary>
+            /// Gets the timestamp.
+            /// </summary>
+            public DateTimeOffset Timestamp { get; }
         }
     }
 }

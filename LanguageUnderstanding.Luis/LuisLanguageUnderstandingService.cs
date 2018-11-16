@@ -40,6 +40,9 @@ namespace LanguageUnderstanding.Luis
         /// <summary> The delay to use to throttle LUIS queries. </summary>
         private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
+        /// <summary> The delay to use when polling for LUIS training status. </summary>
+        private static readonly TimeSpan TrainStatusDelay = TimeSpan.FromSeconds(2);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
         /// </summary>
@@ -192,6 +195,32 @@ namespace LanguageUnderstanding.Luis
             var uri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
             var trainResponse = await this.LuisClient.PostAsync(uri, null, cancellationToken);
             trainResponse.EnsureSuccessStatusCode();
+
+            // Wait for training to complete
+            JArray trainStatusJson;
+            while (true)
+            {
+                var trainStatusResponse = await this.LuisClient.GetAsync(uri, cancellationToken);
+                var trainStatusContent = await trainStatusResponse.Content.ReadAsStringAsync();
+                trainStatusJson = JArray.Parse(trainStatusContent);
+                var inProgress = trainStatusJson.SelectTokens("[*].details.status")
+                    .Select(statusJson => statusJson.Value<string>())
+                    .Any(status => status == "InProgress" || status == "Queued");
+
+                if (!inProgress)
+                {
+                    break;
+                }
+
+                await Task.Delay(TrainStatusDelay, cancellationToken);
+            }
+
+            // Ensure no failures occurred while training
+            var failures = trainStatusJson.SelectTokens("[?(@.details.status == 'Fail')]");
+            if (failures.Any())
+            {
+                throw new InvalidOperationException("Failure occurred while training LUIS model.");
+            }
 
             // Publish
             await this.PublishAppAsync(cancellationToken);
