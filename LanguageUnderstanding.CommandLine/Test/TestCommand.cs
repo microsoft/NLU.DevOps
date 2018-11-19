@@ -27,10 +27,10 @@ namespace LanguageUnderstanding.CommandLine.Test
         private async Task RunAsync()
         {
             this.Log("Running tests against NLU service... ", false);
-            var testUtterances = Serialization.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-            var entityTypes = Serialization.Read<List<EntityType>>(this.Options.EntityTypesPath);
+            var testUtterances = Serializer.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+            var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
             var unlabeledTests = testUtterances.Select(utterance => utterance.Text);
-            var testResults = await this.LanguageUnderstandingService.TestAsync(unlabeledTests, entityTypes);
+            var testResults = await this.LanguageUnderstandingService.TestAsync(unlabeledTests, entityTypes).ConfigureAwait(false);
             this.Log("Done.");
 
             var stream = this.Options.OutputPath != null
@@ -39,7 +39,7 @@ namespace LanguageUnderstanding.CommandLine.Test
 
             using (stream)
             {
-                Serialization.Write(stream, testResults);
+                Serializer.Write(stream, testResults);
             }
         }
     }

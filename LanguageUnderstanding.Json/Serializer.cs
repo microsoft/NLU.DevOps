@@ -14,7 +14,7 @@ namespace LanguageUnderstanding.Json
     /// <summary>
     /// Serializes and parses labeled utterances to JSON files.
     /// </summary>
-    public static class Serialization
+    public static class Serializer
     {
         private static Lazy<JsonSerializerSettings> LazyJsonSerializerSettings =>
             new Lazy<JsonSerializerSettings>(() => new JsonSerializerSettings

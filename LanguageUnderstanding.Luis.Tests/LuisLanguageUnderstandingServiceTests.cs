@@ -21,25 +21,15 @@ namespace LanguageUnderstanding.Luis.Tests
     /// Test suite for <see cref="LuisEntity"/> class.
     /// </summary>
     [TestFixture]
-    internal class LuisLanguageUnderstandingServiceTests
+    internal static class LuisLanguageUnderstandingServiceTests
     {
         /// <summary>
         /// Epsilon used to accomodate for clock accuracy.
         /// </summary>
         private static readonly TimeSpan Epsilon = TimeSpan.FromMilliseconds(100);
 
-        /// <summary>
-        /// Compares two <see cref="LuisEntity"/> instances.
-        /// </summary>
-        private readonly LuisEntityComparer luisEntityComparer = new LuisEntityComparer();
-
-        /// <summary>
-        /// Compares two <see cref="LuisLabeledUtterance"/> instances.
-        /// </summary>
-        private readonly LuisLabeledUtteranceComparer luisLabeledUtteranceComparer = new LuisLabeledUtteranceComparer();
-
         [Test]
-        public void ArgumentNullChecks()
+        public static void ArgumentNullChecks()
         {
             Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, false, string.Empty, string.Empty, new MockLuisClient());
             Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, false, string.Empty, string.Empty, default(ILuisClient));
@@ -67,7 +57,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void LuisEntityInitializes()
+        public static void LuisEntityInitializes()
         {
             var entityType = "Location";
             var startCharIndex = 2;
@@ -79,7 +69,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void LuisEntitySerializes()
+        public static void LuisEntitySerializes()
         {
             var entityType = "Location";
             var startCharIndex = 2;
@@ -93,20 +83,20 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void EntityConvertsToLuisEntity()
+        public static void EntityConvertsToLuisEntity()
         {
             var utterance = "Engineer is the job I want!";
             var entity = new Entity("String", null, "Engineer", 0);
             var expected = new LuisEntity("String", 0, 7);
             var entityType = new SimpleEntityType("String");
             var actual = LuisEntity.FromEntity(entity, utterance, entityType);
-            this.luisEntityComparer.Equals(actual, expected).Should().BeTrue();
+            new LuisEntityComparer().Equals(actual, expected).Should().BeTrue();
         }
 
         /* LuisLabeledUtteranceTests */
 
         [Test]
-        public void LuisLabeledUtteranceInitializes()
+        public static void LuisLabeledUtteranceInitializes()
         {
             var text = "I want to fly from New York to Seattle";
             var intent = "bookFlight";
@@ -123,7 +113,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void LuisLabeledUtteranceSerializes()
+        public static void LuisLabeledUtteranceSerializes()
         {
             var text = "My name is Bill Gates.";
             var intent = "updateName";
@@ -148,7 +138,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void LabeledUtteranceToLuisLabeledUtterance()
+        public static void LabeledUtteranceToLuisLabeledUtterance()
         {
             var text = "My name is Bill Gates.";
             var intent = "updateName";
@@ -174,11 +164,11 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var labeledUtterance = new LabeledUtterance(text, intent, entities);
             var actual = LuisLabeledUtterance.FromLabeledUtterance(labeledUtterance, entityTypes);
-            this.luisLabeledUtteranceComparer.Equals(actual, expected).Should().BeTrue();
+            new LuisLabeledUtteranceComparer().Equals(actual, expected).Should().BeTrue();
         }
 
         [Test]
-        public async Task TrainEmptyModel()
+        public static async Task TrainEmptyModel()
         {
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
@@ -192,7 +182,7 @@ namespace LanguageUnderstanding.Luis.Tests
             {
                 var utterances = Enumerable.Empty<LabeledUtterance>();
                 var entityTypes = Enumerable.Empty<EntityType>();
-                await luis.TrainAsync(utterances, entityTypes);
+                await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
 
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == importUri);
@@ -221,7 +211,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void TrainFailuresThrowException()
+        public static void TrainFailuresThrowException()
         {
             var failUri = default(string);
             var mockClient = new MockLuisClient
@@ -264,7 +254,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public async Task TrainModelWithUtterances()
+        public static async Task TrainModelWithUtterances()
         {
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
@@ -310,7 +300,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public async Task TrainModelWithUtterancesAndSimpleEntities()
+        public static async Task TrainModelWithUtterancesAndSimpleEntities()
         {
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
@@ -336,7 +326,7 @@ namespace LanguageUnderstanding.Luis.Tests
                     new SimpleEntityType("Subject")
                 };
 
-                await luis.TrainAsync(utterances, entityTypes);
+                await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
 
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == importUri);
@@ -377,7 +367,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public async Task CleanupModel()
+        public static async Task CleanupModel()
         {
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
@@ -385,7 +375,7 @@ namespace LanguageUnderstanding.Luis.Tests
             var cleanupUri = $"{GetAuthoringUriBase(builder)}/";
             using (var luis = builder.Build())
             {
-                await luis.CleanupAsync();
+                await luis.CleanupAsync().ConfigureAwait(false);
                 var cleanupRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == cleanupUri);
                 cleanupRequest.Should().NotBeNull();
                 cleanupRequest.Method.Should().Be(HttpMethod.Delete.Method);
@@ -393,7 +383,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public async Task TestModel()
+        public static async Task TestModel()
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
@@ -417,20 +407,20 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
+                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>()).ConfigureAwait(false);
                 result.Count().Should().Be(1);
                 result.First().Text.Should().Be(test);
                 result.First().Intent.Should().Be("intent");
                 result.First().Entities.Count.Should().Be(1);
-                result.First().Entities.First().EntityType.Should().Be("type");
-                result.First().Entities.First().EntityValue.Should().Be(default(string));
-                result.First().Entities.First().MatchText.Should().Be("the");
-                result.First().Entities.First().MatchIndex.Should().Be(1);
+                result.First().Entities[0].EntityType.Should().Be("type");
+                result.First().Entities[0].EntityValue.Should().Be(default(string));
+                result.First().Entities[0].MatchText.Should().Be("the");
+                result.First().Entities[0].MatchIndex.Should().Be(1);
             }
         }
 
         [Test]
-        public async Task TestModelWithEntityResolution()
+        public static async Task TestModelWithEntityResolution()
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
@@ -495,7 +485,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
+                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>()).ConfigureAwait(false);
                 result.First().Entities.Count.Should().Be(3);
                 result.First().Entities[0].EntityValue.Should().Be("2018-11-16");
                 result.First().Entities[1].EntityValue.Should().Be("Fox");
@@ -504,7 +494,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public async Task TestSpeech()
+        public static async Task TestSpeech()
         {
             var test = "the quick brown fox jumped over the lazy dog entity";
             var jsonString = "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
@@ -524,20 +514,20 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestSpeechAsync(new string[] { "somefile" }, new List<EntityType>(), CancellationToken.None);
+                var result = await luis.TestSpeechAsync(new string[] { "somefile" }, new List<EntityType>()).ConfigureAwait(false);
                 result.Count().Should().Be(1);
                 result.First().Text.Should().Be(test);
                 result.First().Intent.Should().Be("intent");
                 result.First().Entities.Count.Should().Be(1);
-                result.First().Entities.First().EntityType.Should().Be("type");
+                result.First().Entities[0].EntityType.Should().Be("type");
 
-                result.First().Entities.First().MatchText.Should().Be("entity");
-                result.First().Entities.First().MatchIndex.Should().Be(0);
+                result.First().Entities[0].MatchText.Should().Be("entity");
+                result.First().Entities[0].MatchIndex.Should().Be(0);
             }
         }
 
         [Test]
-        public async Task TestWithBuiltinEntity()
+        public static async Task TestWithBuiltinEntity()
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
@@ -563,20 +553,20 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(new[] { test }, new[] { entityType });
+                var result = await luis.TestAsync(new[] { test }, new[] { entityType }).ConfigureAwait(false);
                 result.Count().Should().Be(1);
                 result.First().Text.Should().Be(test);
                 result.First().Intent.Should().Be("intent");
                 result.First().Entities.Count.Should().Be(1);
-                result.First().Entities.First().EntityType.Should().Be("type");
-                result.First().Entities.First().EntityValue.Should().Be(default(string));
-                result.First().Entities.First().MatchText.Should().Be("the");
-                result.First().Entities.First().MatchIndex.Should().Be(1);
+                result.First().Entities[0].EntityType.Should().Be("type");
+                result.First().Entities[0].EntityValue.Should().Be(default(string));
+                result.First().Entities[0].MatchText.Should().Be("the");
+                result.First().Entities[0].MatchIndex.Should().Be(1);
             }
         }
 
         [Test]
-        public void TestFailedThrowsException()
+        public static void TestFailedThrowsException()
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
@@ -604,7 +594,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public async Task TrainingStatusDelayBetweenPolling()
+        public static async Task TrainingStatusDelayBetweenPolling()
         {
             var count = 0;
             string[] statusArray = { "Queued", "InProgress", "Success" };
@@ -631,7 +621,7 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>());
+                await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // Ensure correct number of training status requests are made.
                 mockClient.Requests.Where(IsTrainStatusRequest).Count().Should().Be(statusArray.Length);
@@ -649,7 +639,7 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public void TrainingFailedThrowsInvalidOperation()
+        public static void TrainingFailedThrowsInvalidOperation()
         {
             var mockClient = new MockLuisClient
             {
@@ -779,7 +769,7 @@ namespace LanguageUnderstanding.Luis.Tests
             }
 
             /// <inheritdoc />
-            public Task<string> RecognizeSpeechAsync(string appId, string speechFile)
+            public Task<string> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
             {
                 return Task.FromResult(this.OnRecognizeSpeechResponse.Invoke(speechFile));
             }

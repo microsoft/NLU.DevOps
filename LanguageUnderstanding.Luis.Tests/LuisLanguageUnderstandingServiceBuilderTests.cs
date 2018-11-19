@@ -8,10 +8,10 @@ namespace LanguageUnderstanding.Luis.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal class LuisLanguageUnderstandingServiceBuilderTests
+    internal static class LuisLanguageUnderstandingServiceBuilderTests
     {
         [Test]
-        public void ThrowsInvalidOperation()
+        public static void ThrowsInvalidOperation()
         {
             var builder = new LuisLanguageUnderstandingServiceBuilder();
             Action action = () => builder.Build();

@@ -28,7 +28,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
         {
             this.Log("Running speech tests against NLU service... ", false);
 
-            var testUtterances = Serialization.Read<List<LabeledUtteranceWithRecordingId>>(this.Options.UtterancesPath);
+            var testUtterances = Serializer.Read<List<LabeledUtteranceWithRecordingId>>(this.Options.UtterancesPath);
             if (testUtterances.Any(utterance => utterance.RecordingId == null))
             {
                 throw new InvalidOperationException("Test utterances must have 'recordingID'.");
@@ -37,8 +37,8 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
             var speechFiles = testUtterances
                 .Select(utterance => $"{Path.Combine(this.Options.RecordingsDirectory, utterance.RecordingId)}.wav");
 
-            var entityTypes = Serialization.Read<List<EntityType>>(this.Options.EntityTypesPath);
-            var testResults = await this.LanguageUnderstandingService.TestSpeechAsync(speechFiles, entityTypes);
+            var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
+            var testResults = await this.LanguageUnderstandingService.TestSpeechAsync(speechFiles, entityTypes).ConfigureAwait(false);
 
             this.Log("Done.");
 
@@ -48,7 +48,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
 
             using (stream)
             {
-                Serialization.Write(stream, testResults);
+                Serializer.Write(stream, testResults);
             }
         }
 

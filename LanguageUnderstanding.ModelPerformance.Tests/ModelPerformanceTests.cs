@@ -9,13 +9,13 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal class ModelPerformanceTests
+    internal static class ModelPerformanceTests
     {
         [Test]
         [Category("Intent")]
         [Category("Performance")]
         [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "TestCases")]
-        public void CompareIntents(LabeledUtteranceTestCaseData testCaseData)
+        public static void CompareIntents(LabeledUtteranceTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
             var expected = testCaseData.ExpectedUtterance;
@@ -26,7 +26,7 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
         [Category("Text")]
         [Category("Performance")]
         [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "TestCases")]
-        public void CompareText(LabeledUtteranceTestCaseData testCaseData)
+        public static void CompareText(LabeledUtteranceTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
             var expected = testCaseData.ExpectedUtterance;
@@ -37,7 +37,7 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
         [Category("Entities")]
         [Category("Performance")]
         [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "TestCases")]
-        public void CompareEntities(LabeledUtteranceTestCaseData testCaseData)
+        public static void CompareEntities(LabeledUtteranceTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
             var expected = testCaseData.ExpectedUtterance;
@@ -58,7 +58,7 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
         [Category("Entities")]
         [Category("Performance")]
         [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "EntityTestCases")]
-        public void CompareEntitiesOfType(string entityType, LabeledUtteranceTestCaseData testCaseData)
+        public static void CompareEntitiesOfType(string entityType, LabeledUtteranceTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
             var expected = testCaseData.ExpectedUtterance;

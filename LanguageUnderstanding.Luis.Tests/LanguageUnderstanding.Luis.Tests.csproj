@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\CodeCoverage.props" />
-  <Import Project="..\StyleCop.props" />
+  <Import Project="..\CodeAnalysis.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>

@@ -3,25 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Models", "LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Playground\Playground.csproj", "{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Json", "LanguageUnderstanding.Json\LanguageUnderstanding.Json.csproj", "{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Json", "LanguageUnderstanding.Json\LanguageUnderstanding.Json.csproj", "{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Json.Tests", "LanguageUnderstanding.Json.Tests\LanguageUnderstanding.Json.Tests.csproj", "{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Json.Tests", "LanguageUnderstanding.Json.Tests\LanguageUnderstanding.Json.Tests.csproj", "{B9D98AAE-A15E-43BF-8BFB-CF31D8312A13}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Lex", "LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj", "{26972FE8-130F-479B-B8A5-58BC8DD7A308}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Lex", "LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj", "{26972FE8-130F-479B-B8A5-58BC8DD7A308}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Lex.Tests", "LanguageUnderstanding.Lex.Tests\LanguageUnderstanding.Lex.Tests.csproj", "{87AEDCAE-F7D4-4F63-8586-280CAC75CEF3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Luis", "LanguageUnderstanding.Luis\LanguageUnderstanding.Luis.csproj", "{B52DDC83-32C8-4DCA-8C39-8DBD0A550382}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Luis", "LanguageUnderstanding.Luis\LanguageUnderstanding.Luis.csproj", "{B52DDC83-32C8-4DCA-8C39-8DBD0A550382}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.ModelPerformance.Tests", "LanguageUnderstanding.ModelPerformance.Tests\LanguageUnderstanding.ModelPerformance.Tests.csproj", "{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.ModelPerformance.Tests", "LanguageUnderstanding.ModelPerformance.Tests\LanguageUnderstanding.ModelPerformance.Tests.csproj", "{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.Luis.Tests", "LanguageUnderstanding.Luis.Tests\LanguageUnderstanding.Luis.Tests.csproj", "{280B55DA-272D-44D5-AE73-8730CA96EC0B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.Luis.Tests", "LanguageUnderstanding.Luis.Tests\LanguageUnderstanding.Luis.Tests.csproj", "{280B55DA-272D-44D5-AE73-8730CA96EC0B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LanguageUnderstanding.CommandLine", "LanguageUnderstanding.CommandLine\LanguageUnderstanding.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageUnderstanding.CommandLine", "LanguageUnderstanding.CommandLine\LanguageUnderstanding.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,10 +31,6 @@ Global
 		{6B6B7069-F43F-43AD-87EB-7F0B7583404E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B6B7069-F43F-43AD-87EB-7F0B7583404E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B6B7069-F43F-43AD-87EB-7F0B7583404E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B29D3DAB-9D04-4130-B2A6-EAC5BBDE22F1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C5779F0-FDC6-4C2B-B967-6C6EBB8438D8}.Release|Any CPU.ActiveCfg = Release|Any CPU

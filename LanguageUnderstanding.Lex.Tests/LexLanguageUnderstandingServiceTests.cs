@@ -20,13 +20,13 @@ namespace LanguageUnderstanding.Lex.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal class LexLanguageUnderstandingServiceTests
+    internal static class LexLanguageUnderstandingServiceTests
     {
         private const string TemplatesDirectory = "Templates";
         private static readonly TimeSpan Epsilon = TimeSpan.FromMilliseconds(100);
 
         [Test]
-        public void ThrowsArgumentNull()
+        public static void ThrowsArgumentNull()
         {
             var nullBotName = new Action(() => new LexLanguageUnderstandingService(null, string.Empty, string.Empty, default(ILexClient)));
             var nullBotAlias = new Action(() => new LexLanguageUnderstandingService(string.Empty, null, string.Empty, default(ILexClient)));
@@ -61,7 +61,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public void MissingEntityMatchInTextThrowsInvalidOperation()
+        public static void MissingEntityMatchInTextThrowsInvalidOperation()
         {
             var text = "foo";
             var match = "bar";
@@ -76,7 +76,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public void MissingEntityTypeThrowsInvalidOperation()
+        public static void MissingEntityTypeThrowsInvalidOperation()
         {
             var text = "hello world";
             var intent = Guid.NewGuid().ToString();
@@ -93,7 +93,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task CreatesBot()
+        public static async Task CreatesBot()
         {
             var text = "hello world";
             var intent = Guid.NewGuid().ToString();
@@ -106,7 +106,7 @@ namespace LanguageUnderstanding.Lex.Tests
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
                 var entityType = new BuiltinEntityType(entityTypeName, entityTypeName);
 
-                await lex.TrainAsync(new[] { utterance }, new[] { entityType });
+                await lex.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
 
                 // get StartImport request
                 var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
@@ -140,7 +140,7 @@ namespace LanguageUnderstanding.Lex.Tests
         [TestCase("foo'd foo", "foo", "x", 0, "{x}'d foo")]
         [TestCase("foo'd foo", "foo", "x", 1, "foo'd {x}")]
         [TestCase("foo foo foo", "foo", "x", 2, "foo foo {x}")]
-        public async Task ReplacesCorrectTokensInSampleUtterances(
+        public static async Task ReplacesCorrectTokensInSampleUtterances(
             string text,
             string entityMatch,
             string entityTypeName,
@@ -155,7 +155,7 @@ namespace LanguageUnderstanding.Lex.Tests
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
                 var entityType = new BuiltinEntityType(entityTypeName, entityTypeName);
 
-                await lex.TrainAsync(new[] { utterance }, new[] { entityType });
+                await lex.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
 
                 var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
                 var payloadJson = GetPayloadJson(startImportRequest.Payload);
@@ -168,7 +168,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task WaitsForImportCompletion()
+        public static async Task WaitsForImportCompletion()
         {
             var importId = Guid.NewGuid().ToString();
 
@@ -194,7 +194,7 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
-                await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>());
+                await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // Assert two GetImport actions occur
                 mockClient.Requests.OfType<GetImportRequest>().Count().Should().Be(2);
@@ -215,7 +215,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public void ImportFailureThrowsInvalidOperation()
+        public static void ImportFailureThrowsInvalidOperation()
         {
             var importId = Guid.NewGuid().ToString();
             var failureReason = new List<string>
@@ -245,7 +245,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public void DisposesLexClient()
+        public static void DisposesLexClient()
         {
             var handle = new ManualResetEvent(false);
             var mockClient = new MockLexClient
@@ -260,7 +260,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task WaitsForBuildCompletion()
+        public static async Task WaitsForBuildCompletion()
         {
             var mockClient = new MockLexClient();
             mockClient.Get<GetBotResponse>().Status = Status.BUILDING;
@@ -280,7 +280,7 @@ namespace LanguageUnderstanding.Lex.Tests
             using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
-                await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>());
+                await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // Assert three GetBot actions occur
                 mockClient.Requests.OfType<GetBotRequest>().Count().Should().Be(3);
@@ -301,7 +301,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public void BuildFailureThrowsInvalidOperation()
+        public static void BuildFailureThrowsInvalidOperation()
         {
             var mockClient = new MockLexClient();
             mockClient.Get<GetBotResponse>().Status = Status.BUILDING;
@@ -331,14 +331,14 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task CleanupCallsLexActions()
+        public static async Task CleanupCallsLexActions()
         {
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
             using (var lex = new LexLanguageUnderstandingService(botName, botAlias, TemplatesDirectory, mockClient))
             {
-                await lex.CleanupAsync();
+                await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
                 mockClient.Requests.OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
                 mockClient.Requests.OfType<DeleteBotRequest>().Count().Should().Be(1);
@@ -347,7 +347,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task AddsListSlotTypesToImportJson()
+        public static async Task AddsListSlotTypesToImportJson()
         {
             var mockClient = new MockLexClient();
             using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
@@ -375,7 +375,7 @@ namespace LanguageUnderstanding.Lex.Tests
 
                 var entityTypes = new[] { originalValueListEntityType, topResolutionListEntityType };
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
-                await lex.TrainAsync(new[] { utterance }, entityTypes);
+                await lex.TrainAsync(new[] { utterance }, entityTypes).ConfigureAwait(false);
 
                 var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
                 var payloadJson = GetPayloadJson(startImportRequest.Payload);
@@ -399,7 +399,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task TestsWithSpeech()
+        public static async Task TestsWithSpeech()
         {
             var intent = Guid.NewGuid().ToString();
             var transcript = Guid.NewGuid().ToString();
@@ -412,7 +412,7 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
-                var results = await lex.TestSpeechAsync(new[] { Path.Combine("assets", "sample.txt") }, Array.Empty<EntityType>());
+                var results = await lex.TestSpeechAsync(new[] { Path.Combine("assets", "sample.txt") }, Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // assert reads content from file (file contents are "hello world")
                 var request = mockClient.Requests.OfType<PostContentRequest>().Single();
@@ -429,7 +429,8 @@ namespace LanguageUnderstanding.Lex.Tests
 
                 // test with valid slots response
                 mockClient.Get<PostContentResponse>().Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
-                results = await lex.TestSpeechAsync(new[] { Path.Combine("assets", "sample.txt") }, Array.Empty<EntityType>());
+                results = await lex.TestSpeechAsync(new[] { Path.Combine("assets", "sample.txt") }, Array.Empty<EntityType>()).ConfigureAwait(false);
+
                 results.Count().Should().Be(1);
                 results.First().Entities.Count.Should().Be(1);
                 results.First().Entities[0].EntityType.Should().Be(entityType);
@@ -438,7 +439,7 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        public async Task CreatesLabeledUtterances()
+        public static async Task CreatesLabeledUtterances()
         {
             var text = Guid.NewGuid().ToString();
             var intent = Guid.NewGuid().ToString();
@@ -453,21 +454,21 @@ namespace LanguageUnderstanding.Lex.Tests
             mockClient.Get<PostTextResponse>().IntentName = intent;
             using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
-                var responses = await lex.TestAsync(new[] { text }, Array.Empty<EntityType>());
+                var responses = await lex.TestAsync(new[] { text }, Array.Empty<EntityType>()).ConfigureAwait(false);
                 responses.Count().Should().Be(1);
                 responses.First().Text.Should().Be(text);
                 responses.First().Intent.Should().Be(intent);
                 responses.First().Entities.Should().BeEmpty();
 
                 mockClient.Get<PostTextResponse>().Slots = slots;
-                responses = await lex.TestAsync(new[] { text }, Array.Empty<EntityType>());
+                responses = await lex.TestAsync(new[] { text }, Array.Empty<EntityType>()).ConfigureAwait(false);
                 responses.First().Entities[0].EntityType.Should().Be(entityType);
                 responses.First().Entities[0].EntityValue.Should().Be(entityValue);
             }
         }
 
         [Test]
-        public async Task RunsTestsInParallel()
+        public static async Task RunsTestsInParallel()
         {
             var mockClient = new MockLexClient();
             var degreeOfParallelism = 3;
@@ -509,14 +510,14 @@ namespace LanguageUnderstanding.Lex.Tests
                 taskCompletionSource.SetResult(true);
 
                 // Assert results count
-                var results = await task;
+                var results = await task.ConfigureAwait(false);
                 results.Count().Should().Be(utteranceCount);
             }
         }
 
         [Test]
         [Category("LongRunning")]
-        public void DeleteBotAliasRetries()
+        public static void DeleteBotAliasRetries()
         {
             var mockClient = new MockLexClient();
 
@@ -631,13 +632,13 @@ namespace LanguageUnderstanding.Lex.Tests
 
             public async Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
             {
-                await this.ProcessRequestAsync(request);
+                await this.ProcessRequestAsync(request).ConfigureAwait(false);
                 return this.Get<GetBotResponse>();
             }
 
             public async Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)
             {
-                await this.ProcessRequestAsync(request);
+                await this.ProcessRequestAsync(request).ConfigureAwait(false);
                 return this.Get<GetImportResponse>();
             }
 
@@ -656,14 +657,14 @@ namespace LanguageUnderstanding.Lex.Tests
                     UserId = request.UserId,
                 };
 
-                await this.ProcessRequestAsync(requestCopy);
+                await this.ProcessRequestAsync(requestCopy).ConfigureAwait(false);
 
                 return this.Get<PostContentResponse>();
             }
 
             public async Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
             {
-                await this.ProcessRequestAsync(request);
+                await this.ProcessRequestAsync(request).ConfigureAwait(false);
                 return this.Get<PostTextResponse>();
             }
 
@@ -689,7 +690,7 @@ namespace LanguageUnderstanding.Lex.Tests
                     ResourceType = request.ResourceType,
                 };
 
-                await this.ProcessRequestAsync(requestCopy);
+                await this.ProcessRequestAsync(requestCopy).ConfigureAwait(false);
 
                 return this.Get<StartImportResponse>();
             }

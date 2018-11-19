@@ -32,7 +32,13 @@ namespace LanguageUnderstanding.CommandLine
 
         public void Dispose()
         {
-            if (this.LazyLanguageUnderstandingService.IsValueCreated)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected void Dispose(bool disposing)
+        {
+            if (disposing && this.LazyLanguageUnderstandingService.IsValueCreated)
             {
                 this.LanguageUnderstandingService.Dispose();
             }

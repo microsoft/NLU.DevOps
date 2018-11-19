@@ -5,6 +5,7 @@ namespace LanguageUnderstanding.Json.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -14,12 +15,12 @@ namespace LanguageUnderstanding.Json.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal class SerializationTests
+    internal static class SerializerTests
     {
         [Test]
-        public void ReadsEntities()
+        public static void ReadsEntities()
         {
-            var entities = Serialization.Read<List<EntityType>>(Path.Combine(".", "models", "entities.json"));
+            var entities = Serializer.Read<List<EntityType>>(Path.Combine(".", "models", "entities.json"));
             entities[0].Kind.Should().Be(EntityTypeKind.Builtin);
             entities[0].Name.Should().Be("BookFlight");
             entities[1].Kind.Should().Be(EntityTypeKind.Simple);
@@ -27,9 +28,9 @@ namespace LanguageUnderstanding.Json.Tests
         }
 
         [Test]
-        public void ReadsUtterances()
+        public static void ReadsUtterances()
         {
-            var utterances = Serialization.Read<List<LabeledUtterance>>(Path.Combine(".", "models", "utterances.json"));
+            var utterances = Serializer.Read<List<LabeledUtterance>>(Path.Combine(".", "models", "utterances.json"));
             utterances.Count.Should().Be(3);
             utterances[0].Text.Should().Be("Book me a flight to Cairo");
             utterances[0].Intent.Should().Be("BookFlight");
@@ -48,13 +49,13 @@ namespace LanguageUnderstanding.Json.Tests
         }
 
         [Test]
-        public void ReadLeavesStreamOpen()
+        public static void ReadLeavesStreamOpen()
         {
             var expected = 42;
-            var bytes = Encoding.UTF8.GetBytes(expected.ToString());
+            var bytes = Encoding.UTF8.GetBytes(expected.ToString(CultureInfo.InvariantCulture));
             using (var stream = new MemoryStream(bytes))
             {
-                var actual = Serialization.Read<int>(stream);
+                var actual = Serializer.Read<int>(stream);
                 actual.Should().Be(expected);
 
                 var seek = new Action(() => stream.Position = 0);
@@ -63,7 +64,7 @@ namespace LanguageUnderstanding.Json.Tests
         }
 
         [Test]
-        public void WritesUtterances()
+        public static void WritesUtterances()
         {
             var text = Guid.NewGuid().ToString();
             var intent = Guid.NewGuid().ToString();
@@ -77,7 +78,7 @@ namespace LanguageUnderstanding.Json.Tests
             var path = Path.GetTempFileName();
             try
             {
-                Serialization.Write(path, new[] { utterance });
+                Serializer.Write(path, new[] { utterance });
                 var jsonText = File.ReadAllText(path);
                 var jsonArray = JArray.Parse(jsonText);
 
@@ -107,11 +108,11 @@ namespace LanguageUnderstanding.Json.Tests
         }
 
         [Test]
-        public void WriteLeavesStreamOpen()
+        public static void WriteLeavesStreamOpen()
         {
             using (var stream = new MemoryStream())
             {
-                Serialization.Write(stream, "foo");
+                Serializer.Write(stream, "foo");
                 var seek = new Action(() => stream.Position = 0);
                 seek.Should().NotThrow<ObjectDisposedException>();
             }

@@ -54,7 +54,7 @@ namespace LanguageUnderstanding.Luis
             {
                 request.Method = HttpMethod.Get;
                 request.RequestUri = uri;
-                return await this.HttpClient.SendAsync(request, cancellationToken);
+                return await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -71,7 +71,7 @@ namespace LanguageUnderstanding.Luis
                     request.Content = new StringContent(requestBody, Encoding.UTF8, "text/json");
                 }
 
-                return await this.HttpClient.SendAsync(request, cancellationToken);
+                return await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -80,12 +80,12 @@ namespace LanguageUnderstanding.Luis
         {
             using (var request = new HttpRequestMessage())
             {
-                return await this.HttpClient.DeleteAsync(uri, cancellationToken);
+                return await this.HttpClient.DeleteAsync(uri, cancellationToken).ConfigureAwait(false);
             }
         }
 
         /// <inheritdoc />
-        public async Task<string> RecognizeSpeechAsync(string appId, string speechFile)
+        public async Task<string> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
         {
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
             using (var recognizer = new IntentRecognizer(this.LazySpeechConfig.Value, audioInput))
@@ -93,7 +93,7 @@ namespace LanguageUnderstanding.Luis
                 // Add intents to intent recognizer
                 var model = LanguageUnderstandingModel.FromAppId(appId);
                 recognizer.AddIntent(model, "None", "None");
-                var result = await recognizer.RecognizeOnceAsync();
+                var result = await recognizer.RecognizeOnceAsync().ConfigureAwait(false);
 
                 // Checks result.
                 // For some reason RecognizeOnceAsync always return ResultReason.RecognizedSpeech

@@ -28,9 +28,9 @@ namespace LanguageUnderstanding.CommandLine.Train
             try
             {
                 this.Log("Training NLU service... ", false);
-                var trainingUtterances = Serialization.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-                var entityTypes = Serialization.Read<List<EntityType>>(this.Options.EntityTypesPath);
-                await this.LanguageUnderstandingService.TrainAsync(trainingUtterances, entityTypes);
+                var trainingUtterances = Serializer.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+                var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
+                await this.LanguageUnderstandingService.TrainAsync(trainingUtterances, entityTypes).ConfigureAwait(false);
                 this.Log("Done.");
             }
             finally
@@ -42,7 +42,7 @@ namespace LanguageUnderstanding.CommandLine.Train
                         this.LanguageUnderstandingService);
 
                     var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
-                    await File.WriteAllTextAsync(configPath, serviceConfiguration.ToString());
+                    await File.WriteAllTextAsync(configPath, serviceConfiguration.ToString()).ConfigureAwait(false);
                 }
             }
         }

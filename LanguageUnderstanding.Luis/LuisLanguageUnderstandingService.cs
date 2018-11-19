@@ -126,7 +126,7 @@ namespace LanguageUnderstanding.Luis
             // Create application if not passed in.
             if (this.AppId == null)
             {
-                this.AppId = await this.CreateAppAsync(cancellationToken);
+                this.AppId = await this.CreateAppAsync(cancellationToken).ConfigureAwait(false);
             }
 
             // Get boilerplate JObject
@@ -188,20 +188,20 @@ namespace LanguageUnderstanding.Luis
             }
 
             // This creates a new version (using the versionId passed on initialization)
-            var importResponse = await this.ImportVersionAsync(model, cancellationToken);
+            var importResponse = await this.ImportVersionAsync(model, cancellationToken).ConfigureAwait(false);
             importResponse.EnsureSuccessStatusCode();
 
             // Train
             var uri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
-            var trainResponse = await this.LuisClient.PostAsync(uri, null, cancellationToken);
+            var trainResponse = await this.LuisClient.PostAsync(uri, null, cancellationToken).ConfigureAwait(false);
             trainResponse.EnsureSuccessStatusCode();
 
             // Wait for training to complete
             JArray trainStatusJson;
             while (true)
             {
-                var trainStatusResponse = await this.LuisClient.GetAsync(uri, cancellationToken);
-                var trainStatusContent = await trainStatusResponse.Content.ReadAsStringAsync();
+                var trainStatusResponse = await this.LuisClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
+                var trainStatusContent = await trainStatusResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                 trainStatusJson = JArray.Parse(trainStatusContent);
                 var inProgress = trainStatusJson.SelectTokens("[*].details.status")
                     .Select(statusJson => statusJson.Value<string>())
@@ -212,7 +212,7 @@ namespace LanguageUnderstanding.Luis
                     break;
                 }
 
-                await Task.Delay(TrainStatusDelay, cancellationToken);
+                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
             }
 
             // Ensure no failures occurred while training
@@ -223,7 +223,7 @@ namespace LanguageUnderstanding.Luis
             }
 
             // Publish
-            await this.PublishAppAsync(cancellationToken);
+            await this.PublishAppAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -261,15 +261,15 @@ namespace LanguageUnderstanding.Luis
                 var uri = new Uri($"{this.EndpointHost}{QueryBasePath}{this.AppId}?q={utterance}{staging}");
                 while (true)
                 {
-                    var response = await this.LuisClient.GetAsync(uri, cancellationToken);
+                    var response = await this.LuisClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
                     if (response.StatusCode == (HttpStatusCode)429)
                     {
-                        await Task.Delay(ThrottleQueryDelay, cancellationToken);
+                        await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
                     response.EnsureSuccessStatusCode();
-                    var json = await response.Content.ReadAsStringAsync();
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var labeledUtterance = PredictionToLabeledUtterance(json, entityTypes);
                     labeledUtterances.Add(labeledUtterance);
                     break;
@@ -297,7 +297,7 @@ namespace LanguageUnderstanding.Luis
                     throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
                 }
 
-                var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile);
+                var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile, cancellationToken).ConfigureAwait(false);
                 return PredictionToLabeledUtterance(jsonResult, entityTypes);
             }
 
@@ -309,7 +309,7 @@ namespace LanguageUnderstanding.Luis
         {
             Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
             var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}");
-            var cleanupResponse = await this.LuisClient.DeleteAsync(uri, cancellationToken);
+            var cleanupResponse = await this.LuisClient.DeleteAsync(uri, cancellationToken).ConfigureAwait(false);
             cleanupResponse.EnsureSuccessStatusCode();
         }
 
@@ -410,7 +410,7 @@ namespace LanguageUnderstanding.Luis
 
             async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
             {
-                var result = await selector(item, i);
+                var result = await selector(item, i).ConfigureAwait(false);
                 return Tuple.Create(i, result);
             }
 
@@ -418,19 +418,19 @@ namespace LanguageUnderstanding.Luis
             {
                 if (tasks.Count == DegreeOfParallelism)
                 {
-                    var task = await Task.WhenAny(tasks);
+                    var task = await Task.WhenAny(tasks).ConfigureAwait(false);
                     tasks.Remove(task);
-                    var result = await task;
+                    var result = await task.ConfigureAwait(false);
                     results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
                 }
 
                 tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
             foreach (var task in tasks)
             {
-                var result = await task;
+                var result = await task.ConfigureAwait(false);
                 results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
             }
 
@@ -479,9 +479,9 @@ namespace LanguageUnderstanding.Luis
 
             var uri = new Uri($"{this.AuthoringHost}{BasePath}");
             var requestBody = requestJson.ToString(Formatting.None);
-            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken);
+            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var jsonString = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
             var json = JToken.Parse(jsonString);
             return json.ToString();
         }
@@ -515,7 +515,7 @@ namespace LanguageUnderstanding.Luis
 
             var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}publish");
             var requestBody = requestJson.ToString(Formatting.None);
-            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken);
+            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
         }
     }

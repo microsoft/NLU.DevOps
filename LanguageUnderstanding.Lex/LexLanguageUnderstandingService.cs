@@ -25,7 +25,7 @@ namespace LanguageUnderstanding.Lex
     /// <summary>
     /// Language understanding service for Amazon Lex.
     /// </summary>
-    public class LexLanguageUnderstandingService : ILanguageUnderstandingService
+    public sealed class LexLanguageUnderstandingService : ILanguageUnderstandingService
     {
         private const int DegreeOfParallelism = 3;
         private const int RetryCount = 5;
@@ -88,19 +88,19 @@ namespace LanguageUnderstanding.Lex
             ValidateArguments(utterances, entityTypes);
 
             // Create the bot
-            await this.CreateBotAsync(cancellationToken);
+            await this.CreateBotAsync(cancellationToken).ConfigureAwait(false);
 
             // Generate the bot configuration
             var importJson = this.CreateImportJson(utterances, entityTypes);
 
             // Import the bot configuration
-            await this.ImportBotAsync(importJson, cancellationToken);
+            await this.ImportBotAsync(importJson, cancellationToken).ConfigureAwait(false);
 
             // Build the bot
-            await this.BuildBotAsync(cancellationToken);
+            await this.BuildBotAsync(cancellationToken).ConfigureAwait(false);
 
             // Publish the bot
-            await this.PublishBotAsync(cancellationToken);
+            await this.PublishBotAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -131,7 +131,7 @@ namespace LanguageUnderstanding.Lex
                     InputText = utterance,
                 };
 
-                var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken);
+                var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken).ConfigureAwait(false);
                 var entities = postTextResponse.Slots?
                     .Where(slot => slot.Value != null)
                     .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
@@ -178,7 +178,7 @@ namespace LanguageUnderstanding.Lex
                         InputStream = stream,
                     };
 
-                    var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken);
+                    var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken).ConfigureAwait(false);
                     var slots = postContentResponse.Slots != null
                         ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
                             .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
@@ -198,8 +198,8 @@ namespace LanguageUnderstanding.Lex
         /// <inheritdoc />
         public async Task CleanupAsync(CancellationToken cancellationToken)
         {
-            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAliasAsync, cancellationToken);
-            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAsync, cancellationToken);
+            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAliasAsync, cancellationToken).ConfigureAwait(false);
+            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAsync, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -259,7 +259,7 @@ namespace LanguageUnderstanding.Lex
                 {
                     var importJsonString = importJson.ToString();
                     var importJsonBytes = Encoding.UTF8.GetBytes(importJsonString);
-                    await entryStream.WriteAsync(importJsonBytes, 0, importJsonBytes.Length, cancellationToken);
+                    await entryStream.WriteAsync(importJsonBytes, 0, importJsonBytes.Length, cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -275,7 +275,7 @@ namespace LanguageUnderstanding.Lex
 
             async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
             {
-                var result = await selector(item, i);
+                var result = await selector(item, i).ConfigureAwait(false);
                 return Tuple.Create(i, result);
             }
 
@@ -283,19 +283,19 @@ namespace LanguageUnderstanding.Lex
             {
                 if (tasks.Count == DegreeOfParallelism)
                 {
-                    var task = await Task.WhenAny(tasks);
+                    var task = await Task.WhenAny(tasks).ConfigureAwait(false);
                     tasks.Remove(task);
-                    var result = await task;
+                    var result = await task.ConfigureAwait(false);
                     results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
                 }
 
                 tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
             foreach (var task in tasks)
             {
-                var result = await task;
+                var result = await task.ConfigureAwait(false);
                 results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
             }
 
@@ -310,13 +310,13 @@ namespace LanguageUnderstanding.Lex
             {
                 try
                 {
-                    await actionAsync(cancellationToken);
+                    await actionAsync(cancellationToken).ConfigureAwait(false);
                     return;
                 }
                 catch (TException)
                 when (count < RetryCount)
                 {
-                    await Task.Delay(RetryDelay, cancellationToken);
+                    await Task.Delay(RetryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -441,7 +441,7 @@ namespace LanguageUnderstanding.Lex
             using (var stream = new MemoryStream())
             {
                 // Generate zip archive with imports JSON
-                await WriteJsonZipAsync(stream, importJson, cancellationToken);
+                await WriteJsonZipAsync(stream, importJson, cancellationToken).ConfigureAwait(false);
 
                 // Call StartImport action on Amazon Lex
                 var startImportRequest = new StartImportRequest
@@ -451,12 +451,12 @@ namespace LanguageUnderstanding.Lex
                     ResourceType = ResourceType.BOT,
                 };
 
-                var startImportResponse = await this.LexClient.StartImportAsync(startImportRequest, cancellationToken);
+                var startImportResponse = await this.LexClient.StartImportAsync(startImportRequest, cancellationToken).ConfigureAwait(false);
 
                 // If the import is not complete, poll until import is complete
                 if (startImportResponse.ImportStatus != ImportStatus.COMPLETE)
                 {
-                    await this.PollBotImportStatusAsync(startImportResponse.ImportId, cancellationToken);
+                    await this.PollBotImportStatusAsync(startImportResponse.ImportId, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -472,7 +472,7 @@ namespace LanguageUnderstanding.Lex
             while (true)
             {
                 // Check the status of the import operation
-                var getImportResponse = await this.LexClient.GetImportAsync(getImportRequest, cancellationToken);
+                var getImportResponse = await this.LexClient.GetImportAsync(getImportRequest, cancellationToken).ConfigureAwait(false);
 
                 // If complete, break from the loop
                 if (getImportResponse.ImportStatus == ImportStatus.COMPLETE)
@@ -489,7 +489,7 @@ namespace LanguageUnderstanding.Lex
 
                 // If in progress, delay with linear backoff
                 var delay = TimeSpan.FromSeconds(GetImportDelaySeconds * ++count);
-                await Task.Delay(delay, cancellationToken);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -502,7 +502,7 @@ namespace LanguageUnderstanding.Lex
                 VersionOrAlias = "$LATEST",
             };
 
-            var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken);
+            var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken).ConfigureAwait(false);
 
             // Call PutBot with the latest GetBot response
             var putBotBuildRequest = JObject.FromObject(getBotResponse).ToObject<PutBotRequest>();
@@ -513,10 +513,10 @@ namespace LanguageUnderstanding.Lex
             putBotBuildRequest.AbortStatement.Messages.First().GroupNumber = 1;
             putBotBuildRequest.ClarificationPrompt.Messages.First().GroupNumber = 1;
 
-            await this.LexClient.PutBotAsync(putBotBuildRequest, cancellationToken);
+            await this.LexClient.PutBotAsync(putBotBuildRequest, cancellationToken).ConfigureAwait(false);
 
             // Poll for until bot is ready
-            await this.PollBotReadyStatusAsync(cancellationToken);
+            await this.PollBotReadyStatusAsync(cancellationToken).ConfigureAwait(false);
         }
 
         private async Task PollBotReadyStatusAsync(CancellationToken cancellationToken)
@@ -531,7 +531,7 @@ namespace LanguageUnderstanding.Lex
             var count = 0;
             while (true)
             {
-                var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken);
+                var getBotResponse = await this.LexClient.GetBotAsync(getBotRequest, cancellationToken).ConfigureAwait(false);
                 if (getBotResponse.Status == Status.READY)
                 {
                     break;
@@ -551,7 +551,7 @@ namespace LanguageUnderstanding.Lex
 
                 // If building, delay with linear backoff
                 var delay = TimeSpan.FromSeconds(GetBotDelaySeconds * ++count);
-                await Task.Delay(delay, cancellationToken);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -565,7 +565,7 @@ namespace LanguageUnderstanding.Lex
                     Name = this.BotAlias,
                 };
 
-                await this.LexClient.DeleteBotAliasAsync(deleteBotAliasRequest, cancellationToken);
+                await this.LexClient.DeleteBotAliasAsync(deleteBotAliasRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Amazon.LexModelBuildingService.Model.NotFoundException)
             {
@@ -583,7 +583,7 @@ namespace LanguageUnderstanding.Lex
                     Name = this.BotName,
                 };
 
-                await this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken);
+                await this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Amazon.LexModelBuildingService.Model.NotFoundException)
             {
@@ -602,7 +602,7 @@ namespace LanguageUnderstanding.Lex
                 Name = this.BotAlias,
             };
 
-            await this.LexClient.PutBotAliasAsync(putBotAliasRequest, cancellationToken);
+            await this.LexClient.PutBotAliasAsync(putBotAliasRequest, cancellationToken).ConfigureAwait(false);
         }
     }
 }

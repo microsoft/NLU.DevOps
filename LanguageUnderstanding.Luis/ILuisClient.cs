@@ -43,7 +43,8 @@ namespace LanguageUnderstanding.Luis
         /// </summary>
         /// <param name="appId">LUIS app ID.</param>
         /// <param name="speechFile">Path to file.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>JSON string result from LUIS recognition.</returns>
-        Task<string> RecognizeSpeechAsync(string appId, string speechFile);
+        Task<string> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
     }
 }
