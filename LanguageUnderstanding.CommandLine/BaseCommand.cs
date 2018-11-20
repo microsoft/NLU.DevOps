@@ -64,14 +64,14 @@ namespace LanguageUnderstanding.CommandLine
             var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory);
 
-            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.local.json")))
-            {
-                configurationBuilder.AddJsonFile("appsettings.local.json");
-            }
-
             if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json")))
             {
                 configurationBuilder.AddJsonFile($"appsettings.{this.Options.Service}.json");
+            }
+
+            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.local.json")))
+            {
+                configurationBuilder.AddJsonFile("appsettings.local.json");
             }
 
             return configurationBuilder

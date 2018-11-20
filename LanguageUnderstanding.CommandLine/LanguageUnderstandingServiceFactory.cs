@@ -69,8 +69,7 @@ namespace LanguageUnderstanding.CommandLine
         {
             var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
-            var userDefinedAlias = configuration[LexBotAliasConfigurationKey];
-            var botAlias = userDefinedAlias ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
+            var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
             return new LexLanguageUnderstandingService(botName, botAlias, TemplatesPath, credentials, regionEndpoint);

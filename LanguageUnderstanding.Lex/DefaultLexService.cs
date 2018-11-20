@@ -34,9 +34,19 @@ namespace LanguageUnderstanding.Lex
             return this.LexModelClient.DeleteBotAsync(request, cancellationToken);
         }
 
+        public Task<GetBotAliasesResponse> GetBotAliasesAsync(GetBotAliasesRequest request, CancellationToken cancellationToken)
+        {
+            return this.LexModelClient.GetBotAliasesAsync(request, cancellationToken);
+        }
+
         public Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
         {
             return this.LexModelClient.GetBotAsync(request, cancellationToken);
+        }
+
+        public Task<GetBotsResponse> GetBotsAsync(GetBotsRequest request, CancellationToken cancellationToken)
+        {
+            return this.LexModelClient.GetBotsAsync(request, cancellationToken);
         }
 
         public Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)

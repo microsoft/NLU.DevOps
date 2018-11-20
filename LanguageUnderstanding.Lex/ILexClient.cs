@@ -31,12 +31,28 @@ namespace LanguageUnderstanding.Lex
         Task DeleteBotAsync(DeleteBotRequest request, CancellationToken cancellationToken);
 
         /// <summary>
+        /// Calls the 'GetBotAliases' action on Lex.
+        /// </summary>
+        /// <returns>Task to await the bot aliases response.</returns>
+        /// <param name="request">Request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<GetBotAliasesResponse> GetBotAliasesAsync(GetBotAliasesRequest request, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Calls the 'GetBot' action on Lex.
         /// </summary>
         /// <returns>Task to await the bot response.</returns>
         /// <param name="request">Request.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Calls the 'GetBots' action on Lex.
+        /// </summary>
+        /// <returns>Task to await the bots response.</returns>
+        /// <param name="request">Request.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<GetBotsResponse> GetBotsAsync(GetBotsRequest request, CancellationToken cancellationToken);
 
         /// <summary>
         /// Calls the 'GetImport' action on Lex.

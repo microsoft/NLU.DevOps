@@ -563,6 +563,58 @@ namespace LanguageUnderstanding.Lex.Tests
             }
         }
 
+        [Test]
+        public static async Task DoesNotCreateIfBotExists()
+        {
+            var botName = Guid.NewGuid().ToString();
+            var mockClient = new MockLexClient();
+            mockClient.Set(new GetBotsResponse
+            {
+                Bots = new List<BotMetadata>
+                {
+                    new BotMetadata
+                    {
+                        Name = botName,
+                    },
+                },
+            });
+
+            using (var lex = new LexLanguageUnderstandingService(botName, string.Empty, TemplatesDirectory, mockClient))
+            {
+                await lex.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+
+                // There are at most two put bot requests, the first to create the bot, the second to build
+                // If the bot exists, only the second put bot to build should occur.
+                mockClient.Requests.OfType<PutBotRequest>().Count().Should().Be(1);
+                mockClient.Requests.OfType<PutBotRequest>().First().ProcessBehavior.Should().Be(ProcessBehavior.BUILD);
+            }
+        }
+
+        [Test]
+        public static async Task DoesNotPublishIfAliasExists()
+        {
+            var botAlias = Guid.NewGuid().ToString();
+            var mockClient = new MockLexClient();
+            mockClient.Set(new GetBotAliasesResponse
+            {
+                BotAliases = new List<BotAliasMetadata>
+                {
+                    new BotAliasMetadata
+                    {
+                        Name = botAlias,
+                    },
+                },
+            });
+
+            using (var lex = new LexLanguageUnderstandingService(string.Empty, botAlias, TemplatesDirectory, mockClient))
+            {
+                await lex.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+
+                // If the bot alias exists, the 'PutBotAlias' request should not occur
+                mockClient.Requests.OfType<PutBotAliasRequest>().Count().Should().Be(0);
+            }
+        }
+
         private static string GetPayloadJson(Stream payloadStream)
         {
             using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read, true))
@@ -630,10 +682,22 @@ namespace LanguageUnderstanding.Lex.Tests
                 return this.ProcessRequestAsync(request);
             }
 
+            public async Task<GetBotAliasesResponse> GetBotAliasesAsync(GetBotAliasesRequest request, CancellationToken cancellationToken)
+            {
+                await this.ProcessRequestAsync(request).ConfigureAwait(false);
+                return this.Get<GetBotAliasesResponse>();
+            }
+
             public async Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
             {
                 await this.ProcessRequestAsync(request).ConfigureAwait(false);
                 return this.Get<GetBotResponse>();
+            }
+
+            public async Task<GetBotsResponse> GetBotsAsync(GetBotsRequest request, CancellationToken cancellationToken)
+            {
+                await this.ProcessRequestAsync(request).ConfigureAwait(false);
+                return this.Get<GetBotsResponse>();
             }
 
             public async Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)

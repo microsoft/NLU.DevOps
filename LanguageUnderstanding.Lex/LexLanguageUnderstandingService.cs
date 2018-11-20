@@ -87,8 +87,14 @@ namespace LanguageUnderstanding.Lex
             // Validate arguments
             ValidateArguments(utterances, entityTypes);
 
-            // Create the bot
-            await this.CreateBotAsync(cancellationToken).ConfigureAwait(false);
+            // Check if bot exists
+            var botExists = await this.BotExistsAsync(cancellationToken).ConfigureAwait(false);
+
+            // Create the bot if does not exist
+            if (!botExists)
+            {
+                await this.CreateBotAsync(cancellationToken).ConfigureAwait(false);
+            }
 
             // Generate the bot configuration
             var importJson = this.CreateImportJson(utterances, entityTypes);
@@ -99,8 +105,12 @@ namespace LanguageUnderstanding.Lex
             // Build the bot
             await this.BuildBotAsync(cancellationToken).ConfigureAwait(false);
 
-            // Publish the bot
-            await this.PublishBotAsync(cancellationToken).ConfigureAwait(false);
+            // Publish the bot if not published
+            var isPublished = await this.IsPublishedAsync(cancellationToken).ConfigureAwait(false);
+            if (!isPublished)
+            {
+                await this.PublishBotAsync(cancellationToken).ConfigureAwait(false);
+            }
         }
 
         /// <inheritdoc />
@@ -321,6 +331,19 @@ namespace LanguageUnderstanding.Lex
             }
         }
 
+        private async Task<bool> BotExistsAsync(CancellationToken cancellationToken)
+        {
+            // Get the latest bot configuration
+            var getBotsRequest = new GetBotsRequest
+            {
+                NameContains = this.BotName,
+            };
+
+            var getBotsResponse = await this.LexClient.GetBotsAsync(getBotsRequest, cancellationToken).ConfigureAwait(false);
+            var botMatch = getBotsResponse.Bots.FirstOrDefault(bot => bot.Name == this.BotName);
+            return botMatch != null;
+        }
+
         private Task CreateBotAsync(CancellationToken cancellationToken)
         {
             // Create a new bot with the given name
@@ -537,6 +560,12 @@ namespace LanguageUnderstanding.Lex
                     break;
                 }
 
+                // After importing an unchanged bot, a bot status will be "NOT_BUILT"
+                if (getBotResponse.Status == Status.NOT_BUILT)
+                {
+                    break;
+                }
+
                 if (getBotResponse.Status == Status.FAILED)
                 {
                     var exceptionMessage = string.Join(Environment.NewLine, getBotResponse.FailureReason);
@@ -590,6 +619,19 @@ namespace LanguageUnderstanding.Lex
                 // Likely that bot was not created
                 // TODO: log that this exception occurred
             }
+        }
+
+        private async Task<bool> IsPublishedAsync(CancellationToken cancellationToken)
+        {
+            var getBotAliasesRequest = new GetBotAliasesRequest
+            {
+                BotName = this.BotName,
+                NameContains = this.BotAlias,
+            };
+
+            var getBotAliasesResponse = await this.LexClient.GetBotAliasesAsync(getBotAliasesRequest, cancellationToken).ConfigureAwait(false);
+            var botAliasMatch = getBotAliasesResponse.BotAliases.FirstOrDefault(botAlias => botAlias.Name == this.BotAlias);
+            return botAliasMatch != null;
         }
 
         private async Task PublishBotAsync(CancellationToken cancellationToken)
