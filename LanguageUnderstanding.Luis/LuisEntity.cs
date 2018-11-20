@@ -34,13 +34,13 @@ namespace LanguageUnderstanding.Luis
         /// <summary>
         /// Gets the occurrence index of matching token in the utterance.
         /// </summary>
-        [JsonProperty("startIndex")]
+        [JsonProperty("startPos")]
         public int StartCharIndex { get; }
 
         /// <summary>
         /// Gets the index of the end of the matching token in the utterance.
         /// </summary>
-        [JsonProperty("endIndex")]
+        [JsonProperty("endPos")]
         public int EndCharIndex { get; }
 
         /// <summary>

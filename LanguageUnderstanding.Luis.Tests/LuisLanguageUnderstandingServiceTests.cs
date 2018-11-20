@@ -78,8 +78,8 @@ namespace LanguageUnderstanding.Luis.Tests
             var actualString = JsonConvert.SerializeObject(luisEntity);
             var actual = JObject.Parse(actualString);
             actual.Value<string>("entity").Should().Be(entityType);
-            actual.Value<int>("startIndex").Should().Be(2);
-            actual.Value<int>("endIndex").Should().Be(8);
+            actual.Value<int>("startPos").Should().Be(2);
+            actual.Value<int>("endPos").Should().Be(8);
         }
 
         [Test]
@@ -130,11 +130,11 @@ namespace LanguageUnderstanding.Luis.Tests
             actual.Value<string>("intent").Should().Be(intent);
             actual["entities"].As<JArray>().Count.Should().Be(2);
             actual.SelectToken(".entities[0].entity").Value<string>().Should().Be(luisEntities[0].EntityName);
-            actual.SelectToken(".entities[0].startIndex").Value<int>().Should().Be(luisEntities[0].StartCharIndex);
-            actual.SelectToken(".entities[0].endIndex").Value<int>().Should().Be(luisEntities[0].EndCharIndex);
+            actual.SelectToken(".entities[0].startPos").Value<int>().Should().Be(luisEntities[0].StartCharIndex);
+            actual.SelectToken(".entities[0].endPos").Value<int>().Should().Be(luisEntities[0].EndCharIndex);
             actual.SelectToken(".entities[1].entity").Value<string>().Should().Be(luisEntities[1].EntityName);
-            actual.SelectToken(".entities[1].startIndex").Value<int>().Should().Be(luisEntities[1].StartCharIndex);
-            actual.SelectToken(".entities[1].endIndex").Value<int>().Should().Be(luisEntities[1].EndCharIndex);
+            actual.SelectToken(".entities[1].startPos").Value<int>().Should().Be(luisEntities[1].StartCharIndex);
+            actual.SelectToken(".entities[1].endPos").Value<int>().Should().Be(luisEntities[1].EndCharIndex);
         }
 
         [Test]
@@ -348,15 +348,15 @@ namespace LanguageUnderstanding.Luis.Tests
                 bookUtterance.Should().NotBeNull();
                 bookUtterance.Value<string>("text").Should().Be(utterances[0].Text);
                 bookUtterance.SelectToken(".entities[0].entity").Value<string>().Should().Be(utterances[0].Entities[0].EntityType);
-                bookUtterance.SelectToken(".entities[0].startIndex").Value<int>().Should().Be(5);
-                bookUtterance.SelectToken(".entities[0].endIndex").Value<int>().Should().Be(6);
+                bookUtterance.SelectToken(".entities[0].startPos").Value<int>().Should().Be(5);
+                bookUtterance.SelectToken(".entities[0].endPos").Value<int>().Should().Be(6);
 
                 var cancelUtterance = importUtterances.FirstOrDefault(token => token.Value<string>("intent") == utterances[1].Intent);
                 cancelUtterance.Should().NotBeNull();
                 cancelUtterance.Value<string>("text").Should().Be(utterances[1].Text);
                 cancelUtterance.SelectToken(".entities[0].entity").Value<string>().Should().Be(utterances[1].Entities[0].EntityType);
-                cancelUtterance.SelectToken(".entities[0].startIndex").Value<int>().Should().Be(10);
-                cancelUtterance.SelectToken(".entities[0].endIndex").Value<int>().Should().Be(15);
+                cancelUtterance.SelectToken(".entities[0].startPos").Value<int>().Should().Be(10);
+                cancelUtterance.SelectToken(".entities[0].endPos").Value<int>().Should().Be(15);
 
                 // Expect 2 entities
                 var entities = jsonBody.SelectToken(".entities").As<JArray>();

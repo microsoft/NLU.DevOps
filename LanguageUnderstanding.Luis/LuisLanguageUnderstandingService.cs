@@ -161,6 +161,7 @@ namespace LanguageUnderstanding.Luis
             // Add entities to model
             var entitiesArray = (JArray)model["entities"];
             var prebuiltEntitiesArray = (JArray)model["prebuiltEntities"];
+            var closedListsArray = (JArray)model["closedLists"];
             foreach (var entityType in entityTypes)
             {
                 if (entityType == null)
@@ -181,6 +182,28 @@ namespace LanguageUnderstanding.Luis
                         prebuiltEntitiesArray.Add(new JObject(
                             new JProperty("name", builtinEntityType.BuiltinId),
                             new JProperty("roles", new JArray())));
+                        break;
+                    case EntityTypeKind.List:
+                        var listEntityType = (ListEntityType)entityType;
+                        var entityTypeJson = new JObject(
+                            new JProperty("name", listEntityType.Name),
+                            new JProperty("roles", new JArray()));
+                        var subLists = new JArray();
+                        foreach (var synonymSet in listEntityType.Values)
+                        {
+                            var entityJson = new JObject(new JProperty("canonicalForm", synonymSet.CanonicalForm));
+                            var list = new JArray();
+                            foreach (var synonym in synonymSet.Synonyms)
+                            {
+                                list.Add(synonym);
+                            }
+
+                            entityJson.Add("list", list);
+                            subLists.Add(entityJson);
+                        }
+
+                        entityTypeJson.Add("subLists", subLists);
+                        closedListsArray.Add(entityTypeJson);
                         break;
                     default:
                         throw new NotImplementedException();
