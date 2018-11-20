@@ -6,34 +6,33 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
     using System;
     using Models;
 
-    internal class LabeledUtteranceTestCaseData
+    internal class EntityTestCaseData
     {
-        public LabeledUtteranceTestCaseData(
-            LabeledUtterance expectedUtterance,
+        public EntityTestCaseData(
+            Entity expectedEntity,
             LabeledUtterance actualUtterance,
+            string text,
             string testLabel)
         {
-            this.ExpectedUtterance = expectedUtterance ?? throw new ArgumentNullException(nameof(expectedUtterance));
+            this.ExpectedEntity = expectedEntity ?? throw new ArgumentNullException(nameof(expectedEntity));
             this.ActualUtterance = actualUtterance ?? throw new ArgumentNullException(nameof(actualUtterance));
+            this.Text = text;
             this.TestLabel = testLabel;
         }
 
+        public Entity ExpectedEntity { get; }
+
         public LabeledUtterance ActualUtterance { get; }
 
-        public LabeledUtterance ExpectedUtterance { get; }
+        private string Text { get; }
 
-        /// <summary>
-        /// Gets the test label.
-        /// </summary>
-        /// <remarks>
-        /// The test label is useful for discriminating between tests for audio and text.
-        /// </remarks>
-        public string TestLabel { get; }
+        private string TestLabel { get; }
 
         public override string ToString()
         {
+            var entityValue = this.ExpectedEntity.MatchText ?? this.ExpectedEntity.EntityValue;
             var testLabelText = this.TestLabel != null ? $"{this.TestLabel}: " : string.Empty;
-            return $"{testLabelText}\"{this.ExpectedUtterance.Text}\"";
+            return $"{testLabelText}{this.ExpectedEntity.EntityType}, \"{entityValue}\", \"{this.Text}\"";
         }
     }
 }

@@ -11,7 +11,7 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
     using Microsoft.Extensions.Configuration;
     using Models;
 
-    internal class LabeledUtteranceTestCaseSource
+    internal class ModelPerformanceTestCaseSource
     {
         private const string AppSettingsPath = "appsettings.json";
         private const string AppSettingsLocalPath = "appsettings.local.json";
@@ -36,13 +36,33 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
             }
         }
 
-        public static IEnumerable<object[]> EntityTestCases
+        public static IEnumerable<EntityTestCaseData> ExpectedEntityTestCases
         {
             get
             {
                 return from testCase in TestCases
-                       from entityType in DistinctEntityTypes(testCase.ExpectedUtterance)
-                       select new object[] { entityType, testCase };
+                       from entityTestCase in GetEntityTestCaseData(testCase, testCase.ExpectedUtterance)
+                       select entityTestCase;
+            }
+        }
+
+        public static IEnumerable<EntityTestCaseData> ActualEntityTestCases
+        {
+            get
+            {
+                return from testCase in TestCases
+                       from entityTestCase in GetEntityTestCaseData(testCase, testCase.ActualUtterance)
+                       select entityTestCase;
+            }
+        }
+
+        public static IEnumerable<EntityTestCaseData> ExpectedEntityValueTestCases
+        {
+            get
+            {
+                return from entityTestCase in ExpectedEntityTestCases
+                       where entityTestCase.ExpectedEntity.EntityValue != null
+                       select entityTestCase;
             }
         }
 
@@ -66,9 +86,22 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
                 (expected, actual) => new LabeledUtteranceTestCaseData(expected, actual, testLabel));
         }
 
-        private static IEnumerable<string> DistinctEntityTypes(LabeledUtterance utterance)
+        private static IEnumerable<EntityTestCaseData> GetEntityTestCaseData(
+            LabeledUtteranceTestCaseData testCase,
+            LabeledUtterance utterance)
         {
-            return utterance.Entities?.Select(entity => entity.EntityType).Distinct() ?? Array.Empty<string>();
+            var otherUtterance = testCase.ExpectedUtterance == utterance
+                ? testCase.ActualUtterance
+                : testCase.ExpectedUtterance;
+
+            var entityTestCases = utterance.Entities?
+                .Select(entity => new EntityTestCaseData(
+                    entity,
+                    otherUtterance,
+                    testCase.ExpectedUtterance.Text,
+                    testCase.TestLabel));
+
+            return entityTestCases ?? Array.Empty<EntityTestCaseData>();
         }
     }
 }

@@ -14,8 +14,8 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
         [Test]
         [Category("Intent")]
         [Category("Performance")]
-        [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "TestCases")]
-        public static void CompareIntents(LabeledUtteranceTestCaseData testCaseData)
+        [TestCaseSource(typeof(ModelPerformanceTestCaseSource), "TestCases")]
+        public static void CompareIntent(LabeledUtteranceTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
             var expected = testCaseData.ExpectedUtterance;
@@ -25,7 +25,7 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
         [Test]
         [Category("Text")]
         [Category("Performance")]
-        [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "TestCases")]
+        [TestCaseSource(typeof(ModelPerformanceTestCaseSource), "TestCases")]
         public static void CompareText(LabeledUtteranceTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
@@ -36,44 +36,42 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
         [Test]
         [Category("Entities")]
         [Category("Performance")]
-        [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "TestCases")]
-        public static void CompareEntities(LabeledUtteranceTestCaseData testCaseData)
+        [TestCaseSource(typeof(ModelPerformanceTestCaseSource), "ExpectedEntityTestCases")]
+        public static void CompareExpectedEntity(EntityTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
-            var expected = testCaseData.ExpectedUtterance;
-
-            if (expected.Entities == null)
-            {
-                actual.Entities.Should().BeNull();
-                return;
-            }
-
-            actual.Entities.Count.Should().Be(expected.Entities.Count);
-            expected.Entities
-                .All(expectedEntity => actual.Entities.Any(actualEntity => IsEntityMatch(expectedEntity, actualEntity)))
-                .Should().BeTrue();
+            var expectedEntity = testCaseData.ExpectedEntity;
+            actual.Entities.Any(actualEntity => IsEntityMatch(expectedEntity, actualEntity)).Should().BeTrue();
         }
 
         [Test]
         [Category("Entities")]
         [Category("Performance")]
-        [TestCaseSource(typeof(LabeledUtteranceTestCaseSource), "EntityTestCases")]
-        public static void CompareEntitiesOfType(string entityType, LabeledUtteranceTestCaseData testCaseData)
+        [TestCaseSource(typeof(ModelPerformanceTestCaseSource), "ExpectedEntityValueTestCases")]
+        public static void CompareExpectedEntityValue(EntityTestCaseData testCaseData)
         {
             var actual = testCaseData.ActualUtterance;
-            var expected = testCaseData.ExpectedUtterance;
+            var expectedEntity = testCaseData.ExpectedEntity;
+            actual.Entities.Any(actualEntity => expectedEntity.EntityValue == actualEntity.EntityValue).Should().BeTrue();
+        }
 
-            expected.Entities
-                .Where(entity => entity.EntityType == entityType)
-                .All(expectedEntity => actual.Entities.Any(actualEntity => IsEntityMatch(expectedEntity, actualEntity)))
-                .Should().BeTrue();
+        [Test]
+        [Category("Entities")]
+        [Category("Performance")]
+        [TestCaseSource(typeof(ModelPerformanceTestCaseSource), "ActualEntityTestCases")]
+        public static void CompareExtractedEntity(EntityTestCaseData testCaseData)
+        {
+            var actual = testCaseData.ActualUtterance;
+            var expectedEntity = testCaseData.ExpectedEntity;
+            actual.Entities.Any(actualEntity => IsEntityMatch(expectedEntity, actualEntity)).Should().BeTrue();
         }
 
         private static bool IsEntityMatch(Entity expected, Entity actual)
         {
-            var expectedEntityValue = expected.EntityValue ?? expected.MatchText;
-            var actualEntityValue = actual.EntityValue ?? actual.MatchText;
-            return expected.EntityType == actual.EntityType && expectedEntityValue == actualEntityValue;
+            return expected.MatchText == actual.MatchText
+                || expected.MatchText == actual.EntityValue
+                || expected.EntityValue == actual.EntityValue
+                || expected.EntityValue == actual.MatchText;
         }
     }
 }

@@ -15,5 +15,17 @@
     "entities": [],
     "intent": "None",
     "text": "Order me 2 pizzas"
+  },
+  {
+    "entities": [
+      {
+        "entityType": "City",
+        "entityValue": "New York City",
+        "matchText": null,
+        "matchIndex": 0
+      }
+    ],
+    "intent": "BookFlight",
+    "text": "show me flights to the big apple"
   }
 ]
