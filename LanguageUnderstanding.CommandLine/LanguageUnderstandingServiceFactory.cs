@@ -36,6 +36,8 @@ namespace LanguageUnderstanding.CommandLine
         private const string LuisEndpointRegionConfigurationKey = "LUIS_ENDPOINT_REGION";
         private const string LuisIsStagingConfigurationKey = "LUIS_IS_STAGING";
 
+        private const string BuildIdConfigurationKey = "NLU_BUILD_ID";
+
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
 
@@ -87,7 +89,7 @@ namespace LanguageUnderstanding.CommandLine
             {
                 AppName = appName,
                 AppId = configuration[LuisAppIdConfigurationKey],
-                AppVersion = configuration[LuisAppVersionConfigurationKey],
+                AppVersion = GetAppVersion(configuration),
                 AuthoringRegion = configuration[LuisAuthoringRegionConfigurationKey],
                 EndpointRegion = configuration[LuisEndpointRegionConfigurationKey],
                 IsStaging = isStaging,
@@ -151,6 +153,19 @@ namespace LanguageUnderstanding.CommandLine
             return new string(Enumerable.Repeat(0, 8)
                 .Select(_ => (char)random.Next((int)'A', (int)'Z'))
                 .ToArray());
+        }
+
+        private static string GetAppVersion(IConfiguration configuration)
+        {
+            var appVersion = configuration[LuisAppVersionConfigurationKey];
+            if (appVersion == null)
+            {
+                return null;
+            }
+
+            var buildId = configuration[BuildIdConfigurationKey];
+            var buildIdModifier = buildId != null ? $".{buildId}" : string.Empty;
+            return $"{appVersion}{buildIdModifier}";
         }
     }
 }
