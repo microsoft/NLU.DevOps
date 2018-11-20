@@ -11,7 +11,6 @@ namespace LanguageUnderstanding.Luis.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using LanguageUnderstanding.Luis;
     using Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -29,10 +28,11 @@ namespace LanguageUnderstanding.Luis.Tests
         private static readonly TimeSpan Epsilon = TimeSpan.FromMilliseconds(100);
 
         [Test]
-        public static void ArgumentNullChecks()
+        public static void ThrowsArgumentNull()
         {
             Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, false, string.Empty, string.Empty, new MockLuisClient());
             Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, false, string.Empty, string.Empty, default(ILuisClient));
+            nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
             using (var luis = GetTestLuisBuilder().Build())
@@ -45,6 +45,10 @@ namespace LanguageUnderstanding.Luis.Tests
                 Func<Task> nullTestUtterance = () => luis.TestAsync(new string[] { null }, Array.Empty<EntityType>());
                 Func<Task> nullTestEntityTypes = () => luis.TestAsync(Array.Empty<string>(), null);
                 Func<Task> nullTestEntityType = () => luis.TestAsync(Array.Empty<string>(), new EntityType[] { null });
+                Func<Task> nullTestSpeechUtterances = () => luis.TestSpeechAsync(null, Array.Empty<EntityType>());
+                Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(new string[] { null }, Array.Empty<EntityType>());
+                Func<Task> nullTestSpeechEntityTypes = () => luis.TestSpeechAsync(Array.Empty<string>(), null);
+                Func<Task> nullTestSpeechEntityType = () => luis.TestSpeechAsync(Array.Empty<string>(), new EntityType[] { null });
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
@@ -53,6 +57,26 @@ namespace LanguageUnderstanding.Luis.Tests
                 nullTestUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullTestEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullTestEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
+                nullTestSpeechUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFiles");
+                nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFiles");
+                nullTestSpeechEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
+                nullTestSpeechEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
+            }
+        }
+
+        [Test]
+        public static void ThrowsInvalidOperationWhenUntrained()
+        {
+            var builder = GetTestLuisBuilder();
+            builder.AppId = null;
+            using (var luis = builder.Build())
+            {
+                Func<Task> testAsync = () => luis.TestAsync(Array.Empty<string>(), Array.Empty<EntityType>());
+                Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(Array.Empty<string>(), Array.Empty<EntityType>());
+                Func<Task> cleanupAsync = () => luis.CleanupAsync();
+                testAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync));
+                testSpeechAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestSpeechAsync));
+                cleanupAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync));
             }
         }
 

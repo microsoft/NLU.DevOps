@@ -3,4 +3,4 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("LanguageUnderstanding.LUIS.Tests")]
+[assembly: InternalsVisibleTo("LanguageUnderstanding.Luis.Tests")]

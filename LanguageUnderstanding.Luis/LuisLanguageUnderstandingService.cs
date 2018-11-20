@@ -8,7 +8,6 @@ namespace LanguageUnderstanding.Luis
     using System.Diagnostics;
     using System.Linq;
     using System.Net;
-    using System.Net.Http;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -111,15 +110,8 @@ namespace LanguageUnderstanding.Luis
             IEnumerable<EntityType> entityTypes,
             CancellationToken cancellationToken)
         {
-            if (utterances == null)
-            {
-                throw new ArgumentNullException(nameof(utterances));
-            }
-
-            if (entityTypes == null)
-            {
-                throw new ArgumentNullException(nameof(entityTypes));
-            }
+            // Validate arguments
+            ValidateTrainingArguments(utterances, entityTypes);
 
             Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
 
@@ -129,128 +121,26 @@ namespace LanguageUnderstanding.Luis
                 this.AppId = await this.CreateAppAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            // Get boilerplate JObject
-            var model = this.GetModelStarter();
+            // Create LUIS import JSON
+            var model = this.CreateImportJson(utterances, entityTypes);
 
-            // Add intents to model
-            var intents = new HashSet<string> { "None" };
-            foreach (var utterance in utterances)
-            {
-                if (utterance == null)
-                {
-                    throw new ArgumentException("Utterance must not be null.", nameof(utterances));
-                }
+            // Import the LUIS model
+            await this.ImportVersionAsync(model, cancellationToken).ConfigureAwait(false);
 
-                intents.Add(utterance.Intent);
-            }
-
-            var intentArray = (JArray)model["intents"];
-            foreach (var intent in intents)
-            {
-                intentArray.Add(new JObject(new JProperty("name", intent)));
-            }
-
-            // Add utterances to model
-            var luisUtterances = utterances.Select(item => LuisLabeledUtterance.FromLabeledUtterance(item, entityTypes));
-            var utteranceArray = (JArray)model["utterances"];
-            foreach (var luisUtterance in luisUtterances)
-            {
-                utteranceArray.Add(JObject.FromObject(luisUtterance));
-            }
-
-            // Add entities to model
-            var entitiesArray = (JArray)model["entities"];
-            var prebuiltEntitiesArray = (JArray)model["prebuiltEntities"];
-            var closedListsArray = (JArray)model["closedLists"];
-            foreach (var entityType in entityTypes)
-            {
-                if (entityType == null)
-                {
-                    throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
-                }
-
-                switch (entityType.Kind)
-                {
-                    case EntityTypeKind.Simple:
-                        entitiesArray.Add(new JObject(
-                            new JProperty("name", entityType.Name),
-                            new JProperty("children", new JArray()),
-                            new JProperty("roles", new JArray())));
-                        break;
-                    case EntityTypeKind.Builtin:
-                        var builtinEntityType = (BuiltinEntityType)entityType;
-                        prebuiltEntitiesArray.Add(new JObject(
-                            new JProperty("name", builtinEntityType.BuiltinId),
-                            new JProperty("roles", new JArray())));
-                        break;
-                    case EntityTypeKind.List:
-                        var listEntityType = (ListEntityType)entityType;
-                        var entityTypeJson = new JObject(
-                            new JProperty("name", listEntityType.Name),
-                            new JProperty("roles", new JArray()));
-                        var subLists = new JArray();
-                        foreach (var synonymSet in listEntityType.Values)
-                        {
-                            var entityJson = new JObject(new JProperty("canonicalForm", synonymSet.CanonicalForm));
-                            var list = new JArray();
-                            foreach (var synonym in synonymSet.Synonyms)
-                            {
-                                list.Add(synonym);
-                            }
-
-                            entityJson.Add("list", list);
-                            subLists.Add(entityJson);
-                        }
-
-                        entityTypeJson.Add("subLists", subLists);
-                        closedListsArray.Add(entityTypeJson);
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-
-            // This creates a new version (using the versionId passed on initialization)
-            var importResponse = await this.ImportVersionAsync(model, cancellationToken).ConfigureAwait(false);
-            importResponse.EnsureSuccessStatusCode();
-
-            // Train
-            var uri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
-            var trainResponse = await this.LuisClient.PostAsync(uri, null, cancellationToken).ConfigureAwait(false);
+            // Train the LUIS model
+            var trainingUri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
+            var trainResponse = await this.LuisClient.PostAsync(trainingUri, null, cancellationToken).ConfigureAwait(false);
             trainResponse.EnsureSuccessStatusCode();
 
             // Wait for training to complete
-            JArray trainStatusJson;
-            while (true)
-            {
-                var trainStatusResponse = await this.LuisClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
-                var trainStatusContent = await trainStatusResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                trainStatusJson = JArray.Parse(trainStatusContent);
-                var inProgress = trainStatusJson.SelectTokens("[*].details.status")
-                    .Select(statusJson => statusJson.Value<string>())
-                    .Any(status => status == "InProgress" || status == "Queued");
+            await this.PollTrainingStatusAsync(trainingUri, cancellationToken).ConfigureAwait(false);
 
-                if (!inProgress)
-                {
-                    break;
-                }
-
-                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
-            }
-
-            // Ensure no failures occurred while training
-            var failures = trainStatusJson.SelectTokens("[?(@.details.status == 'Fail')]");
-            if (failures.Any())
-            {
-                throw new InvalidOperationException("Failure occurred while training LUIS model.");
-            }
-
-            // Publish
+            // Publishes the LUIS app version
             await this.PublishAppAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<LabeledUtterance>> TestAsync(
+        public Task<IEnumerable<LabeledUtterance>> TestAsync(
             IEnumerable<string> utterances,
             IEnumerable<EntityType> entityTypes,
             CancellationToken cancellationToken)
@@ -270,10 +160,15 @@ namespace LanguageUnderstanding.Luis
                 throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
             }
 
+            if (this.AppId == null)
+            {
+                throw new InvalidOperationException(
+                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestAsync)}'.");
+            }
+
             Debug.Assert(this.EndpointRegion != null, "Builder will not instantiate without endpoint region.");
 
-            var labeledUtterances = new List<LabeledUtterance>();
-            foreach (var utterance in utterances)
+            async Task<LabeledUtterance> selector(string utterance)
             {
                 if (utterance == null)
                 {
@@ -293,13 +188,11 @@ namespace LanguageUnderstanding.Luis
 
                     response.EnsureSuccessStatusCode();
                     var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    var labeledUtterance = PredictionToLabeledUtterance(json, entityTypes);
-                    labeledUtterances.Add(labeledUtterance);
-                    break;
+                    return PredictionToLabeledUtterance(json, entityTypes);
                 }
             }
 
-            return labeledUtterances;
+            return SelectAsync(utterances, selector);
         }
 
         /// <inheritdoc />
@@ -313,7 +206,23 @@ namespace LanguageUnderstanding.Luis
                 throw new ArgumentNullException(nameof(speechFiles));
             }
 
-            async Task<LabeledUtterance> selector(string speechFile, int index)
+            if (entityTypes == null)
+            {
+                throw new ArgumentNullException(nameof(entityTypes));
+            }
+
+            if (entityTypes.Any(entityType => entityType == null))
+            {
+                throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
+            }
+
+            if (this.AppId == null)
+            {
+                throw new InvalidOperationException(
+                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestSpeechAsync)}'.");
+            }
+
+            async Task<LabeledUtterance> selector(string speechFile)
             {
                 if (speechFile == null)
                 {
@@ -330,6 +239,12 @@ namespace LanguageUnderstanding.Luis
         /// <inheritdoc />
         public async Task CleanupAsync(CancellationToken cancellationToken)
         {
+            if (this.AppId == null)
+            {
+                throw new InvalidOperationException(
+                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.CleanupAsync)}'.");
+            }
+
             Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
             var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}");
             var cleanupResponse = await this.LuisClient.DeleteAsync(uri, cancellationToken).ConfigureAwait(false);
@@ -340,6 +255,34 @@ namespace LanguageUnderstanding.Luis
         public void Dispose()
         {
             this.LuisClient.Dispose();
+        }
+
+        /// <summary>
+        /// Validates the utterance and entity types arguments used to train the LUIS model.
+        /// </summary>
+        /// <param name="utterances">Utterances.</param>
+        /// <param name="entityTypes">Entity types.</param>
+        private static void ValidateTrainingArguments(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
+        {
+            if (utterances == null)
+            {
+                throw new ArgumentNullException(nameof(utterances));
+            }
+
+            if (entityTypes == null)
+            {
+                throw new ArgumentNullException(nameof(entityTypes));
+            }
+
+            if (utterances.Any(utterance => utterance == null))
+            {
+                throw new ArgumentException("Utterances must not be null.", nameof(utterances));
+            }
+
+            if (entityTypes.Any(entityType => entityType == null))
+            {
+                throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
+            }
         }
 
         /// <summary>
@@ -394,8 +337,8 @@ namespace LanguageUnderstanding.Luis
         /// <summary>
         /// Retrieves entity value from "resolution" field of LUIS entity.
         /// </summary>
-        /// <param name="entityJson">LUIS entity</param>
-        /// <returns><see cref="string"/> entity value if it exists in resolution field or null</returns>
+        /// <param name="entityJson">LUIS entity.</param>
+        /// <returns>Entity value if it exists in resolution field or <code>null</code>.</returns>
         private static string GetEntityValue(JToken entityJson)
         {
             var resolution = entityJson["resolution"];
@@ -418,14 +361,14 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <summary>
-        /// Async Select implementation
+        /// Asynchronously maps items in a collection.
         /// </summary>
-        /// <typeparam name="T">type of items</typeparam>
-        /// <typeparam name="TResult">type of mapped item</typeparam>
-        /// <param name="items">List of items</param>
-        /// <param name="selector">Function that accepts item and index of an item in the list</param>
-        /// <returns>results</returns>
-        private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, int, Task<TResult>> selector)
+        /// <typeparam name="T">Type of items.</typeparam>
+        /// <typeparam name="TResult">Type of mapped item.</typeparam>
+        /// <param name="items">Collection of items.</param>
+        /// <param name="selector">Asynchronous mapping function.</param>
+        /// <returns>Task to await the mapped results.</returns>
+        private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, Task<TResult>> selector)
         {
             var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
             var results = new TResult[items.Count()];
@@ -433,7 +376,7 @@ namespace LanguageUnderstanding.Luis
 
             async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
             {
-                var result = await selector(item, i).ConfigureAwait(false);
+                var result = await selector(item).ConfigureAwait(false);
                 return Tuple.Create(i, result);
             }
 
@@ -461,9 +404,111 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <summary>
+        /// Creates a new app for LUIS.
+        /// </summary>
+        /// <returns>Task to await the creation of the LUIS app.</returns>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        private async Task<string> CreateAppAsync(CancellationToken cancellationToken)
+        {
+            var requestJson = new JObject
+            {
+                { "name", this.AppName },
+                { "culture", "en-us" },
+            };
+
+            var uri = new Uri($"{this.AuthoringHost}{BasePath}");
+            var requestBody = requestJson.ToString(Formatting.None);
+            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
+            httpResponse.EnsureSuccessStatusCode();
+            var jsonString = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var json = JToken.Parse(jsonString);
+            return json.ToString();
+        }
+
+        /// <summary>
+        /// Creates the import JSON for the LUIS app version.
+        /// </summary>
+        /// <returns>Import JSON.</returns>
+        /// <param name="utterances">Utterances.</param>
+        /// <param name="entityTypes">Entity types.</param>
+        private JObject CreateImportJson(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
+        {
+            // Get boilerplate JObject
+            var model = this.GetModelStarter();
+
+            // Add intents to model
+            var intents = utterances
+                .Select(utterance => utterance.Intent)
+                .Append("None")
+                .Distinct()
+                .Select(intent => new JObject { { "name", intent } });
+            var intentsArray = (JArray)model["intents"];
+            intentsArray.AddRange(intents);
+
+            // Add utterances to model
+            var luisUtterances = utterances
+                .Select(item => JObject.FromObject(LuisLabeledUtterance.FromLabeledUtterance(item, entityTypes)));
+            var utteranceArray = (JArray)model["utterances"];
+            utteranceArray.AddRange(luisUtterances);
+
+            // Add entities to model
+            var entitiesArray = (JArray)model["entities"];
+            var prebuiltEntitiesArray = (JArray)model["prebuiltEntities"];
+            var closedListsArray = (JArray)model["closedLists"];
+            foreach (var entityType in entityTypes)
+            {
+                if (entityType == null)
+                {
+                    throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
+                }
+
+                switch (entityType.Kind)
+                {
+                    case EntityTypeKind.Simple:
+                        entitiesArray.Add(new JObject
+                        {
+                            { "name", entityType.Name },
+                            { "children", new JArray() },
+                            { "roles", new JArray() },
+                        });
+                        break;
+                    case EntityTypeKind.Builtin:
+                        var builtinEntityType = (BuiltinEntityType)entityType;
+                        prebuiltEntitiesArray.Add(new JObject
+                        {
+                            { "name", builtinEntityType.BuiltinId },
+                            { "roles", new JArray() },
+                        });
+                        break;
+                    case EntityTypeKind.List:
+                        var listEntityType = (ListEntityType)entityType;
+                        var subLists = listEntityType.Values
+                            .Select(value => new JObject
+                            {
+                                { "canonicalForm", value.CanonicalForm },
+                                { "list", JArray.FromObject(value.Synonyms) },
+                            });
+                        var subListsJson = new JArray();
+                        subListsJson.AddRange(subLists);
+                        closedListsArray.Add(new JObject
+                        {
+                            { "name", listEntityType.Name },
+                            { "roles", new JArray() },
+                            { "subLists", subListsJson },
+                        });
+                        break;
+                    default:
+                        throw new NotImplementedException($"Entity type '{entityType.Kind}' has not been implemented.");
+                }
+            }
+
+            return model;
+        }
+
+        /// <summary>
         /// Create skeleton JSON for a LUIS model.
         /// </summary>
-        /// <returns>A JSON object with all necessary properties for a LUIS model.</returns>
+        /// <returns>JSON object with top-level properties for a LUIS model.</returns>
         private JObject GetModelStarter()
         {
             return new JObject
@@ -488,44 +533,57 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <summary>
-        /// Creates a new app for LUIS.
-        /// </summary>
-        /// <returns>A task to wait on the completion of the async operation.</returns>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        private async Task<string> CreateAppAsync(CancellationToken cancellationToken)
-        {
-            var requestJson = new JObject
-            {
-                { "name", this.AppName },
-                { "culture", "en-us" },
-            };
-
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}");
-            var requestBody = requestJson.ToString(Formatting.None);
-            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
-            httpResponse.EnsureSuccessStatusCode();
-            var jsonString = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var json = JToken.Parse(jsonString);
-            return json.ToString();
-        }
-
-        /// <summary>
         /// Import a LUIS model as a new version.
         /// </summary>
-        /// <returns>A task to wait on the completion of the async operation.</returns>
+        /// <returns>Task to await the import operation.</returns>
         /// <param name="model">LUIS model as a json object.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        private Task<HttpResponseMessage> ImportVersionAsync(JObject model, CancellationToken cancellationToken)
+        private async Task ImportVersionAsync(JObject model, CancellationToken cancellationToken)
         {
             var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}versions/import?versionId={this.AppVersion}");
             var requestBody = model.ToString(Formatting.None);
-            return this.LuisClient.PostAsync(uri, requestBody, cancellationToken);
+            var response = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+        }
+
+        /// <summary>
+        /// Polls the training status for the LUIS app.
+        /// </summary>
+        /// <returns>Task to await the completion of the training operation.</returns>
+        /// <param name="uri">URI to poll.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        private async Task PollTrainingStatusAsync(Uri uri, CancellationToken cancellationToken)
+        {
+            JArray trainStatusJson;
+            while (true)
+            {
+                var trainStatusResponse = await this.LuisClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
+                var trainStatusContent = await trainStatusResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                trainStatusJson = JArray.Parse(trainStatusContent);
+                var inProgress = trainStatusJson.SelectTokens("[*].details.status")
+                    .Select(statusJson => statusJson.Value<string>())
+                    .Any(status => status == "InProgress" || status == "Queued");
+
+                if (!inProgress)
+                {
+                    break;
+                }
+
+                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Ensure no failures occurred while training
+            var failures = trainStatusJson.SelectTokens("[?(@.details.status == 'Fail')]");
+            if (failures.Any())
+            {
+                throw new InvalidOperationException("Failure occurred while training LUIS model.");
+            }
         }
 
         /// <summary>
         /// Creates a new app for LUIS.
         /// </summary>
-        /// <returns>A task to wait on the completion of the async operation.</returns>
+        /// <returns>Task to await the publishing of the LUIS app version.</returns>
         /// <param name="cancellationToken">Cancellation token.</param>
         private async Task PublishAppAsync(CancellationToken cancellationToken)
         {
