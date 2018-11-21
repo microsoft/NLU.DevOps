@@ -32,6 +32,7 @@ namespace LanguageUnderstanding.CommandLine
         private const string LuisAppIdConfigurationKey = "LUIS_APP_ID";
         private const string LuisAppVersionConfigurationKey = "LUIS_APP_VERSION";
         private const string LuisAuthoringKeyConfigurationKey = "LUIS_AUTHORING_KEY";
+        private const string LuisEndpointKeyConfigurationKey = "LUIS_ENDPOINT_KEY";
         private const string LuisAuthoringRegionConfigurationKey = "LUIS_AUTHORING_REGION";
         private const string LuisEndpointRegionConfigurationKey = "LUIS_ENDPOINT_REGION";
         private const string LuisIsStagingConfigurationKey = "LUIS_IS_STAGING";
@@ -94,6 +95,7 @@ namespace LanguageUnderstanding.CommandLine
                 EndpointRegion = configuration[LuisEndpointRegionConfigurationKey],
                 IsStaging = isStaging,
                 AuthoringKey = configuration[LuisAuthoringKeyConfigurationKey],
+                EndpointKey = configuration[LuisEndpointKeyConfigurationKey]
             };
 
             return builder.Build();

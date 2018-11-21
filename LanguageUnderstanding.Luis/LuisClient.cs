@@ -103,6 +103,10 @@ namespace LanguageUnderstanding.Luis
                 {
                     return result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
                 }
+                else if (result.Reason == ResultReason.NoMatch)
+                {
+                    return null;
+                }
                 else
                 {
                     throw new InvalidOperationException($"Failed to get speech recognition result. Reason = '{result.Reason}'");

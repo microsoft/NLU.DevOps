@@ -293,6 +293,11 @@ namespace LanguageUnderstanding.Luis
         /// <param name="entityTypes">Entity types included in the model.</param>
         private static LabeledUtterance PredictionToLabeledUtterance(string json, IEnumerable<EntityType> entityTypes)
         {
+            if (json == null)
+            {
+                return new LabeledUtterance(null, null, null);
+            }
+
             var renamedEntityTypes = entityTypes
                 .OfType<BuiltinEntityType>()
                 .ToDictionary(entityType => $"builtin.{entityType.BuiltinId}", entityType => entityType.Name);
@@ -316,7 +321,7 @@ namespace LanguageUnderstanding.Luis
                 var endCharIndex = item.Value<int>("endIndex");
 
                 var matchText = item.Value<string>("entity");
-                var matches = Regex.Matches(text, matchText);
+                var matches = Regex.Matches(text, matchText, RegexOptions.IgnoreCase);
                 var matchIndex = -1;
                 for (var i = 0; i < matches.Count; ++i)
                 {
