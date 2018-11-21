@@ -28,11 +28,8 @@ namespace LanguageUnderstanding.Lex
     public sealed class LexLanguageUnderstandingService : ILanguageUnderstandingService
     {
         private const int DegreeOfParallelism = 3;
-        private const int RetryCount = 5;
         private const int GetBotDelaySeconds = 2;
         private const int GetImportDelaySeconds = 2;
-
-        private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LexLanguageUnderstandingService"/> class.
@@ -48,7 +45,7 @@ namespace LanguageUnderstanding.Lex
             string templatesDirectory,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, botAlias, templatesDirectory, new DefaultLexService(credentials, regionEndpoint))
+            : this(botName, botAlias, templatesDirectory, new DefaultLexClient(credentials, regionEndpoint))
         {
         }
 
@@ -208,8 +205,8 @@ namespace LanguageUnderstanding.Lex
         /// <inheritdoc />
         public async Task CleanupAsync(CancellationToken cancellationToken)
         {
-            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAliasAsync, cancellationToken).ConfigureAwait(false);
-            await RetryAsync<Amazon.LexModelBuildingService.Model.ConflictException>(this.DeleteBotAsync, cancellationToken).ConfigureAwait(false);
+            await this.DeleteBotAliasAsync(cancellationToken).ConfigureAwait(false);
+            await this.DeleteBotAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -310,25 +307,6 @@ namespace LanguageUnderstanding.Lex
             }
 
             return results;
-        }
-
-        private static async Task RetryAsync<TException>(Func<CancellationToken, Task> actionAsync, CancellationToken cancellationToken)
-            where TException : Exception
-        {
-            var count = 0;
-            while (count++ < RetryCount)
-            {
-                try
-                {
-                    await actionAsync(cancellationToken).ConfigureAwait(false);
-                    return;
-                }
-                catch (TException)
-                when (count < RetryCount)
-                {
-                    await Task.Delay(RetryDelay, cancellationToken).ConfigureAwait(false);
-                }
-            }
         }
 
         private async Task<bool> BotExistsAsync(CancellationToken cancellationToken)

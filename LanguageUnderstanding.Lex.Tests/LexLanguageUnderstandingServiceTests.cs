@@ -515,54 +515,6 @@ namespace LanguageUnderstanding.Lex.Tests
         }
 
         [Test]
-        [Category("LongRunning")]
-        public static void DeleteBotAliasRetries()
-        {
-            var mockClient = new MockLexClient();
-
-            // Wait for the second GetBot action to set status to failed
-            var shouldThrow = true;
-            var throwOnce = true;
-            var conflictException = new Amazon.LexModelBuildingService.Model.ConflictException(string.Empty);
-            void onRequest(object request)
-            {
-                if (request is DeleteBotAliasRequest && shouldThrow)
-                {
-                    shouldThrow = !throwOnce;
-                    throw conflictException;
-                }
-            }
-
-            mockClient.OnRequest = onRequest;
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
-            {
-                var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
-                var buildModel = new Func<Task>(() => lex.CleanupAsync());
-
-                buildModel.Should().NotThrow<Amazon.LexModelBuildingService.Model.ConflictException>();
-
-                // Assert two DeleteBotAliasRequest actions occur
-                mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(2);
-
-                // Assert that the time difference is at least five seconds
-                var requests = mockClient.TimestampedRequests
-                    .Where(tuple => tuple.Item1 is DeleteBotAliasRequest)
-                    .Select(tuple => new
-                    {
-                        Request = (DeleteBotAliasRequest)tuple.Item1,
-                        Timestamp = tuple.Item2
-                    })
-                   .ToArray();
-                var difference = requests[1].Timestamp - requests[0].Timestamp;
-                difference.Should().BeGreaterThan(TimeSpan.FromSeconds(10) - Epsilon);
-
-                shouldThrow = true;
-                throwOnce = false;
-                buildModel.Should().Throw<Amazon.LexModelBuildingService.Model.ConflictException>().And.Should().Be(conflictException);
-            }
-        }
-
-        [Test]
         public static async Task DoesNotCreateIfBotExists()
         {
             var botName = Guid.NewGuid().ToString();
