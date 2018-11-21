@@ -8,6 +8,7 @@ namespace LanguageUnderstanding.Luis
     using System.Diagnostics;
     using System.Linq;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -93,10 +94,7 @@ namespace LanguageUnderstanding.Luis
         private ILuisClient LuisClient { get; }
 
         /// <summary> Gets host for LUIS API calls.</summary>
-        private string AuthoringHost => $"{Protocol}{this.AuthoringRegion}{Domain}";
-
-        /// <summary> Gets host for LUIS API calls.</summary>
-        private string EndpointHost => $"{Protocol}{this.EndpointRegion}{Domain}";
+        private string Host => $"{Protocol}{this.AuthoringRegion}{Domain}";
 
         /// <summary> Gets full path for LUIS API calls. Contains appId.</summary>
         private string AppIdPath => $"{BasePath}{this.AppId}/";
@@ -113,7 +111,7 @@ namespace LanguageUnderstanding.Luis
             // Validate arguments
             ValidateTrainingArguments(utterances, entityTypes);
 
-            Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
+            this.EnsureAuthoringRegion();
 
             // Create application if not passed in.
             if (this.AppId == null)
@@ -128,7 +126,7 @@ namespace LanguageUnderstanding.Luis
             await this.ImportVersionAsync(model, cancellationToken).ConfigureAwait(false);
 
             // Train the LUIS model
-            var trainingUri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
+            var trainingUri = new Uri($"{this.Host}{this.AppVersionPath}train");
             var trainResponse = await this.LuisClient.PostAsync(trainingUri, null, cancellationToken).ConfigureAwait(false);
             trainResponse.EnsureSuccessStatusCode();
 
@@ -166,7 +164,7 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestAsync)}'.");
             }
 
-            Debug.Assert(this.EndpointRegion != null, "Builder will not instantiate without endpoint region.");
+            this.EnsureAuthoringRegion();
 
             async Task<LabeledUtterance> selector(string utterance)
             {
@@ -176,7 +174,7 @@ namespace LanguageUnderstanding.Luis
                 }
 
                 var staging = this.IsStaging ? "&staging=true" : string.Empty;
-                var uri = new Uri($"{this.EndpointHost}{QueryBasePath}{this.AppId}?q={utterance}{staging}");
+                var uri = new Uri($"{this.Host}{QueryBasePath}{this.AppId}?q={utterance}{staging}");
                 while (true)
                 {
                     var response = await this.LuisClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
@@ -222,6 +220,8 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestSpeechAsync)}'.");
             }
 
+            this.EnsureEndpointRegion();
+
             async Task<LabeledUtterance> selector(string speechFile)
             {
                 if (speechFile == null)
@@ -245,8 +245,9 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.CleanupAsync)}'.");
             }
 
-            Debug.Assert(this.AuthoringRegion != null, "Builder will not instantiate without authoring region.");
-            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}");
+            this.EnsureAuthoringRegion();
+
+            var uri = new Uri($"{this.Host}{this.AppIdPath}");
             var cleanupResponse = await this.LuisClient.DeleteAsync(uri, cancellationToken).ConfigureAwait(false);
             cleanupResponse.EnsureSuccessStatusCode();
         }
@@ -409,6 +410,32 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <summary>
+        /// Ensures the authoring region is set.
+        /// </summary>
+        /// <param name="caller">Caller.</param>
+        private void EnsureAuthoringRegion([CallerMemberName] string caller = null)
+        {
+            if (this.AuthoringRegion == null)
+            {
+                throw new InvalidOperationException(
+                    $"Must specify '{nameof(this.AuthoringRegion)}' when using '{caller}'.");
+            }
+        }
+
+        /// <summary>
+        /// Ensures the endpoint region is set.
+        /// </summary>
+        /// <param name="caller">Caller.</param>
+        private void EnsureEndpointRegion([CallerMemberName] string caller = null)
+        {
+            if (this.EndpointRegion == null)
+            {
+                throw new InvalidOperationException(
+                    $"Must specify '{nameof(this.EndpointRegion)}' when using '{caller}'.");
+            }
+        }
+
+        /// <summary>
         /// Creates a new app for LUIS.
         /// </summary>
         /// <returns>Task to await the creation of the LUIS app.</returns>
@@ -421,7 +448,7 @@ namespace LanguageUnderstanding.Luis
                 { "culture", "en-us" },
             };
 
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}");
+            var uri = new Uri($"{this.Host}{BasePath}");
             var requestBody = requestJson.ToString(Formatting.None);
             var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();
@@ -540,7 +567,7 @@ namespace LanguageUnderstanding.Luis
         /// <param name="cancellationToken">Cancellation token.</param>
         private async Task ImportVersionAsync(JObject model, CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}versions/import?versionId={this.AppVersion}");
+            var uri = new Uri($"{this.Host}{this.AppIdPath}versions/import?versionId={this.AppVersion}");
             var requestBody = model.ToString(Formatting.None);
             var response = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
@@ -594,7 +621,7 @@ namespace LanguageUnderstanding.Luis
                 { "region", this.EndpointRegion },
             };
 
-            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}publish");
+            var uri = new Uri($"{this.Host}{this.AppIdPath}publish");
             var requestBody = requestJson.ToString(Formatting.None);
             var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
             httpResponse.EnsureSuccessStatusCode();

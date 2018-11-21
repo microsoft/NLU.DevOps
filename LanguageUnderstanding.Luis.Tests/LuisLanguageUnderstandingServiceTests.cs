@@ -74,9 +74,37 @@ namespace LanguageUnderstanding.Luis.Tests
                 Func<Task> testAsync = () => luis.TestAsync(Array.Empty<string>(), Array.Empty<EntityType>());
                 Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(Array.Empty<string>(), Array.Empty<EntityType>());
                 Func<Task> cleanupAsync = () => luis.CleanupAsync();
-                testAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync));
-                testSpeechAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestSpeechAsync));
-                cleanupAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync));
+                testAsync.Should().Throw<InvalidOperationException>()
+                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync))
+                    .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
+                testSpeechAsync.Should().Throw<InvalidOperationException>()
+                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestSpeechAsync))
+                    .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
+                cleanupAsync.Should().Throw<InvalidOperationException>()
+                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync))
+                    .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
+            }
+        }
+
+        [Test]
+        public static void ThrowsInvalidOperationWhenOnlyEndpointRegionSet()
+        {
+            var builder = GetTestLuisBuilder();
+            builder.AuthoringRegion = null;
+            using (var luis = builder.Build())
+            {
+                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>());
+                Func<Task> testAsync = () => luis.TestAsync(Array.Empty<string>(), Array.Empty<EntityType>());
+                Func<Task> cleanupAsync = () => luis.CleanupAsync();
+                trainAsync.Should().Throw<InvalidOperationException>()
+                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TrainAsync))
+                    .And.Contain("AuthoringRegion");
+                testAsync.Should().Throw<InvalidOperationException>()
+                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync))
+                    .And.Contain("AuthoringRegion");
+                cleanupAsync.Should().Throw<InvalidOperationException>()
+                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync))
+                    .And.Contain("AuthoringRegion");
             }
         }
 

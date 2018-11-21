@@ -77,8 +77,6 @@ namespace LanguageUnderstanding.Luis
                 throw new InvalidOperationException("Must provide at least one subscription key.");
             }
 
-            this.EndpointRegion = this.EndpointRegion ?? this.AuthoringRegion;
-            this.EndpointKey = this.EndpointKey ?? this.AuthoringKey;
             this.LuisClient = this.LuisClient ?? new LuisClient(this.AuthoringKey, this.EndpointKey, this.EndpointRegion);
 
             return new LuisLanguageUnderstandingService(
