@@ -43,8 +43,8 @@ namespace LanguageUnderstanding.Lex.Tests
                 var nullEntityTypes = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), null));
                 var nullEntityTypeItem = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null }));
                 var nullSpeechFiles = new Func<Task>(() => service.TestSpeechAsync(default(IEnumerable<string>), Array.Empty<EntityType>()));
-                var nullSpeechFileItem = new Func<Task>(() => service.TestSpeechAsync(null, Array.Empty<EntityType>()));
-                var nullTestSpeechEntityTypes = new Func<Task>(() => service.TestSpeechAsync(null, Array.Empty<EntityType>()));
+                var nullSpeechFileItem = new Func<Task>(() => service.TestSpeechAsync(new string[] { null }, Array.Empty<EntityType>()));
+                var nullTestSpeechEntityTypes = new Func<Task>(() => service.TestSpeechAsync(Array.Empty<string>(), null));
                 var nullTestUtterances = new Func<Task>(() => service.TestAsync(null, Array.Empty<EntityType>()));
                 var nullTestUtterancesItem = new Func<Task>(() => service.TestAsync(new string[] { null }, Array.Empty<EntityType>()));
                 var nullTestEntityTypes = new Func<Task>(() => service.TestAsync(Array.Empty<string>(), null));
@@ -54,8 +54,10 @@ namespace LanguageUnderstanding.Lex.Tests
                 nullEntityTypeItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
                 nullSpeechFiles.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFiles");
                 nullSpeechFileItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFiles");
+                nullTestSpeechEntityTypes.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
                 nullTestUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullTestUtterancesItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
+                nullTestEntityTypes.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
             }
         }
 
@@ -323,9 +325,11 @@ namespace LanguageUnderstanding.Lex.Tests
                 var buildFailed = new Func<Task>(() => lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()));
                 buildFailed.Should().Throw<InvalidOperationException>();
 
-                count = 0;
-                mockClient.Get<GetBotResponse>().Status = Status.NOT_BUILT;
+                mockClient.Get<GetBotResponse>().Status = new Status("UNKNOWN");
                 buildFailed.Should().Throw<InvalidOperationException>();
+
+                mockClient.Get<GetBotResponse>().Status = Status.NOT_BUILT;
+                buildFailed.Should().NotThrow<InvalidOperationException>();
             }
         }
 
@@ -335,6 +339,30 @@ namespace LanguageUnderstanding.Lex.Tests
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
+            using (var lex = new LexLanguageUnderstandingService(botName, botAlias, TemplatesDirectory, mockClient))
+            {
+                await lex.CleanupAsync().ConfigureAwait(false);
+                mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
+                mockClient.Requests.OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
+                mockClient.Requests.OfType<DeleteBotRequest>().Count().Should().Be(1);
+                mockClient.Requests.OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
+            }
+        }
+
+        [Test]
+        public static async Task CleanupSucceedsWithNotFound()
+        {
+            var botName = Guid.NewGuid().ToString();
+            var botAlias = Guid.NewGuid().ToString();
+            var mockClient = new MockLexClient();
+            mockClient.OnRequest = request =>
+            {
+                if (request is DeleteBotAliasRequest || request is DeleteBotRequest)
+                {
+                    throw new Amazon.LexModelBuildingService.Model.NotFoundException(string.Empty);
+                }
+            };
+
             using (var lex = new LexLanguageUnderstandingService(botName, botAlias, TemplatesDirectory, mockClient))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);

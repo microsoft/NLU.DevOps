@@ -462,11 +462,6 @@ namespace LanguageUnderstanding.Luis
             var closedListsArray = (JArray)model["closedLists"];
             foreach (var entityType in entityTypes)
             {
-                if (entityType == null)
-                {
-                    throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
-                }
-
                 switch (entityType.Kind)
                 {
                     case EntityTypeKind.Simple:

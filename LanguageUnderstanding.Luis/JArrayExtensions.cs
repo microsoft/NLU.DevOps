@@ -15,13 +15,5 @@ namespace LanguageUnderstanding.Luis
                 array.Add(item);
             }
         }
-
-        public static void AddRange(this JArray array, IEnumerable<string> items)
-        {
-            foreach (var item in items)
-            {
-                array.Add(item);
-            }
-        }
     }
 }

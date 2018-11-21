@@ -693,6 +693,71 @@ namespace LanguageUnderstanding.Luis.Tests
             }
         }
 
+        [Test]
+        public static async Task CreatesAppIfAppIdNotProvided()
+        {
+            var appId = Guid.NewGuid().ToString();
+            var mockClient = new MockLuisClient();
+            mockClient.OnHttpRequestResponse = request =>
+            {
+                if (request.Uri.EndsWith("apps/", StringComparison.Ordinal))
+                {
+                    return $"\"{appId}\"";
+                }
+
+                return null;
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            builder.AppId = null;
+            using (var luis = builder.Build())
+            {
+                await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+                luis.AppId.Should().Be(appId);
+            }
+        }
+
+        [Test]
+        public static async Task TestAsyncThrottlesWhenTooManyRequests()
+        {
+            var utterance = Guid.NewGuid().ToString();
+            var mockClient = new MockLuisClient();
+            var count = 0;
+            var retryCount = 3;
+            mockClient.OnHttpRequestResponse = request =>
+            {
+                if (++count < retryCount)
+                {
+                    return MockLuisClient.TooManyRequestsString;
+                }
+
+                return "{\"query\":\"" + utterance + "\",\"topScoringIntent\":{\"intent\":\"intent\"},\"entities\":[]}";
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            using (var luis = builder.Build())
+            {
+                await luis.TestAsync(new string[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
+                mockClient.Requests.Count().Should().Be(retryCount);
+            }
+        }
+
+        [Test]
+        public static async Task TestSpeechAsyncNoMatchResponse()
+        {
+            var utterance = Guid.NewGuid().ToString();
+            var builder = GetTestLuisBuilder();
+            using (var luis = builder.Build())
+            {
+                var results = await luis.TestSpeechAsync(new string[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
+                results.First().Intent.Should().BeNull();
+                results.First().Text.Should().BeNull();
+                results.First().Entities.Should().BeNull();
+            }
+        }
+
         private static LuisLanguageUnderstandingServiceBuilder GetTestLuisBuilder()
         {
             return new LuisLanguageUnderstandingServiceBuilder
@@ -753,6 +818,11 @@ namespace LanguageUnderstanding.Luis.Tests
             public static string FailString { get; } = Guid.NewGuid().ToString();
 
             /// <summary>
+            /// Gets a string that can be returned in <see cref="OnHttpRequestResponse"/> to return a 429.
+            /// </summary>
+            public static string TooManyRequestsString { get; } = Guid.NewGuid().ToString();
+
+            /// <summary>
             /// Gets a collection of requests made against the LUIS client.
             /// </summary>
             public IEnumerable<LuisRequest> Requests => this.RequestsInternal.Select(t => t.Instance);
@@ -795,7 +865,7 @@ namespace LanguageUnderstanding.Luis.Tests
             /// <inheritdoc />
             public Task<string> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
             {
-                return Task.FromResult(this.OnRecognizeSpeechResponse.Invoke(speechFile));
+                return Task.FromResult(this.OnRecognizeSpeechResponse?.Invoke(speechFile));
             }
 
             /// <inheritdoc />
@@ -835,10 +905,16 @@ namespace LanguageUnderstanding.Luis.Tests
                 this.OnHttpRequest?.Invoke(request);
                 var response = this.OnHttpRequestResponse?.Invoke(request);
 
-                // Check for failure string and set 500 response
-                var statusCode = response != FailString
-                    ? HttpStatusCode.OK
-                    : HttpStatusCode.InternalServerError;
+                // Check for canary to set special HTTP response
+                var statusCode = HttpStatusCode.OK;
+                if (response == FailString)
+                {
+                    statusCode = HttpStatusCode.InternalServerError;
+                }
+                else if (response == TooManyRequestsString)
+                {
+                    statusCode = (HttpStatusCode)429;
+                }
 
                 // Return an empty array for train status GET requests
                 if (response == null && IsTrainStatusRequest(request))
