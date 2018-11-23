@@ -30,6 +30,8 @@ namespace LanguageUnderstanding.Luis
         /// <param name="endpointRegion">LUIS endpoint region.</param>
         public LuisClient(string authoringKey, string endpointKey, string endpointRegion)
         {
+            this.EndpointKey = endpointKey;
+
             this.HttpClient = new HttpClient
             {
                 DefaultRequestHeaders =
@@ -40,6 +42,9 @@ namespace LanguageUnderstanding.Luis
 
             this.LazySpeechConfig = new Lazy<SpeechConfig>(() => SpeechConfig.FromSubscription(endpointKey, endpointRegion));
         }
+
+        /// <summary> Gets the endpoint key. </summary>
+        private string EndpointKey { get; }
 
         /// <summary> Gets the HTTP client configured with the LUIS subscription key header.</summary>
         private HttpClient HttpClient { get; }
@@ -52,6 +57,18 @@ namespace LanguageUnderstanding.Luis
         {
             using (var request = new HttpRequestMessage())
             {
+                request.Method = HttpMethod.Get;
+                request.RequestUri = uri;
+                return await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<HttpResponseMessage> QueryAsync(Uri uri, CancellationToken cancellationToken)
+        {
+            using (var request = new HttpRequestMessage())
+            {
+                request.Headers.Add(SubscriptionKeyHeader, this.EndpointKey);
                 request.Method = HttpMethod.Get;
                 request.RequestUri = uri;
                 return await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);

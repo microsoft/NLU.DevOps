@@ -22,6 +22,17 @@ namespace LanguageUnderstanding.Luis
         Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken);
 
         /// <summary>
+        /// Sends a GET request for query as an async operation.
+        /// </summary>
+        /// <returns>A Task to await the HTTP request response.</returns>
+        /// <param name="uri">The URI.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <remarks>
+        /// Should use the endpoint key instead of the authoring key.
+        /// </remarks>
+        Task<HttpResponseMessage> QueryAsync(Uri uri, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Sends a POST request as an async operation.
         /// </summary>
         /// <returns>A Task to await the HTTP request response.</returns>

@@ -23,6 +23,13 @@ namespace LanguageUnderstanding.Luis.Tests
 
             builder.AuthoringRegion = Guid.NewGuid().ToString();
             action.Should().Throw<InvalidOperationException>();
+
+            builder.EndpointKey = Guid.NewGuid().ToString();
+            action.Should().Throw<InvalidOperationException>();
+
+            builder.EndpointKey = null;
+            builder.EndpointRegion = Guid.NewGuid().ToString();
+            action.Should().Throw<InvalidOperationException>();
         }
     }
 }

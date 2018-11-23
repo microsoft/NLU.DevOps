@@ -99,9 +99,6 @@ namespace LanguageUnderstanding.Luis.Tests
                 trainAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TrainAsync))
                     .And.Contain("AuthoringRegion");
-                testAsync.Should().Throw<InvalidOperationException>()
-                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync))
-                    .And.Contain("AuthoringRegion");
                 cleanupAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync))
                     .And.Contain("AuthoringRegion");
@@ -882,6 +879,16 @@ namespace LanguageUnderstanding.Luis.Tests
 
             /// <inheritdoc />
             public Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken)
+            {
+                return this.ProcessRequest(new LuisRequest
+                {
+                    Method = HttpMethod.Get.Method,
+                    Uri = uri.OriginalString,
+                });
+            }
+
+            /// <inheritdoc />
+            public Task<HttpResponseMessage> QueryAsync(Uri uri, CancellationToken cancellationToken)
             {
                 return this.ProcessRequest(new LuisRequest
                 {

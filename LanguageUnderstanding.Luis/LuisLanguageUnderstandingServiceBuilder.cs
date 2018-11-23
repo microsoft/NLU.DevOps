@@ -77,6 +77,17 @@ namespace LanguageUnderstanding.Luis
                 throw new InvalidOperationException("Must provide at least one subscription key.");
             }
 
+            if (this.EndpointKey == null && this.EndpointRegion == null)
+            {
+                this.EndpointKey = this.AuthoringKey;
+                this.EndpointRegion = this.AuthoringRegion;
+            }
+
+            if (this.LuisClient == null && (this.EndpointKey == null || this.EndpointRegion == null))
+            {
+                throw new InvalidOperationException("Must provide endpoint key and region together.");
+            }
+
             this.LuisClient = this.LuisClient ?? new LuisClient(this.AuthoringKey, this.EndpointKey, this.EndpointRegion);
 
             return new LuisLanguageUnderstandingService(
