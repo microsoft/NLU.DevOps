@@ -19,8 +19,6 @@ namespace LanguageUnderstanding.Luis
     /// </summary>
     public sealed class LuisLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
     {
-        private const int DegreeOfParallelism = 3;
-
         private static readonly TimeSpan TrainStatusDelay = TimeSpan.FromSeconds(2);
 
         internal LuisLanguageUnderstandingService(string appName, string appId, string appVersion, ILuisClient luisClient)
@@ -80,14 +78,14 @@ namespace LanguageUnderstanding.Luis
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestAsync(
-            IEnumerable<string> utterances,
+        public async Task<LabeledUtterance> TestAsync(
+            string utterance,
             IEnumerable<EntityType> entityTypes,
             CancellationToken cancellationToken)
         {
-            if (utterances == null)
+            if (utterance == null)
             {
-                throw new ArgumentNullException(nameof(utterances));
+                throw new ArgumentNullException(nameof(utterance));
             }
 
             if (entityTypes == null)
@@ -106,29 +104,19 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestAsync)}'.");
             }
 
-            async Task<LabeledUtterance> selector(string utterance)
-            {
-                if (utterance == null)
-                {
-                    throw new ArgumentException("Utterances must not be null.", nameof(utterances));
-                }
-
-                var json = await this.LuisClient.QueryAsync(this.AppId, utterance, cancellationToken).ConfigureAwait(false);
-                return IntentJsonToLabeledUtterance(json, entityTypes);
-            }
-
-            return SelectAsync(utterances, selector);
+            var json = await this.LuisClient.QueryAsync(this.AppId, utterance, cancellationToken).ConfigureAwait(false);
+            return IntentJsonToLabeledUtterance(json, entityTypes);
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(
-            IEnumerable<string> speechFiles,
+        public async Task<LabeledUtterance> TestSpeechAsync(
+            string speechFile,
             IEnumerable<EntityType> entityTypes,
             CancellationToken cancellationToken)
         {
-            if (speechFiles == null)
+            if (speechFile == null)
             {
-                throw new ArgumentNullException(nameof(speechFiles));
+                throw new ArgumentNullException(nameof(speechFile));
             }
 
             if (entityTypes == null)
@@ -147,18 +135,8 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestSpeechAsync)}'.");
             }
 
-            async Task<LabeledUtterance> selector(string speechFile)
-            {
-                if (speechFile == null)
-                {
-                    throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
-                }
-
-                var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile, cancellationToken).ConfigureAwait(false);
-                return IntentJsonToLabeledUtterance(jsonResult, entityTypes);
-            }
-
-            return SelectAsync(speechFiles, selector);
+            var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile, cancellationToken).ConfigureAwait(false);
+            return IntentJsonToLabeledUtterance(jsonResult, entityTypes);
         }
 
         /// <inheritdoc />
@@ -268,41 +246,6 @@ namespace LanguageUnderstanding.Luis
             return resolvedValue is JObject resolvedObject
                 ? resolvedObject.Value<string>("value")
                 : resolvedValue.Value<string>();
-        }
-
-        private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, Task<TResult>> selector)
-        {
-            var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
-            var results = new TResult[items.Count()];
-            var tasks = new List<Task<Tuple<int, TResult>>>(DegreeOfParallelism);
-
-            async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
-            {
-                var result = await selector(item).ConfigureAwait(false);
-                return Tuple.Create(i, result);
-            }
-
-            foreach (var indexedItem in indexedItems)
-            {
-                if (tasks.Count == DegreeOfParallelism)
-                {
-                    var task = await Task.WhenAny(tasks).ConfigureAwait(false);
-                    tasks.Remove(task);
-                    var result = await task.ConfigureAwait(false);
-                    results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
-                }
-
-                tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
-            }
-
-            await Task.WhenAll(tasks).ConfigureAwait(false);
-            foreach (var task in tasks)
-            {
-                var result = await task.ConfigureAwait(false);
-                results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
-            }
-
-            return results;
         }
 
         private JObject CreateImportJson(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)

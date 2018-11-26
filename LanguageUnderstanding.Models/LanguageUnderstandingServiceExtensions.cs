@@ -15,7 +15,7 @@ namespace LanguageUnderstanding.Models
         /// <summary>
         /// Trains the language understanding service.
         /// </summary>
-        /// <returns>A task to await the training operation.</returns>
+        /// <returns>Task to await the training operation.</returns>
         /// <param name="instance">Language understanding service instance.</param>
         /// <param name="utterances">Labeled utterances to train on.</param>
         /// <param name="entityTypes">Entity types to include in the model.</param>
@@ -27,31 +27,31 @@ namespace LanguageUnderstanding.Models
         /// <summary>
         /// Tests the language understanding service.
         /// </summary>
-        /// <returns>A task to await the resulting labeled utterances.</returns>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">Language understanding service instance.</param>
-        /// <param name="utterances">Unlabeled utterances to test on.</param>
+        /// <param name="utterance">Unlabeled utterance.</param>
         /// <param name="entityTypes">Entity types included in the model.</param>
-        public static Task<IEnumerable<LabeledUtterance>> TestAsync(this ILanguageUnderstandingService instance, IEnumerable<string> utterances, IEnumerable<EntityType> entityTypes)
+        public static Task<LabeledUtterance> TestAsync(this ILanguageUnderstandingService instance, string utterance, IEnumerable<EntityType> entityTypes)
         {
-            return instance.TestAsync(utterances, entityTypes, CancellationToken.None);
+            return instance.TestAsync(utterance, entityTypes, CancellationToken.None);
         }
 
         /// <summary>
         /// Tests the language understanding service using speech.
         /// </summary>
-        /// <returns>A task to await the resulting labeled utterances.</returns>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">Language understanding service instance.</param>
-        /// <param name="speechFiles">Speech files to test on.</param>
+        /// <param name="speechFile">Speech file.</param>
         /// <param name="entityTypes">Entity types included in the model.</param>
-        public static Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(this ILanguageUnderstandingService instance, IEnumerable<string> speechFiles, IEnumerable<EntityType> entityTypes)
+        public static Task<LabeledUtterance> TestSpeechAsync(this ILanguageUnderstandingService instance, string speechFile, IEnumerable<EntityType> entityTypes)
         {
-            return instance.TestSpeechAsync(speechFiles, entityTypes, CancellationToken.None);
+            return instance.TestSpeechAsync(speechFile, entityTypes, CancellationToken.None);
         }
 
         /// <summary>
         /// Cleans up the language understanding service.
         /// </summary>
-        /// <returns>A task to await the cleanup operation.</returns>
+        /// <returns>Task to await the cleanup operation.</returns>
         /// <param name="instance">Language understanding service instance.</param>
         public static Task CleanupAsync(this ILanguageUnderstandingService instance)
         {

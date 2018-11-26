@@ -27,7 +27,6 @@ namespace LanguageUnderstanding.Lex
     /// </summary>
     public sealed class LexLanguageUnderstandingService : ILanguageUnderstandingService
     {
-        private const int DegreeOfParallelism = 3;
         private const int GetBotDelaySeconds = 2;
         private const int GetImportDelaySeconds = 2;
 
@@ -111,11 +110,11 @@ namespace LanguageUnderstanding.Lex
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestAsync(IEnumerable<string> utterances, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
+        public async Task<LabeledUtterance> TestAsync(string utterance, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
         {
-            if (utterances == null)
+            if (utterance == null)
             {
-                throw new ArgumentNullException(nameof(utterances));
+                throw new ArgumentNullException(nameof(utterance));
             }
 
             if (entityTypes == null)
@@ -123,42 +122,32 @@ namespace LanguageUnderstanding.Lex
                 throw new ArgumentNullException(nameof(entityTypes));
             }
 
-            async Task<LabeledUtterance> selector(string utterance, int index)
+            var postTextRequest = new PostTextRequest
             {
-                if (utterance == null)
-                {
-                    throw new ArgumentException("Utterance must not be null.", nameof(utterances));
-                }
+                BotAlias = this.BotAlias,
+                BotName = this.BotName,
+                UserId = Guid.NewGuid().ToString(),
+                InputText = utterance,
+            };
 
-                var postTextRequest = new PostTextRequest
-                {
-                    BotAlias = this.BotAlias,
-                    BotName = this.BotName,
-                    UserId = $"User{index}",
-                    InputText = utterance,
-                };
+            var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken).ConfigureAwait(false);
+            var entities = postTextResponse.Slots?
+                .Where(slot => slot.Value != null)
+                .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                .ToList();
 
-                var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken).ConfigureAwait(false);
-                var entities = postTextResponse.Slots?
-                    .Where(slot => slot.Value != null)
-                    .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
-                    .ToList();
-
-                return new LabeledUtterance(
-                    utterance,
-                    postTextResponse.IntentName,
-                    entities);
-            }
-
-            return SelectAsync(utterances, selector);
+            return new LabeledUtterance(
+                utterance,
+                postTextResponse.IntentName,
+                entities);
         }
 
         /// <inheritdoc />
-        public Task<IEnumerable<LabeledUtterance>> TestSpeechAsync(IEnumerable<string> speechFiles, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
+        public async Task<LabeledUtterance> TestSpeechAsync(string speechFile, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
         {
-            if (speechFiles == null)
+            if (speechFile == null)
             {
-                throw new ArgumentNullException(nameof(speechFiles));
+                throw new ArgumentNullException(nameof(speechFile));
             }
 
             if (entityTypes == null)
@@ -166,40 +155,30 @@ namespace LanguageUnderstanding.Lex
                 throw new ArgumentNullException(nameof(entityTypes));
             }
 
-            async Task<LabeledUtterance> selector(string speechFile, int index)
+            using (var stream = File.OpenRead(speechFile))
             {
-                if (speechFile == null)
+                var postContentRequest = new PostContentRequest
                 {
-                    throw new ArgumentException("Speech files must not be null.", nameof(speechFiles));
-                }
+                    BotAlias = this.BotAlias,
+                    BotName = this.BotName,
+                    UserId = Guid.NewGuid().ToString(),
+                    Accept = "text/plain; charset=utf-8",
+                    ContentType = "audio/l16; rate=16000; channels=1",
+                    InputStream = stream,
+                };
 
-                using (var stream = File.OpenRead(speechFile))
-                {
-                    var postContentRequest = new PostContentRequest
-                    {
-                        BotAlias = this.BotAlias,
-                        BotName = this.BotName,
-                        UserId = $"User{index}",
-                        Accept = "text/plain; charset=utf-8",
-                        ContentType = "audio/l16; rate=16000; channels=1",
-                        InputStream = stream,
-                    };
+                var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken).ConfigureAwait(false);
+                var slots = postContentResponse.Slots != null
+                    ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
+                        .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                        .ToList()
+                    : null;
 
-                    var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken).ConfigureAwait(false);
-                    var slots = postContentResponse.Slots != null
-                        ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
-                            .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
-                            .ToList()
-                        : null;
-
-                    return new LabeledUtterance(
-                        postContentResponse.InputTranscript,
-                        postContentResponse.IntentName,
-                        slots);
-                }
+                return new LabeledUtterance(
+                    postContentResponse.InputTranscript,
+                    postContentResponse.IntentName,
+                    slots);
             }
-
-            return SelectAsync(speechFiles, selector);
         }
 
         /// <inheritdoc />
@@ -272,41 +251,6 @@ namespace LanguageUnderstanding.Lex
 
             // Reset stream to initial position
             stream.Position = 0;
-        }
-
-        private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, int, Task<TResult>> selector)
-        {
-            var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
-            var results = new TResult[items.Count()];
-            var tasks = new List<Task<Tuple<int, TResult>>>(DegreeOfParallelism);
-
-            async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
-            {
-                var result = await selector(item, i).ConfigureAwait(false);
-                return Tuple.Create(i, result);
-            }
-
-            foreach (var indexedItem in indexedItems)
-            {
-                if (tasks.Count == DegreeOfParallelism)
-                {
-                    var task = await Task.WhenAny(tasks).ConfigureAwait(false);
-                    tasks.Remove(task);
-                    var result = await task.ConfigureAwait(false);
-                    results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
-                }
-
-                tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
-            }
-
-            await Task.WhenAll(tasks).ConfigureAwait(false);
-            foreach (var task in tasks)
-            {
-                var result = await task.ConfigureAwait(false);
-                results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
-            }
-
-            return results;
         }
 
         private async Task<bool> BotExistsAsync(CancellationToken cancellationToken)

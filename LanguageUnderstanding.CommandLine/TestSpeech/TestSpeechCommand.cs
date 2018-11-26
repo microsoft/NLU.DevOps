@@ -38,7 +38,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
                 .Select(utterance => $"{Path.Combine(this.Options.RecordingsDirectory, utterance.RecordingId)}.wav");
 
             var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
-            var testResults = await this.LanguageUnderstandingService.TestSpeechAsync(speechFiles, entityTypes).ConfigureAwait(false);
+            var testResults = await speechFiles.SelectAsync(speechFile => this.LanguageUnderstandingService.TestSpeechAsync(speechFile, entityTypes)).ConfigureAwait(false);
 
             this.Log("Done.");
 

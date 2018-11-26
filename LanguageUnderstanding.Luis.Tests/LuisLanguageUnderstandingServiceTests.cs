@@ -42,24 +42,20 @@ namespace LanguageUnderstanding.Luis.Tests
                 Func<Task> nullUtterance = () => luis.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>());
                 Func<Task> nullEntityTypes = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), null);
                 Func<Task> nullEntityType = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null });
-                Func<Task> nullTestUtterances = () => luis.TestAsync(null, Array.Empty<EntityType>());
-                Func<Task> nullTestUtterance = () => luis.TestAsync(new string[] { null }, Array.Empty<EntityType>());
-                Func<Task> nullTestEntityTypes = () => luis.TestAsync(Array.Empty<string>(), null);
-                Func<Task> nullTestEntityType = () => luis.TestAsync(Array.Empty<string>(), new EntityType[] { null });
-                Func<Task> nullTestSpeechUtterances = () => luis.TestSpeechAsync(null, Array.Empty<EntityType>());
-                Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(new string[] { null }, Array.Empty<EntityType>());
-                Func<Task> nullTestSpeechEntityTypes = () => luis.TestSpeechAsync(Array.Empty<string>(), null);
-                Func<Task> nullTestSpeechEntityType = () => luis.TestSpeechAsync(Array.Empty<string>(), new EntityType[] { null });
+                Func<Task> nullTestUtterance = () => luis.TestAsync(null, Array.Empty<EntityType>());
+                Func<Task> nullTestEntityTypes = () => luis.TestAsync(string.Empty, null);
+                Func<Task> nullTestEntityType = () => luis.TestAsync(string.Empty, new EntityType[] { null });
+                Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null, Array.Empty<EntityType>());
+                Func<Task> nullTestSpeechEntityTypes = () => luis.TestSpeechAsync(string.Empty, null);
+                Func<Task> nullTestSpeechEntityType = () => luis.TestSpeechAsync(string.Empty, new EntityType[] { null });
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
-                nullTestUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
-                nullTestUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
+                nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterance");
                 nullTestEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullTestEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
-                nullTestSpeechUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFiles");
-                nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFiles");
+                nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFile");
                 nullTestSpeechEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullTestSpeechEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
             }
@@ -72,8 +68,8 @@ namespace LanguageUnderstanding.Luis.Tests
             builder.AppId = null;
             using (var luis = builder.Build())
             {
-                Func<Task> testAsync = () => luis.TestAsync(Array.Empty<string>(), Array.Empty<EntityType>());
-                Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(Array.Empty<string>(), Array.Empty<EntityType>());
+                Func<Task> testAsync = () => luis.TestAsync(string.Empty, Array.Empty<EntityType>());
+                Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(string.Empty, Array.Empty<EntityType>());
                 Func<Task> cleanupAsync = () => luis.CleanupAsync();
                 testAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync))
@@ -400,15 +396,14 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>()).ConfigureAwait(false);
-                result.Count().Should().Be(1);
-                result.First().Text.Should().Be(test);
-                result.First().Intent.Should().Be("intent");
-                result.First().Entities.Count.Should().Be(1);
-                result.First().Entities[0].EntityType.Should().Be("type");
-                result.First().Entities[0].EntityValue.Should().Be(default(string));
-                result.First().Entities[0].MatchText.Should().Be("the");
-                result.First().Entities[0].MatchIndex.Should().Be(1);
+                var result = await luis.TestAsync(test, Array.Empty<EntityType>()).ConfigureAwait(false);
+                result.Text.Should().Be(test);
+                result.Intent.Should().Be("intent");
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be("type");
+                result.Entities[0].EntityValue.Should().Be(default(string));
+                result.Entities[0].MatchText.Should().Be("the");
+                result.Entities[0].MatchIndex.Should().Be(1);
             }
         }
 
@@ -476,11 +471,11 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(new[] { test }, Array.Empty<EntityType>()).ConfigureAwait(false);
-                result.First().Entities.Count.Should().Be(3);
-                result.First().Entities[0].EntityValue.Should().Be("2018-11-16");
-                result.First().Entities[1].EntityValue.Should().Be("Fox");
-                result.First().Entities[2].EntityValue.Should().Be("THE");
+                var result = await luis.TestAsync(test, Array.Empty<EntityType>()).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(3);
+                result.Entities[0].EntityValue.Should().Be("2018-11-16");
+                result.Entities[1].EntityValue.Should().Be("Fox");
+                result.Entities[2].EntityValue.Should().Be("THE");
             }
         }
 
@@ -522,15 +517,14 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestSpeechAsync(new string[] { "somefile" }, new List<EntityType>()).ConfigureAwait(false);
-                result.Count().Should().Be(1);
-                result.First().Text.Should().Be(test);
-                result.First().Intent.Should().Be("intent");
-                result.First().Entities.Count.Should().Be(1);
-                result.First().Entities[0].EntityType.Should().Be("type");
+                var result = await luis.TestSpeechAsync("somefile", new List<EntityType>()).ConfigureAwait(false);
+                result.Text.Should().Be(test);
+                result.Intent.Should().Be("intent");
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be("type");
 
-                result.First().Entities[0].MatchText.Should().Be("entity");
-                result.First().Entities[0].MatchIndex.Should().Be(0);
+                result.Entities[0].MatchText.Should().Be("entity");
+                result.Entities[0].MatchIndex.Should().Be(0);
             }
         }
 
@@ -574,15 +568,14 @@ namespace LanguageUnderstanding.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(new[] { test }, new[] { entityType }).ConfigureAwait(false);
-                result.Count().Should().Be(1);
-                result.First().Text.Should().Be(test);
-                result.First().Intent.Should().Be("intent");
-                result.First().Entities.Count.Should().Be(1);
-                result.First().Entities[0].EntityType.Should().Be("type");
-                result.First().Entities[0].EntityValue.Should().Be(default(string));
-                result.First().Entities[0].MatchText.Should().Be("the");
-                result.First().Entities[0].MatchIndex.Should().Be(1);
+                var result = await luis.TestAsync(test, new[] { entityType }).ConfigureAwait(false);
+                result.Text.Should().Be(test);
+                result.Intent.Should().Be("intent");
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be("type");
+                result.Entities[0].EntityValue.Should().Be(default(string));
+                result.Entities[0].MatchText.Should().Be("the");
+                result.Entities[0].MatchIndex.Should().Be(1);
             }
         }
 
@@ -692,10 +685,10 @@ namespace LanguageUnderstanding.Luis.Tests
             var builder = GetTestLuisBuilder();
             using (var luis = builder.Build())
             {
-                var results = await luis.TestSpeechAsync(new string[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
-                results.First().Intent.Should().BeNull();
-                results.First().Text.Should().BeNull();
-                results.First().Entities.Should().BeNull();
+                var results = await luis.TestSpeechAsync(utterance, Array.Empty<EntityType>()).ConfigureAwait(false);
+                results.Intent.Should().BeNull();
+                results.Text.Should().BeNull();
+                results.Entities.Should().BeNull();
             }
         }
 

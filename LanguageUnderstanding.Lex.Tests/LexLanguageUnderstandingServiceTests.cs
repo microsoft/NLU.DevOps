@@ -42,21 +42,17 @@ namespace LanguageUnderstanding.Lex.Tests
                 var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>()));
                 var nullEntityTypes = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), null));
                 var nullEntityTypeItem = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null }));
-                var nullSpeechFiles = new Func<Task>(() => service.TestSpeechAsync(default(IEnumerable<string>), Array.Empty<EntityType>()));
-                var nullSpeechFileItem = new Func<Task>(() => service.TestSpeechAsync(new string[] { null }, Array.Empty<EntityType>()));
-                var nullTestSpeechEntityTypes = new Func<Task>(() => service.TestSpeechAsync(Array.Empty<string>(), null));
-                var nullTestUtterances = new Func<Task>(() => service.TestAsync(null, Array.Empty<EntityType>()));
-                var nullTestUtterancesItem = new Func<Task>(() => service.TestAsync(new string[] { null }, Array.Empty<EntityType>()));
-                var nullTestEntityTypes = new Func<Task>(() => service.TestAsync(Array.Empty<string>(), null));
+                var nullSpeechFile = new Func<Task>(() => service.TestSpeechAsync(null, Array.Empty<EntityType>()));
+                var nullTestSpeechEntityTypes = new Func<Task>(() => service.TestSpeechAsync(string.Empty, null));
+                var nullTestUtterance = new Func<Task>(() => service.TestAsync(null, Array.Empty<EntityType>()));
+                var nullTestEntityTypes = new Func<Task>(() => service.TestAsync(string.Empty, null));
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtteranceItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
                 nullEntityTypeItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
-                nullSpeechFiles.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFiles");
-                nullSpeechFileItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFiles");
+                nullSpeechFile.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFile");
                 nullTestSpeechEntityTypes.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
-                nullTestUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
-                nullTestUtterancesItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
+                nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterance");
                 nullTestEntityTypes.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
             }
         }
@@ -439,7 +435,7 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
-                var results = await lex.TestSpeechAsync(new[] { Path.Combine("assets", "sample.txt") }, Array.Empty<EntityType>()).ConfigureAwait(false);
+                var result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"), Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // assert reads content from file (file contents are "hello world")
                 var request = mockClient.Requests.OfType<PostContentRequest>().Single();
@@ -449,19 +445,17 @@ namespace LanguageUnderstanding.Lex.Tests
                 }
 
                 // assert results
-                results.Count().Should().Be(1);
-                results.First().Intent.Should().Be(intent);
-                results.First().Text.Should().Be(transcript);
-                results.First().Entities.Should().BeNull();
+                result.Intent.Should().Be(intent);
+                result.Text.Should().Be(transcript);
+                result.Entities.Should().BeNull();
 
                 // test with valid slots response
                 mockClient.Get<PostContentResponse>().Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
-                results = await lex.TestSpeechAsync(new[] { Path.Combine("assets", "sample.txt") }, Array.Empty<EntityType>()).ConfigureAwait(false);
+                result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"), Array.Empty<EntityType>()).ConfigureAwait(false);
 
-                results.Count().Should().Be(1);
-                results.First().Entities.Count.Should().Be(1);
-                results.First().Entities[0].EntityType.Should().Be(entityType);
-                results.First().Entities[0].EntityValue.Should().Be(entityValue);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be(entityType);
+                result.Entities[0].EntityValue.Should().Be(entityValue);
             }
         }
 
@@ -481,64 +475,15 @@ namespace LanguageUnderstanding.Lex.Tests
             mockClient.Get<PostTextResponse>().IntentName = intent;
             using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
-                var responses = await lex.TestAsync(new[] { text }, Array.Empty<EntityType>()).ConfigureAwait(false);
-                responses.Count().Should().Be(1);
-                responses.First().Text.Should().Be(text);
-                responses.First().Intent.Should().Be(intent);
-                responses.First().Entities.Should().BeEmpty();
+                var response = await lex.TestAsync(text, Array.Empty<EntityType>()).ConfigureAwait(false);
+                response.Text.Should().Be(text);
+                response.Intent.Should().Be(intent);
+                response.Entities.Should().BeEmpty();
 
                 mockClient.Get<PostTextResponse>().Slots = slots;
-                responses = await lex.TestAsync(new[] { text }, Array.Empty<EntityType>()).ConfigureAwait(false);
-                responses.First().Entities[0].EntityType.Should().Be(entityType);
-                responses.First().Entities[0].EntityValue.Should().Be(entityValue);
-            }
-        }
-
-        [Test]
-        public static async Task RunsTestsInParallel()
-        {
-            var mockClient = new MockLexClient();
-            var degreeOfParallelism = 3;
-
-            var requestCount = 0;
-            var countdownEvent = new CountdownEvent(degreeOfParallelism);
-            var taskCompletionSource = new TaskCompletionSource<bool>();
-            Task onRequestAsync(object request)
-            {
-                if (request is PostTextRequest)
-                {
-                    countdownEvent.Signal();
-                    requestCount++;
-                    return taskCompletionSource.Task;
-                }
-
-                return Task.CompletedTask;
-            }
-
-            mockClient.OnRequestAsync = onRequestAsync;
-
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, mockClient))
-            {
-                // Send number of utterances greater than the max parallelism
-                var utteranceCount = degreeOfParallelism + 1;
-                var utterances = Enumerable.Repeat(string.Empty, utteranceCount);
-                var task = lex.TestAsync(utterances, Array.Empty<EntityType>());
-
-                // Should receive max parallel requests within 5 seconds
-                countdownEvent.Wait(5000).Should().BeTrue();
-
-                // At most max parallel requests have been made
-                requestCount.Should().Be(degreeOfParallelism);
-
-                // Do not block future requests
-                mockClient.OnRequestAsync = null;
-
-                // Release blocked requests
-                taskCompletionSource.SetResult(true);
-
-                // Assert results count
-                var results = await task.ConfigureAwait(false);
-                results.Count().Should().Be(utteranceCount);
+                response = await lex.TestAsync(text, Array.Empty<EntityType>()).ConfigureAwait(false);
+                response.Entities[0].EntityType.Should().Be(entityType);
+                response.Entities[0].EntityValue.Should().Be(entityValue);
             }
         }
 
