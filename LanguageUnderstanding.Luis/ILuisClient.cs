@@ -4,58 +4,84 @@
 namespace LanguageUnderstanding.Luis
 {
     using System;
-    using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// Interface for LUIS http utility methods.
+    /// Interface for LUIS operations.
     /// </summary>
     public interface ILuisClient : IDisposable
     {
         /// <summary>
-        /// Sends a GET request as an async operation.
+        /// Creates the LUIS app.
         /// </summary>
-        /// <returns>A Task to await the HTTP request response.</returns>
-        /// <param name="uri">The URI.</param>
+        /// <returns>Task to await the LUIS app ID of the newly created app.</returns>
+        /// <param name="appName">LUIS app name.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken);
+        Task<string> CreateAppAsync(string appName, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Sends a GET request for query as an async operation.
+        /// Deletes the LUIS app.
         /// </summary>
-        /// <returns>A Task to await the HTTP request response.</returns>
-        /// <param name="uri">The URI.</param>
+        /// <returns>Task to await the delete operation.</returns>
+        /// <param name="appId">LUIS app ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <remarks>
-        /// Should use the endpoint key instead of the authoring key.
-        /// </remarks>
-        Task<HttpResponseMessage> QueryAsync(Uri uri, CancellationToken cancellationToken);
+        Task DeleteAppAsync(string appId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Sends a POST request as an async operation.
+        /// Gets the training status for the LUIS app version.
         /// </summary>
-        /// <returns>A Task to await the HTTP request response.</returns>
-        /// <param name="uri">The URI.</param>
-        /// <param name="requestBody">Request body.</param>
+        /// <returns>Task to await the training status response.</returns>
+        /// <param name="appId">LUIS app ID.</param>
+        /// <param name="appVersion">LUIS app version.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<HttpResponseMessage> PostAsync(Uri uri, string requestBody, CancellationToken cancellationToken);
+        Task<JArray> GetTrainingStatusAsync(string appId, string appVersion, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Sends a DELETE request as an async operation.
+        /// Imports the LUIS app version.
         /// </summary>
-        /// <returns>A Task to await the HTTP request response.</returns>
-        /// <param name="uri">The URI.</param>
+        /// <returns>Task to await the import operation.</returns>
+        /// <param name="appId">LUIS app ID.</param>
+        /// <param name="appVersion">LUIS app version.</param>
+        /// <param name="importJson">Import JSON.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<HttpResponseMessage> DeleteAsync(Uri uri, CancellationToken cancellationToken);
+        Task ImportVersionAsync(string appId, string appVersion, JObject importJson, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Performs speech recognition on LUIS using the given audio file.
+        /// Publishes the LUIS app version.
         /// </summary>
+        /// <returns>Task to await the publish operation.</returns>
+        /// <param name="appId">LUIS app ID.</param>
+        /// <param name="appVersion">LUIS app version.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task PublishAppAsync(string appId, string appVersion, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Queries the LUIS app to extract intent and entities.
+        /// </summary>
+        /// <returns>Task to await the intent results.</returns>
+        /// <param name="appId">LUIS app ID.</param>
+        /// <param name="text">Query text.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<JObject> QueryAsync(string appId, string text, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Performs intent recognition from speech using the given audio file.
+        /// </summary>
+        /// <returns>Task to await the intent results.</returns>
         /// <param name="appId">LUIS app ID.</param>
         /// <param name="speechFile">Path to file.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>JSON string result from LUIS recognition.</returns>
-        Task<string> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
+        Task<JObject> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Trains the LUIS app version.
+        /// </summary>
+        /// <returns>Task to await the train operation.</returns>
+        /// <param name="appId">LUIS app identifier.</param>
+        /// <param name="appVersion">LUIS app version.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task TrainAsync(string appId, string appVersion, CancellationToken cancellationToken);
     }
 }

@@ -8,6 +8,7 @@ namespace LanguageUnderstanding.Luis.Tests
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
@@ -30,8 +31,8 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, false, string.Empty, string.Empty, new MockLuisClient());
-            Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, false, string.Empty, string.Empty, default(ILuisClient));
+            Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, new MockLuisClient());
+            Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, default(ILuisClient));
             nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
@@ -83,25 +84,6 @@ namespace LanguageUnderstanding.Luis.Tests
                 cleanupAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync))
                     .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
-            }
-        }
-
-        [Test]
-        public static void ThrowsInvalidOperationWhenOnlyEndpointRegionSet()
-        {
-            var builder = GetTestLuisBuilder();
-            builder.AuthoringRegion = null;
-            using (var luis = builder.Build())
-            {
-                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>());
-                Func<Task> testAsync = () => luis.TestAsync(Array.Empty<string>(), Array.Empty<EntityType>());
-                Func<Task> cleanupAsync = () => luis.CleanupAsync();
-                trainAsync.Should().Throw<InvalidOperationException>()
-                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TrainAsync))
-                    .And.Contain("AuthoringRegion");
-                cleanupAsync.Should().Throw<InvalidOperationException>()
-                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync))
-                    .And.Contain("AuthoringRegion");
             }
         }
 
@@ -224,9 +206,6 @@ namespace LanguageUnderstanding.Luis.Tests
             builder.IsStaging = true;
             builder.AppVersion = Guid.NewGuid().ToString();
             builder.LuisClient = mockClient;
-            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
-            var trainUri = $"{GetVersionUriBase(builder)}/train";
-            var publishUri = $"{GetAuthoringUriBase(builder)}/publish";
             using (var luis = builder.Build())
             {
                 var utterances = Enumerable.Empty<LabeledUtterance>();
@@ -234,9 +213,10 @@ namespace LanguageUnderstanding.Luis.Tests
                 await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
 
                 // Assert correct import request
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == importUri);
+                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
-                var importBody = JObject.Parse(importRequest.Body);
+                importRequest.Arguments[2].Should().NotBeNull();
+                var importBody = importRequest.Arguments[2].As<JObject>();
 
                 // Expects 3 intents
                 var intents = importBody.SelectToken(".intents").As<JArray>();
@@ -244,61 +224,16 @@ namespace LanguageUnderstanding.Luis.Tests
                 intents.FirstOrDefault(token => token.Value<string>("name") == "None").Should().NotBeNull();
 
                 // Assert train request
-                var trainRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == trainUri);
+                var trainRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.TrainAsync));
                 trainRequest.Should().NotBeNull();
 
                 // Assert publish request
-                var publishRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == publishUri);
+                var publishRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.PublishAppAsync));
                 publishRequest.Should().NotBeNull();
-                var publishBody = JObject.Parse(publishRequest.Body);
 
                 // Expects publish settings:
-                publishBody["isStaging"].Value<bool>().Should().Be(builder.IsStaging);
-                publishBody["versionId"].Value<string>().Should().Be(builder.AppVersion);
-                publishBody["region"].Value<string>().Should().Be(builder.EndpointRegion);
-            }
-        }
-
-        [Test]
-        public static void TrainFailuresThrowException()
-        {
-            var failUri = default(string);
-            var mockClient = new MockLuisClient
-            {
-                OnHttpRequestResponse = request =>
-                {
-                    if (request.Uri == failUri)
-                    {
-                        return MockLuisClient.FailString;
-                    }
-
-                    return null;
-                },
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
-            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
-            var trainUri = $"{GetVersionUriBase(builder)}/train";
-            var publishUri = $"{GetAuthoringUriBase(builder)}/publish";
-
-            using (var luis = builder.Build())
-            {
-                var utterances = Enumerable.Empty<LabeledUtterance>();
-                var entityTypes = Enumerable.Empty<EntityType>();
-                Func<Task> callTrainAsync = () => luis.TrainAsync(utterances, entityTypes);
-
-                failUri = importUri;
-                callTrainAsync.Should().Throw<HttpRequestException>();
-
-                failUri = trainUri;
-                callTrainAsync.Should().Throw<HttpRequestException>();
-
-                failUri = publishUri;
-                callTrainAsync.Should().Throw<HttpRequestException>();
-
-                failUri = null;
-                callTrainAsync.Should().NotThrow<HttpRequestException>();
+                publishRequest.Arguments[0].Should().Be(builder.AppId);
+                publishRequest.Arguments[1].Should().Be(builder.AppVersion);
             }
         }
 
@@ -308,7 +243,6 @@ namespace LanguageUnderstanding.Luis.Tests
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
-            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
             using (var luis = builder.Build())
             {
                 var utterances = new[]
@@ -321,9 +255,9 @@ namespace LanguageUnderstanding.Luis.Tests
                 await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
 
                 // Assert correct import request
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == importUri);
+                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
-                var jsonBody = JObject.Parse(importRequest.Body);
+                var jsonBody = importRequest.Arguments[2].As<JObject>();
 
                 // Expects 3 intents
                 var intents = jsonBody.SelectToken(".intents").As<JArray>();
@@ -354,7 +288,6 @@ namespace LanguageUnderstanding.Luis.Tests
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
-            var importUri = $"{GetAuthoringUriBase(builder)}/versions/import?versionId={builder.AppVersion}";
             using (var luis = builder.Build())
             {
                 var utterances = new[]
@@ -378,9 +311,9 @@ namespace LanguageUnderstanding.Luis.Tests
                 await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
 
                 // Assert correct import request
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == importUri);
+                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
-                var jsonBody = JObject.Parse(importRequest.Body);
+                var jsonBody = importRequest.Arguments[2].As<JObject>();
 
                 // Expects 3 intents
                 var intents = jsonBody.SelectToken(".intents").As<JArray>();
@@ -421,13 +354,11 @@ namespace LanguageUnderstanding.Luis.Tests
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
-            var cleanupUri = $"{GetAuthoringUriBase(builder)}/";
             using (var luis = builder.Build())
             {
                 await luis.CleanupAsync().ConfigureAwait(false);
-                var cleanupRequest = mockClient.Requests.FirstOrDefault(request => request.Uri == cleanupUri);
+                var cleanupRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.DeleteAppAsync));
                 cleanupRequest.Should().NotBeNull();
-                cleanupRequest.Method.Should().Be(HttpMethod.Delete.Method);
             }
         }
 
@@ -436,19 +367,32 @@ namespace LanguageUnderstanding.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisClient
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
             {
-                OnHttpRequestResponse = request =>
+                if (request.Method == nameof(ILuisClient.QueryAsync))
                 {
-                    if (request.Uri.Contains(test))
+                    return new JObject
                     {
-                        return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                            "\"entities\":[{\"entity\":\"the\",\"type\":\"type\",\"startIndex\":32," +
-                            "\"endIndex\":34}]}";
-                    }
+                        { "query", test },
+                        { "topScoringIntent", new JObject { { "intent", "intent" } } },
+                        {
+                            "entities",
+                            new JArray
+                            {
+                                new JObject
+                                {
+                                    { "entity", "the" },
+                                    { "type", "type" },
+                                    { "startIndex", 32 },
+                                    { "endIndex", 34 },
+                                },
+                            }
+                        },
+                    };
+                }
 
-                    return null;
-                },
+                return null;
             };
 
             var builder = GetTestLuisBuilder();
@@ -473,60 +417,58 @@ namespace LanguageUnderstanding.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisClient
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
             {
-                OnHttpRequestResponse = request =>
+                if (request.Method == nameof(ILuisClient.QueryAsync))
                 {
-                    if (request.Uri.Contains(test))
-                    {
-                        return @"{
-                                ""query"": ""the quick brown fox jumped over the lazy dog today"",
-                                ""topScoringIntent"": {
-                                    ""intent"": ""Calendar.Add"",
-                                    ""score"": 0.718678534
-                                },
-                                ""entities"": [
-                                    {
-                                        ""entity"": ""today"",
-                                        ""type"": ""builtin.datetimeV2.date"",
-                                        ""startIndex"": 45,
-                                        ""endIndex"": 49,
-                                        ""resolution"": {
-                                            ""values"": [
-                                                {
-                                                    ""timex"": ""2018-11-16"",
-                                                    ""type"": ""date"",
-                                                    ""value"": ""2018-11-16""
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        ""entity"": ""brown fox"",
-                                        ""type"": ""builtin.personName"",
-                                        ""startIndex"": 10,
-                                        ""endIndex"": 18,
-                                        ""resolution"": {
-                                            ""values"": [
-                                                ""Fox""
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        ""entity"": ""the"",
-                                        ""type"": ""thetype"",
-                                        ""startIndex"": 0,
-                                        ""endIndex"": 2,
-                                        ""resolution"": {
-                                            ""value"": ""THE""
-                                        }
+                    return JObject.Parse(@"{
+                            ""query"": ""the quick brown fox jumped over the lazy dog today"",
+                            ""topScoringIntent"": {
+                                ""intent"": ""Calendar.Add"",
+                                ""score"": 0.718678534
+                            },
+                            ""entities"": [
+                                {
+                                    ""entity"": ""today"",
+                                    ""type"": ""builtin.datetimeV2.date"",
+                                    ""startIndex"": 45,
+                                    ""endIndex"": 49,
+                                    ""resolution"": {
+                                        ""values"": [
+                                            {
+                                                ""timex"": ""2018-11-16"",
+                                                ""type"": ""date"",
+                                                ""value"": ""2018-11-16""
+                                            }
+                                        ]
                                     }
-                                ]
-                            }";
-                    }
+                                },
+                                {
+                                    ""entity"": ""brown fox"",
+                                    ""type"": ""builtin.personName"",
+                                    ""startIndex"": 10,
+                                    ""endIndex"": 18,
+                                    ""resolution"": {
+                                        ""values"": [
+                                            ""Fox""
+                                        ]
+                                    }
+                                },
+                                {
+                                    ""entity"": ""the"",
+                                    ""type"": ""thetype"",
+                                    ""startIndex"": 0,
+                                    ""endIndex"": 2,
+                                    ""resolution"": {
+                                        ""value"": ""THE""
+                                    }
+                                }
+                            ]
+                        }");
+                }
 
-                    return null;
-                },
+                return null;
             };
 
             var builder = GetTestLuisBuilder();
@@ -546,16 +488,33 @@ namespace LanguageUnderstanding.Luis.Tests
         public static async Task TestSpeech()
         {
             var test = "the quick brown fox jumped over the lazy dog entity";
-            var jsonString = "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                "\"entities\":[{\"entity\":\"entity\",\"type\":\"type\",\"startIndex\":45," +
-                "\"endIndex\":50}]}";
 
-            var mockClient = new MockLuisClient
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
             {
-                OnRecognizeSpeechResponse = (speechFile) =>
+                if (request.Method == nameof(ILuisClient.RecognizeSpeechAsync))
                 {
-                    return jsonString;
+                    return new JObject
+                    {
+                        { "query", test },
+                        { "topScoringIntent", new JObject { { "intent", "intent" } } },
+                        {
+                            "entities",
+                            new JArray
+                            {
+                                new JObject
+                                {
+                                    { "entity", "entity" },
+                                    { "type", "type" },
+                                    { "startIndex", 45 },
+                                    { "endIndex", 50 },
+                                },
+                            }
+                        },
+                    };
                 }
+
+                return null;
             };
 
             var builder = GetTestLuisBuilder();
@@ -580,19 +539,32 @@ namespace LanguageUnderstanding.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisClient
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
             {
-                OnHttpRequestResponse = request =>
+                if (request.Method == nameof(ILuisClient.QueryAsync))
                 {
-                    if (request.Uri.Contains(test))
+                    return new JObject
                     {
-                        return "{\"query\":\"" + test + "\",\"topScoringIntent\":{\"intent\":\"intent\"}," +
-                            "\"entities\":[{\"entity\":\"the\",\"type\":\"builtin.test\",\"startIndex\":32," +
-                            "\"endIndex\":34}]}";
-                    }
+                        { "query", test },
+                        { "topScoringIntent", new JObject { { "intent", "intent" } } },
+                        {
+                            "entities",
+                            new JArray
+                            {
+                                new JObject
+                                {
+                                    { "entity", "the" },
+                                    { "type", "builtin.test" },
+                                    { "startIndex", 32 },
+                                    { "endIndex", 34 },
+                                },
+                            }
+                        },
+                    };
+                }
 
-                    return null;
-                },
+                return null;
             };
 
             var entityType = new BuiltinEntityType("type", "test");
@@ -615,54 +587,25 @@ namespace LanguageUnderstanding.Luis.Tests
         }
 
         [Test]
-        public static void TestFailedThrowsException()
-        {
-            var test = "the quick brown fox jumped over the lazy dog";
-
-            var mockClient = new MockLuisClient
-            {
-                OnHttpRequestResponse = request =>
-                {
-                    if (request.Uri.Contains(test))
-                    {
-                        return MockLuisClient.FailString;
-                    }
-
-                    return null;
-                },
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
-
-            using (var luis = builder.Build())
-            {
-                Func<Task> callTestAsync = () => luis.TestAsync(new[] { test }, Array.Empty<EntityType>());
-                callTestAsync.Should().Throw<HttpRequestException>();
-            }
-        }
-
-        [Test]
         public static async Task TrainingStatusDelayBetweenPolling()
         {
             var count = 0;
             string[] statusArray = { "Queued", "InProgress", "Success" };
-            var mockClient = new MockLuisClient
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
             {
-                OnHttpRequestResponse = request =>
+                if (IsTrainingStatusRequest(request))
                 {
-                    if (IsTrainStatusRequest(request))
+                    return new JArray
                     {
-                        var json = new JObject
+                        new JObject
                         {
                             { "details", new JObject { { "status", statusArray[count++] } } }
-                        };
+                        }
+                    };
+                }
 
-                        return $"[{json.ToString()}]";
-                    }
-
-                    return null;
-                },
+                return null;
             };
 
             var builder = GetTestLuisBuilder();
@@ -673,15 +616,15 @@ namespace LanguageUnderstanding.Luis.Tests
                 await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // Ensure correct number of training status requests are made.
-                mockClient.Requests.Where(IsTrainStatusRequest).Count().Should().Be(statusArray.Length);
+                mockClient.Requests.Where(IsTrainingStatusRequest).Count().Should().Be(statusArray.Length);
 
                 // Ensure 2 second delay between requests
-                var previousRequest = mockClient.TimestampedRequests.Where(t => IsTrainStatusRequest(t.Instance)).First();
+                var previousRequest = mockClient.TimestampedRequests.Where(t => IsTrainingStatusRequest(t.Instance)).First();
                 for (var i = 1; i < statusArray.Length; ++i)
                 {
-                    var request = mockClient.TimestampedRequests.Where(t => IsTrainStatusRequest(t.Instance)).Skip(i).First();
-                    var timeDifference = request.Timestamp - previousRequest.Timestamp;
-                    previousRequest = request;
+                    var nextRequest = mockClient.TimestampedRequests.Where(t => IsTrainingStatusRequest(t.Instance)).Skip(i).First();
+                    var timeDifference = nextRequest.Timestamp - previousRequest.Timestamp;
+                    previousRequest = nextRequest;
                     timeDifference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
                 }
             }
@@ -690,22 +633,21 @@ namespace LanguageUnderstanding.Luis.Tests
         [Test]
         public static void TrainingFailedThrowsInvalidOperation()
         {
-            var mockClient = new MockLuisClient
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
             {
-                OnHttpRequestResponse = request =>
+                if (IsTrainingStatusRequest(request))
                 {
-                    if (IsTrainStatusRequest(request))
+                    return new JArray
                     {
-                        var json = new JObject
+                        new JObject
                         {
                             { "details", new JObject { { "status", "Fail" } } }
-                        };
+                        }
+                    };
+                }
 
-                        return $"[{json.ToString()}]";
-                    }
-
-                    return null;
-                },
+                return null;
             };
 
             var builder = GetTestLuisBuilder();
@@ -723,11 +665,11 @@ namespace LanguageUnderstanding.Luis.Tests
         {
             var appId = Guid.NewGuid().ToString();
             var mockClient = new MockLuisClient();
-            mockClient.OnHttpRequestResponse = request =>
+            mockClient.OnRequestResponse = request =>
             {
-                if (request.Uri.EndsWith("apps/", StringComparison.Ordinal))
+                if (request.Method == nameof(ILuisClient.CreateAppAsync))
                 {
-                    return $"\"{appId}\"";
+                    return appId;
                 }
 
                 return null;
@@ -740,32 +682,6 @@ namespace LanguageUnderstanding.Luis.Tests
             {
                 await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
                 luis.AppId.Should().Be(appId);
-            }
-        }
-
-        [Test]
-        public static async Task TestAsyncThrottlesWhenTooManyRequests()
-        {
-            var utterance = Guid.NewGuid().ToString();
-            var mockClient = new MockLuisClient();
-            var count = 0;
-            var retryCount = 3;
-            mockClient.OnHttpRequestResponse = request =>
-            {
-                if (++count < retryCount)
-                {
-                    return MockLuisClient.TooManyRequestsString;
-                }
-
-                return "{\"query\":\"" + utterance + "\",\"topScoringIntent\":{\"intent\":\"intent\"},\"entities\":[]}";
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
-            using (var luis = builder.Build())
-            {
-                await luis.TestAsync(new string[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
-                mockClient.Requests.Count().Should().Be(retryCount);
             }
         }
 
@@ -790,26 +706,13 @@ namespace LanguageUnderstanding.Luis.Tests
                 AppName = "test",
                 AppId = Guid.NewGuid().ToString(),
                 AppVersion = "0.1",
-                AuthoringRegion = "westus",
-                EndpointRegion = "eastus",
                 LuisClient = new MockLuisClient(),
             };
         }
 
-        private static string GetAuthoringUriBase(LuisLanguageUnderstandingServiceBuilder builder)
+        private static bool IsTrainingStatusRequest(LuisRequest request)
         {
-            return $"https://{builder.AuthoringRegion}.api.cognitive.microsoft.com/luis/api/v2.0/apps/{builder.AppId}";
-        }
-
-        private static string GetVersionUriBase(LuisLanguageUnderstandingServiceBuilder builder)
-        {
-            return $"{GetAuthoringUriBase(builder)}/versions/{builder.AppVersion}";
-        }
-
-        private static bool IsTrainStatusRequest(LuisRequest request)
-        {
-            return request.Method == HttpMethod.Get.Method
-                && request.Uri.EndsWith("train", StringComparison.Ordinal);
+            return request.Method == nameof(ILuisClient.GetTrainingStatusAsync);
         }
 
         /// <summary>
@@ -837,133 +740,84 @@ namespace LanguageUnderstanding.Luis.Tests
         /// </summary>
         private sealed class MockLuisClient : ILuisClient
         {
-            /// <summary>
-            /// Gets a string that can be returned in <see cref="OnHttpRequestResponse"/> to return a failure.
-            /// </summary>
-            public static string FailString { get; } = Guid.NewGuid().ToString();
+            public Action<LuisRequest> OnRequest { get; set; }
 
-            /// <summary>
-            /// Gets a string that can be returned in <see cref="OnHttpRequestResponse"/> to return a 429.
-            /// </summary>
-            public static string TooManyRequestsString { get; } = Guid.NewGuid().ToString();
+            public Func<LuisRequest, object> OnRequestResponse { get; set; }
 
-            /// <summary>
-            /// Gets a collection of requests made against the LUIS client.
-            /// </summary>
-            public IEnumerable<LuisRequest> Requests => this.RequestsInternal.Select(t => t.Instance);
+            public IEnumerable<LuisRequest> Requests => this.RequestsInternal.Select(x => x.Instance);
 
-            /// <summary>
-            /// Gets a collection of requests made against the LUIS client.
-            /// </summary>
             public IEnumerable<Timestamped<LuisRequest>> TimestampedRequests => this.RequestsInternal;
 
-            /// <summary>
-            /// Gets or sets callback when a request is made against the LUIS client.
-            /// </summary>
-            public Action<LuisRequest> OnHttpRequest { get; set; }
-
-            /// <summary>
-            /// Gets or sets callback when a request is made against the LUIS client.
-            /// </summary>
-            public Func<LuisRequest, string> OnHttpRequestResponse { get; set; }
-
-            /// <summary>
-            /// Gets or sets callback when a recognizeSpeech request is made against the LUIS client.
-            /// </summary>
-            public Func<string, string> OnRecognizeSpeechResponse { get; set; }
-
-            /// <summary>
-            /// Gets a collection of requests made against the LUIS client.
-            /// </summary>
             private List<Timestamped<LuisRequest>> RequestsInternal { get; } = new List<Timestamped<LuisRequest>>();
 
-            /// <inheritdoc />
-            public Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken cancellationToken)
+            public Task<string> CreateAppAsync(string appName, CancellationToken cancellationToken)
             {
-                return this.ProcessRequest(new LuisRequest
-                {
-                    Method = HttpMethod.Get.Method,
-                    Uri = uri.OriginalString,
-                });
+                return this.ProcessRequestAsync<string>(appName);
             }
 
-            /// <inheritdoc />
-            public Task<HttpResponseMessage> QueryAsync(Uri uri, CancellationToken cancellationToken)
+            public Task DeleteAppAsync(string appId, CancellationToken cancellationToken)
             {
-                return this.ProcessRequest(new LuisRequest
-                {
-                    Method = HttpMethod.Get.Method,
-                    Uri = uri.OriginalString,
-                });
+                return this.ProcessRequestAsync(appId);
             }
 
-            /// <inheritdoc />
-            public Task<string> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+            public Task<JArray> GetTrainingStatusAsync(string appId, string appVersion, CancellationToken cancellationToken)
             {
-                return Task.FromResult(this.OnRecognizeSpeechResponse?.Invoke(speechFile));
+                return this.ProcessRequestAsync<JArray>(appId, appVersion);
             }
 
-            /// <inheritdoc />
-            public Task<HttpResponseMessage> PostAsync(Uri uri, string requestBody, CancellationToken cancellationToken)
+            public Task ImportVersionAsync(string appId, string appVersion, JObject importJson, CancellationToken cancellationToken)
             {
-                return this.ProcessRequest(new LuisRequest
-                {
-                    Method = HttpMethod.Post.Method,
-                    Uri = uri.OriginalString,
-                    Body = requestBody,
-                });
+                return this.ProcessRequestAsync(appId, appVersion, importJson);
             }
 
-            /// <inheritdoc />
-            public Task<HttpResponseMessage> DeleteAsync(Uri uri, CancellationToken cancellationToken)
+            public Task PublishAppAsync(string appId, string appVersion, CancellationToken cancellationToken)
             {
-                return this.ProcessRequest(new LuisRequest
-                {
-                    Method = HttpMethod.Delete.Method,
-                    Uri = uri.OriginalString,
-                });
+                return this.ProcessRequestAsync(appId, appVersion);
             }
 
-            /// <inheritdoc />
+            public Task<JObject> QueryAsync(string appId, string text, CancellationToken cancellationToken)
+            {
+                return this.ProcessRequestAsync<JObject>(appId, text);
+            }
+
+            public Task<JObject> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+            {
+                return this.ProcessRequestAsync<JObject>(appId, speechFile);
+            }
+
+            public Task TrainAsync(string appId, string appVersion, CancellationToken cancellationToken)
+            {
+                return this.ProcessRequestAsync(appId, appVersion);
+            }
+
             public void Dispose()
             {
             }
 
-            /// <summary>
-            /// Process the LUIS request.
-            /// </summary>
-            /// <param name="request">LUIS <paramref name="request"/>.</param>
-            /// <returns>HTTP response.</returns>
-            private Task<HttpResponseMessage> ProcessRequest(LuisRequest request)
+            private Task ProcessRequestAsync(object arg0, object arg1 = null, object arg2 = null, [CallerMemberName] string methodName = null)
             {
+                return this.ProcessRequestAsync<object>(arg0, arg1, arg2, methodName);
+            }
+
+            private Task<T> ProcessRequestAsync<T>(object arg0, object arg1 = null, object arg2 = null, [CallerMemberName] string methodName = null)
+            {
+                var request = new LuisRequest
+                {
+                    Method = methodName,
+                    Arguments = new[] { arg0, arg1, arg2 },
+                };
+
                 this.RequestsInternal.Add(Timestamped.Create(request));
-                this.OnHttpRequest?.Invoke(request);
-                var response = this.OnHttpRequestResponse?.Invoke(request);
 
-                // Check for canary to set special HTTP response
-                var statusCode = HttpStatusCode.OK;
-                if (response == FailString)
+                this.OnRequest?.Invoke(request);
+
+                var response = this.OnRequestResponse?.Invoke(request);
+                if (response == null && IsTrainingStatusRequest(request))
                 {
-                    statusCode = HttpStatusCode.InternalServerError;
-                }
-                else if (response == TooManyRequestsString)
-                {
-                    statusCode = (HttpStatusCode)429;
+                    response = new JArray();
                 }
 
-                // Return an empty array for train status GET requests
-                if (response == null && IsTrainStatusRequest(request))
-                {
-                    response = "[]";
-                }
-
-                var httpResponse = new HttpResponseMessage(statusCode);
-                if (response != null)
-                {
-                    httpResponse.Content = new StringContent(response);
-                }
-
-                return Task.FromResult(httpResponse);
+                return Task.FromResult((T)response);
             }
         }
 
@@ -980,12 +834,7 @@ namespace LanguageUnderstanding.Luis.Tests
             /// <summary>
             /// Gets or sets the URI of the request.
             /// </summary>
-            public string Uri { get; set; }
-
-            /// <summary>
-            /// Gets or sets the request body.
-            /// </summary>
-            public string Body { get; set; }
+            public object[] Arguments { get; set; }
         }
 
         /// <summary>

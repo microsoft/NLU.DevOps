@@ -7,13 +7,10 @@ namespace LanguageUnderstanding.Luis
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Net;
-    using System.Runtime.CompilerServices;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Models;
-    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     /// <summary>
@@ -22,45 +19,15 @@ namespace LanguageUnderstanding.Luis
     /// </summary>
     public sealed class LuisLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
     {
-        /// <summary>Maximum number of tasks that are running simultaneously. </summary>
-        private const int DegreeOfParallelism = 1;
+        private const int DegreeOfParallelism = 3;
 
-        /// <summary> The protocol used in LUIS http requests. </summary>
-        private const string Protocol = "https://";
-
-        /// <summary> All the static domains/subdomains to construct LUIS host address. </summary>
-        private const string Domain = ".api.cognitive.microsoft.com";
-
-        /// <summary> Base path for LUIS API calls. </summary>
-        private const string BasePath = "/luis/api/v2.0/apps/";
-
-        /// <summary> Base path for LUIS queries. </summary>
-        private const string QueryBasePath = "/luis/v2.0/apps/";
-
-        /// <summary> The delay to use to throttle LUIS queries. </summary>
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
-
-        /// <summary> The delay to use when polling for LUIS training status. </summary>
         private static readonly TimeSpan TrainStatusDelay = TimeSpan.FromSeconds(2);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LuisLanguageUnderstandingService"/> class.
-        /// </summary>
-        /// <param name="appName">LUIS application name.</param>
-        /// <param name="appId">LUIS application id.</param>
-        /// <param name="appVersion">LUIS application version.</param>
-        /// <param name="isStaging">Signals whether to use the staging endpoint.</param>
-        /// <param name="authoringRegion">LUIS authoring region.</param>
-        /// <param name="endpointRegion">LUIS endpoint region.</param>
-        /// <param name="luisClient">LUIS client.</param>
-        internal LuisLanguageUnderstandingService(string appName, string appId, string appVersion, bool isStaging, string authoringRegion, string endpointRegion, ILuisClient luisClient)
+        internal LuisLanguageUnderstandingService(string appName, string appId, string appVersion, ILuisClient luisClient)
         {
             this.AppName = appName ?? throw new ArgumentNullException(nameof(appName));
             this.AppId = appId;
-            this.AppVersion = appVersion ?? "0.2";
-            this.IsStaging = isStaging;
-            this.AuthoringRegion = authoringRegion;
-            this.EndpointRegion = endpointRegion;
+            this.AppVersion = appVersion ?? "0.1.1";
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
@@ -79,31 +46,7 @@ namespace LanguageUnderstanding.Luis
         /// </summary>
         public string AppVersion { get; }
 
-        /// <summary>
-        /// Gets a value indicating whether the LUIS app is staging.
-        /// </summary>
-        public bool IsStaging { get; }
-
-        /// <summary> Gets the LUIS authoring region. </summary>
-        private string AuthoringRegion { get; }
-
-        /// <summary> Gets the LUIS endpoint region. </summary>
-        private string EndpointRegion { get; }
-
-        /// <summary> Gets the client to make HTTP requests to LUIS. </summary>
         private ILuisClient LuisClient { get; }
-
-        /// <summary> Gets host for LUIS authoring calls.</summary>
-        private string AuthoringHost => $"{Protocol}{this.AuthoringRegion}{Domain}";
-
-        /// <summary> Gets host for LUIS endpoint calls.</summary>
-        private string EndpointHost => $"{Protocol}{this.EndpointRegion}{Domain}";
-
-        /// <summary> Gets full path for LUIS API calls. Contains appId.</summary>
-        private string AppIdPath => $"{BasePath}{this.AppId}/";
-
-        /// <summary> Gets path for LUIS API calls. Contains the appId and appVersion.</summary>
-        private string AppVersionPath => $"{this.AppIdPath}versions/{this.AppVersion}/";
 
         /// <inheritdoc />
         public async Task TrainAsync(
@@ -114,30 +57,26 @@ namespace LanguageUnderstanding.Luis
             // Validate arguments
             ValidateTrainingArguments(utterances, entityTypes);
 
-            this.EnsureAuthoringRegion();
-
             // Create application if not passed in.
             if (this.AppId == null)
             {
-                this.AppId = await this.CreateAppAsync(cancellationToken).ConfigureAwait(false);
+                this.AppId = await this.LuisClient.CreateAppAsync(this.AppName, cancellationToken).ConfigureAwait(false);
             }
 
             // Create LUIS import JSON
-            var model = this.CreateImportJson(utterances, entityTypes);
+            var importJson = this.CreateImportJson(utterances, entityTypes);
 
             // Import the LUIS model
-            await this.ImportVersionAsync(model, cancellationToken).ConfigureAwait(false);
+            await this.LuisClient.ImportVersionAsync(this.AppId, this.AppVersion, importJson, cancellationToken).ConfigureAwait(false);
 
             // Train the LUIS model
-            var trainingUri = new Uri($"{this.AuthoringHost}{this.AppVersionPath}train");
-            var trainResponse = await this.LuisClient.PostAsync(trainingUri, null, cancellationToken).ConfigureAwait(false);
-            trainResponse.EnsureSuccessStatusCode();
+            await this.LuisClient.TrainAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
 
             // Wait for training to complete
-            await this.PollTrainingStatusAsync(trainingUri, cancellationToken).ConfigureAwait(false);
+            await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
 
             // Publishes the LUIS app version
-            await this.PublishAppAsync(cancellationToken).ConfigureAwait(false);
+            await this.LuisClient.PublishAppAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -167,8 +106,6 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestAsync)}'.");
             }
 
-            this.EnsureEndpointRegion();
-
             async Task<LabeledUtterance> selector(string utterance)
             {
                 if (utterance == null)
@@ -176,21 +113,8 @@ namespace LanguageUnderstanding.Luis
                     throw new ArgumentException("Utterances must not be null.", nameof(utterances));
                 }
 
-                var staging = this.IsStaging ? "&staging=true" : string.Empty;
-                var uri = new Uri($"{this.EndpointHost}{QueryBasePath}{this.AppId}?q={utterance}{staging}");
-                while (true)
-                {
-                    var response = await this.LuisClient.QueryAsync(uri, cancellationToken).ConfigureAwait(false);
-                    if (response.StatusCode == (HttpStatusCode)429)
-                    {
-                        await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                        continue;
-                    }
-
-                    response.EnsureSuccessStatusCode();
-                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                    return PredictionToLabeledUtterance(json, entityTypes);
-                }
+                var json = await this.LuisClient.QueryAsync(this.AppId, utterance, cancellationToken).ConfigureAwait(false);
+                return IntentJsonToLabeledUtterance(json, entityTypes);
             }
 
             return SelectAsync(utterances, selector);
@@ -223,8 +147,6 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestSpeechAsync)}'.");
             }
 
-            this.EnsureEndpointRegion();
-
             async Task<LabeledUtterance> selector(string speechFile)
             {
                 if (speechFile == null)
@@ -233,14 +155,14 @@ namespace LanguageUnderstanding.Luis
                 }
 
                 var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile, cancellationToken).ConfigureAwait(false);
-                return PredictionToLabeledUtterance(jsonResult, entityTypes);
+                return IntentJsonToLabeledUtterance(jsonResult, entityTypes);
             }
 
             return SelectAsync(speechFiles, selector);
         }
 
         /// <inheritdoc />
-        public async Task CleanupAsync(CancellationToken cancellationToken)
+        public Task CleanupAsync(CancellationToken cancellationToken)
         {
             if (this.AppId == null)
             {
@@ -248,11 +170,7 @@ namespace LanguageUnderstanding.Luis
                     $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.CleanupAsync)}'.");
             }
 
-            this.EnsureAuthoringRegion();
-
-            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}");
-            var cleanupResponse = await this.LuisClient.DeleteAsync(uri, cancellationToken).ConfigureAwait(false);
-            cleanupResponse.EnsureSuccessStatusCode();
+            return this.LuisClient.DeleteAppAsync(this.AppId, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -261,11 +179,6 @@ namespace LanguageUnderstanding.Luis
             this.LuisClient.Dispose();
         }
 
-        /// <summary>
-        /// Validates the utterance and entity types arguments used to train the LUIS model.
-        /// </summary>
-        /// <param name="utterances">Utterances.</param>
-        /// <param name="entityTypes">Entity types.</param>
         private static void ValidateTrainingArguments(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
         {
             if (utterances == null)
@@ -289,15 +202,9 @@ namespace LanguageUnderstanding.Luis
             }
         }
 
-        /// <summary>
-        /// Converts a prediction request response from Luis into a <see cref="LabeledUtterance"/>.
-        /// </summary>
-        /// <returns>A <see cref="LabeledUtterance"/>.</returns>
-        /// <param name="json">Prediction request response.</param>
-        /// <param name="entityTypes">Entity types included in the model.</param>
-        private static LabeledUtterance PredictionToLabeledUtterance(string json, IEnumerable<EntityType> entityTypes)
+        private static LabeledUtterance IntentJsonToLabeledUtterance(JObject intentJson, IEnumerable<EntityType> entityTypes)
         {
-            if (json == null)
+            if (intentJson == null)
             {
                 return new LabeledUtterance(null, null, null);
             }
@@ -306,11 +213,10 @@ namespace LanguageUnderstanding.Luis
                 .OfType<BuiltinEntityType>()
                 .ToDictionary(entityType => $"builtin.{entityType.BuiltinId}", entityType => entityType.Name);
 
-            var jsonObject = JObject.Parse(json);
-            var text = jsonObject.Value<string>("query");
-            var intent = jsonObject.SelectToken(".topScoringIntent.intent").Value<string>();
+            var text = intentJson.Value<string>("query");
+            var intent = intentJson.SelectToken(".topScoringIntent.intent").Value<string>();
 
-            var array = (JArray)jsonObject["entities"];
+            var array = (JArray)intentJson["entities"];
             var entities = new List<Entity>(array.Count);
             foreach (var item in array)
             {
@@ -343,11 +249,6 @@ namespace LanguageUnderstanding.Luis
             return new LabeledUtterance(text, intent, entities);
         }
 
-        /// <summary>
-        /// Retrieves entity value from "resolution" field of LUIS entity.
-        /// </summary>
-        /// <param name="entityJson">LUIS entity.</param>
-        /// <returns>Entity value if it exists in resolution field or <code>null</code>.</returns>
         private static string GetEntityValue(JToken entityJson)
         {
             var resolution = entityJson["resolution"];
@@ -369,14 +270,6 @@ namespace LanguageUnderstanding.Luis
                 : resolvedValue.Value<string>();
         }
 
-        /// <summary>
-        /// Asynchronously maps items in a collection.
-        /// </summary>
-        /// <typeparam name="T">Type of items.</typeparam>
-        /// <typeparam name="TResult">Type of mapped item.</typeparam>
-        /// <param name="items">Collection of items.</param>
-        /// <param name="selector">Asynchronous mapping function.</param>
-        /// <returns>Task to await the mapped results.</returns>
         private static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(IEnumerable<T> items, Func<T, Task<TResult>> selector)
         {
             var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
@@ -412,64 +305,10 @@ namespace LanguageUnderstanding.Luis
             return results;
         }
 
-        /// <summary>
-        /// Ensures the authoring region is set.
-        /// </summary>
-        /// <param name="caller">Caller.</param>
-        private void EnsureAuthoringRegion([CallerMemberName] string caller = null)
-        {
-            if (this.AuthoringRegion == null)
-            {
-                throw new InvalidOperationException(
-                    $"Must specify '{nameof(this.AuthoringRegion)}' when using '{caller}'.");
-            }
-        }
-
-        /// <summary>
-        /// Ensures the endpoint region is set.
-        /// </summary>
-        /// <param name="caller">Caller.</param>
-        private void EnsureEndpointRegion([CallerMemberName] string caller = null)
-        {
-            if (this.EndpointRegion == null)
-            {
-                throw new InvalidOperationException(
-                    $"Must specify '{nameof(this.EndpointRegion)}' when using '{caller}'.");
-            }
-        }
-
-        /// <summary>
-        /// Creates a new app for LUIS.
-        /// </summary>
-        /// <returns>Task to await the creation of the LUIS app.</returns>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        private async Task<string> CreateAppAsync(CancellationToken cancellationToken)
-        {
-            var requestJson = new JObject
-            {
-                { "name", this.AppName },
-                { "culture", "en-us" },
-            };
-
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}");
-            var requestBody = requestJson.ToString(Formatting.None);
-            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
-            httpResponse.EnsureSuccessStatusCode();
-            var jsonString = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-            var json = JToken.Parse(jsonString);
-            return json.ToString();
-        }
-
-        /// <summary>
-        /// Creates the import JSON for the LUIS app version.
-        /// </summary>
-        /// <returns>Import JSON.</returns>
-        /// <param name="utterances">Utterances.</param>
-        /// <param name="entityTypes">Entity types.</param>
         private JObject CreateImportJson(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
         {
             // Get boilerplate JObject
-            var model = this.GetModelStarter();
+            var importJson = this.GetModelStarter();
 
             // Add intents to model
             var intents = utterances
@@ -477,19 +316,19 @@ namespace LanguageUnderstanding.Luis
                 .Append("None")
                 .Distinct()
                 .Select(intent => new JObject { { "name", intent } });
-            var intentsArray = (JArray)model["intents"];
+            var intentsArray = (JArray)importJson["intents"];
             intentsArray.AddRange(intents);
 
             // Add utterances to model
             var luisUtterances = utterances
                 .Select(item => JObject.FromObject(LuisLabeledUtterance.FromLabeledUtterance(item, entityTypes)));
-            var utteranceArray = (JArray)model["utterances"];
+            var utteranceArray = (JArray)importJson["utterances"];
             utteranceArray.AddRange(luisUtterances);
 
             // Add entities to model
-            var entitiesArray = (JArray)model["entities"];
-            var prebuiltEntitiesArray = (JArray)model["prebuiltEntities"];
-            var closedListsArray = (JArray)model["closedLists"];
+            var entitiesArray = (JArray)importJson["entities"];
+            var prebuiltEntitiesArray = (JArray)importJson["prebuiltEntities"];
+            var closedListsArray = (JArray)importJson["closedLists"];
             foreach (var entityType in entityTypes)
             {
                 switch (entityType.Kind)
@@ -532,13 +371,9 @@ namespace LanguageUnderstanding.Luis
                 }
             }
 
-            return model;
+            return importJson;
         }
 
-        /// <summary>
-        /// Create skeleton JSON for a LUIS model.
-        /// </summary>
-        /// <returns>JSON object with top-level properties for a LUIS model.</returns>
         private JObject GetModelStarter()
         {
             return new JObject
@@ -562,34 +397,12 @@ namespace LanguageUnderstanding.Luis
             };
         }
 
-        /// <summary>
-        /// Import a LUIS model as a new version.
-        /// </summary>
-        /// <returns>Task to await the import operation.</returns>
-        /// <param name="model">LUIS model as a json object.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        private async Task ImportVersionAsync(JObject model, CancellationToken cancellationToken)
-        {
-            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}versions/import?versionId={this.AppVersion}");
-            var requestBody = model.ToString(Formatting.None);
-            var response = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-        }
-
-        /// <summary>
-        /// Polls the training status for the LUIS app.
-        /// </summary>
-        /// <returns>Task to await the completion of the training operation.</returns>
-        /// <param name="uri">URI to poll.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        private async Task PollTrainingStatusAsync(Uri uri, CancellationToken cancellationToken)
+        private async Task PollTrainingStatusAsync(CancellationToken cancellationToken)
         {
             JArray trainStatusJson;
             while (true)
             {
-                var trainStatusResponse = await this.LuisClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
-                var trainStatusContent = await trainStatusResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                trainStatusJson = JArray.Parse(trainStatusContent);
+                trainStatusJson = await this.LuisClient.GetTrainingStatusAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
                 var inProgress = trainStatusJson.SelectTokens("[*].details.status")
                     .Select(statusJson => statusJson.Value<string>())
                     .Any(status => status == "InProgress" || status == "Queued");
@@ -608,26 +421,6 @@ namespace LanguageUnderstanding.Luis
             {
                 throw new InvalidOperationException("Failure occurred while training LUIS model.");
             }
-        }
-
-        /// <summary>
-        /// Creates a new app for LUIS.
-        /// </summary>
-        /// <returns>Task to await the publishing of the LUIS app version.</returns>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        private async Task PublishAppAsync(CancellationToken cancellationToken)
-        {
-            var requestJson = new JObject
-            {
-                { "versionId", this.AppVersion },
-                { "isStaging", this.IsStaging },
-                { "region", this.EndpointRegion },
-            };
-
-            var uri = new Uri($"{this.AuthoringHost}{this.AppIdPath}publish");
-            var requestBody = requestJson.ToString(Formatting.None);
-            var httpResponse = await this.LuisClient.PostAsync(uri, requestBody, cancellationToken).ConfigureAwait(false);
-            httpResponse.EnsureSuccessStatusCode();
         }
     }
 }

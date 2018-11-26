@@ -11,25 +11,21 @@ namespace LanguageUnderstanding.Luis.Tests
     internal static class LuisLanguageUnderstandingServiceBuilderTests
     {
         [Test]
-        public static void ThrowsInvalidOperation()
+        public static void ThrowsArgumentException()
         {
             var builder = new LuisLanguageUnderstandingServiceBuilder();
             Action action = () => builder.Build();
 
-            action.Should().Throw<InvalidOperationException>();
+            // Default LUIS client checks for key
+            action.Should().Throw<ArgumentException>().And.Message.Should().Contain("endpointKey").And.Contain("authoringKey");
 
-            builder.AppName = Guid.NewGuid().ToString();
-            action.Should().Throw<InvalidOperationException>();
+            // Default LUIS client checks for region
+            builder.AuthoringKey = Guid.NewGuid().ToString();
+            action.Should().Throw<ArgumentException>().And.Message.Should().Contain("endpointRegion").And.Contain("authoringRegion");
 
-            builder.AuthoringRegion = Guid.NewGuid().ToString();
-            action.Should().Throw<InvalidOperationException>();
-
-            builder.EndpointKey = Guid.NewGuid().ToString();
-            action.Should().Throw<InvalidOperationException>();
-
-            builder.EndpointKey = null;
-            builder.EndpointRegion = Guid.NewGuid().ToString();
-            action.Should().Throw<InvalidOperationException>();
+            // LUIS implementation checks for app name
+            builder.AuthoringRegion = "westus";
+            action.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
         }
     }
 }

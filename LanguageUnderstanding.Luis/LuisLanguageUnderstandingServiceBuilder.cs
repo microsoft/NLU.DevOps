@@ -62,41 +62,18 @@ namespace LanguageUnderstanding.Luis
         /// <returns>The LUIS client.</returns>
         public LuisLanguageUnderstandingService Build()
         {
-            if (this.AppName == null)
-            {
-                throw new InvalidOperationException("Must provide app name for LUIS.");
-            }
-
-            if (this.AuthoringRegion == null && this.EndpointRegion == null)
-            {
-                throw new InvalidOperationException("Must specify either authoring or endpoint region.");
-            }
-
-            if (this.LuisClient == null && this.AuthoringKey == null && this.EndpointKey == null)
-            {
-                throw new InvalidOperationException("Must provide at least one subscription key.");
-            }
-
-            if (this.EndpointKey == null && this.EndpointRegion == null)
-            {
-                this.EndpointKey = this.AuthoringKey;
-                this.EndpointRegion = this.AuthoringRegion;
-            }
-
-            if (this.LuisClient == null && (this.EndpointKey == null || this.EndpointRegion == null))
-            {
-                throw new InvalidOperationException("Must provide endpoint key and region together.");
-            }
-
-            this.LuisClient = this.LuisClient ?? new LuisClient(this.AuthoringKey, this.EndpointKey, this.EndpointRegion);
+            this.LuisClient = this.LuisClient ??
+                new LuisClient(
+                    this.AuthoringKey,
+                    this.AuthoringRegion,
+                    this.EndpointKey,
+                    this.EndpointRegion,
+                    this.IsStaging);
 
             return new LuisLanguageUnderstandingService(
                 this.AppName,
                 this.AppId,
                 this.AppVersion,
-                this.IsStaging,
-                this.AuthoringRegion,
-                this.EndpointRegion,
                 this.LuisClient);
         }
     }

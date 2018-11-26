@@ -139,7 +139,6 @@ namespace LanguageUnderstanding.CommandLine
                 { LuisAppNameConfigurationKey, instance.AppName },
                 { LuisAppIdConfigurationKey, instance.AppId },
                 { LuisAppVersionConfigurationKey, instance.AppVersion },
-                { LuisIsStagingConfigurationKey, instance.IsStaging },
             };
         }
 
