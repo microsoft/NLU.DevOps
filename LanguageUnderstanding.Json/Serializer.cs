@@ -6,9 +6,7 @@ namespace LanguageUnderstanding.Json
     using System;
     using System.IO;
     using System.Text;
-    using Models;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
 
     /// <summary>
@@ -19,7 +17,6 @@ namespace LanguageUnderstanding.Json
         private static Lazy<JsonSerializerSettings> LazyJsonSerializerSettings =>
             new Lazy<JsonSerializerSettings>(() => new JsonSerializerSettings
             {
-                Converters = { new EntityTypesJsonConverter() },
                 ContractResolver = new CamelCasePropertyNamesContractResolver(),
             });
 
@@ -78,35 +75,6 @@ namespace LanguageUnderstanding.Json
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8, 4096, true))
             {
                 streamWriter.Write(jsonUtterances);
-            }
-        }
-
-        private class EntityTypesJsonConverter : JsonConverter
-        {
-            public override bool CanWrite => false;
-
-            public override bool CanConvert(Type objectType) => objectType == typeof(EntityType);
-
-            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-            {
-                var jsonObject = JObject.Load(reader);
-                var kind = jsonObject["kind"].Value<string>();
-                switch (kind)
-                {
-                    case "builtin":
-                        return jsonObject.ToObject<BuiltinEntityType>();
-                    case "simple":
-                        return jsonObject.ToObject<SimpleEntityType>();
-                    case "list":
-                        return jsonObject.ToObject<ListEntityType>();
-                    default:
-                        throw new NotSupportedException($"Value '{kind}' is not supported for kind property.");
-                }
-            }
-
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            {
-                throw new NotImplementedException();
             }
         }
     }

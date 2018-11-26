@@ -21,9 +21,9 @@ namespace LanguageUnderstanding.Json.Tests
         public static void ReadsEntities()
         {
             var entities = Serializer.Read<List<EntityType>>(Path.Combine(".", "models", "entities.json"));
-            entities[0].Kind.Should().Be(EntityTypeKind.Builtin);
+            entities[0].Kind.Should().Be("builtin");
             entities[0].Name.Should().Be("BookFlight");
-            entities[1].Kind.Should().Be(EntityTypeKind.Simple);
+            entities[1].Kind.Should().Be("simple");
             entities[1].Name.Should().Be("FlightType");
         }
 

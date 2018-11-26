@@ -7,4 +7,8 @@
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\LanguageUnderstanding.Models.xml</DocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
 </Project>

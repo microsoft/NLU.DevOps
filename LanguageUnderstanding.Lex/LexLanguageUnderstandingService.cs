@@ -293,7 +293,7 @@ namespace LanguageUnderstanding.Lex
 
             // Add slot types to imports JSON template
             var slotTypes = entityTypes
-                .OfType<ListEntityType>()
+                .Where(entityType => entityType.Kind != "builtin")
                 .Select(entityType => this.CreateSlotType(entityType));
             Debug.Assert(importJson.SelectToken(".resource.slotTypes") is JArray, "Import template includes slotTypes JSON array.");
             var slotTypesArray = (JArray)importJson.SelectToken(".resource.slotTypes");
@@ -342,20 +342,19 @@ namespace LanguageUnderstanding.Lex
             var slotJson = JObject.Parse(slotJsonString);
             slotJson.SelectToken(".name").Replace(slot);
 
-            var slotTypeToken = slotJson.SelectToken(".slotType");
-            if (entityType is BuiltinEntityType builtinEntityType)
+            if (entityType.Kind == "builtin")
             {
-                slotTypeToken.Replace(builtinEntityType.BuiltinId);
+                slotJson.Merge(entityType.Data);
             }
             else
             {
-                slotTypeToken.Replace(slot);
+                slotJson.SelectToken(".slotType").Replace(slot);
             }
 
             return slotJson;
         }
 
-        private JToken CreateSlotType(ListEntityType entityType)
+        private JToken CreateSlotType(EntityType entityType)
         {
             // Create a new intent with the given name
             var slotTypeJsonString = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "slotType.json"));
@@ -363,20 +362,13 @@ namespace LanguageUnderstanding.Lex
             slotTypeJson.SelectToken(".name").Replace(entityType.Name);
 
             // If any values have synonyms, use TOP_RESOLUTION, otherwise use ORIGINAL_VALUE
-            var valueSelectionStrategy = entityType.Values.Any(synonymSet => synonymSet.Synonyms?.Count > 0)
+            var valueSelectionStrategy = entityType.Data.SelectTokens(".enumerationValues[*].synonyms")
+                .Any(synonyms => synonyms.Any())
                 ? SlotValueSelectionStrategy.TOP_RESOLUTION
                 : SlotValueSelectionStrategy.ORIGINAL_VALUE;
             slotTypeJson.SelectToken(".valueSelectionStrategy").Replace(valueSelectionStrategy.Value);
 
-            // Add enumeration values
-            var enumerationValues = entityType.Values
-                .Select(synonymSet => new JObject
-                {
-                    { "value", synonymSet.CanonicalForm },
-                    { "synonyms", JArray.FromObject(synonymSet.Synonyms ?? Array.Empty<string>()) },
-                });
-            var slotTypesArray = (JArray)slotTypeJson.SelectToken(".enumerationValues");
-            slotTypesArray.AddRange(enumerationValues);
+            slotTypeJson.Merge(entityType.Data);
 
             return slotTypeJson;
         }

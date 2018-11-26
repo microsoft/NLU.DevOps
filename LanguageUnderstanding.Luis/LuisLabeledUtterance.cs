@@ -58,7 +58,7 @@ namespace LanguageUnderstanding.Luis
 
             var entities = from entity in utterance.Entities
                            let entityType = entityTypes.First(item => item.Name == entity.EntityType)
-                           where entityType.Kind != EntityTypeKind.Builtin
+                           where entityType.Kind != "builtin"
                            select LuisEntity.FromEntity(entity, text, entityType);
 
             return new LuisLabeledUtterance(text, utterance.Intent, entities.ToList());

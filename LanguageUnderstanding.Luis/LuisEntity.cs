@@ -56,8 +56,8 @@ namespace LanguageUnderstanding.Luis
             var endCharIndex = startCharIndex + entity.MatchText.Length - 1;
 
             // Builtin entities do not use a custom label
-            var entityName = entityType is BuiltinEntityType builtinEntityType
-                ? builtinEntityType.BuiltinId
+            var entityName = entityType.Kind == "builtin"
+                ? entityType.Data.Value<string>("name")
                 : entity.EntityType;
 
             return new LuisEntity(entityName, startCharIndex, endCharIndex);

@@ -3,18 +3,24 @@
 
 namespace LanguageUnderstanding.Models
 {
+    using Newtonsoft.Json.Linq;
+
     /// <summary>
-    /// Base class for entity types.
+    /// Entity types class.
     /// </summary>
-    public abstract class EntityType
+    public class EntityType
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EntityType"/> class.
         /// </summary>
         /// <param name="name">Entity type name.</param>
-        protected EntityType(string name)
+        /// <param name="kind">Entity type kind.</param>
+        /// <param name="data">Entity type data.</param>
+        public EntityType(string name, string kind, JToken data)
         {
             this.Name = name;
+            this.Kind = kind;
+            this.Data = data;
         }
 
         /// <summary>
@@ -25,6 +31,11 @@ namespace LanguageUnderstanding.Models
         /// <summary>
         /// Gets the entity type kind.
         /// </summary>
-        public abstract EntityTypeKind Kind { get; }
+        public string Kind { get; }
+
+        /// <summary>
+        /// Gets the entity type data.
+        /// </summary>
+        public JToken Data { get; }
     }
 }

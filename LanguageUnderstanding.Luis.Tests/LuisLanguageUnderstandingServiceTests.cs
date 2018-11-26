@@ -115,7 +115,7 @@ namespace LanguageUnderstanding.Luis.Tests
             var utterance = "Engineer is the job I want!";
             var entity = new Entity("String", null, "Engineer", 0);
             var expected = new LuisEntity("String", 0, 7);
-            var entityType = new SimpleEntityType("String");
+            var entityType = new EntityType("String", "simple", null);
             var actual = LuisEntity.FromEntity(entity, utterance, entityType);
             new LuisEntityComparer().Equals(actual, expected).Should().BeTrue();
         }
@@ -185,8 +185,8 @@ namespace LanguageUnderstanding.Luis.Tests
 
             var entityTypes = new[]
             {
-                new SimpleEntityType("FirstName"),
-                new SimpleEntityType("LastName"),
+                new EntityType("FirstName", "simple", null),
+                new EntityType("LastName", "simple", null),
             };
 
             var labeledUtterance = new LabeledUtterance(text, intent, entities);
@@ -300,8 +300,8 @@ namespace LanguageUnderstanding.Luis.Tests
 
                 var entityTypes = new[]
                 {
-                    new SimpleEntityType("Name"),
-                    new SimpleEntityType("Subject")
+                    new EntityType("Name", "simple", null),
+                    new EntityType("Subject", "simple", null),
                 };
 
                 await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
@@ -561,7 +561,7 @@ namespace LanguageUnderstanding.Luis.Tests
                 return null;
             };
 
-            var entityType = new BuiltinEntityType("type", "test");
+            var entityType = new EntityType("type", "builtin", new JObject { { "name", "test" } });
 
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;

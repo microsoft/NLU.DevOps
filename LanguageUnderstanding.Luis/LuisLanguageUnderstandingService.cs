@@ -188,8 +188,8 @@ namespace LanguageUnderstanding.Luis
             }
 
             var renamedEntityTypes = entityTypes
-                .OfType<BuiltinEntityType>()
-                .ToDictionary(entityType => $"builtin.{entityType.BuiltinId}", entityType => entityType.Name);
+                .Where(entityType => entityType.Kind == "builtin")
+                .ToDictionary(entityType => $"builtin.{entityType.Data.Value<string>("name")}", entityType => entityType.Name);
 
             var text = intentJson.Value<string>("query");
             var intent = intentJson.SelectToken(".topScoringIntent.intent").Value<string>();
@@ -270,44 +270,42 @@ namespace LanguageUnderstanding.Luis
 
             // Add entities to model
             var entitiesArray = (JArray)importJson["entities"];
+            var modelFeatures = (JArray)importJson["model_features"];
             var prebuiltEntitiesArray = (JArray)importJson["prebuiltEntities"];
             var closedListsArray = (JArray)importJson["closedLists"];
             foreach (var entityType in entityTypes)
             {
                 switch (entityType.Kind)
                 {
-                    case EntityTypeKind.Simple:
-                        entitiesArray.Add(new JObject
+                    case "simple":
+                        var simpleEntity = new JObject
                         {
                             { "name", entityType.Name },
-                            { "children", new JArray() },
-                            { "roles", new JArray() },
-                        });
+                        };
+
+                        simpleEntity.Merge(entityType.Data);
+                        entitiesArray.Add(simpleEntity);
                         break;
-                    case EntityTypeKind.Builtin:
-                        var builtinEntityType = (BuiltinEntityType)entityType;
-                        prebuiltEntitiesArray.Add(new JObject
-                        {
-                            { "name", builtinEntityType.BuiltinId },
-                            { "roles", new JArray() },
-                        });
+                    case "builtin":
+                        prebuiltEntitiesArray.Add(entityType.Data);
                         break;
-                    case EntityTypeKind.List:
-                        var listEntityType = (ListEntityType)entityType;
-                        var subLists = listEntityType.Values
-                            .Select(value => new JObject
-                            {
-                                { "canonicalForm", value.CanonicalForm },
-                                { "list", JArray.FromObject(value.Synonyms) },
-                            });
-                        var subListsJson = new JArray();
-                        subListsJson.AddRange(subLists);
-                        closedListsArray.Add(new JObject
+                    case "list":
+                        var listEntity = new JObject
                         {
-                            { "name", listEntityType.Name },
-                            { "roles", new JArray() },
-                            { "subLists", subListsJson },
-                        });
+                            { "name", entityType.Name }
+                        };
+
+                        listEntity.Merge(entityType.Data);
+                        closedListsArray.Add(listEntity);
+                        break;
+                    case "phrases":
+                        var phraseEntity = new JObject
+                        {
+                            { "name", entityType.Name }
+                        };
+
+                        phraseEntity.Merge(entityType.Data);
+                        modelFeatures.Add(phraseEntity);
                         break;
                     default:
                         throw new NotImplementedException($"Entity type '{entityType.Kind}' has not been implemented.");

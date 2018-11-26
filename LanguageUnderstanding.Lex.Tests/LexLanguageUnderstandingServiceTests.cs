@@ -64,10 +64,9 @@ namespace LanguageUnderstanding.Lex.Tests
             var match = "bar";
             using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, new MockLexClient()))
             {
-                var entityType = new BuiltinEntityType(string.Empty, string.Empty);
                 var entity = new Entity(string.Empty, string.Empty, match, 0);
                 var utterance = new LabeledUtterance(text, string.Empty, new[] { entity });
-                var invalidEntityMatch = new Func<Task>(() => service.TrainAsync(new[] { utterance }, new[] { entityType }));
+                var invalidEntityMatch = new Func<Task>(() => service.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()));
                 invalidEntityMatch.Should().Throw<InvalidOperationException>();
             }
         }
@@ -101,7 +100,7 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
-                var entityType = new BuiltinEntityType(entityTypeName, entityTypeName);
+                var entityType = new EntityType(entityTypeName, "builtin", new JObject { { "slotType", entityTypeName } });
 
                 await lex.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
 
@@ -150,7 +149,7 @@ namespace LanguageUnderstanding.Lex.Tests
             {
                 var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
-                var entityType = new BuiltinEntityType(entityTypeName, entityTypeName);
+                var entityType = new EntityType(entityTypeName, "builtin", new JObject { { "slotType", entityTypeName } });
 
                 await lex.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
 
@@ -380,21 +379,17 @@ namespace LanguageUnderstanding.Lex.Tests
                 var originalValueListEntityTypeCanonicalForm = Guid.NewGuid().ToString();
                 var topResolutionListEntityTypeCanonicalForm = Guid.NewGuid().ToString();
                 var topResolutionListEntityTypeSynonym = Guid.NewGuid().ToString();
-
-                var originalValueListEntityType = new ListEntityType(
+                var data = @"{""enumerationValues"":[{""value"":""" + originalValueListEntityTypeCanonicalForm + @""",""synonyms"":[]}]}";
+                var originalValueListEntityType = new EntityType(
                     originalValueListEntityTypeName,
-                    new[] { new SynonymSet(originalValueListEntityTypeCanonicalForm, null) });
+                    "list",
+                    JObject.Parse(data));
 
-                var topResolutionListEntityTypeValues = new[]
-                {
-                    new SynonymSet(
-                        topResolutionListEntityTypeCanonicalForm,
-                        new[] { topResolutionListEntityTypeSynonym }),
-                };
-
-                var topResolutionListEntityType = new ListEntityType(
+                var dataTopResolution = @"{""enumerationValues"":[{""value"":""" + topResolutionListEntityTypeCanonicalForm + @""",""synonyms"":[""" + topResolutionListEntityTypeSynonym + @"""]}]}";
+                var topResolutionListEntityType = new EntityType(
                     topResolutionListEntityTypeName,
-                    topResolutionListEntityTypeValues);
+                    "list",
+                    JObject.Parse(dataTopResolution));
 
                 var entityTypes = new[] { originalValueListEntityType, topResolutionListEntityType };
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
