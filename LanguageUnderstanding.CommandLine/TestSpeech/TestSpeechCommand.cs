@@ -8,7 +8,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using LanguageUnderstanding.Models;
+    using Models;
 
     internal class TestSpeechCommand : BaseCommand<TestSpeechOptions>
     {
@@ -25,7 +25,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
 
         private async Task RunAsync()
         {
-            this.Log("Running speech tests against NLU service... ", false);
+            this.Log("Running speech tests against NLU service...");
 
             var testUtterances = Read<List<LabeledUtteranceWithRecordingId>>(this.Options.UtterancesPath);
             if (testUtterances.Any(utterance => utterance.RecordingId == null))
@@ -38,8 +38,6 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
 
             var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
             var testResults = await speechFiles.SelectAsync(speechFile => this.LanguageUnderstandingService.TestSpeechAsync(speechFile, entityTypes)).ConfigureAwait(false);
-
-            this.Log("Done.");
 
             var stream = this.Options.OutputPath != null
                 ? File.OpenWrite(this.Options.OutputPath)

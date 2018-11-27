@@ -6,7 +6,9 @@ namespace LanguageUnderstanding.CommandLine
     using System;
     using System.IO;
     using System.Text;
+    using Logging;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
@@ -17,8 +19,9 @@ namespace LanguageUnderstanding.CommandLine
         public BaseCommand(TOptions options)
         {
             this.Options = options;
-            this.LazyLanguageUnderstandingService =
-                new Lazy<ILanguageUnderstandingService>(this.CreateLanguageUnderstandingService);
+            this.LazyConfiguration = new Lazy<IConfiguration>(this.CreateConfiguration);
+            this.LazyLanguageUnderstandingService = new Lazy<ILanguageUnderstandingService>(this.CreateLanguageUnderstandingService);
+            this.LazyLogger = new Lazy<ILogger>(this.CreateLogger);
         }
 
         protected TOptions Options { get; }
@@ -27,9 +30,11 @@ namespace LanguageUnderstanding.CommandLine
 
         protected ILanguageUnderstandingService LanguageUnderstandingService => this.LazyLanguageUnderstandingService.Value;
 
-        private Lazy<IConfiguration> LazyConfiguration => new Lazy<IConfiguration>(this.CreateConfiguration);
+        private Lazy<IConfiguration> LazyConfiguration { get; }
 
         private Lazy<ILanguageUnderstandingService> LazyLanguageUnderstandingService { get; }
+
+        private Lazy<ILogger> LazyLogger { get; }
 
         public abstract int Main();
 
@@ -66,19 +71,9 @@ namespace LanguageUnderstanding.CommandLine
             }
         }
 
-        protected void Log(string message, bool newline = true)
+        protected void Log(string message)
         {
-            if (!this.Options.Quiet)
-            {
-                if (newline)
-                {
-                    Console.WriteLine(message);
-                }
-                else
-                {
-                    Console.Write(message);
-                }
-            }
+            this.LazyLogger.Value.LogInformation(message);
         }
 
         private IConfiguration CreateConfiguration()
@@ -104,6 +99,18 @@ namespace LanguageUnderstanding.CommandLine
         private ILanguageUnderstandingService CreateLanguageUnderstandingService()
         {
             return LanguageUnderstandingServiceFactory.Create(this.Options.Service, this.Configuration);
+        }
+
+        private ILogger CreateLogger()
+        {
+            var logLevel = this.Options.Verbose ? LogLevel.Trace : LogLevel.Information;
+
+            if (this.Options.Quiet)
+            {
+                logLevel = LogLevel.Warning;
+            }
+
+            return ApplicationLogger.LoggerFactory.AddConsole(logLevel).CreateLogger(this.GetType());
         }
     }
 }

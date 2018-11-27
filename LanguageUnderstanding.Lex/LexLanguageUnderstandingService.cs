@@ -18,6 +18,8 @@ namespace LanguageUnderstanding.Lex
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
     using Amazon.Runtime;
+    using Logging;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -72,6 +74,10 @@ namespace LanguageUnderstanding.Lex
         /// Gets the bot alias.
         /// </summary>
         public string BotAlias { get; }
+
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexLanguageUnderstandingService>());
 
         private string TemplatesDirectory { get; }
 
@@ -273,6 +279,7 @@ namespace LanguageUnderstanding.Lex
             var putBotRequest = JsonConvert.DeserializeObject<PutBotRequest>(botJson);
             putBotRequest.Name = this.BotName;
             putBotRequest.CreateVersion = true;
+            Logger.LogTrace($"Creating bot '{this.BotName}'.");
             return this.LexClient.PutBotAsync(putBotRequest, cancellationToken);
         }
 
@@ -388,6 +395,8 @@ namespace LanguageUnderstanding.Lex
                     ResourceType = ResourceType.BOT,
                 };
 
+                Logger.LogTrace($"Importing bot '{this.BotName}'.");
+
                 var startImportResponse = await this.LexClient.StartImportAsync(startImportRequest, cancellationToken).ConfigureAwait(false);
 
                 // If the import is not complete, poll until import is complete
@@ -450,6 +459,8 @@ namespace LanguageUnderstanding.Lex
             putBotBuildRequest.AbortStatement.Messages.First().GroupNumber = 1;
             putBotBuildRequest.ClarificationPrompt.Messages.First().GroupNumber = 1;
 
+            Logger.LogTrace($"Building bot '{this.BotName}'.");
+
             await this.LexClient.PutBotAsync(putBotBuildRequest, cancellationToken).ConfigureAwait(false);
 
             // Poll for until bot is ready
@@ -508,12 +519,14 @@ namespace LanguageUnderstanding.Lex
                     Name = this.BotAlias,
                 };
 
+                Logger.LogTrace($"Deleting bot alias '{this.BotAlias}' for bot '{this.BotName}'.");
+
                 await this.LexClient.DeleteBotAliasAsync(deleteBotAliasRequest, cancellationToken).ConfigureAwait(false);
             }
-            catch (Amazon.LexModelBuildingService.Model.NotFoundException)
+            catch (Amazon.LexModelBuildingService.Model.NotFoundException exception)
             {
                 // Likely that no bot alias was published
-                // TODO: log that this exception occurred
+                Logger.LogWarning(exception, $"Could not delete bot alias '{this.BotAlias}' for bot '{this.BotName}'.");
             }
         }
 
@@ -526,12 +539,14 @@ namespace LanguageUnderstanding.Lex
                     Name = this.BotName,
                 };
 
+                Logger.LogTrace($"Deleting bot '{this.BotName}'.");
+
                 await this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken).ConfigureAwait(false);
             }
-            catch (Amazon.LexModelBuildingService.Model.NotFoundException)
+            catch (Amazon.LexModelBuildingService.Model.NotFoundException exception)
             {
                 // Likely that bot was not created
-                // TODO: log that this exception occurred
+                Logger.LogWarning(exception, $"Could not delete bot '{this.BotName}'.");
             }
         }
 
@@ -557,6 +572,8 @@ namespace LanguageUnderstanding.Lex
                 BotVersion = "$LATEST",
                 Name = this.BotAlias,
             };
+
+            Logger.LogTrace($"Publishing bot alias '{this.BotAlias}' for bot '{this.BotName}'.");
 
             await this.LexClient.PutBotAliasAsync(putBotAliasRequest, cancellationToken).ConfigureAwait(false);
         }

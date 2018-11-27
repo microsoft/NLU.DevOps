@@ -12,5 +12,8 @@ namespace LanguageUnderstanding.CommandLine
 
         [Option('q', HelpText = "Suppress log output.", Required = false)]
         public bool Quiet { get; set; }
+
+        [Option('v', HelpText = "Verbose log output.", Required = false)]
+        public bool Verbose { get; set; }
     }
 }

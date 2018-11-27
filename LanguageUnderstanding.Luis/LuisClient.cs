@@ -9,9 +9,11 @@ namespace LanguageUnderstanding.Luis
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using LanguageUnderstanding.Logging;
     using Microsoft.CognitiveServices.Speech;
     using Microsoft.CognitiveServices.Speech.Audio;
     using Microsoft.CognitiveServices.Speech.Intent;
+    using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -49,6 +51,10 @@ namespace LanguageUnderstanding.Luis
 
             this.LazySpeechConfig = new Lazy<SpeechConfig>(() => SpeechConfig.FromSubscription(endpointKey, endpointRegion));
         }
+
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisLanguageUnderstandingService>());
 
         private string AuthoringRegion { get; }
 
@@ -142,6 +148,7 @@ namespace LanguageUnderstanding.Luis
                     {
                         if (httpResponse.StatusCode == (HttpStatusCode)429)
                         {
+                            Logger.LogWarning("Received HTTP 429 result from Cognitive Services. Retrying.");
                             await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                             continue;
                         }
@@ -175,6 +182,7 @@ namespace LanguageUnderstanding.Luis
                 }
                 else if (result.Reason == ResultReason.NoMatch)
                 {
+                    Logger.LogWarning("Received 'NoMatch' result from Cognitive Services.");
                     return null;
                 }
                 else

@@ -12,16 +12,18 @@
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Lex\LanguageUnderstanding.Lex.csproj" />
     <ProjectReference Include="..\LanguageUnderstanding.Luis\LanguageUnderstanding.Luis.csproj" />
+    <ProjectReference Include="..\LanguageUnderstanding.Logging\LanguageUnderstanding.Logging.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.3.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.*.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>

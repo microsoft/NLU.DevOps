@@ -10,6 +10,8 @@ namespace LanguageUnderstanding.Luis
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Logging;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json.Linq;
 
@@ -44,6 +46,10 @@ namespace LanguageUnderstanding.Luis
         /// </summary>
         public string AppVersion { get; }
 
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisLanguageUnderstandingService>());
+
         private ILuisClient LuisClient { get; }
 
         /// <inheritdoc />
@@ -59,21 +65,25 @@ namespace LanguageUnderstanding.Luis
             if (this.AppId == null)
             {
                 this.AppId = await this.LuisClient.CreateAppAsync(this.AppName, cancellationToken).ConfigureAwait(false);
+                Logger.LogTrace($"Created LUIS app '{this.AppName}' with ID '{this.AppId}'.");
             }
 
             // Create LUIS import JSON
             var importJson = this.CreateImportJson(utterances, entityTypes);
 
             // Import the LUIS model
+            Logger.LogTrace($"Importing LUIS app '{this.AppName}' version '{this.AppVersion}'.");
             await this.LuisClient.ImportVersionAsync(this.AppId, this.AppVersion, importJson, cancellationToken).ConfigureAwait(false);
 
             // Train the LUIS model
+            Logger.LogTrace($"Training LUIS app '{this.AppName}' version '{this.AppVersion}'.");
             await this.LuisClient.TrainAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
 
             // Wait for training to complete
             await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
 
             // Publishes the LUIS app version
+            Logger.LogTrace($"Publishing LUIS app '{this.AppName}' version '{this.AppVersion}'.");
             await this.LuisClient.PublishAppAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
         }
 
@@ -353,6 +363,7 @@ namespace LanguageUnderstanding.Luis
                     break;
                 }
 
+                Logger.LogTrace($"Training jobs not complete. Polling again.");
                 await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
             }
 

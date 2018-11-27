@@ -26,11 +26,10 @@ namespace LanguageUnderstanding.CommandLine.Train
         {
             try
             {
-                this.Log("Training NLU service... ", false);
+                this.Log("Training NLU service...");
                 var trainingUtterances = Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
                 var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
                 await this.LanguageUnderstandingService.TrainAsync(trainingUtterances, entityTypes).ConfigureAwait(false);
-                this.Log("Done.");
             }
             finally
             {

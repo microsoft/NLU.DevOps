@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj" />
+    <ProjectReference Include="..\LanguageUnderstanding.Logging\LanguageUnderstanding.Logging.csproj" />
   </ItemGroup>
 
 </Project>

@@ -12,6 +12,8 @@ namespace LanguageUnderstanding.Lex
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
     using Amazon.Runtime;
+    using Logging;
+    using Microsoft.Extensions.Logging;
 
     internal sealed class DefaultLexClient : ILexClient
     {
@@ -31,6 +33,10 @@ namespace LanguageUnderstanding.Lex
             this.LexClient = new AmazonLexClient(credentials, regionEndpoint);
             this.LexModelClient = new AmazonLexModelBuildingServiceClient(credentials, regionEndpoint);
         }
+
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexLanguageUnderstandingService>());
 
         private AmazonLexClient LexClient { get; }
 
@@ -97,27 +103,15 @@ namespace LanguageUnderstanding.Lex
             this.LexModelClient.Dispose();
         }
 
-        private static async Task RetryAsync<TRequest>(Func<TRequest, CancellationToken, Task> actionAsync, TRequest request, CancellationToken cancellationToken)
+        private static Task RetryAsync<TRequest>(Func<TRequest, CancellationToken, Task> actionAsync, TRequest request, CancellationToken cancellationToken)
         {
-            var count = 0;
-            while (count++ < RetryCount)
+            async Task<bool> asyncActionWrapper(TRequest requestParam, CancellationToken cancellationTokenParam)
             {
-                try
-                {
-                    await actionAsync(request, cancellationToken).ConfigureAwait(false);
-                    return;
-                }
-                catch (Amazon.LexModelBuildingService.Model.ConflictException)
-                when (count < RetryCount)
-                {
-                    await Task.Delay(RetryConflictDelay, cancellationToken).ConfigureAwait(false);
-                }
-                catch (Amazon.Lex.Model.LimitExceededException)
-                when (count < RetryCount)
-                {
-                    await Task.Delay(RetryLimitExceededDelay, cancellationToken).ConfigureAwait(false);
-                }
+                await actionAsync(requestParam, cancellationTokenParam).ConfigureAwait(false);
+                return true;
             }
+
+            return RetryAsync(asyncActionWrapper, request, cancellationToken);
         }
 
         private static async Task<TResponse> RetryAsync<TRequest, TResponse>(Func<TRequest, CancellationToken, Task<TResponse>> actionAsync, TRequest request, CancellationToken cancellationToken)
@@ -129,14 +123,16 @@ namespace LanguageUnderstanding.Lex
                 {
                     return await actionAsync(request, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Amazon.LexModelBuildingService.Model.ConflictException)
+                catch (Amazon.LexModelBuildingService.Model.ConflictException conflictException)
                 when (count < RetryCount)
                 {
+                    Logger.LogWarning(conflictException, $"Encountered 'ConflictException', retrying.");
                     await Task.Delay(RetryConflictDelay, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Amazon.Lex.Model.LimitExceededException)
+                catch (Amazon.Lex.Model.LimitExceededException limitExceededException)
                 when (count < RetryCount)
                 {
+                    Logger.LogWarning(limitExceededException, "Encountered 'LimitExceededException', retrying.");
                     await Task.Delay(RetryLimitExceededDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
