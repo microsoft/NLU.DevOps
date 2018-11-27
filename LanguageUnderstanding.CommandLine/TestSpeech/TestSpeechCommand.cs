@@ -8,7 +8,6 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using Json;
     using LanguageUnderstanding.Models;
 
     internal class TestSpeechCommand : BaseCommand<TestSpeechOptions>
@@ -28,7 +27,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
         {
             this.Log("Running speech tests against NLU service... ", false);
 
-            var testUtterances = Serializer.Read<List<LabeledUtteranceWithRecordingId>>(this.Options.UtterancesPath);
+            var testUtterances = Read<List<LabeledUtteranceWithRecordingId>>(this.Options.UtterancesPath);
             if (testUtterances.Any(utterance => utterance.RecordingId == null))
             {
                 throw new InvalidOperationException("Test utterances must have 'recordingID'.");
@@ -37,7 +36,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
             var speechFiles = testUtterances
                 .Select(utterance => $"{Path.Combine(this.Options.RecordingsDirectory, utterance.RecordingId)}.wav");
 
-            var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
+            var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
             var testResults = await speechFiles.SelectAsync(speechFile => this.LanguageUnderstandingService.TestSpeechAsync(speechFile, entityTypes)).ConfigureAwait(false);
 
             this.Log("Done.");
@@ -48,7 +47,7 @@ namespace LanguageUnderstanding.CommandLine.TestSpeech
 
             using (stream)
             {
-                Serializer.Write(stream, testResults);
+                Write(stream, testResults);
             }
         }
 

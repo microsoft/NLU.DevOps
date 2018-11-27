@@ -8,7 +8,6 @@ namespace LanguageUnderstanding.CommandLine.Test
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using Json;
     using LanguageUnderstanding.Models;
 
     internal class TestCommand : BaseCommand<TestOptions>
@@ -27,8 +26,8 @@ namespace LanguageUnderstanding.CommandLine.Test
         private async Task RunAsync()
         {
             this.Log("Running tests against NLU service... ", false);
-            var testUtterances = Serializer.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-            var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
+            var testUtterances = Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+            var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
             var utterances = testUtterances.Select(utterance => utterance.Text);
             var testResults = await utterances.SelectAsync(utterance => this.LanguageUnderstandingService.TestAsync(utterance, entityTypes)).ConfigureAwait(false);
             this.Log("Done.");
@@ -39,7 +38,7 @@ namespace LanguageUnderstanding.CommandLine.Test
 
             using (stream)
             {
-                Serializer.Write(stream, testResults);
+                Write(stream, testResults);
             }
         }
     }

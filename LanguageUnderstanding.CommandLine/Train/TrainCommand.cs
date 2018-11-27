@@ -7,7 +7,6 @@ namespace LanguageUnderstanding.CommandLine.Train
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
-    using Json;
     using Models;
 
     internal class TrainCommand : BaseCommand<TrainOptions>
@@ -28,8 +27,8 @@ namespace LanguageUnderstanding.CommandLine.Train
             try
             {
                 this.Log("Training NLU service... ", false);
-                var trainingUtterances = Serializer.Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-                var entityTypes = Serializer.Read<List<EntityType>>(this.Options.EntityTypesPath);
+                var trainingUtterances = Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+                var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
                 await this.LanguageUnderstandingService.TrainAsync(trainingUtterances, entityTypes).ConfigureAwait(false);
                 this.Log("Done.");
             }

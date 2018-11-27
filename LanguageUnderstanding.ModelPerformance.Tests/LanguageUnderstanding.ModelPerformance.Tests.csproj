@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LanguageUnderstanding.Models\LanguageUnderstanding.Models.csproj" />
-    <ProjectReference Include="..\LanguageUnderstanding.Json\LanguageUnderstanding.Json.csproj" />
   </ItemGroup>
 
   <ItemGroup>

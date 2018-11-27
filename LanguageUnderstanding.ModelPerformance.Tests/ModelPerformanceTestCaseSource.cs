@@ -7,9 +7,9 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using Json;
     using Microsoft.Extensions.Configuration;
     using Models;
+    using Newtonsoft.Json;
 
     internal class ModelPerformanceTestCaseSource
     {
@@ -73,8 +73,8 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
-            var expectedUtterances = Serializer.Read<List<LabeledUtterance>>(expectedPath);
-            var actualUtterances = Serializer.Read<List<LabeledUtterance>>(actualPath);
+            var expectedUtterances = Read(expectedPath);
+            var actualUtterances = Read(actualPath);
 
             if (expectedUtterances.Count != actualUtterances.Count)
             {
@@ -102,6 +102,15 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
                     testCase.TestLabel));
 
             return entityTestCases ?? Array.Empty<EntityTestCaseData>();
+        }
+
+        private static List<LabeledUtterance> Read(string path)
+        {
+            var serializer = JsonSerializer.CreateDefault();
+            using (var jsonReader = new JsonTextReader(File.OpenText(path)))
+            {
+                return serializer.Deserialize<List<LabeledUtterance>>(jsonReader);
+            }
         }
     }
 }
