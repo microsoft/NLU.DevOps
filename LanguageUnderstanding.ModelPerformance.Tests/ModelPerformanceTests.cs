@@ -68,10 +68,10 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
 
         private static bool IsEntityMatch(Entity expected, Entity actual)
         {
-            return expected.MatchText == actual.MatchText
-                || expected.MatchText == actual.EntityValue
-                || expected.EntityValue == actual.EntityValue
-                || expected.EntityValue == actual.MatchText;
+            return string.Compare(expected.MatchText, actual.MatchText, System.StringComparison.OrdinalIgnoreCase) == 0
+                || string.Compare(expected.MatchText, actual.EntityValue, System.StringComparison.OrdinalIgnoreCase) == 0
+                || string.Compare(expected.EntityValue, actual.EntityValue, System.StringComparison.OrdinalIgnoreCase) == 0
+                || string.Compare(expected.EntityValue, actual.MatchText, System.StringComparison.OrdinalIgnoreCase) == 0;
         }
     }
 }
