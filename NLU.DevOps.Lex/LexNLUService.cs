@@ -59,8 +59,8 @@ namespace NLU.DevOps.Lex
         /// <param name="lexClient">Lex client.</param>
         public LexNLUService(string botName, string botAlias, string templatesDirectory, ILexClient lexClient)
         {
-            this.BotName = botName ?? throw new ArgumentNullException(nameof(botName));
-            this.BotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
+            this.LexBotName = botName ?? throw new ArgumentNullException(nameof(botName));
+            this.LexBotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
             this.TemplatesDirectory = templatesDirectory ?? throw new ArgumentNullException(nameof(templatesDirectory));
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
@@ -68,12 +68,12 @@ namespace NLU.DevOps.Lex
         /// <summary>
         /// Gets the name of the bot.
         /// </summary>
-        public string BotName { get; }
+        public string LexBotName { get; }
 
         /// <summary>
         /// Gets the bot alias.
         /// </summary>
-        public string BotAlias { get; }
+        public string LexBotAlias { get; }
 
         private static ILogger Logger => LazyLogger.Value;
 
@@ -130,8 +130,8 @@ namespace NLU.DevOps.Lex
 
             var postTextRequest = new PostTextRequest
             {
-                BotAlias = this.BotAlias,
-                BotName = this.BotName,
+                BotAlias = this.LexBotAlias,
+                BotName = this.LexBotName,
                 UserId = Guid.NewGuid().ToString(),
                 InputText = utterance,
             };
@@ -165,8 +165,8 @@ namespace NLU.DevOps.Lex
             {
                 var postContentRequest = new PostContentRequest
                 {
-                    BotAlias = this.BotAlias,
-                    BotName = this.BotName,
+                    BotAlias = this.LexBotAlias,
+                    BotName = this.LexBotName,
                     UserId = Guid.NewGuid().ToString(),
                     Accept = "text/plain; charset=utf-8",
                     ContentType = "audio/l16; rate=16000; channels=1",
@@ -264,11 +264,11 @@ namespace NLU.DevOps.Lex
             // Get the latest bot configuration
             var getBotsRequest = new GetBotsRequest
             {
-                NameContains = this.BotName,
+                NameContains = this.LexBotName,
             };
 
             var getBotsResponse = await this.LexClient.GetBotsAsync(getBotsRequest, cancellationToken).ConfigureAwait(false);
-            var botMatch = getBotsResponse.Bots.FirstOrDefault(bot => bot.Name == this.BotName);
+            var botMatch = getBotsResponse.Bots.FirstOrDefault(bot => bot.Name == this.LexBotName);
             return botMatch != null;
         }
 
@@ -277,9 +277,9 @@ namespace NLU.DevOps.Lex
             // Create a new bot with the given name
             var botJson = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "bot.json"));
             var putBotRequest = JsonConvert.DeserializeObject<PutBotRequest>(botJson);
-            putBotRequest.Name = this.BotName;
+            putBotRequest.Name = this.LexBotName;
             putBotRequest.CreateVersion = true;
-            Logger.LogTrace($"Creating bot '{this.BotName}'.");
+            Logger.LogTrace($"Creating bot '{this.LexBotName}'.");
             return this.LexClient.PutBotAsync(putBotRequest, cancellationToken);
         }
 
@@ -288,7 +288,7 @@ namespace NLU.DevOps.Lex
             // Add name to imports JSON template
             var importJsonTemplate = File.ReadAllText(Path.Combine(this.TemplatesDirectory, "import.json"));
             var importJson = JObject.Parse(importJsonTemplate);
-            importJson.SelectToken(".resource.name").Replace(this.BotName);
+            importJson.SelectToken(".resource.name").Replace(this.LexBotName);
 
             // Add intents to imports JSON template
             var intents = utterances
@@ -395,7 +395,7 @@ namespace NLU.DevOps.Lex
                     ResourceType = ResourceType.BOT,
                 };
 
-                Logger.LogTrace($"Importing bot '{this.BotName}'.");
+                Logger.LogTrace($"Importing bot '{this.LexBotName}'.");
 
                 var startImportResponse = await this.LexClient.StartImportAsync(startImportRequest, cancellationToken).ConfigureAwait(false);
 
@@ -444,7 +444,7 @@ namespace NLU.DevOps.Lex
             // Get the latest bot configuration
             var getBotRequest = new GetBotRequest
             {
-                Name = this.BotName,
+                Name = this.LexBotName,
                 VersionOrAlias = "$LATEST",
             };
 
@@ -459,7 +459,7 @@ namespace NLU.DevOps.Lex
             putBotBuildRequest.AbortStatement.Messages.First().GroupNumber = 1;
             putBotBuildRequest.ClarificationPrompt.Messages.First().GroupNumber = 1;
 
-            Logger.LogTrace($"Building bot '{this.BotName}'.");
+            Logger.LogTrace($"Building bot '{this.LexBotName}'.");
 
             await this.LexClient.PutBotAsync(putBotBuildRequest, cancellationToken).ConfigureAwait(false);
 
@@ -471,7 +471,7 @@ namespace NLU.DevOps.Lex
         {
             var getBotRequest = new GetBotRequest
             {
-                Name = this.BotName,
+                Name = this.LexBotName,
                 VersionOrAlias = "$LATEST",
             };
 
@@ -515,18 +515,18 @@ namespace NLU.DevOps.Lex
             {
                 var deleteBotAliasRequest = new DeleteBotAliasRequest
                 {
-                    BotName = this.BotName,
-                    Name = this.BotAlias,
+                    BotName = this.LexBotName,
+                    Name = this.LexBotAlias,
                 };
 
-                Logger.LogTrace($"Deleting bot alias '{this.BotAlias}' for bot '{this.BotName}'.");
+                Logger.LogTrace($"Deleting bot alias '{this.LexBotAlias}' for bot '{this.LexBotName}'.");
 
                 await this.LexClient.DeleteBotAliasAsync(deleteBotAliasRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Amazon.LexModelBuildingService.Model.NotFoundException exception)
             {
                 // Likely that no bot alias was published
-                Logger.LogWarning(exception, $"Could not delete bot alias '{this.BotAlias}' for bot '{this.BotName}'.");
+                Logger.LogWarning(exception, $"Could not delete bot alias '{this.LexBotAlias}' for bot '{this.LexBotName}'.");
             }
         }
 
@@ -536,17 +536,17 @@ namespace NLU.DevOps.Lex
             {
                 var deleteBotRequest = new DeleteBotRequest
                 {
-                    Name = this.BotName,
+                    Name = this.LexBotName,
                 };
 
-                Logger.LogTrace($"Deleting bot '{this.BotName}'.");
+                Logger.LogTrace($"Deleting bot '{this.LexBotName}'.");
 
                 await this.LexClient.DeleteBotAsync(deleteBotRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Amazon.LexModelBuildingService.Model.NotFoundException exception)
             {
                 // Likely that bot was not created
-                Logger.LogWarning(exception, $"Could not delete bot '{this.BotName}'.");
+                Logger.LogWarning(exception, $"Could not delete bot '{this.LexBotName}'.");
             }
         }
 
@@ -554,12 +554,12 @@ namespace NLU.DevOps.Lex
         {
             var getBotAliasesRequest = new GetBotAliasesRequest
             {
-                BotName = this.BotName,
-                NameContains = this.BotAlias,
+                BotName = this.LexBotName,
+                NameContains = this.LexBotAlias,
             };
 
             var getBotAliasesResponse = await this.LexClient.GetBotAliasesAsync(getBotAliasesRequest, cancellationToken).ConfigureAwait(false);
-            var botAliasMatch = getBotAliasesResponse.BotAliases.FirstOrDefault(botAlias => botAlias.Name == this.BotAlias);
+            var botAliasMatch = getBotAliasesResponse.BotAliases.FirstOrDefault(botAlias => botAlias.Name == this.LexBotAlias);
             return botAliasMatch != null;
         }
 
@@ -568,12 +568,12 @@ namespace NLU.DevOps.Lex
             // Creates an alias that can be used for testing
             var putBotAliasRequest = new PutBotAliasRequest
             {
-                BotName = this.BotName,
+                BotName = this.LexBotName,
                 BotVersion = "$LATEST",
-                Name = this.BotAlias,
+                Name = this.LexBotAlias,
             };
 
-            Logger.LogTrace($"Publishing bot alias '{this.BotAlias}' for bot '{this.BotName}'.");
+            Logger.LogTrace($"Publishing bot alias '{this.LexBotAlias}' for bot '{this.LexBotName}'.");
 
             await this.LexClient.PutBotAliasAsync(putBotAliasRequest, cancellationToken).ConfigureAwait(false);
         }

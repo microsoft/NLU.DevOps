@@ -73,13 +73,13 @@ namespace NLU.DevOps.Luis.Tests
                 Func<Task> cleanupAsync = () => luis.CleanupAsync();
                 testAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisNLUService.TestAsync))
-                    .And.Contain(nameof(LuisNLUService.AppId));
+                    .And.Contain(nameof(LuisNLUService.LuisAppId));
                 testSpeechAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisNLUService.TestSpeechAsync))
-                    .And.Contain(nameof(LuisNLUService.AppId));
+                    .And.Contain(nameof(LuisNLUService.LuisAppId));
                 cleanupAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisNLUService.CleanupAsync))
-                    .And.Contain(nameof(LuisNLUService.AppId));
+                    .And.Contain(nameof(LuisNLUService.LuisAppId));
             }
         }
 
@@ -674,7 +674,7 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
-                luis.AppId.Should().Be(appId);
+                luis.LuisAppId.Should().Be(appId);
             }
         }
 

@@ -35,12 +35,11 @@ namespace NLU.DevOps.CommandLine.Train
             {
                 if (this.Options.WriteConfig)
                 {
-                    var serviceConfiguration = NLUServiceFactory.GetServiceConfiguration(
-                        this.Options.Service,
-                        this.NLUService);
-
                     var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
-                    await File.WriteAllTextAsync(configPath, serviceConfiguration.ToString()).ConfigureAwait(false);
+                    using (var stream = File.OpenWrite(configPath))
+                    {
+                        Write(stream, this.NLUService);
+                    }
                 }
             }
         }

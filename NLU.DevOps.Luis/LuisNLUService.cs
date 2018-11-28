@@ -25,26 +25,26 @@ namespace NLU.DevOps.Luis
 
         internal LuisNLUService(string appName, string appId, string appVersion, ILuisClient luisClient)
         {
-            this.AppName = appName ?? throw new ArgumentNullException(nameof(appName));
-            this.AppId = appId;
-            this.AppVersion = appVersion ?? "0.1.1";
+            this.LuisAppName = appName ?? throw new ArgumentNullException(nameof(appName));
+            this.LuisAppId = appId;
+            this.LuisAppVersion = appVersion ?? "0.1.1";
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
         /// <summary>
         /// Gets the name of the LUIS app.
         /// </summary>
-        public string AppName { get; }
+        public string LuisAppName { get; }
 
         /// <summary>
         /// Gets the LUIS app ID.
         /// </summary>
-        public string AppId { get; private set; }
+        public string LuisAppId { get; private set; }
 
         /// <summary>
         /// Gets the LUIS app version.
         /// </summary>
-        public string AppVersion { get; }
+        public string LuisAppVersion { get; }
 
         private static ILogger Logger => LazyLogger.Value;
 
@@ -62,29 +62,29 @@ namespace NLU.DevOps.Luis
             ValidateTrainingArguments(utterances, entityTypes);
 
             // Create application if not passed in.
-            if (this.AppId == null)
+            if (this.LuisAppId == null)
             {
-                this.AppId = await this.LuisClient.CreateAppAsync(this.AppName, cancellationToken).ConfigureAwait(false);
-                Logger.LogTrace($"Created LUIS app '{this.AppName}' with ID '{this.AppId}'.");
+                this.LuisAppId = await this.LuisClient.CreateAppAsync(this.LuisAppName, cancellationToken).ConfigureAwait(false);
+                Logger.LogTrace($"Created LUIS app '{this.LuisAppName}' with ID '{this.LuisAppId}'.");
             }
 
             // Create LUIS import JSON
             var importJson = this.CreateImportJson(utterances, entityTypes);
 
             // Import the LUIS model
-            Logger.LogTrace($"Importing LUIS app '{this.AppName}' version '{this.AppVersion}'.");
-            await this.LuisClient.ImportVersionAsync(this.AppId, this.AppVersion, importJson, cancellationToken).ConfigureAwait(false);
+            Logger.LogTrace($"Importing LUIS app '{this.LuisAppName}' version '{this.LuisAppVersion}'.");
+            await this.LuisClient.ImportVersionAsync(this.LuisAppId, this.LuisAppVersion, importJson, cancellationToken).ConfigureAwait(false);
 
             // Train the LUIS model
-            Logger.LogTrace($"Training LUIS app '{this.AppName}' version '{this.AppVersion}'.");
-            await this.LuisClient.TrainAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
+            Logger.LogTrace($"Training LUIS app '{this.LuisAppName}' version '{this.LuisAppVersion}'.");
+            await this.LuisClient.TrainAsync(this.LuisAppId, this.LuisAppVersion, cancellationToken).ConfigureAwait(false);
 
             // Wait for training to complete
             await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
 
             // Publishes the LUIS app version
-            Logger.LogTrace($"Publishing LUIS app '{this.AppName}' version '{this.AppVersion}'.");
-            await this.LuisClient.PublishAppAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
+            Logger.LogTrace($"Publishing LUIS app '{this.LuisAppName}' version '{this.LuisAppVersion}'.");
+            await this.LuisClient.PublishAppAsync(this.LuisAppId, this.LuisAppVersion, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -108,13 +108,13 @@ namespace NLU.DevOps.Luis
                 throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
             }
 
-            if (this.AppId == null)
+            if (this.LuisAppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'.");
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'.");
             }
 
-            var json = await this.LuisClient.QueryAsync(this.AppId, utterance, cancellationToken).ConfigureAwait(false);
+            var json = await this.LuisClient.QueryAsync(this.LuisAppId, utterance, cancellationToken).ConfigureAwait(false);
             return IntentJsonToLabeledUtterance(json, entityTypes);
         }
 
@@ -139,26 +139,26 @@ namespace NLU.DevOps.Luis
                 throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
             }
 
-            if (this.AppId == null)
+            if (this.LuisAppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'.");
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'.");
             }
 
-            var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile, cancellationToken).ConfigureAwait(false);
+            var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.LuisAppId, speechFile, cancellationToken).ConfigureAwait(false);
             return IntentJsonToLabeledUtterance(jsonResult, entityTypes);
         }
 
         /// <inheritdoc />
         public Task CleanupAsync(CancellationToken cancellationToken)
         {
-            if (this.AppId == null)
+            if (this.LuisAppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisNLUService.CleanupAsync)}'.");
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.CleanupAsync)}'.");
             }
 
-            return this.LuisClient.DeleteAppAsync(this.AppId, cancellationToken);
+            return this.LuisClient.DeleteAppAsync(this.LuisAppId, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -330,8 +330,8 @@ namespace NLU.DevOps.Luis
             return new JObject
             {
                 { "luis_schema_version", "3.0.0" },
-                { "versionId", this.AppVersion },
-                { "name", this.AppName },
+                { "versionId", this.LuisAppVersion },
+                { "name", this.LuisAppName },
                 { "desc", string.Empty },
                 { "culture", "en-us" },
                 { "intents", new JArray() },
@@ -353,7 +353,7 @@ namespace NLU.DevOps.Luis
             JArray trainStatusJson;
             while (true)
             {
-                trainStatusJson = await this.LuisClient.GetTrainingStatusAsync(this.AppId, this.AppVersion, cancellationToken).ConfigureAwait(false);
+                trainStatusJson = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisAppVersion, cancellationToken).ConfigureAwait(false);
                 var inProgress = trainStatusJson.SelectTokens("[*].details.status")
                     .Select(statusJson => statusJson.Value<string>())
                     .Any(status => status == "InProgress" || status == "Queued");
