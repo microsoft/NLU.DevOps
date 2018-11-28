@@ -22,6 +22,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="appsettings.*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

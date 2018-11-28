@@ -79,7 +79,8 @@ namespace LanguageUnderstanding.CommandLine
         private IConfiguration CreateConfiguration()
         {
             var configurationBuilder = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory);
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.json");
 
             if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json")))
             {
