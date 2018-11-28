@@ -36,7 +36,10 @@ namespace NLU.DevOps.CommandLine.TestSpeech
             var speechFiles = testUtterances
                 .Select(utterance => $"{Path.Combine(this.Options.RecordingsDirectory, utterance.RecordingId)}.wav");
 
-            var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
+            var entityTypes = this.Options.EntityTypesPath != null
+                ? Read<IList<EntityType>>(this.Options.EntityTypesPath)
+                : Array.Empty<EntityType>();
+
             var testResults = await speechFiles.SelectAsync(speechFile => this.LanguageUnderstandingService.TestSpeechAsync(speechFile, entityTypes)).ConfigureAwait(false);
 
             var stream = this.Options.OutputPath != null

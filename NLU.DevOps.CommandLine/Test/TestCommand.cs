@@ -27,8 +27,10 @@ namespace NLU.DevOps.CommandLine.Test
         {
             this.Log("Running tests against NLU service...");
             var testUtterances = Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-            var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
             var utterances = testUtterances.Select(utterance => utterance.Text);
+            var entityTypes = this.Options.EntityTypesPath != null
+                ? Read<IList<EntityType>>(this.Options.EntityTypesPath)
+                : Array.Empty<EntityType>();
             var testResults = await utterances.SelectAsync(utterance => this.LanguageUnderstandingService.TestAsync(utterance, entityTypes)).ConfigureAwait(false);
 
             var stream = this.Options.OutputPath != null

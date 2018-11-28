@@ -11,7 +11,7 @@ namespace NLU.DevOps.CommandLine.Test
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
         public string UtterancesPath { get; set; }
 
-        [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = true)]
+        [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = false)]
         public string EntityTypesPath { get; set; }
 
         [Option('o', "output", HelpText = "Path to labeled results output.", Required = false)]

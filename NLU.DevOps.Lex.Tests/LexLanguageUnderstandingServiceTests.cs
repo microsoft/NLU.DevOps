@@ -42,9 +42,9 @@ namespace NLU.DevOps.Lex.Tests
                 var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>()));
                 var nullEntityTypes = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), null));
                 var nullEntityTypeItem = new Func<Task>(() => service.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null }));
-                var nullSpeechFile = new Func<Task>(() => service.TestSpeechAsync(null, Array.Empty<EntityType>()));
+                var nullSpeechFile = new Func<Task>(() => service.TestSpeechAsync(null));
                 var nullTestSpeechEntityTypes = new Func<Task>(() => service.TestSpeechAsync(string.Empty, null));
-                var nullTestUtterance = new Func<Task>(() => service.TestAsync(null, Array.Empty<EntityType>()));
+                var nullTestUtterance = new Func<Task>(() => service.TestAsync(null));
                 var nullTestEntityTypes = new Func<Task>(() => service.TestAsync(string.Empty, null));
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtteranceItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
@@ -430,7 +430,7 @@ namespace NLU.DevOps.Lex.Tests
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
-                var result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"), Array.Empty<EntityType>()).ConfigureAwait(false);
+                var result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt")).ConfigureAwait(false);
 
                 // assert reads content from file (file contents are "hello world")
                 var request = mockClient.Requests.OfType<PostContentRequest>().Single();
@@ -446,7 +446,7 @@ namespace NLU.DevOps.Lex.Tests
 
                 // test with valid slots response
                 mockClient.Get<PostContentResponse>().Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
-                result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt"), Array.Empty<EntityType>()).ConfigureAwait(false);
+                result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt")).ConfigureAwait(false);
 
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be(entityType);
@@ -470,13 +470,13 @@ namespace NLU.DevOps.Lex.Tests
             mockClient.Get<PostTextResponse>().IntentName = intent;
             using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
-                var response = await lex.TestAsync(text, Array.Empty<EntityType>()).ConfigureAwait(false);
+                var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Text.Should().Be(text);
                 response.Intent.Should().Be(intent);
                 response.Entities.Should().BeEmpty();
 
                 mockClient.Get<PostTextResponse>().Slots = slots;
-                response = await lex.TestAsync(text, Array.Empty<EntityType>()).ConfigureAwait(false);
+                response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Entities[0].EntityType.Should().Be(entityType);
                 response.Entities[0].EntityValue.Should().Be(entityValue);
             }

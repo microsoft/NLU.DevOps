@@ -3,6 +3,7 @@
 
 namespace NLU.DevOps.Models
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -37,6 +38,29 @@ namespace NLU.DevOps.Models
         }
 
         /// <summary>
+        /// Tests the language understanding service.
+        /// </summary>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="utterance">Unlabeled utterance.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static Task<LabeledUtterance> TestAsync(this ILanguageUnderstandingService instance, string utterance, CancellationToken cancellationToken)
+        {
+            return instance.TestAsync(utterance, Array.Empty<EntityType>(), cancellationToken);
+        }
+
+        /// <summary>
+        /// Tests the language understanding service.
+        /// </summary>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="utterance">Unlabeled utterance.</param>
+        public static Task<LabeledUtterance> TestAsync(this ILanguageUnderstandingService instance, string utterance)
+        {
+            return instance.TestAsync(utterance, Array.Empty<EntityType>());
+        }
+
+        /// <summary>
         /// Tests the language understanding service using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
@@ -46,6 +70,29 @@ namespace NLU.DevOps.Models
         public static Task<LabeledUtterance> TestSpeechAsync(this ILanguageUnderstandingService instance, string speechFile, IEnumerable<EntityType> entityTypes)
         {
             return instance.TestSpeechAsync(speechFile, entityTypes, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Tests the language understanding service using speech.
+        /// </summary>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="speechFile">Speech file.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public static Task<LabeledUtterance> TestSpeechAsync(this ILanguageUnderstandingService instance, string speechFile, CancellationToken cancellationToken)
+        {
+            return instance.TestSpeechAsync(speechFile, Array.Empty<EntityType>(), cancellationToken);
+        }
+
+        /// <summary>
+        /// Tests the language understanding service using speech.
+        /// </summary>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
+        /// <param name="instance">Language understanding service instance.</param>
+        /// <param name="speechFile">Speech file.</param>
+        public static Task<LabeledUtterance> TestSpeechAsync(this ILanguageUnderstandingService instance, string speechFile)
+        {
+            return instance.TestSpeechAsync(speechFile, Array.Empty<EntityType>());
         }
 
         /// <summary>

@@ -42,10 +42,10 @@ namespace NLU.DevOps.Luis.Tests
                 Func<Task> nullUtterance = () => luis.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>());
                 Func<Task> nullEntityTypes = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), null);
                 Func<Task> nullEntityType = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null });
-                Func<Task> nullTestUtterance = () => luis.TestAsync(null, Array.Empty<EntityType>());
+                Func<Task> nullTestUtterance = () => luis.TestAsync(null);
                 Func<Task> nullTestEntityTypes = () => luis.TestAsync(string.Empty, null);
                 Func<Task> nullTestEntityType = () => luis.TestAsync(string.Empty, new EntityType[] { null });
-                Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null, Array.Empty<EntityType>());
+                Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null);
                 Func<Task> nullTestSpeechEntityTypes = () => luis.TestSpeechAsync(string.Empty, null);
                 Func<Task> nullTestSpeechEntityType = () => luis.TestSpeechAsync(string.Empty, new EntityType[] { null });
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
@@ -68,8 +68,8 @@ namespace NLU.DevOps.Luis.Tests
             builder.AppId = null;
             using (var luis = builder.Build())
             {
-                Func<Task> testAsync = () => luis.TestAsync(string.Empty, Array.Empty<EntityType>());
-                Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(string.Empty, Array.Empty<EntityType>());
+                Func<Task> testAsync = () => luis.TestAsync(string.Empty);
+                Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(string.Empty);
                 Func<Task> cleanupAsync = () => luis.CleanupAsync();
                 testAsync.Should().Throw<InvalidOperationException>()
                     .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync))
@@ -396,7 +396,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(test, Array.Empty<EntityType>()).ConfigureAwait(false);
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -471,7 +471,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(test, Array.Empty<EntityType>()).ConfigureAwait(false);
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(3);
                 result.Entities[0].EntityValue.Should().Be("2018-11-16");
                 result.Entities[1].EntityValue.Should().Be("Fox");
@@ -685,7 +685,7 @@ namespace NLU.DevOps.Luis.Tests
             var builder = GetTestLuisBuilder();
             using (var luis = builder.Build())
             {
-                var results = await luis.TestSpeechAsync(utterance, Array.Empty<EntityType>()).ConfigureAwait(false);
+                var results = await luis.TestSpeechAsync(utterance).ConfigureAwait(false);
                 results.Intent.Should().BeNull();
                 results.Text.Should().BeNull();
                 results.Entities.Should().BeNull();
