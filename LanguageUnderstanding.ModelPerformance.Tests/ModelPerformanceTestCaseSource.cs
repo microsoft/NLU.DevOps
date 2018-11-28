@@ -10,6 +10,7 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;
+    using NUnit.Framework;
 
     internal class ModelPerformanceTestCaseSource
     {
@@ -28,10 +29,13 @@ namespace LanguageUnderstanding.ModelPerformance.Tests
                     configurationBuilder.AddJsonFile(AppSettingsLocalPath);
                 }
 
-                var configuration = configurationBuilder.Build();
-                var expectedPath = configuration["expectedUtterances"];
-                var actualPath = configuration["actualUtterances"];
-                var testLabel = configuration["testLabel"];
+                var configuration = configurationBuilder
+                    .AddEnvironmentVariables()
+                    .Build();
+
+                var expectedPath = TestContext.Parameters.Get("expected") ?? configuration["expected"];
+                var actualPath = TestContext.Parameters.Get("actual") ?? configuration["actual"];
+                var testLabel = TestContext.Parameters.Get("testLabel") ?? configuration["testLabel"];
                 return ZipUtterances(expectedPath, actualPath, testLabel);
             }
         }

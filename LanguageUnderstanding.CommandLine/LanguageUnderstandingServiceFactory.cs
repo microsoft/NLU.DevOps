@@ -37,7 +37,7 @@ namespace LanguageUnderstanding.CommandLine
         private const string LuisEndpointRegionConfigurationKey = "LUIS_ENDPOINT_REGION";
         private const string LuisIsStagingConfigurationKey = "LUIS_IS_STAGING";
 
-        private const string BuildIdConfigurationKey = "NLU_BUILD_ID";
+        private const string BuildIdEnvironmentalVariableKey = "NLU_BUILD_KEY";
 
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
@@ -164,7 +164,8 @@ namespace LanguageUnderstanding.CommandLine
                 return null;
             }
 
-            var buildId = configuration[BuildIdConfigurationKey];
+            var buildIdKey = configuration[BuildIdEnvironmentalVariableKey];
+            var buildId = buildIdKey != null ? configuration[buildIdKey] : null;
             var buildIdModifier = buildId != null ? $".{buildId}" : string.Empty;
             return $"{appVersion}{buildIdModifier}";
         }
