@@ -24,7 +24,7 @@ namespace NLU.DevOps.CommandLine.Clean
         private async Task RunAsync()
         {
             this.Log("Cleaning NLU service...");
-            await this.LanguageUnderstandingService.CleanupAsync().ConfigureAwait(false);
+            await this.NLUService.CleanupAsync().ConfigureAwait(false);
 
             if (this.Options.DeleteConfig)
             {

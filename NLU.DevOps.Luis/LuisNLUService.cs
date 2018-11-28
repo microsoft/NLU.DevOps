@@ -17,13 +17,13 @@ namespace NLU.DevOps.Luis
 
     /// <summary>
     /// Train, test, and cleanup a LUIS model.
-    /// Implementation of <see cref="ILanguageUnderstandingService"/>
+    /// Implementation of <see cref="INLUService"/>
     /// </summary>
-    public sealed class LuisLanguageUnderstandingService : ILanguageUnderstandingService, IDisposable
+    public sealed class LuisNLUService : INLUService, IDisposable
     {
         private static readonly TimeSpan TrainStatusDelay = TimeSpan.FromSeconds(2);
 
-        internal LuisLanguageUnderstandingService(string appName, string appId, string appVersion, ILuisClient luisClient)
+        internal LuisNLUService(string appName, string appId, string appVersion, ILuisClient luisClient)
         {
             this.AppName = appName ?? throw new ArgumentNullException(nameof(appName));
             this.AppId = appId;
@@ -48,7 +48,7 @@ namespace NLU.DevOps.Luis
 
         private static ILogger Logger => LazyLogger.Value;
 
-        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisLanguageUnderstandingService>());
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUService>());
 
         private ILuisClient LuisClient { get; }
 
@@ -111,7 +111,7 @@ namespace NLU.DevOps.Luis
             if (this.AppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestAsync)}'.");
+                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'.");
             }
 
             var json = await this.LuisClient.QueryAsync(this.AppId, utterance, cancellationToken).ConfigureAwait(false);
@@ -142,7 +142,7 @@ namespace NLU.DevOps.Luis
             if (this.AppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.TestSpeechAsync)}'.");
+                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'.");
             }
 
             var jsonResult = await this.LuisClient.RecognizeSpeechAsync(this.AppId, speechFile, cancellationToken).ConfigureAwait(false);
@@ -155,7 +155,7 @@ namespace NLU.DevOps.Luis
             if (this.AppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisLanguageUnderstandingService.CleanupAsync)}'.");
+                    $"The '{nameof(this.AppId)}' must be set before calling '{nameof(LuisNLUService.CleanupAsync)}'.");
             }
 
             return this.LuisClient.DeleteAppAsync(this.AppId, cancellationToken);

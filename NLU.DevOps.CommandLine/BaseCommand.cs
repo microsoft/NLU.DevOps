@@ -20,7 +20,7 @@ namespace NLU.DevOps.CommandLine
         {
             this.Options = options;
             this.LazyConfiguration = new Lazy<IConfiguration>(this.CreateConfiguration);
-            this.LazyLanguageUnderstandingService = new Lazy<ILanguageUnderstandingService>(this.CreateLanguageUnderstandingService);
+            this.LazyNLUService = new Lazy<INLUService>(this.CreateNLUService);
             this.LazyLogger = new Lazy<ILogger>(this.CreateLogger);
         }
 
@@ -28,11 +28,11 @@ namespace NLU.DevOps.CommandLine
 
         protected IConfiguration Configuration => this.LazyConfiguration.Value;
 
-        protected ILanguageUnderstandingService LanguageUnderstandingService => this.LazyLanguageUnderstandingService.Value;
+        protected INLUService NLUService => this.LazyNLUService.Value;
 
         private Lazy<IConfiguration> LazyConfiguration { get; }
 
-        private Lazy<ILanguageUnderstandingService> LazyLanguageUnderstandingService { get; }
+        private Lazy<INLUService> LazyNLUService { get; }
 
         private Lazy<ILogger> LazyLogger { get; }
 
@@ -65,9 +65,9 @@ namespace NLU.DevOps.CommandLine
 
         protected void Dispose(bool disposing)
         {
-            if (disposing && this.LazyLanguageUnderstandingService.IsValueCreated)
+            if (disposing && this.LazyNLUService.IsValueCreated)
             {
-                this.LanguageUnderstandingService.Dispose();
+                this.NLUService.Dispose();
             }
         }
 
@@ -97,9 +97,9 @@ namespace NLU.DevOps.CommandLine
                 .Build();
         }
 
-        private ILanguageUnderstandingService CreateLanguageUnderstandingService()
+        private INLUService CreateNLUService()
         {
-            return LanguageUnderstandingServiceFactory.Create(this.Options.Service, this.Configuration);
+            return NLUServiceFactory.Create(this.Options.Service, this.Configuration);
         }
 
         private ILogger CreateLogger()

@@ -31,7 +31,7 @@ namespace NLU.DevOps.CommandLine.Test
             var entityTypes = this.Options.EntityTypesPath != null
                 ? Read<IList<EntityType>>(this.Options.EntityTypesPath)
                 : Array.Empty<EntityType>();
-            var testResults = await utterances.SelectAsync(utterance => this.LanguageUnderstandingService.TestAsync(utterance, entityTypes)).ConfigureAwait(false);
+            var testResults = await utterances.SelectAsync(utterance => this.NLUService.TestAsync(utterance, entityTypes)).ConfigureAwait(false);
 
             var stream = this.Options.OutputPath != null
                 ? File.OpenWrite(this.Options.OutputPath)

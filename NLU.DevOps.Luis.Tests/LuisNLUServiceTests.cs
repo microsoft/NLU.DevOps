@@ -21,7 +21,7 @@ namespace NLU.DevOps.Luis.Tests
     /// Test suite for <see cref="LuisEntity"/> class.
     /// </summary>
     [TestFixture]
-    internal static class LuisLanguageUnderstandingServiceTests
+    internal static class LuisNLUServiceTests
     {
         /// <summary>
         /// Epsilon used to accomodate for clock accuracy.
@@ -31,8 +31,8 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullAppName = () => new LuisLanguageUnderstandingService(null, string.Empty, string.Empty, new MockLuisClient());
-            Action nullLuisClient = () => new LuisLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, default(ILuisClient));
+            Action nullAppName = () => new LuisNLUService(null, string.Empty, string.Empty, new MockLuisClient());
+            Action nullLuisClient = () => new LuisNLUService(string.Empty, string.Empty, string.Empty, default(ILuisClient));
             nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
@@ -72,14 +72,14 @@ namespace NLU.DevOps.Luis.Tests
                 Func<Task> testSpeechAsync = () => luis.TestSpeechAsync(string.Empty);
                 Func<Task> cleanupAsync = () => luis.CleanupAsync();
                 testAsync.Should().Throw<InvalidOperationException>()
-                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestAsync))
-                    .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
+                    .And.Message.Should().Contain(nameof(LuisNLUService.TestAsync))
+                    .And.Contain(nameof(LuisNLUService.AppId));
                 testSpeechAsync.Should().Throw<InvalidOperationException>()
-                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.TestSpeechAsync))
-                    .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
+                    .And.Message.Should().Contain(nameof(LuisNLUService.TestSpeechAsync))
+                    .And.Contain(nameof(LuisNLUService.AppId));
                 cleanupAsync.Should().Throw<InvalidOperationException>()
-                    .And.Message.Should().Contain(nameof(LuisLanguageUnderstandingService.CleanupAsync))
-                    .And.Contain(nameof(LuisLanguageUnderstandingService.AppId));
+                    .And.Message.Should().Contain(nameof(LuisNLUService.CleanupAsync))
+                    .And.Contain(nameof(LuisNLUService.AppId));
             }
         }
 
@@ -692,9 +692,9 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
-        private static LuisLanguageUnderstandingServiceBuilder GetTestLuisBuilder()
+        private static LuisNLUServiceBuilder GetTestLuisBuilder()
         {
-            return new LuisLanguageUnderstandingServiceBuilder
+            return new LuisNLUServiceBuilder
             {
                 AppName = "test",
                 AppId = Guid.NewGuid().ToString(),

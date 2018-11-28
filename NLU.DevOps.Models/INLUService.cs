@@ -9,12 +9,12 @@ namespace NLU.DevOps.Models
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Language understanding service interface.
+    /// NLU service interface.
     /// </summary>
-    public interface ILanguageUnderstandingService : IDisposable
+    public interface INLUService : IDisposable
     {
         /// <summary>
-        /// Trains the language understanding service.
+        /// Trains the NLU service.
         /// </summary>
         /// <returns>Task to await the training operation.</returns>
         /// <param name="utterances">Labeled utterances to train on.</param>
@@ -26,7 +26,7 @@ namespace NLU.DevOps.Models
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// Tests the language understanding service.
+        /// Tests the NLU service.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="utterance">Unlabeled utterances to test on.</param>
@@ -38,7 +38,7 @@ namespace NLU.DevOps.Models
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// Tests the language understanding service using speech.
+        /// Tests the NLU service using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="speechFile">Speech files to test on.</param>
@@ -50,7 +50,7 @@ namespace NLU.DevOps.Models
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// Cleans up the language understanding service.
+        /// Cleans up the NLU service.
         /// </summary>
         /// <returns>Task to await the cleanup operation.</returns>
         /// <param name="cancellationToken">Cancellation token.</param>

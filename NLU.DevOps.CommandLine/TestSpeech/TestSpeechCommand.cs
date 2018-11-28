@@ -40,7 +40,7 @@ namespace NLU.DevOps.CommandLine.TestSpeech
                 ? Read<IList<EntityType>>(this.Options.EntityTypesPath)
                 : Array.Empty<EntityType>();
 
-            var testResults = await speechFiles.SelectAsync(speechFile => this.LanguageUnderstandingService.TestSpeechAsync(speechFile, entityTypes)).ConfigureAwait(false);
+            var testResults = await speechFiles.SelectAsync(speechFile => this.NLUService.TestSpeechAsync(speechFile, entityTypes)).ConfigureAwait(false);
 
             var stream = this.Options.OutputPath != null
                 ? File.OpenWrite(this.Options.OutputPath)

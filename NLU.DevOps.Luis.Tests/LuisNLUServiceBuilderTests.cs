@@ -8,12 +8,12 @@ namespace NLU.DevOps.Luis.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal static class LuisLanguageUnderstandingServiceBuilderTests
+    internal static class LuisNLUServiceBuilderTests
     {
         [Test]
         public static void ThrowsArgumentException()
         {
-            var builder = new LuisLanguageUnderstandingServiceBuilder();
+            var builder = new LuisNLUServiceBuilder();
             Action action = () => builder.Build();
 
             // Default LUIS client checks for key

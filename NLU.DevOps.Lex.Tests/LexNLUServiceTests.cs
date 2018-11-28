@@ -19,7 +19,7 @@ namespace NLU.DevOps.Lex.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal static class LexLanguageUnderstandingServiceTests
+    internal static class LexNLUServiceTests
     {
         private const string TemplatesDirectory = "Templates";
         private static readonly TimeSpan Epsilon = TimeSpan.FromMilliseconds(100);
@@ -27,16 +27,16 @@ namespace NLU.DevOps.Lex.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            var nullBotName = new Action(() => new LexLanguageUnderstandingService(null, string.Empty, string.Empty, default(ILexClient)));
-            var nullBotAlias = new Action(() => new LexLanguageUnderstandingService(string.Empty, null, string.Empty, default(ILexClient)));
-            var nullTemplatesDirectory = new Action(() => new LexLanguageUnderstandingService(string.Empty, string.Empty, null, default(ILexClient)));
-            var nullLexClient = new Action(() => new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, default(ILexClient)));
+            var nullBotName = new Action(() => new LexNLUService(null, string.Empty, string.Empty, default(ILexClient)));
+            var nullBotAlias = new Action(() => new LexNLUService(string.Empty, null, string.Empty, default(ILexClient)));
+            var nullTemplatesDirectory = new Action(() => new LexNLUService(string.Empty, string.Empty, null, default(ILexClient)));
+            var nullLexClient = new Action(() => new LexNLUService(string.Empty, string.Empty, string.Empty, default(ILexClient)));
             nullBotName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botName");
             nullBotAlias.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botAlias");
             nullTemplatesDirectory.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("templatesDirectory");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, new MockLexClient()))
+            using (var service = new LexNLUService(string.Empty, string.Empty, string.Empty, new MockLexClient()))
             {
                 var nullUtterances = new Func<Task>(() => service.TrainAsync(null, Array.Empty<EntityType>()));
                 var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>()));
@@ -62,7 +62,7 @@ namespace NLU.DevOps.Lex.Tests
         {
             var text = "foo";
             var match = "bar";
-            using (var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, new MockLexClient()))
+            using (var service = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, new MockLexClient()))
             {
                 var entity = new Entity(string.Empty, string.Empty, match, 0);
                 var utterance = new LabeledUtterance(text, string.Empty, new[] { entity });
@@ -78,7 +78,7 @@ namespace NLU.DevOps.Lex.Tests
             var intent = Guid.NewGuid().ToString();
             var entityTypeName = "Planet";
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -96,7 +96,7 @@ namespace NLU.DevOps.Lex.Tests
             var entityTypeName = "Planet";
             var botName = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(botName, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(botName, string.Empty, TemplatesDirectory, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -145,7 +145,7 @@ namespace NLU.DevOps.Lex.Tests
         {
             var intent = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -186,7 +186,7 @@ namespace NLU.DevOps.Lex.Tests
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -225,7 +225,7 @@ namespace NLU.DevOps.Lex.Tests
             mockClient.Get<StartImportResponse>().ImportStatus = ImportStatus.FAILED;
             mockClient.Get<GetImportResponse>().ImportId = importId;
             mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.FAILED;
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -249,7 +249,7 @@ namespace NLU.DevOps.Lex.Tests
                 OnDispose = () => handle.Set(),
             };
 
-            var service = new LexLanguageUnderstandingService(string.Empty, string.Empty, string.Empty, mockClient);
+            var service = new LexNLUService(string.Empty, string.Empty, string.Empty, mockClient);
             service.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
@@ -273,7 +273,7 @@ namespace NLU.DevOps.Lex.Tests
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
@@ -314,7 +314,7 @@ namespace NLU.DevOps.Lex.Tests
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 var buildFailed = new Func<Task>(() => lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()));
@@ -334,7 +334,7 @@ namespace NLU.DevOps.Lex.Tests
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(botName, botAlias, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(botName, botAlias, TemplatesDirectory, mockClient))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
@@ -358,7 +358,7 @@ namespace NLU.DevOps.Lex.Tests
                 }
             };
 
-            using (var lex = new LexLanguageUnderstandingService(botName, botAlias, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(botName, botAlias, TemplatesDirectory, mockClient))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
@@ -372,7 +372,7 @@ namespace NLU.DevOps.Lex.Tests
         public static async Task AddsListSlotTypesToImportJson()
         {
             var mockClient = new MockLexClient();
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var originalValueListEntityTypeName = Guid.NewGuid().ToString();
                 var topResolutionListEntityTypeName = Guid.NewGuid().ToString();
@@ -426,7 +426,7 @@ namespace NLU.DevOps.Lex.Tests
             var mockClient = new MockLexClient();
             mockClient.Get<PostContentResponse>().IntentName = intent;
             mockClient.Get<PostContentResponse>().InputTranscript = transcript;
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
@@ -468,7 +468,7 @@ namespace NLU.DevOps.Lex.Tests
 
             var mockClient = new MockLexClient();
             mockClient.Get<PostTextResponse>().IntentName = intent;
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, TemplatesDirectory, mockClient))
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Text.Should().Be(text);
@@ -498,7 +498,7 @@ namespace NLU.DevOps.Lex.Tests
                 },
             });
 
-            using (var lex = new LexLanguageUnderstandingService(botName, string.Empty, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(botName, string.Empty, TemplatesDirectory, mockClient))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 
@@ -525,7 +525,7 @@ namespace NLU.DevOps.Lex.Tests
                 },
             });
 
-            using (var lex = new LexLanguageUnderstandingService(string.Empty, botAlias, TemplatesDirectory, mockClient))
+            using (var lex = new LexNLUService(string.Empty, botAlias, TemplatesDirectory, mockClient))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 

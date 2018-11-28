@@ -25,39 +25,39 @@ namespace NLU.DevOps.Lex
     using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// Language understanding service for Amazon Lex.
+    /// NLU service for Amazon Lex.
     /// </summary>
-    public sealed class LexLanguageUnderstandingService : ILanguageUnderstandingService
+    public sealed class LexNLUService : INLUService
     {
         private const int GetBotDelaySeconds = 2;
         private const int GetImportDelaySeconds = 2;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LexLanguageUnderstandingService"/> class.
+        /// Initializes a new instance of the <see cref="LexNLUService"/> class.
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
         /// <param name="templatesDirectory">Templates directory.</param>
         /// <param name="credentials">Credentials.</param>
         /// <param name="regionEndpoint">Region endpoint.</param>
-        public LexLanguageUnderstandingService(
+        public LexNLUService(
             string botName,
             string botAlias,
             string templatesDirectory,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, botAlias, templatesDirectory, new DefaultLexClient(credentials, regionEndpoint))
+            : this(botName, botAlias, templatesDirectory, new LexClient(credentials, regionEndpoint))
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LexLanguageUnderstandingService"/> class.
+        /// Initializes a new instance of the <see cref="LexNLUService"/> class.
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
         /// <param name="templatesDirectory">Templates directory.</param>
         /// <param name="lexClient">Lex client.</param>
-        public LexLanguageUnderstandingService(string botName, string botAlias, string templatesDirectory, ILexClient lexClient)
+        public LexNLUService(string botName, string botAlias, string templatesDirectory, ILexClient lexClient)
         {
             this.BotName = botName ?? throw new ArgumentNullException(nameof(botName));
             this.BotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
@@ -77,7 +77,7 @@ namespace NLU.DevOps.Lex
 
         private static ILogger Logger => LazyLogger.Value;
 
-        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexLanguageUnderstandingService>());
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexNLUService>());
 
         private string TemplatesDirectory { get; }
 

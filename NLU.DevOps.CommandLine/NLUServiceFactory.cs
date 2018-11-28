@@ -15,7 +15,7 @@ namespace NLU.DevOps.CommandLine
     using Models;
     using Newtonsoft.Json.Linq;
 
-    internal class LanguageUnderstandingServiceFactory
+    internal class NLUServiceFactory
     {
         private const string LexServiceId = "lex";
         private const string LexPrefixConfigurationKey = "AWS_LEX_PREFIX";
@@ -42,7 +42,7 @@ namespace NLU.DevOps.CommandLine
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
 
-        public static ILanguageUnderstandingService Create(string service, IConfiguration configuration)
+        public static INLUService Create(string service, IConfiguration configuration)
         {
             switch (service)
             {
@@ -55,30 +55,30 @@ namespace NLU.DevOps.CommandLine
             }
         }
 
-        public static JToken GetServiceConfiguration(string service, ILanguageUnderstandingService instance)
+        public static JToken GetServiceConfiguration(string service, INLUService instance)
         {
             switch (service)
             {
                 case LexServiceId:
-                    return GetLexConfig((LexLanguageUnderstandingService)instance);
+                    return GetLexConfig((LexNLUService)instance);
                 case LuisServiceId:
-                    return GetLuisConfig((LuisLanguageUnderstandingService)instance);
+                    return GetLuisConfig((LuisNLUService)instance);
                 default:
                     throw new ArgumentException($"Invalid service type '{service}'.", nameof(service));
             }
         }
 
-        private static ILanguageUnderstandingService CreateLex(IConfiguration configuration)
+        private static INLUService CreateLex(IConfiguration configuration)
         {
             var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
             var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
-            return new LexLanguageUnderstandingService(botName, botAlias, TemplatesPath, credentials, regionEndpoint);
+            return new LexNLUService(botName, botAlias, TemplatesPath, credentials, regionEndpoint);
         }
 
-        private static ILanguageUnderstandingService CreateLuis(IConfiguration configuration)
+        private static INLUService CreateLuis(IConfiguration configuration)
         {
             var userDefinedName = configuration[LuisAppNameConfigurationKey];
             var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
@@ -86,7 +86,7 @@ namespace NLU.DevOps.CommandLine
             var isStagingString = configuration[LuisIsStagingConfigurationKey];
             var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;
 
-            var builder = new LuisLanguageUnderstandingServiceBuilder
+            var builder = new LuisNLUServiceBuilder
             {
                 AppName = appName,
                 AppId = configuration[LuisAppIdConfigurationKey],
@@ -123,7 +123,7 @@ namespace NLU.DevOps.CommandLine
             return Encoding.UTF8.GetString(Convert.FromBase64String(secretKeyBase64));
         }
 
-        private static JToken GetLexConfig(LexLanguageUnderstandingService instance)
+        private static JToken GetLexConfig(LexNLUService instance)
         {
             return new JObject
             {
@@ -132,7 +132,7 @@ namespace NLU.DevOps.CommandLine
             };
         }
 
-        private static JToken GetLuisConfig(LuisLanguageUnderstandingService instance)
+        private static JToken GetLuisConfig(LuisNLUService instance)
         {
             return new JObject
             {

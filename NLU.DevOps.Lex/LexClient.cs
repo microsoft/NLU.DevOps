@@ -15,7 +15,7 @@ namespace NLU.DevOps.Lex
     using Logging;
     using Microsoft.Extensions.Logging;
 
-    internal sealed class DefaultLexClient : ILexClient
+    internal sealed class LexClient : ILexClient
     {
         /// <summary>
         /// Number of retries per Lex model building service request.
@@ -28,79 +28,79 @@ namespace NLU.DevOps.Lex
         private static readonly TimeSpan RetryConflictDelay = TimeSpan.FromSeconds(10);
         private static readonly TimeSpan RetryLimitExceededDelay = TimeSpan.FromSeconds(1);
 
-        public DefaultLexClient(AWSCredentials credentials, RegionEndpoint regionEndpoint)
+        public LexClient(AWSCredentials credentials, RegionEndpoint regionEndpoint)
         {
-            this.LexClient = new AmazonLexClient(credentials, regionEndpoint);
-            this.LexModelClient = new AmazonLexModelBuildingServiceClient(credentials, regionEndpoint);
+            this.AmazonLexClient = new AmazonLexClient(credentials, regionEndpoint);
+            this.AmazonLexModelClient = new AmazonLexModelBuildingServiceClient(credentials, regionEndpoint);
         }
 
         private static ILogger Logger => LazyLogger.Value;
 
-        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexLanguageUnderstandingService>());
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexNLUService>());
 
-        private AmazonLexClient LexClient { get; }
+        private AmazonLexClient AmazonLexClient { get; }
 
-        private AmazonLexModelBuildingServiceClient LexModelClient { get; }
+        private AmazonLexModelBuildingServiceClient AmazonLexModelClient { get; }
 
         public Task DeleteBotAliasAsync(DeleteBotAliasRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.DeleteBotAliasAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.DeleteBotAliasAsync, request, cancellationToken);
         }
 
         public Task DeleteBotAsync(DeleteBotRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.DeleteBotAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.DeleteBotAsync, request, cancellationToken);
         }
 
         public Task<GetBotAliasesResponse> GetBotAliasesAsync(GetBotAliasesRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.GetBotAliasesAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.GetBotAliasesAsync, request, cancellationToken);
         }
 
         public Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.GetBotAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.GetBotAsync, request, cancellationToken);
         }
 
         public Task<GetBotsResponse> GetBotsAsync(GetBotsRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.GetBotsAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.GetBotsAsync, request, cancellationToken);
         }
 
         public Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.GetImportAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.GetImportAsync, request, cancellationToken);
         }
 
         public Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexClient.PostContentAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexClient.PostContentAsync, request, cancellationToken);
         }
 
         public Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexClient.PostTextAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexClient.PostTextAsync, request, cancellationToken);
         }
 
         public Task PutBotAliasAsync(PutBotAliasRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.PutBotAliasAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.PutBotAliasAsync, request, cancellationToken);
         }
 
         public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.PutBotAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.PutBotAsync, request, cancellationToken);
         }
 
         public Task<StartImportResponse> StartImportAsync(StartImportRequest request, CancellationToken cancellationToken)
         {
-            return RetryAsync(this.LexModelClient.StartImportAsync, request, cancellationToken);
+            return RetryAsync(this.AmazonLexModelClient.StartImportAsync, request, cancellationToken);
         }
 
         public void Dispose()
         {
-            this.LexClient.Dispose();
-            this.LexModelClient.Dispose();
+            this.AmazonLexClient.Dispose();
+            this.AmazonLexModelClient.Dispose();
         }
 
         private static Task RetryAsync<TRequest>(Func<TRequest, CancellationToken, Task> actionAsync, TRequest request, CancellationToken cancellationToken)

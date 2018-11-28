@@ -54,7 +54,7 @@ namespace NLU.DevOps.Luis
 
         private static ILogger Logger => LazyLogger.Value;
 
-        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisLanguageUnderstandingService>());
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUService>());
 
         private string AuthoringRegion { get; }
 

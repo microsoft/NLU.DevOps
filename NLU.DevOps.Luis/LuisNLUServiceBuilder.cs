@@ -6,9 +6,9 @@ namespace NLU.DevOps.Luis
     using System;
 
     /// <summary>
-    /// Builder for <see cref="LuisLanguageUnderstandingService"/>.
+    /// Builder for <see cref="LuisNLUService"/>.
     /// </summary>
-    public class LuisLanguageUnderstandingServiceBuilder
+    public class LuisNLUServiceBuilder
     {
         /// <summary>
         /// Gets or sets the name of the LUIS app.
@@ -60,7 +60,7 @@ namespace NLU.DevOps.Luis
         /// Build this LUIS client.
         /// </summary>
         /// <returns>The LUIS client.</returns>
-        public LuisLanguageUnderstandingService Build()
+        public LuisNLUService Build()
         {
             this.LuisClient = this.LuisClient ??
                 new LuisClient(
@@ -70,7 +70,7 @@ namespace NLU.DevOps.Luis
                     this.EndpointRegion,
                     this.IsStaging);
 
-            return new LuisLanguageUnderstandingService(
+            return new LuisNLUService(
                 this.AppName,
                 this.AppId,
                 this.AppVersion,
