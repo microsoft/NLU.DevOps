@@ -10,6 +10,7 @@ trigger:
     - master
   paths:
     include:
+    - /pipelines/build.yml
     - /src
     
 steps:
