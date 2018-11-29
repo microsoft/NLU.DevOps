@@ -6,20 +6,16 @@ namespace NLU.DevOps.Luis.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net;
-    using System.Net.Http;
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
-    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
-    /// <summary>
-    /// Test suite for <see cref="LuisEntity"/> class.
-    /// </summary>
     [TestFixture]
     internal static class LuisNLUServiceTests
     {
@@ -31,17 +27,12 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullAppName = () => new LuisNLUService(null, string.Empty, string.Empty, new MockLuisClient());
-            Action nullLuisClient = () => new LuisNLUService(string.Empty, string.Empty, string.Empty, default(ILuisClient));
-            nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
-            nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
-
             using (var luis = GetTestLuisBuilder().Build())
             {
                 Func<Task> nullUtterances = () => luis.TrainAsync(null, Array.Empty<EntityType>());
-                Func<Task> nullUtterance = () => luis.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>());
-                Func<Task> nullEntityTypes = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), null);
-                Func<Task> nullEntityType = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), new EntityType[] { null });
+                Func<Task> nullUtterance = () => luis.TrainAsync(new Models.LabeledUtterance[] { null }, Array.Empty<EntityType>());
+                Func<Task> nullEntityTypes = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), null);
+                Func<Task> nullEntityType = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), new EntityType[] { null });
                 Func<Task> nullTestUtterance = () => luis.TestAsync(null);
                 Func<Task> nullTestEntityTypes = () => luis.TestAsync(string.Empty, null);
                 Func<Task> nullTestEntityType = () => luis.TestAsync(string.Empty, new EntityType[] { null });
@@ -84,117 +75,6 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
-        public static void LuisEntityInitializes()
-        {
-            var entityType = "Location";
-            var startCharIndex = 2;
-            var endCharIndex = 8;
-            var luisEntity = new LuisEntity(entityType, startCharIndex, endCharIndex);
-            luisEntity.EntityName.Should().Be("Location");
-            luisEntity.StartCharIndex.Should().Be(startCharIndex);
-            luisEntity.EndCharIndex.Should().Be(endCharIndex);
-        }
-
-        [Test]
-        public static void LuisEntitySerializes()
-        {
-            var entityType = "Location";
-            var startCharIndex = 2;
-            var endCharIndex = 8;
-            var luisEntity = new LuisEntity(entityType, startCharIndex, endCharIndex);
-            var actualString = JsonConvert.SerializeObject(luisEntity);
-            var actual = JObject.Parse(actualString);
-            actual.Value<string>("entity").Should().Be(entityType);
-            actual.Value<int>("startPos").Should().Be(2);
-            actual.Value<int>("endPos").Should().Be(8);
-        }
-
-        [Test]
-        public static void EntityConvertsToLuisEntity()
-        {
-            var utterance = "Engineer is the job I want!";
-            var entity = new Entity("String", null, "Engineer", 0);
-            var expected = new LuisEntity("String", 0, 7);
-            var entityType = new EntityType("String", "simple", null);
-            var actual = LuisEntity.FromEntity(entity, utterance, entityType);
-            new LuisEntityComparer().Equals(actual, expected).Should().BeTrue();
-        }
-
-        /* LuisLabeledUtteranceTests */
-
-        [Test]
-        public static void LuisLabeledUtteranceInitializes()
-        {
-            var text = "I want to fly from New York to Seattle";
-            var intent = "bookFlight";
-            var luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("Location::From", 20, 27),
-                new LuisEntity("Location::To", 32, 38),
-            };
-
-            var luisLabeledUtterance = new LuisLabeledUtterance(text, intent, luisEntities);
-            luisLabeledUtterance.Text.Should().Be(text);
-            luisLabeledUtterance.Intent.Should().Be(intent);
-            luisLabeledUtterance.LuisEntities.Should().BeEquivalentTo(luisEntities);
-        }
-
-        [Test]
-        public static void LuisLabeledUtteranceSerializes()
-        {
-            var text = "My name is Bill Gates.";
-            var intent = "updateName";
-            var luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("FirstName", 11, 14),
-                new LuisEntity("LastName", 16, 20),
-            };
-
-            var luisLabeledUtterance = new LuisLabeledUtterance(text, intent, luisEntities);
-            var actualString = JsonConvert.SerializeObject(luisLabeledUtterance);
-            var actual = JObject.Parse(actualString);
-            actual.Value<string>("text").Should().Be(text);
-            actual.Value<string>("intent").Should().Be(intent);
-            actual["entities"].As<JArray>().Count.Should().Be(2);
-            actual.SelectToken(".entities[0].entity").Value<string>().Should().Be(luisEntities[0].EntityName);
-            actual.SelectToken(".entities[0].startPos").Value<int>().Should().Be(luisEntities[0].StartCharIndex);
-            actual.SelectToken(".entities[0].endPos").Value<int>().Should().Be(luisEntities[0].EndCharIndex);
-            actual.SelectToken(".entities[1].entity").Value<string>().Should().Be(luisEntities[1].EntityName);
-            actual.SelectToken(".entities[1].startPos").Value<int>().Should().Be(luisEntities[1].StartCharIndex);
-            actual.SelectToken(".entities[1].endPos").Value<int>().Should().Be(luisEntities[1].EndCharIndex);
-        }
-
-        [Test]
-        public static void LabeledUtteranceToLuisLabeledUtterance()
-        {
-            var text = "My name is Bill Gates.";
-            var intent = "updateName";
-            List<LuisEntity> luisEntities = new List<LuisEntity>
-            {
-                new LuisEntity("FirstName", 11, 14),
-                new LuisEntity("LastName", 16, 20),
-            };
-
-            var expected = new LuisLabeledUtterance(text, intent, luisEntities);
-
-            var entities = new List<Entity>
-            {
-                new Entity("FirstName", null, "Bill", 0),
-                new Entity("LastName", null, "Gates", 0),
-            };
-
-            var entityTypes = new[]
-            {
-                new EntityType("FirstName", "simple", null),
-                new EntityType("LastName", "simple", null),
-            };
-
-            var labeledUtterance = new LabeledUtterance(text, intent, entities);
-            var actual = LuisLabeledUtterance.FromLabeledUtterance(labeledUtterance, entityTypes);
-            new LuisLabeledUtteranceComparer().Equals(actual, expected).Should().BeTrue();
-        }
-
-        [Test]
         public static async Task TrainEmptyModel()
         {
             var mockClient = new MockLuisClient();
@@ -204,7 +84,7 @@ namespace NLU.DevOps.Luis.Tests
             builder.LuisClient = mockClient;
             using (var luis = builder.Build())
             {
-                var utterances = Enumerable.Empty<LabeledUtterance>();
+                var utterances = Enumerable.Empty<Models.LabeledUtterance>();
                 var entityTypes = Enumerable.Empty<EntityType>();
                 await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
 
@@ -212,12 +92,11 @@ namespace NLU.DevOps.Luis.Tests
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 importRequest.Arguments[2].Should().NotBeNull();
-                var importBody = importRequest.Arguments[2].As<JObject>();
+                var luisApp = importRequest.Arguments[2].As<LuisApp>();
 
                 // Expects 3 intents
-                var intents = importBody.SelectToken(".intents").As<JArray>();
-                intents.Count.Should().Be(1);
-                intents.FirstOrDefault(token => token.Value<string>("name") == "None").Should().NotBeNull();
+                luisApp.Intents.Count.Should().Be(1);
+                luisApp.Intents.First().Name.Should().Be("None");
 
                 // Assert train request
                 var trainRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.TrainAsync));
@@ -243,8 +122,8 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var utterances = new[]
                 {
-                    new LabeledUtterance("Book me a flight.", "BookFlight", Array.Empty<Entity>()),
-                    new LabeledUtterance("Cancel my flight.", "CancelFlight", Array.Empty<Entity>())
+                    new Models.LabeledUtterance("Book me a flight.", "BookFlight", Array.Empty<Entity>()),
+                    new Models.LabeledUtterance("Cancel my flight.", "CancelFlight", Array.Empty<Entity>())
                 };
 
                 var entityTypes = Enumerable.Empty<EntityType>();
@@ -253,28 +132,26 @@ namespace NLU.DevOps.Luis.Tests
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
-                var jsonBody = importRequest.Arguments[2].As<JObject>();
+                var luisApp = importRequest.Arguments[2].As<LuisApp>();
 
                 // Expects 3 intents
-                var intents = jsonBody.SelectToken(".intents").As<JArray>();
-                intents.Count.Should().Be(3);
-                intents.FirstOrDefault(token => token.Value<string>("name") == "None").Should().NotBeNull();
-                intents.FirstOrDefault(token => token.Value<string>("name") == utterances[0].Intent).Should().NotBeNull();
-                intents.FirstOrDefault(token => token.Value<string>("name") == utterances[1].Intent).Should().NotBeNull();
+                luisApp.Intents.Count.Should().Be(3);
+                luisApp.Intents.Should().Contain(intent => intent.Name == "None");
+                luisApp.Intents.Should().Contain(intent => intent.Name == utterances[0].Intent);
+                luisApp.Intents.Should().Contain(intent => intent.Name == utterances[1].Intent);
 
                 // Expect 2 utterances
-                var importUtterances = jsonBody.SelectToken(".utterances").As<JArray>();
-                importUtterances.Count.Should().Be(2);
+                luisApp.Utterances.Count.Should().Be(2);
 
-                var bookUtterance = importUtterances.FirstOrDefault(token => token.Value<string>("intent") == utterances[0].Intent);
+                var bookUtterance = luisApp.Utterances.FirstOrDefault(utterance => utterance.Intent == utterances[0].Intent);
                 bookUtterance.Should().NotBeNull();
-                bookUtterance.Value<string>("text").Should().Be(utterances[0].Text);
-                bookUtterance.SelectToken(".entities").As<JArray>().Count.Should().Be(0);
+                bookUtterance.Text.Should().Be(utterances[0].Text);
+                bookUtterance.Entities.Count.Should().Be(0);
 
-                var cancelUtterance = importUtterances.FirstOrDefault(token => token.Value<string>("intent") == utterances[1].Intent);
+                var cancelUtterance = luisApp.Utterances.FirstOrDefault(utterance => utterance.Intent == utterances[1].Intent);
                 cancelUtterance.Should().NotBeNull();
-                cancelUtterance.Value<string>("text").Should().Be(utterances[1].Text);
-                cancelUtterance.SelectToken(".entities").As<JArray>().Count.Should().Be(0);
+                cancelUtterance.Text.Should().Be(utterances[1].Text);
+                cancelUtterance.Entities.Count.Should().Be(0);
             }
         }
 
@@ -288,11 +165,11 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var utterances = new[]
                 {
-                    new LabeledUtterance(
+                    new Models.LabeledUtterance(
                         "Book me a flight.",
                         "BookFlight",
                         new Entity[] { new Entity("Name", string.Empty, "me", 0) }),
-                    new LabeledUtterance(
+                    new Models.LabeledUtterance(
                         "Cancel my flight.",
                         "CancelFlight",
                         new Entity[] { new Entity("Subject", string.Empty, "flight", 0) })
@@ -300,8 +177,8 @@ namespace NLU.DevOps.Luis.Tests
 
                 var entityTypes = new[]
                 {
-                    new EntityType("Name", "simple", null),
-                    new EntityType("Subject", "simple", null),
+                    new EntityType("Name", "entities", null),
+                    new EntityType("Subject", "entities", null),
                 };
 
                 await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
@@ -309,38 +186,37 @@ namespace NLU.DevOps.Luis.Tests
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
-                var jsonBody = importRequest.Arguments[2].As<JObject>();
+                var luisApp = importRequest.Arguments[2].As<LuisApp>();
 
                 // Expects 3 intents
-                var intents = jsonBody.SelectToken(".intents").As<JArray>();
-                intents.Count.Should().Be(3);
-                intents.FirstOrDefault(token => token.Value<string>("name") == "None").Should().NotBeNull();
-                intents.FirstOrDefault(token => token.Value<string>("name") == utterances[0].Intent).Should().NotBeNull();
-                intents.FirstOrDefault(token => token.Value<string>("name") == utterances[1].Intent).Should().NotBeNull();
+                luisApp.Intents.Count.Should().Be(3);
+                luisApp.Intents.Should().Contain(intent => intent.Name == "None");
+                luisApp.Intents.Should().Contain(intent => intent.Name == utterances[0].Intent);
+                luisApp.Intents.Should().Contain(intent => intent.Name == utterances[1].Intent);
 
                 // Expect 2 utterances
-                var importUtterances = jsonBody.SelectToken(".utterances").As<JArray>();
-                importUtterances.Count.Should().Be(2);
+                luisApp.Utterances.Count.Should().Be(2);
 
-                var bookUtterance = importUtterances.FirstOrDefault(token => token.Value<string>("intent") == utterances[0].Intent);
+                var bookUtterance = luisApp.Utterances.FirstOrDefault(utterance => utterance.Intent == utterances[0].Intent);
                 bookUtterance.Should().NotBeNull();
-                bookUtterance.Value<string>("text").Should().Be(utterances[0].Text);
-                bookUtterance.SelectToken(".entities[0].entity").Value<string>().Should().Be(utterances[0].Entities[0].EntityType);
-                bookUtterance.SelectToken(".entities[0].startPos").Value<int>().Should().Be(5);
-                bookUtterance.SelectToken(".entities[0].endPos").Value<int>().Should().Be(6);
+                bookUtterance.Text.Should().Be(utterances[0].Text);
+                bookUtterance.Entities.Count.Should().Be(1);
+                bookUtterance.Entities.First().Entity.Should().Be(utterances[0].Entities[0].EntityType);
+                bookUtterance.Entities.First().StartPos.Should().Be(5);
+                bookUtterance.Entities.First().EndPos.Should().Be(6);
 
-                var cancelUtterance = importUtterances.FirstOrDefault(token => token.Value<string>("intent") == utterances[1].Intent);
+                var cancelUtterance = luisApp.Utterances.FirstOrDefault(utterance => utterance.Intent == utterances[1].Intent);
                 cancelUtterance.Should().NotBeNull();
-                cancelUtterance.Value<string>("text").Should().Be(utterances[1].Text);
-                cancelUtterance.SelectToken(".entities[0].entity").Value<string>().Should().Be(utterances[1].Entities[0].EntityType);
-                cancelUtterance.SelectToken(".entities[0].startPos").Value<int>().Should().Be(10);
-                cancelUtterance.SelectToken(".entities[0].endPos").Value<int>().Should().Be(15);
+                cancelUtterance.Text.Should().Be(utterances[1].Text);
+                cancelUtterance.Entities.Count.Should().Be(1);
+                cancelUtterance.Entities.First().Entity.Should().Be(utterances[1].Entities[0].EntityType);
+                cancelUtterance.Entities.First().StartPos.Should().Be(10);
+                cancelUtterance.Entities.First().EndPos.Should().Be(15);
 
                 // Expect 2 entities
-                var entities = jsonBody.SelectToken(".entities").As<JArray>();
-                entities.Count.Should().Be(2);
-                entities.FirstOrDefault(token => token.Value<string>("name") == entityTypes[0].Name).Should().NotBeNull();
-                entities.FirstOrDefault(token => token.Value<string>("name") == entityTypes[1].Name).Should().NotBeNull();
+                luisApp.Entities.Count.Should().Be(2);
+                luisApp.Entities.Should().Contain(entity => entity.Name == entityTypes[0].Name);
+                luisApp.Entities.Should().Contain(entity => entity.Name == entityTypes[1].Name);
             }
         }
 
@@ -368,22 +244,19 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (request.Method == nameof(ILuisClient.QueryAsync))
                 {
-                    return new JObject
+                    return new LuisResult
                     {
-                        { "query", test },
-                        { "topScoringIntent", new JObject { { "intent", "intent" } } },
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                        Entities = new[]
                         {
-                            "entities",
-                            new JArray
+                            new EntityModel
                             {
-                                new JObject
-                                {
-                                    { "entity", "the" },
-                                    { "type", "type" },
-                                    { "startIndex", 32 },
-                                    { "endIndex", 34 },
-                                },
-                            }
+                                Entity = "the",
+                                Type = "type",
+                                StartIndex = 32,
+                                EndIndex = 34,
+                            },
                         },
                     };
                 }
@@ -417,50 +290,49 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (request.Method == nameof(ILuisClient.QueryAsync))
                 {
-                    return JObject.Parse(@"{
-                            ""query"": ""the quick brown fox jumped over the lazy dog today"",
-                            ""topScoringIntent"": {
-                                ""intent"": ""Calendar.Add"",
-                                ""score"": 0.718678534
+                    return new LuisResult
+                    {
+                        Query = "the quick brown fox jumped over the lazy dog today",
+                        Entities = new[]
+                        {
+                            new EntityModel
+                            {
+                                Entity = "today",
+                                StartIndex = 45,
+                                EndIndex = 49,
+                                AdditionalProperties = new Dictionary<string, object>
+                                {
+                                    {
+                                        "resolution",
+                                        new JObject
+                                        {
+                                            { "values", new JArray { new JObject { { "value", "2018-11-16" } } } },
+                                        }
+                                    },
+                                },
                             },
-                            ""entities"": [
+                            new EntityModel
+                            {
+                                Entity = "brown fox",
+                                StartIndex = 10,
+                                EndIndex = 18,
+                                AdditionalProperties = new Dictionary<string, object>
                                 {
-                                    ""entity"": ""today"",
-                                    ""type"": ""builtin.datetimeV2.date"",
-                                    ""startIndex"": 45,
-                                    ""endIndex"": 49,
-                                    ""resolution"": {
-                                        ""values"": [
-                                            {
-                                                ""timex"": ""2018-11-16"",
-                                                ""type"": ""date"",
-                                                ""value"": ""2018-11-16""
-                                            }
-                                        ]
-                                    }
+                                    { "resolution", new JObject { { "values", new JArray { "Fox" } } } },
                                 },
+                            },
+                            new EntityModel
+                            {
+                                Entity = "the",
+                                StartIndex = 0,
+                                EndIndex = 2,
+                                AdditionalProperties = new Dictionary<string, object>
                                 {
-                                    ""entity"": ""brown fox"",
-                                    ""type"": ""builtin.personName"",
-                                    ""startIndex"": 10,
-                                    ""endIndex"": 18,
-                                    ""resolution"": {
-                                        ""values"": [
-                                            ""Fox""
-                                        ]
-                                    }
+                                    { "resolution", new JObject { { "value", "THE" } } },
                                 },
-                                {
-                                    ""entity"": ""the"",
-                                    ""type"": ""thetype"",
-                                    ""startIndex"": 0,
-                                    ""endIndex"": 2,
-                                    ""resolution"": {
-                                        ""value"": ""THE""
-                                    }
-                                }
-                            ]
-                        }");
+                            }
+                        }
+                    };
                 }
 
                 return null;
@@ -489,22 +361,19 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (request.Method == nameof(ILuisClient.RecognizeSpeechAsync))
                 {
-                    return new JObject
+                    return new LuisResult
                     {
-                        { "query", test },
-                        { "topScoringIntent", new JObject { { "intent", "intent" } } },
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                        Entities = new[]
                         {
-                            "entities",
-                            new JArray
+                            new EntityModel
                             {
-                                new JObject
-                                {
-                                    { "entity", "entity" },
-                                    { "type", "type" },
-                                    { "startIndex", 45 },
-                                    { "endIndex", 50 },
-                                },
-                            }
+                                Entity = "entity",
+                                Type = "type",
+                                StartIndex = 45,
+                                EndIndex = 50,
+                            },
                         },
                     };
                 }
@@ -538,22 +407,19 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (request.Method == nameof(ILuisClient.QueryAsync))
                 {
-                    return new JObject
+                    return new LuisResult
                     {
-                        { "query", test },
-                        { "topScoringIntent", new JObject { { "intent", "intent" } } },
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                        Entities = new[]
                         {
-                            "entities",
-                            new JArray
+                            new EntityModel
                             {
-                                new JObject
-                                {
-                                    { "entity", "the" },
-                                    { "type", "builtin.test" },
-                                    { "startIndex", 32 },
-                                    { "endIndex", 34 },
-                                },
-                            }
+                                Entity = "the",
+                                Type = "builtin.test",
+                                StartIndex = 32,
+                                EndIndex = 34
+                            },
                         },
                     };
                 }
@@ -561,7 +427,7 @@ namespace NLU.DevOps.Luis.Tests
                 return null;
             };
 
-            var entityType = new EntityType("type", "builtin", new JObject { { "name", "test" } });
+            var entityType = new EntityType("type", "prebuiltEntities", new JObject { { "name", "test" } });
 
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
@@ -589,11 +455,11 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (IsTrainingStatusRequest(request))
                 {
-                    return new JArray
+                    return new[]
                     {
-                        new JObject
+                        new ModelTrainingInfo
                         {
-                            { "details", new JObject { { "status", statusArray[count++] } } }
+                            Details = new ModelTrainingDetails { Status = statusArray[count++] }
                         }
                     };
                 }
@@ -606,7 +472,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // Ensure correct number of training status requests are made.
                 mockClient.Requests.Where(IsTrainingStatusRequest).Count().Should().Be(statusArray.Length);
@@ -631,11 +497,11 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (IsTrainingStatusRequest(request))
                 {
-                    return new JArray
+                    return new[]
                     {
-                        new JObject
+                        new ModelTrainingInfo
                         {
-                            { "details", new JObject { { "status", "Fail" } } }
+                            Details = new ModelTrainingDetails { Status = "Fail" }
                         }
                     };
                 }
@@ -648,7 +514,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>());
+                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), Array.Empty<EntityType>());
                 trainAsync.Should().Throw<InvalidOperationException>();
             }
         }
@@ -673,7 +539,7 @@ namespace NLU.DevOps.Luis.Tests
             builder.AppId = null;
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
                 luis.LuisAppId.Should().Be(appId);
             }
         }
@@ -753,34 +619,34 @@ namespace NLU.DevOps.Luis.Tests
                 return this.ProcessRequestAsync(appId);
             }
 
-            public Task<JArray> GetTrainingStatusAsync(string appId, string appVersion, CancellationToken cancellationToken)
+            public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<JArray>(appId, appVersion);
+                return this.ProcessRequestAsync<IList<ModelTrainingInfo>>(appId, versionId);
             }
 
-            public Task ImportVersionAsync(string appId, string appVersion, JObject importJson, CancellationToken cancellationToken)
+            public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync(appId, appVersion, importJson);
+                return this.ProcessRequestAsync(appId, versionId, luisApp);
             }
 
-            public Task PublishAppAsync(string appId, string appVersion, CancellationToken cancellationToken)
+            public Task PublishAppAsync(string appId, string versionId, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync(appId, appVersion);
+                return this.ProcessRequestAsync(appId, versionId);
             }
 
-            public Task<JObject> QueryAsync(string appId, string text, CancellationToken cancellationToken)
+            public Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<JObject>(appId, text);
+                return this.ProcessRequestAsync<LuisResult>(appId, text);
             }
 
-            public Task<JObject> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+            public Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<JObject>(appId, speechFile);
+                return this.ProcessRequestAsync<LuisResult>(appId, speechFile);
             }
 
-            public Task TrainAsync(string appId, string appVersion, CancellationToken cancellationToken)
+            public Task TrainAsync(string appId, string versionId, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync(appId, appVersion);
+                return this.ProcessRequestAsync(appId, versionId);
             }
 
             public void Dispose()
@@ -807,7 +673,7 @@ namespace NLU.DevOps.Luis.Tests
                 var response = this.OnRequestResponse?.Invoke(request);
                 if (response == null && IsTrainingStatusRequest(request))
                 {
-                    response = new JArray();
+                    response = Array.Empty<ModelTrainingInfo>();
                 }
 
                 return Task.FromResult((T)response);
@@ -828,46 +694,6 @@ namespace NLU.DevOps.Luis.Tests
             /// Gets or sets the URI of the request.
             /// </summary>
             public object[] Arguments { get; set; }
-        }
-
-        /// <summary>
-        /// An <see cref="IEqualityComparer{T}"/> for <see cref="LuisLabeledUtterance"/>.
-        /// </summary>
-        private sealed class LuisLabeledUtteranceComparer : IEqualityComparer<LuisLabeledUtterance>
-        {
-            /// <inheritdoc />
-            public bool Equals(LuisLabeledUtterance u1, LuisLabeledUtterance u2)
-            {
-                return (u1.Text == u2.Text) &&
-                    (u1.Intent == u2.Intent) &&
-                    u1.LuisEntities.SequenceEqual(u2.LuisEntities, new LuisEntityComparer());
-            }
-
-            /// <inheritdoc />
-            public int GetHashCode(LuisLabeledUtterance utterance)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        /// <summary>
-        /// An <see cref="IEqualityComparer{T}"/> for <see cref="LuisLabeledUtterance"/>.
-        /// </summary>
-        private sealed class LuisEntityComparer : IEqualityComparer<LuisEntity>
-        {
-            /// <inheritdoc />
-            public bool Equals(LuisEntity e1, LuisEntity e2)
-            {
-                return (e1.EntityName == e2.EntityName) &&
-                    (e1.StartCharIndex == e2.StartCharIndex) &&
-                    (e1.EndCharIndex == e2.EndCharIndex);
-            }
-
-            /// <inheritdoc />
-            public int GetHashCode(LuisEntity entity)
-            {
-                throw new NotImplementedException();
-            }
         }
 
         /// <summary>

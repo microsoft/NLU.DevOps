@@ -39,7 +39,7 @@ namespace NLU.DevOps.CommandLine
 
         private static readonly string LuisAppNameConfigurationKey = CamelCase(nameof(LuisNLUService.LuisAppName));
         private static readonly string LuisAppIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisAppId));
-        private static readonly string LuisAppVersionConfigurationKey = CamelCase(nameof(LuisNLUService.LuisAppVersion));
+        private static readonly string LuisVersionIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisVersionId));
 
         private static readonly string TemplatesPath =
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
@@ -79,7 +79,7 @@ namespace NLU.DevOps.CommandLine
             {
                 AppName = appName,
                 AppId = configuration[LuisAppIdConfigurationKey],
-                AppVersion = GetAppVersion(configuration),
+                AppVersion = GetVersionId(configuration),
                 AuthoringRegion = configuration[LuisAuthoringRegionConfigurationKey],
                 EndpointRegion = configuration[LuisEndpointRegionConfigurationKey],
                 IsStaging = isStaging,
@@ -126,10 +126,10 @@ namespace NLU.DevOps.CommandLine
                 .ToArray());
         }
 
-        private static string GetAppVersion(IConfiguration configuration)
+        private static string GetVersionId(IConfiguration configuration)
         {
-            var appVersion = configuration[LuisAppVersionConfigurationKey];
-            if (appVersion == null)
+            var versionId = configuration[LuisVersionIdConfigurationKey];
+            if (versionId == null)
             {
                 return null;
             }
@@ -137,7 +137,7 @@ namespace NLU.DevOps.CommandLine
             var buildIdKey = configuration[BuildVersionVariableKey];
             var buildId = buildIdKey != null ? configuration[buildIdKey] : null;
             var buildIdModifier = buildId != null ? $".{buildId}" : string.Empty;
-            return $"{appVersion}{buildIdModifier}";
+            return $"{versionId}{buildIdModifier}";
         }
 
         private static string CamelCase(string s)

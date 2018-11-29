@@ -4,12 +4,14 @@
 namespace NLU.DevOps.Luis
 {
     using System;
-    using System.Net;
-    using System.Net.Http;
-    using System.Text;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Microsoft.CognitiveServices.Speech;
     using Microsoft.CognitiveServices.Speech.Audio;
     using Microsoft.CognitiveServices.Speech.Intent;
@@ -19,15 +21,8 @@ namespace NLU.DevOps.Luis
 
     internal sealed class LuisClient : ILuisClient
     {
-        private const string SubscriptionKeyHeader = "Ocp-Apim-Subscription-Key";
-
         private const string Protocol = "https://";
-
         private const string Domain = ".api.cognitive.microsoft.com";
-
-        private const string BasePath = "/luis/api/v2.0/apps/";
-
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
         public LuisClient(
             string authoringKey,
@@ -36,18 +31,29 @@ namespace NLU.DevOps.Luis
             string endpointRegion,
             bool isStaging)
         {
-            this.AuthoringRegion = authoringRegion;
-            this.EndpointKey = endpointKey ?? authoringKey ?? throw new ArgumentException($"Must specify either '{nameof(authoringKey)}' or '{nameof(endpointKey)}'.");
-            this.EndpointRegion = endpointRegion ?? authoringRegion ?? throw new ArgumentException($"Must specify either '{nameof(authoringRegion)}' or '{nameof(endpointRegion)}'.");
             this.IsStaging = isStaging;
 
-            this.HttpClient = new HttpClient
+            var endpointOrAuthoringKey = endpointKey ?? authoringKey ?? throw new ArgumentException($"Must specify either '{nameof(authoringKey)}' or '{nameof(endpointKey)}'.");
+            this.EndpointRegion = endpointRegion ?? authoringRegion ?? throw new ArgumentException($"Must specify either '{nameof(authoringRegion)}' or '{nameof(endpointRegion)}'.");
+            var endpointCredentials = new Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.ApiKeyServiceClientCredentials(endpointOrAuthoringKey);
+            this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
-                DefaultRequestHeaders =
-                {
-                    { SubscriptionKeyHeader, authoringKey },
-                },
+                Endpoint = $"{Protocol}{this.EndpointRegion}{Domain}",
             };
+
+            this.LazyAuthoringClient = new Lazy<LUISAuthoringClient>(() =>
+            {
+                if (authoringKey == null || authoringRegion == null)
+                {
+                    throw new InvalidOperationException("Must provide authoring key and region to perform authoring operations.");
+                }
+
+                var authoringCredentials = new Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.ApiKeyServiceClientCredentials(authoringKey);
+                return new LUISAuthoringClient(authoringCredentials)
+                {
+                    Endpoint = $"{Protocol}{authoringRegion}{Domain}",
+                };
+            });
 
             this.LazySpeechConfig = new Lazy<SpeechConfig>(() => SpeechConfig.FromSubscription(endpointKey, endpointRegion));
         }
@@ -56,112 +62,63 @@ namespace NLU.DevOps.Luis
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUService>());
 
-        private string AuthoringRegion { get; }
-
-        private string EndpointKey { get; }
-
         private string EndpointRegion { get; }
 
         private bool IsStaging { get; }
 
-        private HttpClient HttpClient { get; }
+        private LUISRuntimeClient RuntimeClient { get; }
+
+        private LUISAuthoringClient AuthoringClient => this.LazyAuthoringClient.Value;
+
+        private Lazy<LUISAuthoringClient> LazyAuthoringClient { get; }
 
         private Lazy<SpeechConfig> LazySpeechConfig { get; }
 
-        private string AuthoringHost => $"{Protocol}{this.AuthoringRegion}{Domain}";
-
         public async Task<string> CreateAppAsync(string appName, CancellationToken cancellationToken)
         {
-            var requestJson = new JObject
+            var request = new ApplicationCreateObject
             {
-                { "name", appName },
-                { "culture", "en-us" },
+                Name = appName,
+                Culture = "en-us",
             };
 
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}");
-            using (var content = new StringContent(requestJson.ToString(Formatting.None), Encoding.UTF8, "text/json"))
-            using (var httpResponse = await this.HttpClient.PostAsync(uri, content, cancellationToken).ConfigureAwait(false))
-            {
-                httpResponse.EnsureSuccessStatusCode();
-                var jsonString = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                var json = JToken.Parse(jsonString);
-                return json.ToString();
-            }
+            var appId = await this.AuthoringClient.Apps.AddAsync(request, cancellationToken).ConfigureAwait(false);
+            return appId.ToString();
         }
 
-        public async Task DeleteAppAsync(string appId, CancellationToken cancellationToken)
+        public Task DeleteAppAsync(string appId, CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}{appId}/");
-            using (var httpResponse = await this.HttpClient.DeleteAsync(uri, cancellationToken).ConfigureAwait(false))
-            {
-                httpResponse.EnsureSuccessStatusCode();
-            }
+            return this.AuthoringClient.Apps.DeleteAsync(Guid.Parse(appId), cancellationToken);
         }
 
-        public async Task ImportVersionAsync(string appId, string appVersion, JObject importJson, CancellationToken cancellationToken)
+        public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}{appId}/versions/import?versionId={appVersion}");
-            using (var content = new StringContent(importJson.ToString(Formatting.None), Encoding.UTF8, "text/json"))
-            using (var httpResponse = await this.HttpClient.PostAsync(uri, content, cancellationToken).ConfigureAwait(false))
-            {
-                httpResponse.EnsureSuccessStatusCode();
-            }
+            return this.AuthoringClient.Train.GetStatusAsync(Guid.Parse(appId), versionId, cancellationToken);
         }
 
-        public async Task<JArray> GetTrainingStatusAsync(string appId, string appVersion, CancellationToken cancellationToken)
+        public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}{appId}/versions/{appVersion}/train");
-            using (var httpResponse = await this.HttpClient.GetAsync(uri, cancellationToken).ConfigureAwait(false))
-            {
-                httpResponse.EnsureSuccessStatusCode();
-                var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                return JArray.Parse(content);
-            }
+            return this.AuthoringClient.Versions.ImportAsync(Guid.Parse(appId), luisApp, versionId, cancellationToken);
         }
 
-        public async Task PublishAppAsync(string appId, string appVersion, CancellationToken cancellationToken)
+        public Task PublishAppAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-            var requestJson = new JObject
+            var request = new ApplicationPublishObject
             {
-                { "versionId", appVersion },
-                { "isStaging", this.IsStaging },
-                { "region", this.EndpointRegion },
+                IsStaging = this.IsStaging,
+                Region = this.EndpointRegion,
+                VersionId = versionId,
             };
 
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}{appId}/publish");
-            using (var content = new StringContent(requestJson.ToString(Formatting.None), Encoding.UTF8, "text/json"))
-            using (var httpResponse = await this.HttpClient.PostAsync(uri, content, cancellationToken).ConfigureAwait(false))
-            {
-                httpResponse.EnsureSuccessStatusCode();
-            }
+            return this.AuthoringClient.Apps.PublishAsync(Guid.Parse(appId), request, cancellationToken);
         }
 
-        public async Task<JObject> QueryAsync(string appId, string text, CancellationToken cancellationToken)
+        public Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken)
         {
-            var staging = this.IsStaging ? "&staging=true" : string.Empty;
-            var uri = new Uri($"{Protocol}{this.EndpointRegion}{Domain}/luis/v2.0/apps/{appId}?q={text}{staging}");
-            using (var httpRequest = GetQueryRequest(uri, this.EndpointKey))
-            {
-                while (true)
-                {
-                    using (var httpResponse = await this.HttpClient.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false))
-                    {
-                        if (httpResponse.StatusCode == (HttpStatusCode)429)
-                        {
-                            Logger.LogWarning("Received HTTP 429 result from Cognitive Services. Retrying.");
-                            await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                            continue;
-                        }
-
-                        httpResponse.EnsureSuccessStatusCode();
-                        var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        return JObject.Parse(content);
-                    }
-                }
-            }
+            return this.RuntimeClient.Prediction.ResolveAsync(appId, text, cancellationToken: cancellationToken);
         }
 
-        public async Task<JObject> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+        public async Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
         {
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
             using (var recognizer = new IntentRecognizer(this.LazySpeechConfig.Value, audioInput))
@@ -178,7 +135,7 @@ namespace NLU.DevOps.Luis
                 if (result.Reason == ResultReason.RecognizedSpeech || result.Reason == ResultReason.RecognizedIntent)
                 {
                     var content = result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
-                    return JObject.Parse(content);
+                    return JsonConvert.DeserializeObject<LuisResult>(content);
                 }
                 else if (result.Reason == ResultReason.NoMatch)
                 {
@@ -192,29 +149,15 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public async Task TrainAsync(string appId, string appVersion, CancellationToken cancellationToken)
+        public Task TrainAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-            var uri = new Uri($"{this.AuthoringHost}{BasePath}{appId}/versions/{appVersion}/train");
-            using (var httpResponse = await this.HttpClient.PostAsync(uri, null, cancellationToken).ConfigureAwait(false))
-            {
-                httpResponse.EnsureSuccessStatusCode();
-            }
+            return this.AuthoringClient.Train.TrainVersionAsync(Guid.Parse(appId), versionId, cancellationToken);
         }
 
         public void Dispose()
         {
-            this.HttpClient.Dispose();
-        }
-
-        private static HttpRequestMessage GetQueryRequest(Uri uri, string apiKey)
-        {
-            return new HttpRequestMessage(HttpMethod.Get, uri)
-            {
-                Headers =
-                {
-                    { SubscriptionKeyHeader, apiKey }
-                }
-            };
+            this.AuthoringClient.Dispose();
+            this.RuntimeClient.Dispose();
         }
     }
 }

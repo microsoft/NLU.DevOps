@@ -4,8 +4,11 @@
 namespace NLU.DevOps.Luis
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Newtonsoft.Json.Linq;
 
     /// <summary>
@@ -34,54 +37,54 @@ namespace NLU.DevOps.Luis
         /// </summary>
         /// <returns>Task to await the training status response.</returns>
         /// <param name="appId">LUIS app ID.</param>
-        /// <param name="appVersion">LUIS app version.</param>
+        /// <param name="versionId">LUIS version ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<JArray> GetTrainingStatusAsync(string appId, string appVersion, CancellationToken cancellationToken);
+        Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Imports the LUIS app version.
         /// </summary>
         /// <returns>Task to await the import operation.</returns>
         /// <param name="appId">LUIS app ID.</param>
-        /// <param name="appVersion">LUIS app version.</param>
-        /// <param name="importJson">Import JSON.</param>
+        /// <param name="versionId">LUIS version ID.</param>
+        /// <param name="luisApp">LUIS app to import.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task ImportVersionAsync(string appId, string appVersion, JObject importJson, CancellationToken cancellationToken);
+        Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken);
 
         /// <summary>
         /// Publishes the LUIS app version.
         /// </summary>
         /// <returns>Task to await the publish operation.</returns>
         /// <param name="appId">LUIS app ID.</param>
-        /// <param name="appVersion">LUIS app version.</param>
+        /// <param name="versionId">LUIS version ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task PublishAppAsync(string appId, string appVersion, CancellationToken cancellationToken);
+        Task PublishAppAsync(string appId, string versionId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Queries the LUIS app to extract intent and entities.
         /// </summary>
-        /// <returns>Task to await the intent results.</returns>
+        /// <returns>Task to await the LUIS results.</returns>
         /// <param name="appId">LUIS app ID.</param>
         /// <param name="text">Query text.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<JObject> QueryAsync(string appId, string text, CancellationToken cancellationToken);
+        Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken);
 
         /// <summary>
         /// Performs intent recognition from speech using the given audio file.
         /// </summary>
-        /// <returns>Task to await the intent results.</returns>
+        /// <returns>Task to await the LUIS results.</returns>
         /// <param name="appId">LUIS app ID.</param>
         /// <param name="speechFile">Path to file.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<JObject> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
+        Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
 
         /// <summary>
         /// Trains the LUIS app version.
         /// </summary>
         /// <returns>Task to await the train operation.</returns>
         /// <param name="appId">LUIS app identifier.</param>
-        /// <param name="appVersion">LUIS app version.</param>
+        /// <param name="versionId">LUIS version ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task TrainAsync(string appId, string appVersion, CancellationToken cancellationToken);
+        Task TrainAsync(string appId, string versionId, CancellationToken cancellationToken);
     }
 }
