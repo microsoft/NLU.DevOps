@@ -2,6 +2,8 @@
   <Import Project="..\CodeAnalysis.props" />
   <Import Project="..\CommonNuget.props" />
   <PropertyGroup>
+    <AssemblyName>dotnet-nlu</AssemblyName>
+    <PackageType>DotnetCliTool</PackageType>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
