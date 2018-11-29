@@ -140,7 +140,7 @@ namespace NLU.DevOps.Lex
             var entities = postTextResponse.Slots?
                 .Where(slot => slot.Value != null)
                 .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
-                .ToList();
+                .ToArray();
 
             return new LabeledUtterance(
                 utterance,
@@ -177,7 +177,7 @@ namespace NLU.DevOps.Lex
                 var slots = postContentResponse.Slots != null
                     ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
                         .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
-                        .ToList()
+                        .ToArray()
                     : null;
 
                 return new LabeledUtterance(

@@ -26,7 +26,7 @@ namespace NLU.DevOps.Luis
             return new JSONUtterance(
                 utterance.Text,
                 utterance.Intent,
-                entities.ToList());
+                entities.ToArray());
         }
     }
 }

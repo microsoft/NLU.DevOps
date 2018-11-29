@@ -99,8 +99,10 @@ namespace NLU.DevOps.Lex
 
         public void Dispose()
         {
-            this.AmazonLexClient.Dispose();
-            this.AmazonLexModelClient.Dispose();
+            using (this.AmazonLexClient)
+            using (this.AmazonLexModelClient)
+            {
+            }
         }
 
         private static Task RetryAsync<TRequest>(Func<TRequest, CancellationToken, Task> actionAsync, TRequest request, CancellationToken cancellationToken)

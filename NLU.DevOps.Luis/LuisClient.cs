@@ -156,8 +156,10 @@ namespace NLU.DevOps.Luis
 
         public void Dispose()
         {
-            this.AuthoringClient.Dispose();
-            this.RuntimeClient.Dispose();
+            using (this.AuthoringClient)
+            using (this.RuntimeClient)
+            {
+            }
         }
     }
 }
