@@ -1,5 +1,10 @@
+# NLU.DevOps &middot; [![Build Status](https://dev.azure.com/NLUDevOps/NLU.DevOps/_apis/build/status/Microsoft.NLU.DevOps)](https://dev.azure.com/NLUDevOps/NLU.DevOps/_build/latest?definitionId=1) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md#pull-requests)
 
-# Contributing
+Continuous integration and deployment of NLU models.
+
+- [Contributing](#contributing)
+
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
