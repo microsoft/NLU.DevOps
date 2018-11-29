@@ -1,0 +1,73 @@
+resources:
+- repo: self
+  fetchDepth: 15
+queue:
+  name: Hosted VS2017
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /src
+    
+steps:
+- task: DotNetCoreCLI@2
+  displayName: Restore NuGet packages
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: Build solution
+  inputs:
+    projects: '**/*.csproj'
+    arguments: '--configuration Release /warnaserror'
+
+- task: DotNetCoreCLI@2
+  displayName: Run tests
+  inputs:
+    command: test
+    projects: '**/*[Tt]ests/*.csproj'
+    configuration: Release
+    arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:Exclude=[NUnit3.TestAdapter]*'
+
+- task: DotNetCoreCLI@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: Create NuGet packages for prerelease
+  inputs:
+    command: pack
+    packagesToPack: '**/*.csproj'
+    configuration: Release
+    versioningScheme: byPrereleaseNumber
+    packDirectory: '$(Build.ArtifactStagingDirectory)/beta'
+
+- task: DotNetCoreCLI@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: Create NuGet packages for release
+  inputs:
+    command: pack
+    packagesToPack: '**/*.csproj'
+    configuration: Release
+    packDirectory: '$(Build.ArtifactStagingDirectory)/release'
+
+- task: PublishBuildArtifacts@1
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: Publish build artifacts
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
+    artifactType: 'container'
+
+- script: |
+    dotnet tool install dotnet-reportgenerator-globaltool --tool-path . --version 4.0.0
+    .\reportgenerator "-reports:$(Build.SourcesDirectory)\**\NLU.DevOps*\coverage.cobertura.xml" "-targetdir:benchcovrepresults" "-reporttypes:HTMLInline;HTMLChart"
+  displayName: Generate code coverage report
+
+- task: PublishCodeCoverageResults@1
+  displayName: Publish code coverage results
+  inputs:
+    codeCoverageTool: 'cobertura'
+    reportDirectory: $(Build.SourcesDirectory)/**/benchcovrepresults
+    summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
