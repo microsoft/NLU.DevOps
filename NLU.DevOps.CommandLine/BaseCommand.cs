@@ -79,21 +79,11 @@ namespace NLU.DevOps.CommandLine
 
         private IConfiguration CreateConfiguration()
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            return new ConfigurationBuilder()
                 .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json");
-
-            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json")))
-            {
-                configurationBuilder.AddJsonFile($"appsettings.{this.Options.Service}.json");
-            }
-
-            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.local.json")))
-            {
-                configurationBuilder.AddJsonFile("appsettings.local.json");
-            }
-
-            return configurationBuilder
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile($"appsettings.{this.Options.Service}.json", true)
+                .AddJsonFile("appsettings.local.json", true)
                 .AddEnvironmentVariables()
                 .Build();
         }

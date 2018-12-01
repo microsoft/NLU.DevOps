@@ -21,15 +21,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             get
             {
-                var configurationBuilder = new ConfigurationBuilder()
-                    .AddJsonFile(AppSettingsPath);
-
-                if (File.Exists(AppSettingsLocalPath))
-                {
-                    configurationBuilder.AddJsonFile(AppSettingsLocalPath);
-                }
-
-                var configuration = configurationBuilder
+                var configuration = new ConfigurationBuilder()
+                    .AddJsonFile(AppSettingsPath)
+                    .AddJsonFile(AppSettingsLocalPath, true)
                     .AddEnvironmentVariables()
                     .Build();
 
