@@ -80,8 +80,7 @@ namespace NLU.DevOps.CommandLine
         private IConfiguration CreateConfiguration()
         {
             return new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.json")
+                .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile($"appsettings.{this.Options.Service}.json", true)
                 .AddJsonFile("appsettings.local.json", true)
                 .AddEnvironmentVariables()
@@ -90,7 +89,7 @@ namespace NLU.DevOps.CommandLine
 
         private INLUService CreateNLUService()
         {
-            return NLUServiceFactory.Create(this.Options.Service, this.Configuration);
+            return NLUServiceFactory.Create(this.Options, this.Configuration);
         }
 
         private ILogger CreateLogger()

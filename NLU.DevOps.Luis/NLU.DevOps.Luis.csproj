@@ -2,7 +2,7 @@
   <Import Project="..\CodeAnalysis.props" />
   <Import Project="..\CommonNuget.props" />
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
@@ -14,6 +14,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring" Version="2.0.0" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime" Version="2.0.0" />
+    <PackageReference Include="System.Composition.AttributedModel" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>

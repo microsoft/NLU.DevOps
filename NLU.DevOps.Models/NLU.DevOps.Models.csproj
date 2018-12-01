@@ -11,5 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
   </ItemGroup>
 </Project>

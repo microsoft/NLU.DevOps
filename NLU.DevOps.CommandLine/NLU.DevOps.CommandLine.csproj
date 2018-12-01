@@ -3,7 +3,9 @@
   <Import Project="..\CommonNuget.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>dotnet-nlu</AssemblyName>
+    <PackAsTool>true</PackAsTool>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
@@ -23,13 +25,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
     <PackageReference Include="NUnitLite" Version="3.11.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="appsettings.*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <PackageReference Include="System.Composition" Version="1.2.0" />
   </ItemGroup>
 </Project>

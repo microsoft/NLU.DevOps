@@ -35,8 +35,7 @@ namespace NLU.DevOps.CommandLine.Train
             {
                 if (this.Options.WriteConfig)
                 {
-                    var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
-                    using (var stream = File.OpenWrite(configPath))
+                    using (var stream = File.OpenWrite($"appsettings.{this.Options.Service}.json"))
                     {
                         Write(stream, this.NLUService);
                     }

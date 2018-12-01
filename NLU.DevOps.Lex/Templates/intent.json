@@ -1,8 +1,0 @@
-﻿{
-  "name": "",
-  "fulfillmentActivity": {
-    "type": "ReturnIntent"
-  },
-  "sampleUtterances": [],
-  "slots": []
-}
