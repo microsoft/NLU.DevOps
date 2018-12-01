@@ -7,7 +7,6 @@ namespace NLU.DevOps.CommandLine
     using Compare;
     using global::CommandLine;
     using Test;
-    using TestSpeech;
     using Train;
 
     internal class Program
@@ -18,14 +17,12 @@ namespace NLU.DevOps.CommandLine
                 CleanOptions,
                 CompareOptions,
                 TestOptions,
-                TestSpeechOptions,
                 TrainOptions
             >(args)
                 .MapResult(
                     (CleanOptions options) => Run(new CleanCommand(options)),
                     (CompareOptions options) => CompareCommand.Run(options),
                     (TestOptions options) => Run(new TestCommand(options)),
-                    (TestSpeechOptions options) => Run(new TestSpeechCommand(options)),
                     (TrainOptions options) => Run(new TrainCommand(options)),
                     errors => 1);
         }
