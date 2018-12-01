@@ -18,7 +18,7 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('l', "label", HelpText = "Label for differentiating comparison runs.", Required = false)]
         public string TestLabel { get; set; }
 
-        [Option('o', "outputFolder", HelpText = "Output path for test results.", Required = false)]
+        [Option('o', "output-folder", HelpText = "Output path for test results.", Required = false)]
         public string OutputFolder { get; set; }
     }
 }
