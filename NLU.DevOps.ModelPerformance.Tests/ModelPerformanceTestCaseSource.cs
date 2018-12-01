@@ -11,6 +11,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
     using Models;
     using Newtonsoft.Json;
     using NUnit.Framework;
+    using static ConfigurationConstants;
 
     internal class ModelPerformanceTestCaseSource
     {
@@ -27,9 +28,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
                     .AddEnvironmentVariables()
                     .Build();
 
-                var expectedPath = TestContext.Parameters.Get("expected") ?? configuration["expected"];
-                var actualPath = TestContext.Parameters.Get("actual") ?? configuration["actual"];
-                var testLabel = TestContext.Parameters.Get("testLabel") ?? configuration["testLabel"];
+                var expectedPath = TestContext.Parameters.Get(ExpectedUtterancesPathKey) ?? configuration[ExpectedUtterancesPathKey];
+                var actualPath = TestContext.Parameters.Get(ActualUtterancesPathKey) ?? configuration[ActualUtterancesPathKey];
+                var testLabel = TestContext.Parameters.Get(TestLabelKey) ?? configuration[TestLabelKey];
                 return ZipUtterances(expectedPath, actualPath, testLabel);
             }
         }

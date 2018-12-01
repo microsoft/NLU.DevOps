@@ -4,6 +4,7 @@
 namespace NLU.DevOps.CommandLine
 {
     using Clean;
+    using Compare;
     using global::CommandLine;
     using Test;
     using TestSpeech;
@@ -15,12 +16,14 @@ namespace NLU.DevOps.CommandLine
         {
             return Parser.Default.ParseArguments<
                 CleanOptions,
+                CompareOptions,
                 TestOptions,
                 TestSpeechOptions,
                 TrainOptions
             >(args)
                 .MapResult(
                     (CleanOptions options) => Run(new CleanCommand(options)),
+                    (CompareOptions options) => CompareCommand.Run(options),
                     (TestOptions options) => Run(new TestCommand(options)),
                     (TestSpeechOptions options) => Run(new TestSpeechCommand(options)),
                     (TrainOptions options) => Run(new TrainCommand(options)),
