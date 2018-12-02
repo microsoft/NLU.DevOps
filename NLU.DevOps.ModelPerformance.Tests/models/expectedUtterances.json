@@ -17,6 +17,11 @@
     "text": "Order me 2 pizzas"
   },
   {
+    "entities": [],
+    "intent": "None",
+    "text": "When's the next game?"
+  },
+  {
     "entities": [
       {
         "entityType": "City",

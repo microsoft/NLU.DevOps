@@ -3,7 +3,11 @@
 
 namespace NLU.DevOps.ModelPerformance.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using FluentAssertions;
     using Models;
     using NUnit.Framework;
@@ -11,6 +15,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
     [TestFixture]
     internal static class ModelPerformanceTests
     {
+        private static IEqualityComparer<string> UtteranceComparer { get; } = new UtteranceEqualityComparer();
+
         [Test]
         [Category("Intent")]
         [Category("Performance")]
@@ -30,7 +36,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actual = testCaseData.ActualUtterance;
             var expected = testCaseData.ExpectedUtterance;
-            actual.Text.Should().Be(expected.Text);
+            actual.Text.WithComparer(UtteranceComparer).Should().Be(expected.Text);
         }
 
         [Test]
@@ -68,10 +74,35 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
         private static bool IsEntityMatch(Entity expected, Entity actual)
         {
-            return string.Compare(expected.MatchText, actual.MatchText, System.StringComparison.OrdinalIgnoreCase) == 0
-                || string.Compare(expected.MatchText, actual.EntityValue, System.StringComparison.OrdinalIgnoreCase) == 0
-                || string.Compare(expected.EntityValue, actual.EntityValue, System.StringComparison.OrdinalIgnoreCase) == 0
-                || string.Compare(expected.EntityValue, actual.MatchText, System.StringComparison.OrdinalIgnoreCase) == 0;
+            return UtteranceComparer.Equals(expected.MatchText, actual.MatchText)
+                || UtteranceComparer.Equals(expected.MatchText, actual.EntityValue)
+                || UtteranceComparer.Equals(expected.EntityValue, actual.EntityValue)
+                || UtteranceComparer.Equals(expected.EntityValue, actual.MatchText);
+        }
+
+        private class UtteranceEqualityComparer : IEqualityComparer<string>
+        {
+            public bool Equals(string x, string y)
+            {
+                return string.Equals(Normalize(x), Normalize(y), StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(string obj)
+            {
+                throw new NotImplementedException();
+            }
+
+            private static string Normalize(string s)
+            {
+                if (s == null)
+                {
+                    return null;
+                }
+
+                var normalizedSpace = Regex.Replace(s, @"\s+", " ");
+                var withoutPunctuation = Regex.Replace(normalizedSpace, @"[^\w ]", string.Empty);
+                return withoutPunctuation.Trim();
+            }
         }
     }
 }
