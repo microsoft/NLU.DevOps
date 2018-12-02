@@ -37,19 +37,18 @@ namespace NLU.DevOps.Luis
             var isStagingString = configuration[LuisIsStagingConfigurationKey];
             var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;
 
-            var builder = new LuisNLUServiceBuilder
-            {
-                AppName = appName,
-                AppId = configuration[LuisAppIdConfigurationKey],
-                AppVersion = GetVersionId(configuration),
-                AuthoringRegion = configuration[LuisAuthoringRegionConfigurationKey],
-                EndpointRegion = configuration[LuisEndpointRegionConfigurationKey],
-                IsStaging = isStaging,
-                AuthoringKey = configuration[LuisAuthoringKeyConfigurationKey],
-                EndpointKey = configuration[LuisEndpointKeyConfigurationKey]
-            };
+            var luisClient = new LuisClient(
+                configuration[LuisAuthoringKeyConfigurationKey],
+                configuration[LuisAuthoringRegionConfigurationKey],
+                configuration[LuisEndpointKeyConfigurationKey],
+                configuration[LuisEndpointRegionConfigurationKey],
+                isStaging);
 
-            return builder.Build();
+            return new LuisNLUService(
+                appName,
+                configuration[LuisAppIdConfigurationKey],
+                GetVersionId(configuration),
+                luisClient);
         }
 
         private static string GetRandomName(string prefix)

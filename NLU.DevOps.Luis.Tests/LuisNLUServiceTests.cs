@@ -79,7 +79,6 @@ namespace NLU.DevOps.Luis.Tests
         {
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
-            builder.IsStaging = true;
             builder.AppVersion = Guid.NewGuid().ToString();
             builder.LuisClient = mockClient;
             using (var luis = builder.Build())
@@ -574,29 +573,30 @@ namespace NLU.DevOps.Luis.Tests
             return request.Method == nameof(ILuisClient.GetTrainingStatusAsync);
         }
 
-        /// <summary>
-        /// A helper class for creating <see cref="Timestamped{T}"/> instances.
-        /// </summary>
         private static class Timestamped
         {
-            /// <summary>
-            /// Create the timestamped instance.
-            /// </summary>
-            /// <returns>The timestamped instance.</returns>
-            /// <param name="instance">Instance.</param>
-            /// <typeparam name="T">The type of instance.</typeparam>
             public static Timestamped<T> Create<T>(T instance)
             {
                 return new Timestamped<T>(instance);
             }
         }
 
-        /// <summary>
-        /// Mock version of <see cref="ILuisClient"/> for testing.
-        /// Enables the verification of LUIS http requests. Returns a
-        /// successful request response when the request matches expectation.
-        /// Returns a bad request response when the request does not match.
-        /// </summary>
+        private class LuisNLUServiceBuilder
+        {
+            public string AppName { get; set; }
+
+            public string AppId { get; set; }
+
+            public string AppVersion { get; set; }
+
+            public ILuisClient LuisClient { get; set; }
+
+            public LuisNLUService Build()
+            {
+                return new LuisNLUService(this.AppName, this.AppId, this.AppVersion, this.LuisClient);
+            }
+        }
+
         private sealed class MockLuisClient : ILuisClient
         {
             public Action<LuisRequest> OnRequest { get; set; }
@@ -680,46 +680,23 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
-        /// <summary>
-        /// LUIS request data.
-        /// </summary>
         private sealed class LuisRequest
         {
-            /// <summary>
-            /// Gets or sets the HTTP method.
-            /// </summary>
             public string Method { get; set; }
 
-            /// <summary>
-            /// Gets or sets the URI of the request.
-            /// </summary>
             public object[] Arguments { get; set; }
         }
 
-        /// <summary>
-        /// A helper class for timestamping values.
-        /// </summary>
-        /// <typeparam name="T">Type of instance.</typeparam>
         private sealed class Timestamped<T>
         {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="Timestamped{T}"/> class.
-            /// </summary>
-            /// <param name="instance">Instance.</param>
             public Timestamped(T instance)
             {
                 this.Instance = instance;
                 this.Timestamp = DateTimeOffset.Now;
             }
 
-            /// <summary>
-            /// Gets the instance.
-            /// </summary>
             public T Instance { get; }
 
-            /// <summary>
-            /// Gets the timestamp.
-            /// </summary>
             public DateTimeOffset Timestamp { get; }
         }
     }

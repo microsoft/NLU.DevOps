@@ -17,7 +17,6 @@ namespace NLU.DevOps.Luis
     using Microsoft.CognitiveServices.Speech.Intent;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     internal sealed class LuisClient : ILuisClient
     {

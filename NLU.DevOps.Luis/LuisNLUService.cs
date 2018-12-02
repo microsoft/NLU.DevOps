@@ -1,4 +1,4 @@
-﻿ // Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Luis
@@ -25,7 +25,14 @@ namespace NLU.DevOps.Luis
     {
         private static readonly TimeSpan TrainStatusDelay = TimeSpan.FromSeconds(2);
 
-        internal LuisNLUService(string appName, string appId, string versionId, ILuisClient luisClient)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LuisNLUService"/> class.
+        /// </summary>
+        /// <param name="appName">App name.</param>
+        /// <param name="appId">App ID.</param>
+        /// <param name="versionId">Version ID.</param>
+        /// <param name="luisClient">Luis client.</param>
+        public LuisNLUService(string appName, string appId, string versionId, ILuisClient luisClient)
         {
             this.LuisAppName = appName ?? (appId != null ? default(string) : throw new ArgumentNullException(nameof(appName)));
             this.LuisAppId = appId;
