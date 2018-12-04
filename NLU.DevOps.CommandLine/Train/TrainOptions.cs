@@ -14,6 +14,9 @@ namespace NLU.DevOps.CommandLine.Train
         [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = true)]
         public string EntityTypesPath { get; set; }
 
+        [Option('t', "template", HelpText = "Path to NLU service template.", Required = false)]
+        public string TemplatePath { get; set; }
+
         [Option('c', "overwrite-config", HelpText = "Flag to (over)write NLU service configuration.", Required = false)]
         public bool WriteConfig { get; set; }
     }

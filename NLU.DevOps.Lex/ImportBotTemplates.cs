@@ -5,7 +5,7 @@ namespace NLU.DevOps.Lex
 {
     using Newtonsoft.Json.Linq;
 
-    internal static class ImportJsonTemplates
+    internal static class ImportBotTemplates
     {
         public static JObject ImportJson =>
             new JObject

@@ -12,7 +12,7 @@ namespace NLU.DevOps.CommandLine
 
     internal class NLUServiceFactory
     {
-        public static INLUService Create(BaseOptions options, IConfiguration configuration)
+        public static INLUService Create(BaseOptions options, IConfiguration configuration, string templatePath = null)
         {
             var assemblies = new[]
             {
@@ -31,7 +31,7 @@ namespace NLU.DevOps.CommandLine
                 throw new ArgumentException($"Invalid service type '{options.Service}'.");
             }
 
-            return serviceFactory.CreateInstance(configuration);
+            return serviceFactory.CreateInstance(configuration, templatePath);
         }
     }
 }

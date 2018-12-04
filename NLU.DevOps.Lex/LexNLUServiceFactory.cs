@@ -35,7 +35,7 @@ namespace NLU.DevOps.Lex
         private static readonly string LexBotAliasConfigurationKey = CamelCase(nameof(LexNLUService.LexBotAlias));
 
         /// <inheritdoc />
-        public INLUService CreateInstance(IConfiguration configuration)
+        public INLUService CreateInstance(IConfiguration configuration, string templatePath)
         {
             var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);

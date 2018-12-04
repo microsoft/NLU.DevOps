@@ -239,7 +239,7 @@ namespace NLU.DevOps.Lex
         private static JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
         {
             // Create a new intent with the given name
-            var intentJson = ImportJsonTemplates.IntentJson;
+            var intentJson = ImportBotTemplates.IntentJson;
             intentJson.SelectToken(".name").Replace(intent);
 
             // Create slots for the intent
@@ -271,7 +271,7 @@ namespace NLU.DevOps.Lex
             var entityType = entityTypes.First(e => e.Name == slot);
 
             // Create a new intent with the given name
-            var slotJson = ImportJsonTemplates.SlotJson;
+            var slotJson = ImportBotTemplates.SlotJson;
             slotJson.SelectToken(".name").Replace(slot);
 
             if (entityType.Kind == "builtin")
@@ -289,7 +289,7 @@ namespace NLU.DevOps.Lex
         private static JToken CreateSlotType(EntityType entityType)
         {
             // Create a new intent with the given name
-            var slotTypeJson = ImportJsonTemplates.SlotTypeJson;
+            var slotTypeJson = ImportBotTemplates.SlotTypeJson;
             slotTypeJson.SelectToken(".name").Replace(entityType.Name);
 
             // If any values have synonyms, use TOP_RESOLUTION, otherwise use ORIGINAL_VALUE
@@ -330,8 +330,7 @@ namespace NLU.DevOps.Lex
             };
 
             var getBotsResponse = await this.LexClient.GetBotsAsync(getBotsRequest, cancellationToken).ConfigureAwait(false);
-            var botMatch = getBotsResponse.Bots.FirstOrDefault(bot => bot.Name == this.LexBotName);
-            return botMatch != null;
+            return getBotsResponse.Bots.Any(bot => bot.Name == this.LexBotName);
         }
 
         private Task CreateBotAsync(CancellationToken cancellationToken)
@@ -354,7 +353,7 @@ namespace NLU.DevOps.Lex
         private JToken CreateImportJson(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
         {
             // Add name to imports JSON template
-            var importJson = ImportJsonTemplates.ImportJson;
+            var importJson = ImportBotTemplates.ImportJson;
             importJson.SelectToken(".resource.name").Replace(this.LexBotName);
 
             // Add intents to imports JSON template
@@ -555,8 +554,7 @@ namespace NLU.DevOps.Lex
             };
 
             var getBotAliasesResponse = await this.LexClient.GetBotAliasesAsync(getBotAliasesRequest, cancellationToken).ConfigureAwait(false);
-            var botAliasMatch = getBotAliasesResponse.BotAliases.FirstOrDefault(botAlias => botAlias.Name == this.LexBotAlias);
-            return botAliasMatch != null;
+            return getBotAliasesResponse.BotAliases.Any(botAlias => botAlias.Name == this.LexBotAlias);
         }
 
         private async Task PublishBotAsync(CancellationToken cancellationToken)

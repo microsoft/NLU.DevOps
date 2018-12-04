@@ -15,6 +15,7 @@ namespace NLU.DevOps.Models
         /// </summary>
         /// <returns>The instance.</returns>
         /// <param name="configuration">Configuration.</param>
-        INLUService CreateInstance(IConfiguration configuration);
+        /// <param name="templatePath">Path to NLU service template.</param>
+        INLUService CreateInstance(IConfiguration configuration, string templatePath);
     }
 }

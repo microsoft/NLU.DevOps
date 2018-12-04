@@ -64,6 +64,11 @@ namespace NLU.DevOps.CommandLine
             }
         }
 
+        protected virtual INLUService CreateNLUService()
+        {
+            return NLUServiceFactory.Create(this.Options, this.Configuration);
+        }
+
         protected void Dispose(bool disposing)
         {
             if (disposing && this.LazyNLUService.IsValueCreated)
@@ -85,11 +90,6 @@ namespace NLU.DevOps.CommandLine
                 .AddJsonFile("appsettings.local.json", true)
                 .AddEnvironmentVariables()
                 .Build();
-        }
-
-        private INLUService CreateNLUService()
-        {
-            return NLUServiceFactory.Create(this.Options, this.Configuration);
         }
 
         private ILogger CreateLogger()

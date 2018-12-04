@@ -557,6 +557,72 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
+        [Test]
+        public static async Task DoesNotOverwriteTemplateIntents()
+        {
+            var role = Guid.NewGuid().ToString();
+            var intentName = Guid.NewGuid().ToString();
+            var appTemplate = new LuisApp
+            {
+                ClosedLists = new List<ClosedList>(),
+                Entities = new List<HierarchicalModel>(),
+                Intents = new List<HierarchicalModel>
+                {
+                    new HierarchicalModel
+                    {
+                        Name = intentName,
+                        Roles = new List<string> { role },
+                    },
+                },
+                ModelFeatures = new List<JSONModelFeature>(),
+                PrebuiltEntities = new List<PrebuiltEntity>(),
+            };
+
+            var mockClient = new MockLuisClient();
+            var builder = GetTestLuisBuilder();
+            builder.AppTemplate = appTemplate;
+            builder.LuisClient = mockClient;
+            using (var luis = builder.Build())
+            {
+                var utterance = new Models.LabeledUtterance(null, intentName, null);
+                await luis.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
+
+                // Ensure LUIS app intent still has role
+                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
+                importRequest.Should().NotBeNull();
+                var luisApp = importRequest.Arguments[2].As<LuisApp>();
+                luisApp.Intents.Should().Contain(intent => intent.Name == intentName);
+                luisApp.Intents.First(intent => intent.Name == intentName).Roles.Count.Should().Be(1);
+                luisApp.Intents.First(intent => intent.Name == intentName).Roles.First().Should().Be(role);
+            }
+        }
+
+        [Test]
+        public static async Task DoesNotTagBuiltinEntity()
+        {
+            var text = Guid.NewGuid().ToString();
+            var entityTypeName1 = Guid.NewGuid().ToString();
+            var entityTypeName2 = Guid.NewGuid().ToString();
+            var mockClient = new MockLuisClient();
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+            using (var luis = builder.Build())
+            {
+                var entityType = new EntityType(entityTypeName1, "prebuiltEntities", new JObject { { "name", entityTypeName2 } });
+                var entity1 = new Entity(entityTypeName1, null, text, 0);
+                var entity2 = new Entity(entityTypeName2, null, text, 0);
+                var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
+                await luis.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
+
+                // Ensure LUIS app intent still has role
+                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
+                importRequest.Should().NotBeNull();
+                var luisApp = importRequest.Arguments[2].As<LuisApp>();
+                luisApp.Utterances.Should().Contain(u => u.Text == text);
+                luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(0);
+            }
+        }
+
         private static LuisNLUServiceBuilder GetTestLuisBuilder()
         {
             return new LuisNLUServiceBuilder
@@ -583,17 +649,19 @@ namespace NLU.DevOps.Luis.Tests
 
         private class LuisNLUServiceBuilder
         {
-            public string AppName { get; set; }
-
             public string AppId { get; set; }
 
             public string AppVersion { get; set; }
+
+            public string AppName { get; set; }
+
+            public LuisApp AppTemplate { get; set; }
 
             public ILuisClient LuisClient { get; set; }
 
             public LuisNLUService Build()
             {
-                return new LuisNLUService(this.AppName, this.AppId, this.AppVersion, this.LuisClient);
+                return new LuisNLUService(this.AppId, this.AppVersion, this.AppName, this.AppTemplate, this.LuisClient);
             }
         }
 

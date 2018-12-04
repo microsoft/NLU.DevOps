@@ -3,7 +3,6 @@
 
 namespace NLU.DevOps.CommandLine.Train
 {
-    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
@@ -20,6 +19,11 @@ namespace NLU.DevOps.CommandLine.Train
         {
             this.RunAsync().Wait();
             return 0;
+        }
+
+        protected override INLUService CreateNLUService()
+        {
+            return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.TemplatePath);
         }
 
         private async Task RunAsync()

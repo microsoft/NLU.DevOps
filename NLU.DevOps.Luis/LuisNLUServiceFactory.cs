@@ -5,9 +5,12 @@ namespace NLU.DevOps.Luis
 {
     using System;
     using System.Composition;
+    using System.IO;
     using System.Linq;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Configuration;
     using Models;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Factory for creating <see cref="LuisNLUService"/> instances.
@@ -21,21 +24,25 @@ namespace NLU.DevOps.Luis
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
         private const string LuisEndpointRegionConfigurationKey = "luisEndpointRegion";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
+        private const string LuisAppNameConfigurationKey = "luisAppName";
 
         private const string BuildIdConfigurationKey = "BUILD_BUILDID";
 
-        private static readonly string LuisAppNameConfigurationKey = CamelCase(nameof(LuisNLUService.LuisAppName));
         private static readonly string LuisAppIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisAppId));
         private static readonly string LuisVersionIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisVersionId));
 
         /// <inheritdoc/>
-        public INLUService CreateInstance(IConfiguration configuration)
+        public INLUService CreateInstance(IConfiguration configuration, string templatePath)
         {
             var userDefinedName = configuration[LuisAppNameConfigurationKey];
             var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
 
             var isStagingString = configuration[LuisIsStagingConfigurationKey];
             var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;
+
+            var appTemplate = templatePath != null
+                ? JsonConvert.DeserializeObject<LuisApp>(File.ReadAllText(templatePath))
+                : null;
 
             var luisClient = new LuisClient(
                 configuration[LuisAuthoringKeyConfigurationKey],
@@ -45,9 +52,10 @@ namespace NLU.DevOps.Luis
                 isStaging);
 
             return new LuisNLUService(
-                appName,
                 configuration[LuisAppIdConfigurationKey],
                 GetVersionId(configuration),
+                appName,
+                appTemplate,
                 luisClient);
         }
 

@@ -28,22 +28,24 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUService"/> class.
         /// </summary>
-        /// <param name="appName">App name.</param>
         /// <param name="appId">App ID.</param>
         /// <param name="versionId">Version ID.</param>
+        /// <param name="appName">App name.</param>
+        /// <param name="appTemplate">App template.</param>
         /// <param name="luisClient">Luis client.</param>
-        public LuisNLUService(string appName, string appId, string versionId, ILuisClient luisClient)
+        public LuisNLUService(string appId, string versionId, string appName, LuisApp appTemplate, ILuisClient luisClient)
         {
-            this.LuisAppName = appName ?? (appId != null ? default(string) : throw new ArgumentNullException(nameof(appName)));
+            if (appName == null && appId == null && appTemplate == null)
+            {
+                throw new ArgumentNullException(nameof(appName), $"Must supply one of '{nameof(appName)}', '{nameof(appId)}', or '{nameof(appTemplate)}'.");
+            }
+
             this.LuisAppId = appId;
             this.LuisVersionId = versionId ?? "0.1.1";
+            this.AppName = appName;
+            this.AppTemplate = appTemplate;
             this.LuisClient = luisClient;
         }
-
-        /// <summary>
-        /// Gets the name of the LUIS app.
-        /// </summary>
-        public string LuisAppName { get; }
 
         /// <summary>
         /// Gets the LUIS app ID.
@@ -59,6 +61,10 @@ namespace NLU.DevOps.Luis
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUService>());
 
+        private string AppName { get; }
+
+        private LuisApp AppTemplate { get; }
+
         private ILuisClient LuisClient { get; }
 
         /// <inheritdoc />
@@ -73,26 +79,26 @@ namespace NLU.DevOps.Luis
             // Create application if not passed in.
             if (this.LuisAppId == null)
             {
-                this.LuisAppId = await this.LuisClient.CreateAppAsync(this.LuisAppName, cancellationToken).ConfigureAwait(false);
-                Logger.LogTrace($"Created LUIS app '{this.LuisAppName}' with ID '{this.LuisAppId}'.");
+                this.LuisAppId = await this.LuisClient.CreateAppAsync(this.AppName, cancellationToken).ConfigureAwait(false);
+                Logger.LogTrace($"Created LUIS app '{this.AppName}' with ID '{this.LuisAppId}'.");
             }
 
             // Create LUIS import JSON
             var luisApp = this.CreateLuisApp(utterances, entityTypes);
 
             // Import the LUIS model
-            Logger.LogTrace($"Importing LUIS app '{this.LuisAppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
+            Logger.LogTrace($"Importing LUIS app '{this.AppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
             await this.LuisClient.ImportVersionAsync(this.LuisAppId, this.LuisVersionId, luisApp, cancellationToken).ConfigureAwait(false);
 
             // Train the LUIS model
-            Logger.LogTrace($"Training LUIS app '{this.LuisAppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
+            Logger.LogTrace($"Training LUIS app '{this.AppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
             await this.LuisClient.TrainAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
 
             // Wait for training to complete
             await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
 
             // Publishes the LUIS app version
-            Logger.LogTrace($"Publishing LUIS app '{this.LuisAppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
+            Logger.LogTrace($"Publishing LUIS app '{this.AppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
             await this.LuisClient.PublishAppAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
         }
 
@@ -267,33 +273,18 @@ namespace NLU.DevOps.Luis
 
         private LuisApp CreateLuisApp(IEnumerable<Models.LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
         {
-            var luisApp = new LuisApp(
-                name: this.LuisAppName,
-                versionId: this.LuisVersionId,
-                desc: string.Empty,
-                culture: "en-us",
-                entities: new List<HierarchicalModel>(),
-                closedLists: new List<ClosedList>(),
-                composites: new List<HierarchicalModel>(),
-                patternAnyEntities: new List<PatternAny>(),
-                regexEntities: new List<RegexEntity>(),
-                prebuiltEntities: new List<PrebuiltEntity>(),
-                regexFeatures: new List<JSONRegexFeature>(),
-                modelFeatures: new List<JSONModelFeature>(),
-                patterns: new List<PatternRule>());
+            var luisApp = this.CreateLuisAppTemplate();
 
             // Add intents to model
-            luisApp.Intents = utterances
+            luisApp.Intents = luisApp.Intents ?? new List<HierarchicalModel>();
+            utterances
                 .Select(utterance => utterance.Intent)
                 .Append("None")
                 .Distinct()
+                .Where(intent => !luisApp.Intents.Any(i => i.Name == intent))
                 .Select(intent => new HierarchicalModel { Name = intent })
-                .ToList();
-
-            // Add utterances to model
-            luisApp.Utterances = utterances
-                .Select(utterance => utterance.ToJSONUtterance(entityTypes))
-                .ToList();
+                .ToList()
+                .ForEach(luisApp.Intents.Add);
 
             // Add entities to model
             foreach (var entityType in entityTypes)
@@ -325,7 +316,41 @@ namespace NLU.DevOps.Luis
                 }
             }
 
+            // Add utterances to model
+            luisApp.Utterances = luisApp.Utterances ?? new List<JSONUtterance>();
+            utterances
+                .Select(utterance => utterance.ToJSONUtterance(entityTypes, luisApp))
+                .ToList()
+                .ForEach(luisApp.Utterances.Add);
+
             return luisApp;
+        }
+
+        private LuisApp CreateLuisAppTemplate()
+        {
+            var defaultTemplate = new LuisApp(
+                name: this.AppName,
+                versionId: this.LuisVersionId,
+                desc: string.Empty,
+                culture: "en-us",
+                entities: new List<HierarchicalModel>(),
+                closedLists: new List<ClosedList>(),
+                composites: new List<HierarchicalModel>(),
+                patternAnyEntities: new List<PatternAny>(),
+                regexEntities: new List<RegexEntity>(),
+                prebuiltEntities: new List<PrebuiltEntity>(),
+                regexFeatures: new List<JSONRegexFeature>(),
+                modelFeatures: new List<JSONModelFeature>(),
+                patterns: new List<PatternRule>());
+
+            if (this.AppTemplate == null)
+            {
+                return defaultTemplate;
+            }
+
+            var templateJson = JObject.FromObject(defaultTemplate);
+            templateJson.Merge(JObject.FromObject(this.AppTemplate));
+            return templateJson.ToObject<LuisApp>();
         }
 
         private async Task PollTrainingStatusAsync(CancellationToken cancellationToken)

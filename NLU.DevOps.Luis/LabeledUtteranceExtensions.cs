@@ -3,6 +3,7 @@
 
 namespace NLU.DevOps.Luis
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
@@ -10,7 +11,7 @@ namespace NLU.DevOps.Luis
 
     internal static class LabeledUtteranceExtensions
     {
-        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, IEnumerable<EntityType> entityTypes)
+        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, IEnumerable<EntityType> entityTypes, LuisApp luisApp)
         {
             JSONEntity toJSONEntity(Entity entity)
             {
@@ -18,9 +19,9 @@ namespace NLU.DevOps.Luis
                 return new JSONEntity(startPos, startPos + entity.MatchText.Length - 1, entity.EntityType);
             }
 
-            var entities = from entity in utterance.Entities
-                           let entityType = entityTypes.First(item => item.Name == entity.EntityType)
-                           where entityType.Kind != "prebuiltEntities"
+            var entities = from entity in utterance.Entities ?? Array.Empty<Entity>()
+                           where !entityTypes.Any(e => e.Kind == "prebuiltEntities" && e.Name == entity.EntityType)
+                           where !luisApp.PrebuiltEntities.Any(p => p.Name == entity.EntityType)
                            select toJSONEntity(entity);
 
             return new JSONUtterance(
