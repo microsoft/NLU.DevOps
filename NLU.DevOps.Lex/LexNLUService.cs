@@ -37,14 +37,16 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
+        /// <param name="importBotTemplate">Optional import bot template.</param>
         /// <param name="credentials">Credentials.</param>
         /// <param name="regionEndpoint">Region endpoint.</param>
         public LexNLUService(
             string botName,
             string botAlias,
+            JObject importBotTemplate,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, botAlias, new LexClient(credentials, regionEndpoint))
+            : this(botName, botAlias, importBotTemplate, new LexClient(credentials, regionEndpoint))
         {
         }
 
@@ -53,11 +55,17 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
+        /// <param name="importBotTemplate">Optional import bot template.</param>
         /// <param name="lexClient">Lex client.</param>
-        public LexNLUService(string botName, string botAlias, ILexClient lexClient)
+        public LexNLUService(
+            string botName,
+            string botAlias,
+            JObject importBotTemplate,
+            ILexClient lexClient)
         {
             this.LexBotName = botName ?? throw new ArgumentNullException(nameof(botName));
             this.LexBotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
+            this.ImportBotTemplate = importBotTemplate; // Can be null
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
 
@@ -74,6 +82,8 @@ namespace NLU.DevOps.Lex
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexNLUService>());
+
+        private JObject ImportBotTemplate { get; }
 
         private ILexClient LexClient { get; }
 
@@ -299,9 +309,29 @@ namespace NLU.DevOps.Lex
                 : SlotValueSelectionStrategy.ORIGINAL_VALUE;
             slotTypeJson.SelectToken(".valueSelectionStrategy").Replace(valueSelectionStrategy.Value);
 
-            slotTypeJson.Merge(entityType.Data);
+            return slotTypeJson.MergeInto(entityType.Data);
+        }
 
-            return slotTypeJson;
+        private static void AddOrMergeIntents(JArray intents, IEnumerable<JToken> additionalIntents)
+        {
+            foreach (JObject intent in additionalIntents)
+            {
+                var existingIntent = intents.FirstOrDefault(i => i.Value<string>("name") == intent.Value<string>("name")) as JObject;
+                if (existingIntent != null)
+                {
+                    intent.Merge(existingIntent);
+                    var slots = (JArray)intent["slots"];
+                    var coalescedSlots = slots.Cast<JObject>()
+                        .GroupBy(slot => slot.Value<string>("name"))
+                        .Select(group => group.Aggregate(new JObject(), JTokenExtensions.MergeInto));
+                    slots.Replace(JArray.FromObject(coalescedSlots));
+                    existingIntent.Replace(intent);
+                }
+                else
+                {
+                    intents.Add(intent);
+                }
+            }
         }
 
         private static async Task WriteJsonZipAsync(Stream stream, JToken importJson, CancellationToken cancellationToken)
@@ -355,6 +385,7 @@ namespace NLU.DevOps.Lex
             // Add name to imports JSON template
             var importJson = ImportBotTemplates.ImportJson;
             importJson.SelectToken(".resource.name").Replace(this.LexBotName);
+            importJson.Merge(this.ImportBotTemplate);
 
             // Add intents to imports JSON template
             var intents = utterances
@@ -362,7 +393,7 @@ namespace NLU.DevOps.Lex
                 .Select(group => CreateIntent(group.Key, group, entityTypes));
             Debug.Assert(importJson.SelectToken(".resource.intents") is JArray, "Import template includes intents JSON array.");
             var intentsArray = (JArray)importJson.SelectToken(".resource.intents");
-            intentsArray.AddRange(intents);
+            AddOrMergeIntents(intentsArray, intents);
 
             // Add slot types to imports JSON template
             var slotTypes = entityTypes

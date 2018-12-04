@@ -5,11 +5,13 @@ namespace NLU.DevOps.Lex
 {
     using System;
     using System.Composition;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using Amazon;
     using Amazon.Runtime;
     using Microsoft.Extensions.Configuration;
+    using Newtonsoft.Json.Linq;
     using NLU.DevOps.Models;
 
     /// <summary>
@@ -40,9 +42,10 @@ namespace NLU.DevOps.Lex
             var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
             var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
+            var importBotTemplate = templatePath != null ? JObject.Parse(File.ReadAllText(templatePath)) : null;
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
-            return new LexNLUService(botName, botAlias, credentials, regionEndpoint);
+            return new LexNLUService(botName, botAlias, importBotTemplate, credentials, regionEndpoint);
         }
 
         private static string GetRandomName(string prefix)

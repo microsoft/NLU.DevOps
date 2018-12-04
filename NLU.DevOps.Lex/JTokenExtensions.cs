@@ -6,7 +6,7 @@ namespace NLU.DevOps.Lex
     using System.Collections.Generic;
     using Newtonsoft.Json.Linq;
 
-    internal static class JArrayExtensions
+    internal static class JTokenExtensions
     {
         public static void AddRange(this JArray array, IEnumerable<JToken> items)
         {
@@ -22,6 +22,12 @@ namespace NLU.DevOps.Lex
             {
                 array.Add(item);
             }
+        }
+
+        public static JObject MergeInto(this JObject @object, object other)
+        {
+            @object.Merge(other);
+            return @object;
         }
     }
 }

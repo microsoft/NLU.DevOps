@@ -26,14 +26,14 @@ namespace NLU.DevOps.Lex.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            var nullBotName = new Action(() => new LexNLUService(null, string.Empty, default(ILexClient)));
-            var nullBotAlias = new Action(() => new LexNLUService(string.Empty, null, default(ILexClient)));
-            var nullLexClient = new Action(() => new LexNLUService(string.Empty, string.Empty, default(ILexClient)));
+            var nullBotName = new Action(() => new LexNLUService(null, string.Empty, null, default(ILexClient)));
+            var nullBotAlias = new Action(() => new LexNLUService(string.Empty, null, null, default(ILexClient)));
+            var nullLexClient = new Action(() => new LexNLUService(string.Empty, string.Empty, null, default(ILexClient)));
             nullBotName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botName");
             nullBotAlias.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botAlias");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var service = new LexNLUService(string.Empty, string.Empty, new MockLexClient()))
+            using (var service = new LexNLUService(string.Empty, string.Empty, null, new MockLexClient()))
             {
                 var nullUtterances = new Func<Task>(() => service.TrainAsync(null, Array.Empty<EntityType>()));
                 var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }, Array.Empty<EntityType>()));
@@ -59,7 +59,7 @@ namespace NLU.DevOps.Lex.Tests
         {
             var text = "foo";
             var match = "bar";
-            using (var service = new LexNLUService(string.Empty, string.Empty, new MockLexClient()))
+            using (var service = new LexNLUService(string.Empty, string.Empty, null, new MockLexClient()))
             {
                 var entity = new Entity(string.Empty, string.Empty, match, 0);
                 var utterance = new LabeledUtterance(text, string.Empty, new[] { entity });
@@ -75,7 +75,7 @@ namespace NLU.DevOps.Lex.Tests
             var intent = Guid.NewGuid().ToString();
             var entityTypeName = "Planet";
             var mockClient = new MockLexClient();
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -93,7 +93,7 @@ namespace NLU.DevOps.Lex.Tests
             var entityTypeName = "Planet";
             var botName = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexNLUService(botName, string.Empty, mockClient))
+            using (var lex = new LexNLUService(botName, string.Empty, null, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -142,7 +142,7 @@ namespace NLU.DevOps.Lex.Tests
         {
             var intent = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -183,7 +183,7 @@ namespace NLU.DevOps.Lex.Tests
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -222,7 +222,7 @@ namespace NLU.DevOps.Lex.Tests
             mockClient.Get<StartImportResponse>().ImportStatus = ImportStatus.FAILED;
             mockClient.Get<GetImportResponse>().ImportId = importId;
             mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.FAILED;
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -246,7 +246,7 @@ namespace NLU.DevOps.Lex.Tests
                 OnDispose = () => handle.Set(),
             };
 
-            var service = new LexNLUService(string.Empty, string.Empty, mockClient);
+            var service = new LexNLUService(string.Empty, string.Empty, null, mockClient);
             service.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
@@ -270,7 +270,7 @@ namespace NLU.DevOps.Lex.Tests
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 await lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
@@ -311,7 +311,7 @@ namespace NLU.DevOps.Lex.Tests
 
             mockClient.OnRequest = onRequest;
 
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 var buildFailed = new Func<Task>(() => lex.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()));
@@ -331,7 +331,7 @@ namespace NLU.DevOps.Lex.Tests
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            using (var lex = new LexNLUService(botName, botAlias, mockClient))
+            using (var lex = new LexNLUService(botName, botAlias, null, mockClient))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
@@ -355,7 +355,7 @@ namespace NLU.DevOps.Lex.Tests
                 }
             };
 
-            using (var lex = new LexNLUService(botName, botAlias, mockClient))
+            using (var lex = new LexNLUService(botName, botAlias, null, mockClient))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
@@ -369,7 +369,7 @@ namespace NLU.DevOps.Lex.Tests
         public static async Task AddsListSlotTypesToImportJson()
         {
             var mockClient = new MockLexClient();
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var originalValueListEntityTypeName = Guid.NewGuid().ToString();
                 var topResolutionListEntityTypeName = Guid.NewGuid().ToString();
@@ -423,7 +423,7 @@ namespace NLU.DevOps.Lex.Tests
             var mockClient = new MockLexClient();
             mockClient.Get<PostContentResponse>().IntentName = intent;
             mockClient.Get<PostContentResponse>().InputTranscript = transcript;
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
@@ -465,7 +465,7 @@ namespace NLU.DevOps.Lex.Tests
 
             var mockClient = new MockLexClient();
             mockClient.Get<PostTextResponse>().IntentName = intent;
-            using (var lex = new LexNLUService(string.Empty, string.Empty, mockClient))
+            using (var lex = new LexNLUService(string.Empty, string.Empty, null, mockClient))
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Text.Should().Be(text);
@@ -495,7 +495,7 @@ namespace NLU.DevOps.Lex.Tests
                 },
             });
 
-            using (var lex = new LexNLUService(botName, string.Empty, mockClient))
+            using (var lex = new LexNLUService(botName, string.Empty, null, mockClient))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 
@@ -522,12 +522,76 @@ namespace NLU.DevOps.Lex.Tests
                 },
             });
 
-            using (var lex = new LexNLUService(string.Empty, botAlias, mockClient))
+            using (var lex = new LexNLUService(string.Empty, botAlias, null, mockClient))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
 
                 // If the bot alias exists, the 'PutBotAlias' request should not occur
                 mockClient.Requests.OfType<PutBotAliasRequest>().Count().Should().Be(0);
+            }
+        }
+
+        [Test]
+        public static async Task DoesNotOverwriteIntent()
+        {
+            var canary = Guid.NewGuid().ToString();
+            var intentName = Guid.NewGuid().ToString();
+            var entityTypeName = Guid.NewGuid().ToString();
+            var existingUtterance = Guid.NewGuid().ToString();
+
+            var existingSlot = new JObject
+            {
+                { "name", entityTypeName },
+                { "slotType", canary },
+            };
+
+            var existingIntent = new JObject
+            {
+                { "name", intentName },
+                { "canary", canary },
+                { "sampleUtterances", new JArray { existingUtterance } },
+                { "slots", new JArray { existingSlot } },
+            };
+
+            var importBotTemplate = new JObject
+            {
+                {
+                    "resource",
+                    new JObject
+                    {
+                        { "intents", new JArray { existingIntent } },
+                    }
+                }
+            };
+
+            var mockClient = new MockLexClient();
+            using (var lex = new LexNLUService(string.Empty, string.Empty, importBotTemplate, mockClient))
+            {
+                var entityType = new EntityType(entityTypeName, "builtin", new JObject { { "slotType", Guid.NewGuid() } });
+                var text = Guid.NewGuid().ToString();
+                var entity = new Entity(entityTypeName, null, text, 0);
+                var utterance = new LabeledUtterance(text, intentName, new[] { entity });
+                await lex.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
+
+                // get StartImport request
+                var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
+                startImportRequest.Should().NotBeNull();
+
+                // get payload
+                var payloadJson = GetPayloadJson(startImportRequest.Payload);
+                payloadJson.Should().NotBeNull().And.NotBeEmpty();
+                var payload = JObject.Parse(payloadJson);
+
+                // get intent
+                var intents = payload.SelectTokens($".resource.intents[?(@.name == '{intentName}')]");
+                intents.Count().Should().Be(1);
+                intents.First().Value<string>("canary").Should().Be(canary);
+                intents.First().SelectToken(".sampleUtterances").Count().Should().Be(2);
+                intents.First().SelectToken(".sampleUtterances").Should().Contain(u => u.Value<string>() == existingUtterance);
+                intents.First().SelectToken(".sampleUtterances").Should().Contain(u => u.Value<string>() == $"{{{entityTypeName}}}");
+                intents.First().SelectToken(".slots").Count().Should().Be(1);
+                intents.First().SelectToken(".slots").First().Value<string>("slotType").Should().Be(canary);
+                intents.First().SelectToken(".slots").First().Value<string>("slotConstraint").Should().Be("Optional");
             }
         }
 
