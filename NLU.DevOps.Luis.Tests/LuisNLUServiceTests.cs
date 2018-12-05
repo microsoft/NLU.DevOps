@@ -27,28 +27,23 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
+            Action nullAppName = () => new LuisNLUService(null, null, null, new LuisSettings(), new MockLuisClient());
+            Action nullLuisSettings = () => new LuisNLUService(string.Empty, null, null, null, new MockLuisClient());
+            Action nullLuisClient = () => new LuisNLUService(string.Empty, null, null, new LuisSettings(), null);
+            nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
+            nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
+            nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
+
             using (var luis = GetTestLuisBuilder().Build())
             {
-                Func<Task> nullUtterances = () => luis.TrainAsync(null, Array.Empty<EntityType>());
-                Func<Task> nullUtterance = () => luis.TrainAsync(new Models.LabeledUtterance[] { null }, Array.Empty<EntityType>());
-                Func<Task> nullEntityTypes = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), null);
-                Func<Task> nullEntityType = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), new EntityType[] { null });
+                Func<Task> nullUtterances = () => luis.TrainAsync(null);
+                Func<Task> nullUtterance = () => luis.TrainAsync(new Models.LabeledUtterance[] { null });
                 Func<Task> nullTestUtterance = () => luis.TestAsync(null);
-                Func<Task> nullTestEntityTypes = () => luis.TestAsync(string.Empty, null);
-                Func<Task> nullTestEntityType = () => luis.TestAsync(string.Empty, new EntityType[] { null });
                 Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null);
-                Func<Task> nullTestSpeechEntityTypes = () => luis.TestSpeechAsync(string.Empty, null);
-                Func<Task> nullTestSpeechEntityType = () => luis.TestSpeechAsync(string.Empty, new EntityType[] { null });
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
-                nullEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
-                nullEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
                 nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterance");
-                nullTestEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
-                nullTestEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
                 nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFile");
-                nullTestSpeechEntityTypes.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("entityTypes");
-                nullTestSpeechEntityType.Should().Throw<ArgumentException>().And.ParamName.Should().Be("entityTypes");
             }
         }
 
@@ -83,9 +78,8 @@ namespace NLU.DevOps.Luis.Tests
             builder.LuisClient = mockClient;
             using (var luis = builder.Build())
             {
-                var utterances = Enumerable.Empty<Models.LabeledUtterance>();
-                var entityTypes = Enumerable.Empty<EntityType>();
-                await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
+                var utterances = Array.Empty<Models.LabeledUtterance>();
+                await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
@@ -125,8 +119,7 @@ namespace NLU.DevOps.Luis.Tests
                     new Models.LabeledUtterance("Cancel my flight.", "CancelFlight", Array.Empty<Entity>())
                 };
 
-                var entityTypes = Enumerable.Empty<EntityType>();
-                await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
+                await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
@@ -174,13 +167,7 @@ namespace NLU.DevOps.Luis.Tests
                         new Entity[] { new Entity("Subject", string.Empty, "flight", 0) })
                 };
 
-                var entityTypes = new[]
-                {
-                    new EntityType("Name", "entities", null),
-                    new EntityType("Subject", "entities", null),
-                };
-
-                await luis.TrainAsync(utterances, entityTypes).ConfigureAwait(false);
+                await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
@@ -211,11 +198,6 @@ namespace NLU.DevOps.Luis.Tests
                 cancelUtterance.Entities.First().Entity.Should().Be(utterances[1].Entities[0].EntityType);
                 cancelUtterance.Entities.First().StartPos.Should().Be(10);
                 cancelUtterance.Entities.First().EndPos.Should().Be(15);
-
-                // Expect 2 entities
-                luisApp.Entities.Count.Should().Be(2);
-                luisApp.Entities.Should().Contain(entity => entity.Name == entityTypes[0].Name);
-                luisApp.Entities.Should().Contain(entity => entity.Name == entityTypes[1].Name);
             }
         }
 
@@ -385,7 +367,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestSpeechAsync("somefile", new List<EntityType>()).ConfigureAwait(false);
+                var result = await luis.TestSpeechAsync("somefile").ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -400,7 +382,7 @@ namespace NLU.DevOps.Luis.Tests
         public static async Task TestWithBuiltinEntity()
         {
             var test = "the quick brown fox jumped over the lazy dog";
-
+            var builtinType = Guid.NewGuid().ToString();
             var mockClient = new MockLuisClient();
             mockClient.OnRequestResponse = request =>
             {
@@ -426,14 +408,17 @@ namespace NLU.DevOps.Luis.Tests
                 return null;
             };
 
-            var entityType = new EntityType("type", "prebuiltEntities", new JObject { { "name", "test" } });
+            var builtinEntityTypes = new Dictionary<string, string>
+            {
+                { "type", "test" },
+            };
 
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
-
+            builder.LuisSettings = new LuisSettings(builtinEntityTypes);
             using (var luis = builder.Build())
             {
-                var result = await luis.TestAsync(test, new[] { entityType }).ConfigureAwait(false);
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -471,7 +456,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>()).ConfigureAwait(false);
 
                 // Ensure correct number of training status requests are made.
                 mockClient.Requests.Where(IsTrainingStatusRequest).Count().Should().Be(statusArray.Length);
@@ -513,7 +498,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), Array.Empty<EntityType>());
+                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>());
                 trainAsync.Should().Throw<InvalidOperationException>();
             }
         }
@@ -538,7 +523,7 @@ namespace NLU.DevOps.Luis.Tests
             builder.AppId = null;
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>(), Array.Empty<EntityType>()).ConfigureAwait(false);
+                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>()).ConfigureAwait(false);
                 luis.LuisAppId.Should().Be(appId);
             }
         }
@@ -580,12 +565,12 @@ namespace NLU.DevOps.Luis.Tests
 
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
-            builder.AppTemplate = appTemplate;
+            builder.LuisSettings = new LuisSettings(appTemplate);
             builder.LuisClient = mockClient;
             using (var luis = builder.Build())
             {
                 var utterance = new Models.LabeledUtterance(null, intentName, null);
-                await luis.TrainAsync(new[] { utterance }, Array.Empty<EntityType>()).ConfigureAwait(false);
+                await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // Ensure LUIS app intent still has role
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
@@ -598,28 +583,36 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
-        public static async Task DoesNotTagBuiltinEntity()
+        public static async Task TagsBuiltinEntityWithReplacementName()
         {
             var text = Guid.NewGuid().ToString();
             var entityTypeName1 = Guid.NewGuid().ToString();
             var entityTypeName2 = Guid.NewGuid().ToString();
+            var builtinEntityTypes = new Dictionary<string, string>
+            {
+                { entityTypeName1, entityTypeName2 },
+            };
+
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
+            builder.LuisSettings = new LuisSettings(builtinEntityTypes);
+
             using (var luis = builder.Build())
             {
-                var entityType = new EntityType(entityTypeName1, "prebuiltEntities", new JObject { { "name", entityTypeName2 } });
                 var entity1 = new Entity(entityTypeName1, null, text, 0);
                 var entity2 = new Entity(entityTypeName2, null, text, 0);
                 var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
-                await luis.TrainAsync(new[] { utterance }, new[] { entityType }).ConfigureAwait(false);
+                await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // Ensure LUIS app intent still has role
                 var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
                 luisApp.Utterances.Should().Contain(u => u.Text == text);
-                luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(0);
+                luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(2);
+                luisApp.Utterances.First(u => u.Text == text).Entities.Should().Contain(e => e.Entity == entityTypeName2);
+                luisApp.Utterances.First(u => u.Text == text).Entities.Should().Contain(e => e.Entity == entityTypeName2);
             }
         }
 
@@ -630,6 +623,7 @@ namespace NLU.DevOps.Luis.Tests
                 AppName = "test",
                 AppId = Guid.NewGuid().ToString(),
                 AppVersion = "0.1",
+                LuisSettings = new LuisSettings(null, null),
                 LuisClient = new MockLuisClient(),
             };
         }
@@ -655,13 +649,13 @@ namespace NLU.DevOps.Luis.Tests
 
             public string AppName { get; set; }
 
-            public LuisApp AppTemplate { get; set; }
+            public LuisSettings LuisSettings { get; set; }
 
             public ILuisClient LuisClient { get; set; }
 
             public LuisNLUService Build()
             {
-                return new LuisNLUService(this.AppId, this.AppVersion, this.AppName, this.AppTemplate, this.LuisClient);
+                return new LuisNLUService(this.AppName, this.AppId, this.AppVersion, this.LuisSettings, this.LuisClient);
             }
         }
 

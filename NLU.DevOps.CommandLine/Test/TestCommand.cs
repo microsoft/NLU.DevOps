@@ -23,6 +23,11 @@ namespace NLU.DevOps.CommandLine.Test
             return 0;
         }
 
+        protected override INLUService CreateNLUService()
+        {
+            return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.SettingsPath);
+        }
+
         private async Task RunAsync()
         {
             this.Log("Running tests against NLU service...");
@@ -42,13 +47,9 @@ namespace NLU.DevOps.CommandLine.Test
                 ? testUtterances.Select(utterance => $"{Path.Combine(this.Options.RecordingsDirectory, utterance.RecordingId)}.wav")
                 : testUtterances.Select(utterance => utterance.Text);
 
-            var entityTypes = this.Options.EntityTypesPath != null
-                ? Read<IList<EntityType>>(this.Options.EntityTypesPath)
-                : Array.Empty<EntityType>();
-
             var testResults = this.Options.Speech
-                ? await testCases.SelectAsync(testCase => this.NLUService.TestSpeechAsync(testCase, entityTypes)).ConfigureAwait(false)
-                : await testCases.SelectAsync(testCase => this.NLUService.TestAsync(testCase, entityTypes)).ConfigureAwait(false);
+                ? await testCases.SelectAsync(this.NLUService.TestSpeechAsync).ConfigureAwait(false)
+                : await testCases.SelectAsync(this.NLUService.TestAsync).ConfigureAwait(false);
 
             var stream = this.Options.OutputPath != null
                 ? File.OpenWrite(this.Options.OutputPath)

@@ -11,11 +11,8 @@ namespace NLU.DevOps.CommandLine.Train
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
         public string UtterancesPath { get; set; }
 
-        [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = true)]
-        public string EntityTypesPath { get; set; }
-
-        [Option('t', "template", HelpText = "Path to NLU service template.", Required = false)]
-        public string TemplatePath { get; set; }
+        [Option('e', "extra-settings", HelpText = "Path to NLU service settings.", Required = true)]
+        public string SettingsPath { get; set; }
 
         [Option('c', "overwrite-config", HelpText = "Flag to (over)write NLU service configuration.", Required = false)]
         public bool WriteConfig { get; set; }

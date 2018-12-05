@@ -11,6 +11,7 @@ namespace NLU.DevOps.Lex
     using Amazon;
     using Amazon.Runtime;
     using Microsoft.Extensions.Configuration;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using NLU.DevOps.Models;
 
@@ -37,15 +38,22 @@ namespace NLU.DevOps.Lex
         private static readonly string LexBotAliasConfigurationKey = CamelCase(nameof(LexNLUService.LexBotAlias));
 
         /// <inheritdoc />
-        public INLUService CreateInstance(IConfiguration configuration, string templatePath)
+        public INLUService CreateInstance(IConfiguration configuration, string settingsPath)
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+
             var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
             var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
-            var importBotTemplate = templatePath != null ? JObject.Parse(File.ReadAllText(templatePath)) : null;
+            var lexSettings = settingsPath != null
+                ? JsonConvert.DeserializeObject<LexSettings>(File.ReadAllText(settingsPath))
+                : new LexSettings();
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
-            return new LexNLUService(botName, botAlias, importBotTemplate, credentials, regionEndpoint);
+            return new LexNLUService(botName, botAlias, lexSettings, credentials, regionEndpoint);
         }
 
         private static string GetRandomName(string prefix)

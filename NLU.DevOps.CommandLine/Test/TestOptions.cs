@@ -11,8 +11,8 @@ namespace NLU.DevOps.CommandLine.Test
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
         public string UtterancesPath { get; set; }
 
-        [Option('e', "entity-types", HelpText = "Path to entity type configuration.", Required = false)]
-        public string EntityTypesPath { get; set; }
+        [Option('e', "extra-settings", HelpText = "Path to NLU service settings.", Required = true)]
+        public string SettingsPath { get; set; }
 
         [Option("speech", HelpText = "Test using speech, must specify --directory.", Required = false)]
         public bool Speech { get; set; }

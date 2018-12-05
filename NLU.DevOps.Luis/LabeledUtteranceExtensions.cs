@@ -11,23 +11,21 @@ namespace NLU.DevOps.Luis
 
     internal static class LabeledUtteranceExtensions
     {
-        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, IEnumerable<EntityType> entityTypes, LuisApp luisApp)
+        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, IReadOnlyDictionary<string, string> builtinEntityTypes)
         {
             JSONEntity toJSONEntity(Entity entity)
             {
+                var entityType = builtinEntityTypes.TryGetValue(entity.EntityType, out var builtinType)
+                    ? builtinType
+                    : entity.EntityType;
                 var startPos = entity.StartCharIndexInText(utterance.Text);
-                return new JSONEntity(startPos, startPos + entity.MatchText.Length - 1, entity.EntityType);
+                return new JSONEntity(startPos, startPos + entity.MatchText.Length - 1, entityType);
             }
-
-            var entities = from entity in utterance.Entities ?? Array.Empty<Entity>()
-                           where !entityTypes.Any(e => e.Kind == "prebuiltEntities" && e.Name == entity.EntityType)
-                           where !luisApp.PrebuiltEntities.Any(p => p.Name == entity.EntityType)
-                           select toJSONEntity(entity);
 
             return new JSONUtterance(
                 utterance.Text,
                 utterance.Intent,
-                entities.ToArray());
+                utterance.Entities?.Select(toJSONEntity).ToArray() ?? Array.Empty<JSONEntity>());
         }
     }
 }

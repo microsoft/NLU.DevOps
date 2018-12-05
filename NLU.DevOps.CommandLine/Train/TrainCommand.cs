@@ -23,7 +23,7 @@ namespace NLU.DevOps.CommandLine.Train
 
         protected override INLUService CreateNLUService()
         {
-            return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.TemplatePath);
+            return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.SettingsPath);
         }
 
         private async Task RunAsync()
@@ -32,8 +32,7 @@ namespace NLU.DevOps.CommandLine.Train
             {
                 this.Log("Training NLU service...");
                 var trainingUtterances = Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
-                var entityTypes = Read<List<EntityType>>(this.Options.EntityTypesPath);
-                await this.NLUService.TrainAsync(trainingUtterances, entityTypes).ConfigureAwait(false);
+                await this.NLUService.TrainAsync(trainingUtterances).ConfigureAwait(false);
             }
             finally
             {

@@ -32,17 +32,22 @@ namespace NLU.DevOps.Luis
         private static readonly string LuisVersionIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisVersionId));
 
         /// <inheritdoc/>
-        public INLUService CreateInstance(IConfiguration configuration, string templatePath)
+        public INLUService CreateInstance(IConfiguration configuration, string settingsPath)
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+
             var userDefinedName = configuration[LuisAppNameConfigurationKey];
             var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
 
             var isStagingString = configuration[LuisIsStagingConfigurationKey];
             var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;
 
-            var appTemplate = templatePath != null
-                ? JsonConvert.DeserializeObject<LuisApp>(File.ReadAllText(templatePath))
-                : null;
+            var luisSettings = settingsPath != null
+                ? JsonConvert.DeserializeObject<LuisSettings>(File.ReadAllText(settingsPath))
+                : new LuisSettings();
 
             var luisClient = new LuisClient(
                 configuration[LuisAuthoringKeyConfigurationKey],
@@ -52,10 +57,10 @@ namespace NLU.DevOps.Luis
                 isStaging);
 
             return new LuisNLUService(
+                appName,
                 configuration[LuisAppIdConfigurationKey],
                 GetVersionId(configuration),
-                appName,
-                appTemplate,
+                luisSettings,
                 luisClient);
         }
 

@@ -19,10 +19,9 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the training operation.</returns>
         /// <param name="instance">NLU service instance.</param>
         /// <param name="utterances">Labeled utterances to train on.</param>
-        /// <param name="entityTypes">Entity types to include in the model.</param>
-        public static Task TrainAsync(this INLUService instance, IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
+        public static Task TrainAsync(this INLUService instance, IEnumerable<LabeledUtterance> utterances)
         {
-            return instance.TrainAsync(utterances, entityTypes, CancellationToken.None);
+            return instance.TrainAsync(utterances, CancellationToken.None);
         }
 
         /// <summary>
@@ -31,10 +30,9 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">NLU service instance.</param>
         /// <param name="utterance">Unlabeled utterance.</param>
-        /// <param name="entityTypes">Entity types included in the model.</param>
-        public static Task<LabeledUtterance> TestAsync(this INLUService instance, string utterance, IEnumerable<EntityType> entityTypes)
+        public static Task<LabeledUtterance> TestAsync(this INLUService instance, string utterance)
         {
-            return instance.TestAsync(utterance, entityTypes, CancellationToken.None);
+            return instance.TestAsync(utterance, CancellationToken.None);
         }
 
         /// <summary>
@@ -46,18 +44,7 @@ namespace NLU.DevOps.Models
         /// <param name="cancellationToken">Cancellation token.</param>
         public static Task<LabeledUtterance> TestAsync(this INLUService instance, string utterance, CancellationToken cancellationToken)
         {
-            return instance.TestAsync(utterance, Array.Empty<EntityType>(), cancellationToken);
-        }
-
-        /// <summary>
-        /// Tests the NLU service.
-        /// </summary>
-        /// <returns>Task to await the resulting labeled utterance.</returns>
-        /// <param name="instance">NLU service instance.</param>
-        /// <param name="utterance">Unlabeled utterance.</param>
-        public static Task<LabeledUtterance> TestAsync(this INLUService instance, string utterance)
-        {
-            return instance.TestAsync(utterance, Array.Empty<EntityType>());
+            return instance.TestAsync(utterance, cancellationToken);
         }
 
         /// <summary>
@@ -66,10 +53,9 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">NLU service instance.</param>
         /// <param name="speechFile">Speech file.</param>
-        /// <param name="entityTypes">Entity types included in the model.</param>
-        public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile, IEnumerable<EntityType> entityTypes)
+        public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile)
         {
-            return instance.TestSpeechAsync(speechFile, entityTypes, CancellationToken.None);
+            return instance.TestSpeechAsync(speechFile, CancellationToken.None);
         }
 
         /// <summary>
@@ -81,18 +67,7 @@ namespace NLU.DevOps.Models
         /// <param name="cancellationToken">Cancellation token.</param>
         public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile, CancellationToken cancellationToken)
         {
-            return instance.TestSpeechAsync(speechFile, Array.Empty<EntityType>(), cancellationToken);
-        }
-
-        /// <summary>
-        /// Tests the NLU service using speech.
-        /// </summary>
-        /// <returns>Task to await the resulting labeled utterance.</returns>
-        /// <param name="instance">NLU service instance.</param>
-        /// <param name="speechFile">Speech file.</param>
-        public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile)
-        {
-            return instance.TestSpeechAsync(speechFile, Array.Empty<EntityType>());
+            return instance.TestSpeechAsync(speechFile, cancellationToken);
         }
 
         /// <summary>

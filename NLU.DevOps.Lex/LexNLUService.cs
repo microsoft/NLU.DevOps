@@ -37,16 +37,16 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
-        /// <param name="importBotTemplate">Optional import bot template.</param>
+        /// <param name="lexSettings">Lex settings.</param>
         /// <param name="credentials">Credentials.</param>
         /// <param name="regionEndpoint">Region endpoint.</param>
         public LexNLUService(
             string botName,
             string botAlias,
-            JObject importBotTemplate,
+            LexSettings lexSettings,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, botAlias, importBotTemplate, new LexClient(credentials, regionEndpoint))
+            : this(botName, botAlias, lexSettings, new LexClient(credentials, regionEndpoint))
         {
         }
 
@@ -55,17 +55,17 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
-        /// <param name="importBotTemplate">Optional import bot template.</param>
+        /// <param name="lexSettings">Lex settings.</param>
         /// <param name="lexClient">Lex client.</param>
         public LexNLUService(
             string botName,
             string botAlias,
-            JObject importBotTemplate,
+            LexSettings lexSettings,
             ILexClient lexClient)
         {
             this.LexBotName = botName ?? throw new ArgumentNullException(nameof(botName));
             this.LexBotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
-            this.ImportBotTemplate = importBotTemplate; // Can be null
+            this.LexSettings = lexSettings ?? throw new ArgumentNullException(nameof(lexSettings));
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
 
@@ -83,15 +83,23 @@ namespace NLU.DevOps.Lex
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexNLUService>());
 
-        private JObject ImportBotTemplate { get; }
+        private LexSettings LexSettings { get; }
 
         private ILexClient LexClient { get; }
 
         /// <inheritdoc />
-        public async Task TrainAsync(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
+        public async Task TrainAsync(IEnumerable<LabeledUtterance> utterances, CancellationToken cancellationToken)
         {
             // Validate arguments
-            ValidateArguments(utterances, entityTypes);
+            if (utterances == null)
+            {
+                throw new ArgumentNullException(nameof(utterances));
+            }
+
+            if (utterances.Any(utterance => utterance == null))
+            {
+                throw new ArgumentException("Utterances must not be null.", nameof(utterances));
+            }
 
             // Check if bot exists
             var botExists = await this.BotExistsAsync(cancellationToken).ConfigureAwait(false);
@@ -103,7 +111,7 @@ namespace NLU.DevOps.Lex
             }
 
             // Generate the bot configuration
-            var importJson = this.CreateImportJson(utterances, entityTypes);
+            var importJson = this.CreateImportJson(utterances);
 
             // Import the bot configuration
             await this.ImportBotAsync(importJson, cancellationToken).ConfigureAwait(false);
@@ -120,16 +128,11 @@ namespace NLU.DevOps.Lex
         }
 
         /// <inheritdoc />
-        public async Task<LabeledUtterance> TestAsync(string utterance, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
+        public async Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
             if (utterance == null)
             {
                 throw new ArgumentNullException(nameof(utterance));
-            }
-
-            if (entityTypes == null)
-            {
-                throw new ArgumentNullException(nameof(entityTypes));
             }
 
             var postTextRequest = new PostTextRequest
@@ -153,16 +156,11 @@ namespace NLU.DevOps.Lex
         }
 
         /// <inheritdoc />
-        public async Task<LabeledUtterance> TestSpeechAsync(string speechFile, IEnumerable<EntityType> entityTypes, CancellationToken cancellationToken)
+        public async Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             if (speechFile == null)
             {
                 throw new ArgumentNullException(nameof(speechFile));
-            }
-
-            if (entityTypes == null)
-            {
-                throw new ArgumentNullException(nameof(entityTypes));
             }
 
             using (var stream = File.OpenRead(speechFile))
@@ -204,29 +202,6 @@ namespace NLU.DevOps.Lex
             this.LexClient.Dispose();
         }
 
-        private static void ValidateArguments(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
-        {
-            if (utterances == null)
-            {
-                throw new ArgumentNullException(nameof(utterances));
-            }
-
-            if (entityTypes == null)
-            {
-                throw new ArgumentNullException(nameof(entityTypes));
-            }
-
-            if (utterances.Any(utterance => utterance == null))
-            {
-                throw new ArgumentException("Utterances must not be null.", nameof(utterances));
-            }
-
-            if (entityTypes.Any(entityType => entityType == null))
-            {
-                throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
-            }
-        }
-
         private static string CreateSampleUtterance(LabeledUtterance utterance)
         {
             var text = utterance.Text;
@@ -246,35 +221,6 @@ namespace NLU.DevOps.Lex
             return text;
         }
 
-        private static JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
-        {
-            // Create a new intent with the given name
-            var intentJson = ImportBotTemplates.IntentJson;
-            intentJson.SelectToken(".name").Replace(intent);
-
-            // Create slots for the intent
-            //
-            // Currently, the algorithm only adds slots that
-            // exist in the training set for the given intent.
-            var slots = utterances
-                .SelectMany(utterance => utterance.Entities ?? Array.Empty<Entity>())
-                .Select(entity => entity.EntityType)
-                .Distinct()
-                .Select(slot => CreateSlot(slot, entityTypes));
-            Debug.Assert(intentJson.SelectToken(".slots") is JArray, "Intent template includes slots JSON array.");
-            var slotsArray = (JArray)intentJson.SelectToken(".slots");
-            slotsArray.AddRange(slots);
-
-            // Create Lex sample utterances
-            var sampleUtterances = utterances
-                .Select(utterance => CreateSampleUtterance(utterance));
-            Debug.Assert(intentJson.SelectToken(".sampleUtterances") is JArray, "Intent template includes sampleUtterances JSON array.");
-            var sampleUtterancesArray = (JArray)intentJson.SelectToken(".sampleUtterances");
-            sampleUtterancesArray.AddRange(sampleUtterances);
-
-            return intentJson;
-        }
-
         private static JToken CreateSlot(string slot, IEnumerable<EntityType> entityTypes)
         {
             // This will throw if a matching entity type is not provided
@@ -282,16 +228,9 @@ namespace NLU.DevOps.Lex
 
             // Create a new intent with the given name
             var slotJson = ImportBotTemplates.SlotJson;
+            var slotType = entityType.Kind == "builtin" ? entityType.Data : slot;
             slotJson.SelectToken(".name").Replace(slot);
-
-            if (entityType.Kind == "builtin")
-            {
-                slotJson.Merge(entityType.Data);
-            }
-            else
-            {
-                slotJson.SelectToken(".slotType").Replace(slot);
-            }
+            slotJson.SelectToken(".slotType").Replace(slotType);
 
             return slotJson;
         }
@@ -380,23 +319,23 @@ namespace NLU.DevOps.Lex
             return this.LexClient.PutBotAsync(putBotRequest, cancellationToken);
         }
 
-        private JToken CreateImportJson(IEnumerable<LabeledUtterance> utterances, IEnumerable<EntityType> entityTypes)
+        private JToken CreateImportJson(IEnumerable<LabeledUtterance> utterances)
         {
             // Add name to imports JSON template
             var importJson = ImportBotTemplates.ImportJson;
             importJson.SelectToken(".resource.name").Replace(this.LexBotName);
-            importJson.Merge(this.ImportBotTemplate);
+            importJson.Merge(this.LexSettings.ImportBotTemplate);
 
             // Add intents to imports JSON template
             var intents = utterances
                 .GroupBy(utterance => utterance.Intent)
-                .Select(group => CreateIntent(group.Key, group, entityTypes));
+                .Select(group => this.CreateIntent(group.Key, group));
             Debug.Assert(importJson.SelectToken(".resource.intents") is JArray, "Import template includes intents JSON array.");
             var intentsArray = (JArray)importJson.SelectToken(".resource.intents");
             AddOrMergeIntents(intentsArray, intents);
 
             // Add slot types to imports JSON template
-            var slotTypes = entityTypes
+            var slotTypes = this.LexSettings.EntityTypes
                 .Where(entityType => entityType.Kind != "builtin")
                 .Select(entityType => CreateSlotType(entityType));
             Debug.Assert(importJson.SelectToken(".resource.slotTypes") is JArray, "Import template includes slotTypes JSON array.");
@@ -404,6 +343,35 @@ namespace NLU.DevOps.Lex
             slotTypesArray.AddRange(slotTypes);
 
             return importJson;
+        }
+
+        private JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances)
+        {
+            // Create a new intent with the given name
+            var intentJson = ImportBotTemplates.IntentJson;
+            intentJson.SelectToken(".name").Replace(intent);
+
+            // Create slots for the intent
+            //
+            // Currently, the algorithm only adds slots that
+            // exist in the training set for the given intent.
+            var slots = utterances
+                .SelectMany(utterance => utterance.Entities ?? Array.Empty<Entity>())
+                .Select(entity => entity.EntityType)
+                .Distinct()
+                .Select(slot => CreateSlot(slot, this.LexSettings.EntityTypes));
+            Debug.Assert(intentJson.SelectToken(".slots") is JArray, "Intent template includes slots JSON array.");
+            var slotsArray = (JArray)intentJson.SelectToken(".slots");
+            slotsArray.AddRange(slots);
+
+            // Create Lex sample utterances
+            var sampleUtterances = utterances
+                .Select(utterance => CreateSampleUtterance(utterance));
+            Debug.Assert(intentJson.SelectToken(".sampleUtterances") is JArray, "Intent template includes sampleUtterances JSON array.");
+            var sampleUtterancesArray = (JArray)intentJson.SelectToken(".sampleUtterances");
+            sampleUtterancesArray.AddRange(sampleUtterances);
+
+            return intentJson;
         }
 
         private async Task ImportBotAsync(JToken importJson, CancellationToken cancellationToken)
