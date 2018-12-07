@@ -28,8 +28,7 @@ namespace NLU.DevOps.CommandLine.Clean
 
             if (this.Options.DeleteConfig)
             {
-                var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"appsettings.{this.Options.Service}.json");
-                File.Delete(configPath);
+                File.Delete($"appsettings.{this.Options.Service}.json");
             }
         }
     }

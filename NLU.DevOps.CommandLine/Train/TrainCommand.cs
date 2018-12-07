@@ -3,6 +3,7 @@
 
 namespace NLU.DevOps.CommandLine.Train
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
@@ -31,7 +32,15 @@ namespace NLU.DevOps.CommandLine.Train
             try
             {
                 this.Log("Training NLU service...");
-                var trainingUtterances = Read<List<LabeledUtterance>>(this.Options.UtterancesPath);
+
+                if (this.Options.UtterancesPath == null && this.Options.SettingsPath == null)
+                {
+                    throw new InvalidOperationException("Must specify either --utterances or --extra-settings when using train.");
+                }
+
+                var trainingUtterances = this.Options.UtterancesPath != null
+                    ? Read<IList<LabeledUtterance>>(this.Options.UtterancesPath)
+                    : Array.Empty<LabeledUtterance>();
                 await this.NLUService.TrainAsync(trainingUtterances).ConfigureAwait(false);
             }
             finally

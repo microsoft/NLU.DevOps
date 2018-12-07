@@ -56,16 +56,6 @@ namespace NLU.DevOps.Lex
                 { "sampleUtterances", new JArray() },
             };
 
-        public static JObject SlotTypeJson =>
-            new JObject
-            {
-                { "description", string.Empty },
-                { "name", string.Empty },
-                { "version", "1" },
-                { "enumerationValues", new JArray() },
-                { "valueSelectionStrategy", string.Empty },
-            };
-
         private static JObject AbortStatementJson =>
             new JObject
             {

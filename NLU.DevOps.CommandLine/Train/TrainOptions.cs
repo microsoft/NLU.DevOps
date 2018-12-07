@@ -8,10 +8,10 @@ namespace NLU.DevOps.CommandLine.Train
     [Verb("train", HelpText = "Trains the NLU service.")]
     internal class TrainOptions : BaseOptions
     {
-        [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
+        [Option('u', "utterances", HelpText = "Path to utterances.", Required = false)]
         public string UtterancesPath { get; set; }
 
-        [Option('e', "extra-settings", HelpText = "Path to NLU service settings.", Required = true)]
+        [Option('e', "extra-settings", HelpText = "Path to NLU service settings.", Required = false)]
         public string SettingsPath { get; set; }
 
         [Option('c', "overwrite-config", HelpText = "Flag to (over)write NLU service configuration.", Required = false)]

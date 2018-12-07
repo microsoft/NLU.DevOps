@@ -221,41 +221,12 @@ namespace NLU.DevOps.Lex
             return text;
         }
 
-        private static JToken CreateSlot(string slot, IEnumerable<EntityType> entityTypes)
-        {
-            // This will throw if a matching entity type is not provided
-            var entityType = entityTypes.First(e => e.Name == slot);
-
-            // Create a new intent with the given name
-            var slotJson = ImportBotTemplates.SlotJson;
-            var slotType = entityType.Kind == "builtin" ? entityType.Data : slot;
-            slotJson.SelectToken(".name").Replace(slot);
-            slotJson.SelectToken(".slotType").Replace(slotType);
-
-            return slotJson;
-        }
-
-        private static JToken CreateSlotType(EntityType entityType)
-        {
-            // Create a new intent with the given name
-            var slotTypeJson = ImportBotTemplates.SlotTypeJson;
-            slotTypeJson.SelectToken(".name").Replace(entityType.Name);
-
-            // If any values have synonyms, use TOP_RESOLUTION, otherwise use ORIGINAL_VALUE
-            var valueSelectionStrategy = entityType.Data.SelectTokens(".enumerationValues[*].synonyms")
-                .Any(synonyms => synonyms.Any())
-                ? SlotValueSelectionStrategy.TOP_RESOLUTION
-                : SlotValueSelectionStrategy.ORIGINAL_VALUE;
-            slotTypeJson.SelectToken(".valueSelectionStrategy").Replace(valueSelectionStrategy.Value);
-
-            return slotTypeJson.MergeInto(entityType.Data);
-        }
-
         private static void AddOrMergeIntents(JArray intents, IEnumerable<JToken> additionalIntents)
         {
             foreach (JObject intent in additionalIntents)
             {
-                var existingIntent = intents.FirstOrDefault(i => i.Value<string>("name") == intent.Value<string>("name")) as JObject;
+                var intentName = intent.Value<string>("name");
+                var existingIntent = intents.SelectToken($"[?(@.name == '{intentName}')]") as JObject;
                 if (existingIntent != null)
                 {
                     intent.Merge(existingIntent);
@@ -334,14 +305,6 @@ namespace NLU.DevOps.Lex
             var intentsArray = (JArray)importJson.SelectToken(".resource.intents");
             AddOrMergeIntents(intentsArray, intents);
 
-            // Add slot types to imports JSON template
-            var slotTypes = this.LexSettings.EntityTypes
-                .Where(entityType => entityType.Kind != "builtin")
-                .Select(entityType => CreateSlotType(entityType));
-            Debug.Assert(importJson.SelectToken(".resource.slotTypes") is JArray, "Import template includes slotTypes JSON array.");
-            var slotTypesArray = (JArray)importJson.SelectToken(".resource.slotTypes");
-            slotTypesArray.AddRange(slotTypes);
-
             return importJson;
         }
 
@@ -359,7 +322,7 @@ namespace NLU.DevOps.Lex
                 .SelectMany(utterance => utterance.Entities ?? Array.Empty<Entity>())
                 .Select(entity => entity.EntityType)
                 .Distinct()
-                .Select(slot => CreateSlot(slot, this.LexSettings.EntityTypes));
+                .Select(slot => this.CreateSlot(slot));
             Debug.Assert(intentJson.SelectToken(".slots") is JArray, "Intent template includes slots JSON array.");
             var slotsArray = (JArray)intentJson.SelectToken(".slots");
             slotsArray.AddRange(slots);
@@ -372,6 +335,23 @@ namespace NLU.DevOps.Lex
             sampleUtterancesArray.AddRange(sampleUtterances);
 
             return intentJson;
+        }
+
+        private JToken CreateSlot(string slot)
+        {
+            var slotJson = ImportBotTemplates.SlotJson;
+            var existingSlot = this.LexSettings.Slots.SelectToken($"[?(@.name == '{slot}')]");
+            if (existingSlot != null)
+            {
+                slotJson.Merge(existingSlot);
+            }
+            else
+            {
+                slotJson.SelectToken(".name").Replace(slot);
+                slotJson.SelectToken(".slotType").Replace(slot);
+            }
+
+            return slotJson;
         }
 
         private async Task ImportBotAsync(JToken importJson, CancellationToken cancellationToken)

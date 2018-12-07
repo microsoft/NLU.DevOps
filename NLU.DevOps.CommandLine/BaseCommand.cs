@@ -57,6 +57,7 @@ namespace NLU.DevOps.CommandLine
         {
             var serializer = JsonSerializer.CreateDefault();
             serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            serializer.DefaultValueHandling = DefaultValueHandling.Ignore;
             serializer.Formatting = Formatting.Indented;
             using (var textWriter = new StreamWriter(stream, Encoding.UTF8, 4096, true))
             {

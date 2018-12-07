@@ -63,23 +63,6 @@ namespace NLU.DevOps.Lex.Tests
         }
 
         [Test]
-        public static void MissingEntityTypeThrowsInvalidOperation()
-        {
-            var text = "hello world";
-            var intent = Guid.NewGuid().ToString();
-            var entityTypeName = "Planet";
-            var mockClient = new MockLexClient();
-            using (var lex = new LexNLUService(string.Empty, string.Empty, new LexSettings(), mockClient))
-            {
-                var entity = new Entity(entityTypeName, "Earth", "world", 0);
-                var utterance = new LabeledUtterance(text, intent, new[] { entity });
-
-                var missingEntityType = new Func<Task>(() => lex.TrainAsync(new[] { utterance }));
-                missingEntityType.Should().Throw<InvalidOperationException>();
-            }
-        }
-
-        [Test]
         public static async Task CreatesBot()
         {
             var text = "hello world";
@@ -87,8 +70,8 @@ namespace NLU.DevOps.Lex.Tests
             var entityTypeName = "Planet";
             var botName = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            var entityType = new EntityType(entityTypeName, "builtin", entityTypeName);
-            var lexSettings = new LexSettings(new[] { entityType });
+            var slot = CreateSlot(entityTypeName, entityTypeName);
+            var lexSettings = new LexSettings(new JArray { slot });
             using (var lex = new LexNLUService(botName, string.Empty, lexSettings, mockClient))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
@@ -137,8 +120,8 @@ namespace NLU.DevOps.Lex.Tests
         {
             var intent = Guid.NewGuid().ToString();
             var mockClient = new MockLexClient();
-            var entityType = new EntityType(entityTypeName, "builtin", entityTypeName);
-            var lexSettings = new LexSettings(new[] { entityType });
+            var slot = CreateSlot(entityTypeName, entityTypeName);
+            var lexSettings = new LexSettings(new JArray { slot });
             using (var lex = new LexNLUService(string.Empty, string.Empty, lexSettings, mockClient))
             {
                 var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
@@ -362,56 +345,6 @@ namespace NLU.DevOps.Lex.Tests
         }
 
         [Test]
-        public static async Task AddsListSlotTypesToImportJson()
-        {
-            var originalValueListEntityTypeName = Guid.NewGuid().ToString();
-            var topResolutionListEntityTypeName = Guid.NewGuid().ToString();
-            var originalValueListEntityTypeCanonicalForm = Guid.NewGuid().ToString();
-            var topResolutionListEntityTypeCanonicalForm = Guid.NewGuid().ToString();
-            var topResolutionListEntityTypeSynonym = Guid.NewGuid().ToString();
-            var data = @"{""enumerationValues"":[{""value"":""" + originalValueListEntityTypeCanonicalForm + @""",""synonyms"":[]}]}";
-            var originalValueListEntityType = new EntityType(
-                originalValueListEntityTypeName,
-                "list",
-                JObject.Parse(data));
-
-            var dataTopResolution = @"{""enumerationValues"":[{""value"":""" + topResolutionListEntityTypeCanonicalForm + @""",""synonyms"":[""" + topResolutionListEntityTypeSynonym + @"""]}]}";
-            var topResolutionListEntityType = new EntityType(
-                topResolutionListEntityTypeName,
-                "list",
-                JObject.Parse(dataTopResolution));
-
-            var entityTypes = new[] { originalValueListEntityType, topResolutionListEntityType };
-
-            var mockClient = new MockLexClient();
-            var lexSettings = new LexSettings(entityTypes);
-            using (var lex = new LexNLUService(string.Empty, string.Empty, lexSettings, mockClient))
-            {
-                var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
-                await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
-
-                var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
-                var payloadJson = GetPayloadJson(startImportRequest.Payload);
-                var payload = JObject.Parse(payloadJson);
-
-                // assert slot types are created
-                payload.SelectToken(".resource.slotTypes").Count().Should().Be(2);
-                payload.SelectToken(".resource.slotTypes[0].name").Value<string>().Should().Be(originalValueListEntityTypeName);
-                payload.SelectToken(".resource.slotTypes[0].valueSelectionStrategy").Value<string>().Should().Be(SlotValueSelectionStrategy.ORIGINAL_VALUE);
-                payload.SelectToken(".resource.slotTypes[0].enumerationValues").Count().Should().Be(1);
-                payload.SelectToken(".resource.slotTypes[0].enumerationValues[0].value").Value<string>().Should().Be(originalValueListEntityTypeCanonicalForm);
-                payload.SelectToken(".resource.slotTypes[0].enumerationValues[0].synonyms").Count().Should().Be(0);
-
-                payload.SelectToken(".resource.slotTypes[1].name").Value<string>().Should().Be(topResolutionListEntityTypeName);
-                payload.SelectToken(".resource.slotTypes[1].valueSelectionStrategy").Value<string>().Should().Be(SlotValueSelectionStrategy.TOP_RESOLUTION);
-                payload.SelectToken(".resource.slotTypes[1].enumerationValues").Count().Should().Be(1);
-                payload.SelectToken(".resource.slotTypes[1].enumerationValues[0].value").Value<string>().Should().Be(topResolutionListEntityTypeCanonicalForm);
-                payload.SelectToken(".resource.slotTypes[1].enumerationValues[0].synonyms").Count().Should().Be(1);
-                payload.SelectToken(".resource.slotTypes[1].enumerationValues[0].synonyms[0]").Value<string>().Should().Be(topResolutionListEntityTypeSynonym);
-            }
-        }
-
-        [Test]
         public static async Task TestsWithSpeech()
         {
             var intent = Guid.NewGuid().ToString();
@@ -563,8 +496,8 @@ namespace NLU.DevOps.Lex.Tests
             };
 
             var mockClient = new MockLexClient();
-            var entityType = new EntityType(entityTypeName, "builtin", Guid.NewGuid());
-            var lexSettings = new LexSettings(new[] { entityType }, importBotTemplate);
+            var slot = CreateSlot(entityTypeName, Guid.NewGuid().ToString());
+            var lexSettings = new LexSettings(new JArray { slot }, importBotTemplate);
             using (var lex = new LexNLUService(string.Empty, string.Empty, lexSettings, mockClient))
             {
                 var text = Guid.NewGuid().ToString();
@@ -592,6 +525,15 @@ namespace NLU.DevOps.Lex.Tests
                 intents.First().SelectToken(".slots").First().Value<string>("slotType").Should().Be(canary);
                 intents.First().SelectToken(".slots").First().Value<string>("slotConstraint").Should().Be("Optional");
             }
+        }
+
+        private static JToken CreateSlot(string name, string slotType)
+        {
+            return new JObject
+            {
+                { "name", name },
+                { "slotType", slotType },
+            };
         }
 
         private static string GetPayloadJson(Stream payloadStream)

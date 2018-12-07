@@ -34,33 +34,28 @@ namespace NLU.DevOps.Lex
         /// <summary>
         /// Initializes a new instance of the <see cref="LexSettings"/> class.
         /// </summary>
-        /// <param name="entityTypes">Entity types.</param>
-        public LexSettings(IEnumerable<EntityType> entityTypes)
-            : this(entityTypes, null)
+        /// <param name="slots">Entity slot configurations.</param>
+        public LexSettings(JArray slots)
+            : this(slots, null)
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LexSettings"/> class.
         /// </summary>
-        /// <param name="entityTypes">Entity types.</param>
+        /// <param name="slots">Entity slot configurations.</param>
         /// <param name="importBotTemplate">Import bot template.</param>
         [JsonConstructor]
-        public LexSettings(IEnumerable<EntityType> entityTypes, JObject importBotTemplate)
+        public LexSettings(JArray slots, JObject importBotTemplate)
         {
-            this.EntityTypes = entityTypes ?? Array.Empty<EntityType>();
-            if (this.EntityTypes.Any(e => e == null))
-            {
-                throw new ArgumentException("Entity types must not be null.", nameof(entityTypes));
-            }
-
+            this.Slots = slots ?? new JArray();
             this.ImportBotTemplate = importBotTemplate ?? new JObject();
         }
 
         /// <summary>
-        /// Gets the entity types.
+        /// Gets the entity slots.
         /// </summary>
-        public IEnumerable<EntityType> EntityTypes { get; }
+        public JArray Slots { get; }
 
         /// <summary>
         /// Gets the import bot template.
