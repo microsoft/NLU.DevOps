@@ -118,6 +118,12 @@ namespace NLU.DevOps.Lex
 
         private static async Task<TResponse> RetryAsync<TRequest, TResponse>(Func<TRequest, CancellationToken, Task<TResponse>> actionAsync, TRequest request, CancellationToken cancellationToken)
         {
+            Task onErrorAsync(Exception ex, TimeSpan delay, string name)
+            {
+                Logger.LogWarning(ex, $"Encountered '{name}', retrying.");
+                return Task.Delay(delay, cancellationToken);
+            }
+
             var count = 0;
             while (count++ < RetryCount)
             {
@@ -125,17 +131,25 @@ namespace NLU.DevOps.Lex
                 {
                     return await actionAsync(request, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Amazon.LexModelBuildingService.Model.ConflictException conflictException)
+                catch (Amazon.LexModelBuildingService.Model.ConflictException ex)
                 when (count < RetryCount)
                 {
-                    Logger.LogWarning(conflictException, $"Encountered 'ConflictException', retrying.");
-                    await Task.Delay(RetryConflictDelay, cancellationToken).ConfigureAwait(false);
+                    await onErrorAsync(ex, RetryConflictDelay, "ConflictException").ConfigureAwait(false);
                 }
-                catch (Amazon.Lex.Model.LimitExceededException limitExceededException)
+                catch (Amazon.Lex.Model.ConflictException ex)
                 when (count < RetryCount)
                 {
-                    Logger.LogWarning(limitExceededException, "Encountered 'LimitExceededException', retrying.");
-                    await Task.Delay(RetryLimitExceededDelay, cancellationToken).ConfigureAwait(false);
+                    await onErrorAsync(ex, RetryConflictDelay, "ConflictException").ConfigureAwait(false);
+                }
+                catch (Amazon.LexModelBuildingService.Model.LimitExceededException ex)
+                when (count < RetryCount)
+                {
+                    await onErrorAsync(ex, RetryLimitExceededDelay, "LimitExceededException").ConfigureAwait(false);
+                }
+                catch (Amazon.Lex.Model.LimitExceededException ex)
+                when (count < RetryCount)
+                {
+                    await onErrorAsync(ex, RetryLimitExceededDelay, "LimitExceededException").ConfigureAwait(false);
                 }
             }
 

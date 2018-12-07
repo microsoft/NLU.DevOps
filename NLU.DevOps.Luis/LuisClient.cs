@@ -23,6 +23,8 @@ namespace NLU.DevOps.Luis
         private const string Protocol = "https://";
         private const string Domain = ".api.cognitive.microsoft.com";
 
+        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
+
         public LuisClient(
             string authoringKey,
             string authoringRegion,
@@ -112,9 +114,21 @@ namespace NLU.DevOps.Luis
             return this.AuthoringClient.Apps.PublishAsync(Guid.Parse(appId), request, cancellationToken);
         }
 
-        public Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken)
+        public async Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken)
         {
-            return this.RuntimeClient.Prediction.ResolveAsync(appId, text, cancellationToken: cancellationToken);
+            while (true)
+            {
+                try
+                {
+                    return await this.RuntimeClient.Prediction.ResolveAsync(appId, text, cancellationToken: cancellationToken).ConfigureAwait(false);
+                }
+                catch (APIErrorException ex)
+                when ((int)ex.Response.StatusCode == 429)
+                {
+                    Logger.LogWarning("Received HTTP 429 result from Cognitive Services. Retrying.");
+                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
 
         public async Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
