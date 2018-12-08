@@ -20,6 +20,9 @@ namespace NLU.DevOps.CommandLine.Test
         [Option('d', "directory", HelpText = "Path to recordings directory.", Required = false)]
         public string RecordingsDirectory { get; set; }
 
+        [Option('t', "transcriptions", HelpText = "Path to input transcriptions cache.", Required = false)]
+        public string TranscriptionsFile { get; set; }
+
         [Option('o', "output", HelpText = "Path to labeled results output.", Required = false)]
         public string OutputPath { get; set; }
     }

@@ -47,10 +47,7 @@ namespace NLU.DevOps.CommandLine.Train
             {
                 if (this.Options.WriteConfig)
                 {
-                    using (var stream = File.OpenWrite($"appsettings.{this.Options.Service}.json"))
-                    {
-                        Write(stream, this.NLUService);
-                    }
+                    Write($"appsettings.{this.Options.Service}.json", this.NLUService);
                 }
             }
         }

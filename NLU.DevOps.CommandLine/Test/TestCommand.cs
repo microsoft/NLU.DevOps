@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.CommandLine.Test
@@ -15,7 +15,12 @@ namespace NLU.DevOps.CommandLine.Test
         public TestCommand(TestOptions options)
             : base(options)
         {
+            this.LazyTranscriptions = new Lazy<IDictionary<string, string>>(this.LoadTranscriptions);
         }
+
+        private Lazy<IDictionary<string, string>> LazyTranscriptions { get; }
+
+        private IDictionary<string, string> Transcriptions => this.LazyTranscriptions.Value;
 
         public override int Main()
         {
@@ -26,6 +31,15 @@ namespace NLU.DevOps.CommandLine.Test
         protected override INLUService CreateNLUService()
         {
             return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.SettingsPath);
+        }
+
+        private static void EnsureDirectory(string filePath)
+        {
+            var baseDirectory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(baseDirectory) && !Directory.Exists(baseDirectory))
+            {
+                Directory.CreateDirectory(baseDirectory);
+            }
         }
 
         private async Task RunAsync()
@@ -43,21 +57,67 @@ namespace NLU.DevOps.CommandLine.Test
                 throw new InvalidOperationException("Test utterances must have 'recordingID' when using --speech.");
             }
 
-            var testCases = this.Options.Speech
-                ? testUtterances.Select(utterance => $"{Path.Combine(this.Options.RecordingsDirectory, utterance.RecordingId)}.wav")
-                : testUtterances.Select(utterance => utterance.Text);
-
             var testResults = this.Options.Speech
-                ? await testCases.SelectAsync(this.NLUService.TestSpeechAsync).ConfigureAwait(false)
-                : await testCases.SelectAsync(this.NLUService.TestAsync).ConfigureAwait(false);
+                ? await testUtterances.SelectAsync(this.TestSpeechAsync).ConfigureAwait(false)
+                : await testUtterances.SelectAsync(this.TestAsync).ConfigureAwait(false);
+
+            Stream getFileStream(string filePath)
+            {
+                EnsureDirectory(filePath);
+                return File.OpenWrite(filePath);
+            }
 
             var stream = this.Options.OutputPath != null
-                ? File.OpenWrite(this.Options.OutputPath)
+                ? getFileStream(this.Options.OutputPath)
                 : Console.OpenStandardOutput();
 
             using (stream)
             {
                 Write(stream, testResults);
+            }
+
+            this.SaveTranscriptions();
+        }
+
+        private Task<LabeledUtterance> TestAsync(LabeledUtterance utterance)
+        {
+            return this.NLUService.TestAsync(utterance.Text);
+        }
+
+        private async Task<LabeledUtterance> TestSpeechAsync(LabeledUtteranceWithRecordingId utterance)
+        {
+            var text = default(string);
+            if (this.Transcriptions?.TryGetValue(utterance.RecordingId, out text) ?? false)
+            {
+                return await this.NLUService.TestAsync(text).ConfigureAwait(false);
+            }
+
+            var speechFile = Path.Combine(this.Options.RecordingsDirectory, $"{utterance.RecordingId}.wav");
+            var result = await this.NLUService.TestSpeechAsync(speechFile).ConfigureAwait(false);
+            this.Transcriptions?.Add(utterance.RecordingId, result.Text);
+            return result;
+        }
+
+        private IDictionary<string, string> LoadTranscriptions()
+        {
+            var transcriptionsFile = this.Options.TranscriptionsFile;
+            if (this.Options.Speech && transcriptionsFile != null)
+            {
+                return File.Exists(transcriptionsFile)
+                    ? Read<Dictionary<string, string>>(transcriptionsFile)
+                    : new Dictionary<string, string>();
+            }
+
+            return null;
+        }
+
+        private void SaveTranscriptions()
+        {
+            var transcriptionsFile = this.Options.TranscriptionsFile;
+            if (this.Options.Speech && transcriptionsFile != null)
+            {
+                EnsureDirectory(transcriptionsFile);
+                Write(transcriptionsFile, this.Transcriptions);
             }
         }
 

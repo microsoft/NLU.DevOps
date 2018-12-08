@@ -53,6 +53,14 @@ namespace NLU.DevOps.CommandLine
             }
         }
 
+        protected static void Write(string path, object value)
+        {
+            using (var stream = File.OpenWrite(path))
+            {
+                Write(stream, value);
+            }
+        }
+
         protected static void Write(Stream stream, object value)
         {
             var serializer = JsonSerializer.CreateDefault();
