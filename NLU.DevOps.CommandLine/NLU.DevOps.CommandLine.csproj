@@ -15,14 +15,14 @@
   <ItemGroup>
     <ProjectReference Include="..\NLU.DevOps.Lex\NLU.DevOps.Lex.csproj" />
     <ProjectReference Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
-    <ProjectReference Include="..\NLU.DevOps.Logging\NLU.DevOps.Logging.csproj" />
+    <ProjectReference Include="..\NLU.DevOps.Core\NLU.DevOps.Core.csproj" />
     <ProjectReference Include="..\NLU.DevOps.ModelPerformance.Tests\NLU.DevOps.ModelPerformance.Tests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
     <PackageReference Include="NUnitLite" Version="3.11.0" />
     <PackageReference Include="System.Composition" Version="1.2.0" />

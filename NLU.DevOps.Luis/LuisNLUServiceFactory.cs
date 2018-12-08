@@ -7,7 +7,6 @@ namespace NLU.DevOps.Luis
     using System.Composition;
     using System.IO;
     using System.Linq;
-    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;

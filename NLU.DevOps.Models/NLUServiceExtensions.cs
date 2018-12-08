@@ -36,18 +36,6 @@ namespace NLU.DevOps.Models
         }
 
         /// <summary>
-        /// Tests the NLU service.
-        /// </summary>
-        /// <returns>Task to await the resulting labeled utterance.</returns>
-        /// <param name="instance">NLU service instance.</param>
-        /// <param name="utterance">Unlabeled utterance.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        public static Task<LabeledUtterance> TestAsync(this INLUService instance, string utterance, CancellationToken cancellationToken)
-        {
-            return instance.TestAsync(utterance, cancellationToken);
-        }
-
-        /// <summary>
         /// Tests the NLU service using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
@@ -56,18 +44,6 @@ namespace NLU.DevOps.Models
         public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile)
         {
             return instance.TestSpeechAsync(speechFile, CancellationToken.None);
-        }
-
-        /// <summary>
-        /// Tests the NLU service using speech.
-        /// </summary>
-        /// <returns>Task to await the resulting labeled utterance.</returns>
-        /// <param name="instance">NLU service instance.</param>
-        /// <param name="speechFile">Speech file.</param>
-        /// <param name="cancellationToken">Cancellation token.</param>
-        public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile, CancellationToken cancellationToken)
-        {
-            return instance.TestSpeechAsync(speechFile, cancellationToken);
         }
 
         /// <summary>

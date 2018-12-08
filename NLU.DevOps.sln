@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Luis.Tests", "NL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.CommandLine", "NLU.DevOps.CommandLine\NLU.DevOps.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Logging", "NLU.DevOps.Logging\NLU.DevOps.Logging.csproj", "{AF82A1AB-22A6-46F2-892F-4FAF0188846F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Core", "NLU.DevOps.Core\NLU.DevOps.Core.csproj", "{0320DEA6-0432-4283-89FA-0E201FA32B1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,10 +53,10 @@ Global
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AF82A1AB-22A6-46F2-892F-4FAF0188846F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF82A1AB-22A6-46F2-892F-4FAF0188846F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF82A1AB-22A6-46F2-892F-4FAF0188846F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF82A1AB-22A6-46F2-892F-4FAF0188846F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0320DEA6-0432-4283-89FA-0E201FA32B1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0320DEA6-0432-4283-89FA-0E201FA32B1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0320DEA6-0432-4283-89FA-0E201FA32B1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0320DEA6-0432-4283-89FA-0E201FA32B1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

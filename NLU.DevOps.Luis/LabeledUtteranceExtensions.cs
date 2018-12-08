@@ -7,7 +7,7 @@ namespace NLU.DevOps.Luis
     using System.Collections.Generic;
     using System.Linq;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
-    using NLU.DevOps.Models;
+    using Models;
 
     internal static class LabeledUtteranceExtensions
     {

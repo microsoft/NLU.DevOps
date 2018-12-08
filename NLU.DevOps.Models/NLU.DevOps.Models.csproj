@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\CodeAnalysis.props" />
-  <Import Project="..\CommonNuget.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
@@ -8,9 +7,4 @@
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NLU.DevOps.Models.xml</DocumentationFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
-  </ItemGroup>
 </Project>

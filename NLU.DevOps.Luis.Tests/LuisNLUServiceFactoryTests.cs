@@ -5,7 +5,6 @@ namespace NLU.DevOps.Luis.Tests
 {
     using System;
     using FluentAssertions;
-    using Microsoft.Extensions.Configuration;
     using NUnit.Framework;
 
     [TestFixture]

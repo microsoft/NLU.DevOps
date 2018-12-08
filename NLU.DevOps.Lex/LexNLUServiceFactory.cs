@@ -11,9 +11,8 @@ namespace NLU.DevOps.Lex
     using Amazon;
     using Amazon.Runtime;
     using Microsoft.Extensions.Configuration;
+    using Models;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using NLU.DevOps.Models;
 
     /// <summary>
     /// Lex NLU service factory.

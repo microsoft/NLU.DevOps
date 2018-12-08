@@ -4,7 +4,6 @@
 namespace NLU.DevOps.CommandLine.Compare
 {
     using global::CommandLine;
-    using Newtonsoft.Json;
 
     [Verb("compare", HelpText = "Compare test results.")]
     internal class CompareOptions

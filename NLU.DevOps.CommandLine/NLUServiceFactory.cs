@@ -5,10 +5,10 @@ namespace NLU.DevOps.CommandLine
 {
     using System;
     using System.Composition.Hosting;
+    using Lex;
+    using Luis;
     using Microsoft.Extensions.Configuration;
     using Models;
-    using NLU.DevOps.Lex;
-    using NLU.DevOps.Luis;
 
     internal class NLUServiceFactory
     {
