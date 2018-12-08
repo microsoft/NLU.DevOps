@@ -18,7 +18,7 @@ namespace NLU.DevOps.Luis
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
-    internal sealed class LuisClient : ILuisClient
+    internal class LuisClient : ILuisClient
     {
         private const string Protocol = "https://";
         private const string Domain = ".api.cognitive.microsoft.com";
@@ -131,7 +131,7 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public async Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+        public virtual async Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
         {
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
             using (var recognizer = new IntentRecognizer(this.LazySpeechConfig.Value, audioInput))
@@ -169,9 +169,18 @@ namespace NLU.DevOps.Luis
 
         public void Dispose()
         {
-            using (this.AuthoringClient)
-            using (this.RuntimeClient)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected void Dispose(bool disposing)
+        {
+            if (disposing)
             {
+                using (this.AuthoringClient)
+                using (this.RuntimeClient)
+                {
+                }
             }
         }
     }

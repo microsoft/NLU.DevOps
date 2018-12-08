@@ -23,6 +23,7 @@ namespace NLU.DevOps.Luis
         private const string LuisEndpointKeyConfigurationKey = "luisEndpointKey";
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
         private const string LuisEndpointRegionConfigurationKey = "luisEndpointRegion";
+        private const string LuisSpeechKeyConfigurationKey = "luisSpeechKey";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
         private const string LuisAppNameConfigurationKey = "luisAppName";
 
@@ -49,12 +50,22 @@ namespace NLU.DevOps.Luis
                 ? JsonConvert.DeserializeObject<LuisSettings>(File.ReadAllText(settingsPath))
                 : new LuisSettings();
 
-            var luisClient = new LuisClient(
-                configuration[LuisAuthoringKeyConfigurationKey],
-                configuration[LuisAuthoringRegionConfigurationKey],
-                configuration[LuisEndpointKeyConfigurationKey],
-                configuration[LuisEndpointRegionConfigurationKey],
-                isStaging);
+            var luisSpeechKey = configuration[LuisSpeechKeyConfigurationKey];
+
+            var luisClient = luisSpeechKey != null
+                ? new RestSpeechLuisClient(
+                    configuration[LuisAuthoringKeyConfigurationKey],
+                    configuration[LuisAuthoringRegionConfigurationKey],
+                    configuration[LuisEndpointKeyConfigurationKey],
+                    configuration[LuisEndpointRegionConfigurationKey],
+                    luisSpeechKey,
+                    isStaging)
+                : new LuisClient(
+                    configuration[LuisAuthoringKeyConfigurationKey],
+                    configuration[LuisAuthoringRegionConfigurationKey],
+                    configuration[LuisEndpointKeyConfigurationKey],
+                    configuration[LuisEndpointRegionConfigurationKey],
+                    isStaging);
 
             return new LuisNLUService(
                 appName,
