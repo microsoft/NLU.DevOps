@@ -94,7 +94,11 @@ namespace NLU.DevOps.CommandLine.Test
 
             var speechFile = Path.Combine(this.Options.RecordingsDirectory, $"{utterance.RecordingId}.wav");
             var result = await this.NLUService.TestSpeechAsync(speechFile).ConfigureAwait(false);
-            this.Transcriptions?.Add(utterance.RecordingId, result.Text);
+            if (!string.IsNullOrEmpty(result.Text))
+            {
+                this.Transcriptions?.Add(utterance.RecordingId, result.Text);
+            }
+
             return result;
         }
 
