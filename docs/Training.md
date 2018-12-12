@@ -39,7 +39,7 @@ The `utterances.json` argument is the path to the generic utterances file, which
 ]
 ```
 
-See [Generic Utterances Model](./GenericUtterances.md) for more information on the JSON schema for utterances.
+See [Generic Utterances Model](GenericUtterances.md) for more information on the JSON schema for utterances.
 
 See [LUIS Key Configuration](TODO) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
 
@@ -146,4 +146,4 @@ The train command may create a new LUIS application, and the subsequent call to 
 }
 ```
 
-See [Testing NLU Services](./Testing.md) for more information about the test command.
+See [Testing NLU Services](Testing.md) for more information about the test command.
