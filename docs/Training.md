@@ -6,7 +6,7 @@ The NLU.DevOps CLI tool includes a sub-command that allows you to train an NLU s
 
 Run the following command:
 ```bash
-dotnet nlu rain -s luis -u utterances.json
+dotnet nlu train -s luis -u utterances.json
 ```
 
 The `utterances.json` argument is the path to the generic utterances file, which may look something like:
@@ -39,11 +39,14 @@ The `utterances.json` argument is the path to the generic utterances file, which
 ]
 ```
 
-See [Generic Utterances Model](TODO) for more information on the JSON schema.
+See [Generic Utterances Model](TODO) for more information on the JSON schema for utterances.
 
 See [LUIS Key Configuration](TODO) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
 
 ## Detailed Usage
+
+### `-s, --service`
+Identifier of the NLU service to run against. Try `luis` for [LUIS](https://www.luis.ai) or `lex` for [Lex](https://aws.amazon.com/lex/).
 
 ### `-u, --utterances`
 (Optional) Path to labeled utterances to include in the model.
@@ -143,4 +146,4 @@ The train command may create a new LUIS application, and the subsequent call to 
 }
 ```
 
-See [Testing NLU Services](TODO) for more information about the test command.
+See [Testing NLU Services](./Testing.md) for more information about the test command.
