@@ -70,7 +70,7 @@ The resulting output will be a JSON array in the generic utterances format, with
 ]
 ```
 
-See [Generic Utterances Model](TODO) for more information on the JSON schema for utterances.
+See [Generic Utterances Model](./GenericUtterances.md) for more information on the JSON schema for utterances.
 
 See [LUIS Key Configuration](TODO) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the endpoint key, to the CLI tool.
 
