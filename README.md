@@ -20,6 +20,7 @@ The service by default supports training and testing NLU models against [LUIS](h
 Detailed information on the CLI tool sub-commands and arguments can be found in the [docs](docs) folder:
 - [Training an NLU service](docs/Training.md)
 - [Testing an NLU service](docs/Testing.md)
+- [Tearing down an NLU service](docs/Clean.md)
 - [Generic Utterances Model](docs/GenericUtterances.md)
 
 ## Contributing
