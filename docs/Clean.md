@@ -9,6 +9,8 @@ Run the following command:
 dotnet nlu clean -s luis
 ```
 
+To make things easier, be sure to use the `--overwrite-config` option in the `train` command to ensure an `appsettings.json` file is generated with the NLU service-specific details needed to make this call. Use the [`--delete-config`](#-c---delete-config) to delete the `appsettings.json` file after the resources are cleaned up.
+
 ## Detailed Usage
 
 ### `-s, --service`
