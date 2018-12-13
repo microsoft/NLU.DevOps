@@ -133,7 +133,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             }
 
             return FalsePositive(
-                $"TruePositiveText('{expected}', '{actual}')",
+                $"FalsePositiveText('{expected}', '{actual}')",
                 $"Expected text '{expected}', actual text '{actual}'.",
                 "Text");
         }
