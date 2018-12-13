@@ -24,6 +24,7 @@ Detailed information on the CLI tool sub-commands and arguments can be found in 
 - [Analyzing NLU service results](docs/Compare.md)
 - [Generic Utterances Model](docs/GenericUtterances.md)
 - [LUIS App Configuration](docs/LuisSettings.md)
+- [Lex App Configuration](docs/LexSettings.md)
 
 ## Contributing
 
