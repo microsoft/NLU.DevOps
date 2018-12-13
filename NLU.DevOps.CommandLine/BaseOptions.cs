@@ -15,5 +15,8 @@ namespace NLU.DevOps.CommandLine
 
         [Option('v', HelpText = "Verbose log output.", Required = false)]
         public bool Verbose { get; set; }
+
+        [Option("assembly-path", HelpText = "Path to NLU service assembly.", Required = false)]
+        public string ServiceAssemblyPath { get; set; }
     }
 }
