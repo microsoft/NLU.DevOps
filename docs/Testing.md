@@ -151,5 +151,5 @@ See [Caching speech-to-text transcriptions](#caching-speech-to-text-transcriptio
 ### `-e, --extra-settings`
 (Optional) Path to NLU service-specific settings.
 
-This is currently only used for LUIS, see the section on prebuilt entity types in [Configuring LUIS Apps](TODO).
+This is currently only used for LUIS, see the section on prebuilt entity types in [Configuring prebuilt entity types](LuisSettings.md#configuring-prebuilt-entity-types).
 
