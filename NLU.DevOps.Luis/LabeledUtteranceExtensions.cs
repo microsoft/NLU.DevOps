@@ -11,11 +11,11 @@ namespace NLU.DevOps.Luis
 
     internal static class LabeledUtteranceExtensions
     {
-        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, IReadOnlyDictionary<string, string> builtinEntityTypes)
+        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, IReadOnlyDictionary<string, string> prebuiltEntityTypes)
         {
             JSONEntity toJSONEntity(Entity entity)
             {
-                var entityType = builtinEntityTypes.TryGetValue(entity.EntityType, out var builtinType)
+                var entityType = prebuiltEntityTypes.TryGetValue(entity.EntityType, out var builtinType)
                     ? builtinType
                     : entity.EntityType;
                 var startPos = entity.StartCharIndexInText(utterance.Text);

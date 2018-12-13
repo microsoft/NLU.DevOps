@@ -206,7 +206,7 @@ namespace NLU.DevOps.Luis
             // Add utterances to model
             luisApp.Utterances = luisApp.Utterances ?? new List<JSONUtterance>();
             utterances
-                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings.BuiltinEntityTypes))
+                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings.PrebuiltEntityTypes))
                 .ToList()
                 .ForEach(luisApp.Utterances.Add);
 
@@ -266,7 +266,7 @@ namespace NLU.DevOps.Luis
                 return new Models.LabeledUtterance(null, null, null);
             }
 
-            var mappedTypes = this.LuisSettings.BuiltinEntityTypes
+            var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
                 .ToDictionary(pair => $"builtin.{pair.Value}", pair => pair.Key);
 
             Entity getEntity(EntityModel entity)

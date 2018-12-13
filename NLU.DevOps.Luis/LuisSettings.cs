@@ -32,9 +32,9 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisSettings"/> class.
         /// </summary>
-        /// <param name="builtinEntityTypes">Builtin entity types.</param>
-        public LuisSettings(IReadOnlyDictionary<string, string> builtinEntityTypes)
-            : this(null, builtinEntityTypes)
+        /// <param name="prebuiltEntityTypes">Prebuilt entity types.</param>
+        public LuisSettings(IReadOnlyDictionary<string, string> prebuiltEntityTypes)
+            : this(null, prebuiltEntityTypes)
         {
         }
 
@@ -42,12 +42,12 @@ namespace NLU.DevOps.Luis
         /// Initializes a new instance of the <see cref="LuisSettings"/> class.
         /// </summary>
         /// <param name="appTemplate">App template.</param>
-        /// <param name="builtinEntityTypes">Builtin entity types.</param>
+        /// <param name="prebuiltEntityTypes">Prebuilt entity types.</param>
         [JsonConstructor]
-        public LuisSettings(LuisApp appTemplate, IReadOnlyDictionary<string, string> builtinEntityTypes)
+        public LuisSettings(LuisApp appTemplate, IReadOnlyDictionary<string, string> prebuiltEntityTypes)
         {
             this.AppTemplate = appTemplate ?? new LuisApp();
-            this.BuiltinEntityTypes = builtinEntityTypes ?? new Dictionary<string, string>();
+            this.PrebuiltEntityTypes = prebuiltEntityTypes ?? new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -56,8 +56,8 @@ namespace NLU.DevOps.Luis
         public LuisApp AppTemplate { get; }
 
         /// <summary>
-        /// Gets the builtin entity types.
+        /// Gets the prebuilt entity type mappings.
         /// </summary>
-        public IReadOnlyDictionary<string, string> BuiltinEntityTypes { get; }
+        public IReadOnlyDictionary<string, string> PrebuiltEntityTypes { get; }
     }
 }

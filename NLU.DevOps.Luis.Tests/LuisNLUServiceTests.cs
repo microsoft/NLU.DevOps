@@ -379,7 +379,7 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
-        public static async Task TestWithBuiltinEntity()
+        public static async Task TestWithPrebuiltEntity()
         {
             var test = "the quick brown fox jumped over the lazy dog";
             var builtinType = Guid.NewGuid().ToString();
@@ -408,14 +408,14 @@ namespace NLU.DevOps.Luis.Tests
                 return null;
             };
 
-            var builtinEntityTypes = new Dictionary<string, string>
+            var prebuiltEntityTypes = new Dictionary<string, string>
             {
                 { "type", "test" },
             };
 
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
-            builder.LuisSettings = new LuisSettings(builtinEntityTypes);
+            builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
@@ -583,12 +583,12 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
-        public static async Task TagsBuiltinEntityWithReplacementName()
+        public static async Task TagsPrebuiltEntityWithReplacementName()
         {
             var text = Guid.NewGuid().ToString();
             var entityTypeName1 = Guid.NewGuid().ToString();
             var entityTypeName2 = Guid.NewGuid().ToString();
-            var builtinEntityTypes = new Dictionary<string, string>
+            var prebuiltEntityTypes = new Dictionary<string, string>
             {
                 { entityTypeName1, entityTypeName2 },
             };
@@ -596,7 +596,7 @@ namespace NLU.DevOps.Luis.Tests
             var mockClient = new MockLuisClient();
             var builder = GetTestLuisBuilder();
             builder.LuisClient = mockClient;
-            builder.LuisSettings = new LuisSettings(builtinEntityTypes);
+            builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
 
             using (var luis = builder.Build())
             {
