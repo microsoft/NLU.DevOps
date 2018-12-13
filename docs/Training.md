@@ -126,7 +126,7 @@ In this case, you must supply the `settings.luis.json` file that configures the 
 
 The `settings.luis.json` file in this case will be merged into the generated LUIS app JSON that will be imported into the version created by the train command, so the entity type for genre will use the builtin domain entity type, `Music.Genre`.
 
-See [LUIS App Configuration](TODO) and [Lex App Configuration](TODO) for additional information on the kinds of settings, including entity types, that are supplied through this file.
+See [LUIS App Configuration](LuisSettings.md) and [Lex App Configuration](TODO) for additional information on the kinds of settings, including entity types, that are supplied through this file.
 
 ### `-c, --overwrite-config`
 
