@@ -4,11 +4,11 @@ The `train` and `test` sub-commands in the NLU.DevOps CLI tool both accept an `-
 
 The `--extra-settings` for LUIS is a JSON object with two properties,  `appTemplate` and `prebuiltEntityTypes`. The former allows you to specify a partial LUIS import JSON with identical schema to the [LUIS import JSON schema](https://westus.dev.cognitive.microsoft.com/docs/services/5890b47c39e2bb17b84a55ff/operations/5890b47c39e2bb052c5b9c31). The latter refers to mappings from the from user supplied names for entity types to LUIS prebuilt entity type names.
 
-## Configuring LUIS entity types
+## Configuring LUIS entities
 
 ### Closed lists
 
-To configure an entity type as a closed list from LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra--settings) file supplied to the `train` command):
+To configure an entity type as a closed list from LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra-settings) file supplied to the `train` command):
 ```json
 {
   "appTemplate": {
@@ -37,7 +37,7 @@ To configure an entity type as a closed list from LUIS, add the following to the
 
 ### Prebuilt domain entities
 
-To configure an entity type as a prebuilt domain entity from LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra--settings) file supplied to the `train` command):
+To configure an entity type as a prebuilt domain entity from LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra-settings) file supplied to the `train` command):
 ```json
 {
   "appTemplate": {
@@ -56,7 +56,7 @@ To configure an entity type as a prebuilt domain entity from LUIS, add the follo
 
 ### Entities with phrase lists
 
-An alternative to closed lists for specifying entity types is to create a "simple" entity (i.e., an item in the `entities` property of the LUIS app JSON), and configure a phrase list that captures an non-exhaustive list of valid matches. To achieve this, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra--settings) file supplied to the `train` command):
+An alternative to closed lists for specifying entity types is to create a "simple" entity (i.e., an item in the `entities` property of the LUIS app JSON), and configure a phrase list that captures an non-exhaustive list of valid matches. To achieve this, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra-settings) file supplied to the `train` command):
 ```json
 {
   "appTemplate": {
@@ -77,7 +77,7 @@ An alternative to closed lists for specifying entity types is to create a "simpl
 }
 ```
 
-### Configuring prebuilt entity types
+### Configuring prebuilt entities
 
 Prebuilt entity types in LUIS are handled in a slightly different way than other entity types. Specifically, users cannot supply a custom name for prebuilt entity types, and the `type` label for recognized prebuilt entities in LUIS is prefixed with `builtin.`. E.g., if you add the `personName` prebuilt entity to a LUIS app, labeled entities returned from the service will have type `builtin.personName`. The expectation of the [utterances model](GenericUtterances.md) is that users supply their own name for all entity types, including those that will be configured as prebuilt entity types on LUIS. To overcome the limitation on LUIS, we've added a settings property called `prebuiltEntityTypes`. This property includes all mappings from user supplied names for entity types to the LUIS prebuilt entity type name.
 
@@ -120,7 +120,7 @@ E.g., for the following training utterances:
 ]
 ```
 
-To configure the `Recipient` entity type as a LUIS prebuilt entity, the [`--extra-settings`](Training.md#-e---extra--settings) file supplied to the `train` command should look like:
+To configure the `Recipient` entity type as a LUIS prebuilt entity, the [`--extra-settings`](Training.md#-e---extra-settings) file supplied to the `train` command should look like:
 ```json
 {
   "builtinEntityTypes": {
@@ -136,11 +136,11 @@ To configure the `Recipient` entity type as a LUIS prebuilt entity, the [`--extr
 }
 ```
 
-During testing, to ensure that the entity types returned from LUIS are remapped back to the user-supplied entity type name, you must also supply the LUIS settings file above to the `test` command via the [`--extra-settings`](Testing.md#-e---extra--settings) option.
+During testing, to ensure that the entity types returned from LUIS are remapped back to the user-supplied entity type name, you must also supply the LUIS settings file above to the `test` command via the [`--extra-settings`](Testing.md#-e---extra-settings) option.
 
 ## Configuring builtin intents
 
-To configure a builtin intent LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra--settings) file supplied to the `train` command):
+To configure a builtin intent for LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--extra-settings`](Training.md#-e---extra-settings) file supplied to the `train` command):
 ```json
 {
   "appTemplate": {
@@ -171,9 +171,9 @@ Note that for LUIS, you will also need to include at least one utterance for eac
 ### `prebuiltEntityTypes`
 (Optional) The mapping from user-supplied entity type names to LUIS prebuilt entity names.
 
-See [Configuring prebuilt entity types](#configuring-prebuilt-entity-types) for more information.
+See [Configuring prebuilt entities](#configuring-prebuilt-entities) for more information.
 
 ### `appTemplate`
-(Optional) The partial LUIS import JSON that will be used 
+(Optional) The partial LUIS import JSON that will be merged into the model before importing. 
 
-Note, if you plan to train and test with entities, you must supply entity type configurations through this property. See [Configuring LUIS entity types](#configuring-luis-entity-types) for more information.
+Note, if you plan to train and test with entities, you must supply entity type configurations through this property. See [Configuring LUIS entities](#configuring-luis-entities) for more information.
