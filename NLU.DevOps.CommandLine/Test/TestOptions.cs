@@ -14,11 +14,11 @@ namespace NLU.DevOps.CommandLine.Test
         [Option('e', "extra-settings", HelpText = "Path to NLU service settings.", Required = false)]
         public string SettingsPath { get; set; }
 
-        [Option("speech", HelpText = "Test using speech, must specify --directory.", Required = false)]
+        [Option("speech", HelpText = "Test using speech files.", Required = false)]
         public bool Speech { get; set; }
 
-        [Option('d', "directory", HelpText = "Path to recordings directory.", Required = false)]
-        public string RecordingsDirectory { get; set; }
+        [Option('d', "speech-directory", HelpText = "Path to recordings directory.", Required = false)]
+        public string SpeechFilesDirectory { get; set; }
 
         [Option('t', "transcriptions", HelpText = "Path to input transcriptions cache.", Required = false)]
         public string TranscriptionsFile { get; set; }

@@ -46,15 +46,10 @@ namespace NLU.DevOps.CommandLine.Test
         {
             this.Log("Running tests against NLU service...");
 
-            if (this.Options.Speech && this.Options.RecordingsDirectory == null)
+            var testUtterances = Read<List<LabeledUtteranceWithSpeechFile>>(this.Options.UtterancesPath);
+            if (this.Options.Speech && testUtterances.Any(utterance => utterance.SpeechFile == null))
             {
-                throw new InvalidOperationException("Must specify --directory when using --speech.");
-            }
-
-            var testUtterances = Read<List<LabeledUtteranceWithRecordingId>>(this.Options.UtterancesPath);
-            if (this.Options.Speech && testUtterances.Any(utterance => utterance.RecordingId == null))
-            {
-                throw new InvalidOperationException("Test utterances must have 'recordingID' when using --speech.");
+                throw new InvalidOperationException("Test utterances must have 'speechFile' when using --speech.");
             }
 
             var testResults = this.Options.Speech
@@ -84,19 +79,22 @@ namespace NLU.DevOps.CommandLine.Test
             return this.NLUService.TestAsync(utterance.Text);
         }
 
-        private async Task<LabeledUtterance> TestSpeechAsync(LabeledUtteranceWithRecordingId utterance)
+        private async Task<LabeledUtterance> TestSpeechAsync(LabeledUtteranceWithSpeechFile utterance)
         {
             var text = default(string);
-            if (this.Transcriptions?.TryGetValue(utterance.RecordingId, out text) ?? false)
+            if (this.Transcriptions?.TryGetValue(utterance.SpeechFile, out text) ?? false)
             {
                 return await this.NLUService.TestAsync(text).ConfigureAwait(false);
             }
 
-            var speechFile = Path.Combine(this.Options.RecordingsDirectory, $"{utterance.RecordingId}.wav");
+            var speechFile = this.Options.SpeechFilesDirectory != null
+                ? Path.Combine(this.Options.SpeechFilesDirectory, utterance.SpeechFile)
+                : utterance.SpeechFile;
+
             var result = await this.NLUService.TestSpeechAsync(speechFile).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(result.Text))
             {
-                this.Transcriptions?.Add(utterance.RecordingId, result.Text);
+                this.Transcriptions?.Add(utterance.SpeechFile, result.Text);
             }
 
             return result;
@@ -125,15 +123,15 @@ namespace NLU.DevOps.CommandLine.Test
             }
         }
 
-        private class LabeledUtteranceWithRecordingId : LabeledUtterance
+        private class LabeledUtteranceWithSpeechFile : LabeledUtterance
         {
-            public LabeledUtteranceWithRecordingId(string text, string intent, string recordingId, IReadOnlyList<Entity> entities)
+            public LabeledUtteranceWithSpeechFile(string text, string intent, string speechFile, IReadOnlyList<Entity> entities)
                 : base(text, intent, entities)
             {
-                this.RecordingId = recordingId;
+                this.SpeechFile = speechFile;
             }
 
-            public string RecordingId { get; }
+            public string SpeechFile { get; }
         }
     }
 }
