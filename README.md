@@ -18,17 +18,16 @@ This will install the CLI tool to your default .NET Core tools path. See the [do
 The service by default supports training and testing NLU models against [LUIS](https://www.luis.ai) and [Lex](https://aws.amazon.com/lex/).
 
 Detailed information on the CLI tool sub-commands and arguments can be found in the [docs](docs) folder:
-- [Training an NLU service](docs/Training.md)
-- [Testing an NLU service](docs/Testing.md)
+- [Training an NLU service](docs/Train.md)
+- [Testing an NLU service](docs/Test.md)
 - [Tearing down an NLU service](docs/Clean.md)
 - [Analyzing NLU service results](docs/Compare.md)
-- [Generic Utterances Model](docs/GenericUtterances.md)
-- [LUIS App Configuration](docs/LuisSettings.md)
-- [Lex App Configuration](docs/LexSettings.md)
+- [Generic utterances model](docs/GenericUtterances.md)
+- [LUIS app configuration](docs/LuisSettings.md)
+- [Lex bot configuration](docs/LexSettings.md)
+- [Configuring LUIS secrets](docs/LuisSecrets.md)
 
 ## Contributing
-
-See [docs](docs)
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us

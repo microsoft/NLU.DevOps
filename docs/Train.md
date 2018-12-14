@@ -41,7 +41,7 @@ The `utterances.json` argument is the path to the generic utterances file, which
 
 See [Generic Utterances Model](GenericUtterances.md) for more information on the JSON schema for utterances.
 
-See [LUIS Key Configuration](TODO) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
+See [LUIS Key Configuration](LuisSecrets.md) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
 
 ## Detailed Usage
 
@@ -51,7 +51,7 @@ Identifier of the NLU service to run against. Try `luis` for [LUIS](https://www.
 ### `-u, --utterances`
 (Optional) Path to labeled utterances to include in the model.
 
-### `-e, --extra-settings`
+### `-e, --service-settings`
 (Optional) Path to NLU service-specific settings.
 
 E.g., run the following command:
@@ -128,17 +128,17 @@ The `settings.luis.json` file in this case will be merged into the generated LUI
 
 See [LUIS App Configuration](LuisSettings.md) and [Lex App Configuration](LexSettings.md) for additional information on the kinds of settings, including entity types, that are supplied through this file.
 
-### `-c, --overwrite-config`
+### `-a, --save-appsettings`
 
-(Optional) Output additional app settings for resources that were created by the train command for use in subsequent commands.
+(Optional) Output additional appsettings for resources that were created by the train command for use in subsequent commands.
 
-The `--overwrite-config` option is useful when you will be running test commands after training. For example, running:
+The `--save-appsettings` option is useful when you will be running test commands after training. For example, running:
 ```bash
-dotnet nlu train -s luis -u utterances.json -c
+dotnet nlu train -s luis -u utterances.json -a
 dotnet nlu test -s luis -u tests.json
 ```
 
-The train command may create a new LUIS application, and the subsequent call to `dotnet nlu test` will need to know the LUIS app ID that was created in the first call. Using the `-c` option with LUIS, for example, will output a file in the current working directory called `appsettings.luis.json`, with the following settings:
+The train command may create a new LUIS application, and the subsequent call to `dotnet nlu test` will need to know the LUIS app ID that was created in the first call. Using the `-a` option with LUIS, for example, will output a file in the current working directory called `appsettings.luis.json`, with the following settings:
 ```json
 {
   "luisAppId": "<guid>",
@@ -146,4 +146,4 @@ The train command may create a new LUIS application, and the subsequent call to 
 }
 ```
 
-See [Testing NLU Services](Testing.md) for more information about the test command.
+See [Testing NLU Services](Test.md) for more information about the test command.
