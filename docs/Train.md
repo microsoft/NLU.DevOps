@@ -41,7 +41,7 @@ The `utterances.json` argument is the path to the generic utterances file, which
 
 See [Generic Utterances Model](GenericUtterances.md) for more information on the JSON schema for utterances.
 
-See [LUIS Key Configuration](LuisSecrets.md) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
+See [Configuring LUIS secrets](LuisSecrets.md) and [Configuring Lex secrets](LexSecrets.md) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
 
 ## Detailed Usage
 

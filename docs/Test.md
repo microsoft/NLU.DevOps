@@ -72,7 +72,7 @@ The resulting output will be a JSON array in the generic utterances format, with
 
 See [Generic Utterances Model](GenericUtterances.md) for more information on the JSON schema for utterances.
 
-See [LUIS Key Configuration](TODO) and [Lex Key Configuration](TODO) for more information on how to supply secrets, e.g., the endpoint key, to the CLI tool.
+See [Configuring LUIS secrets](LuisSecrets.md) and [Configuring Lex secrets](LexSecrets.md) for more information on how to supply secrets, e.g., the endpoint key, to the CLI tool.
 
 ## Getting started with speech
 
@@ -98,7 +98,7 @@ dotnet nlu test -s luis --speech -u utterances.json
 
 You do not need to train your NLU service with the NLU.DevOps CLI tool in order to test it with the tool. You can just as easily point the tool at existing trained models, e.g., on LUIS or Lex without training from the CLI tool.
 
-See [LUIS Key Configuration](LuisSecrets.md) and [Lex Key Configuration](TODO) for more information on how to point to an existing service, e.g., with a LUIS app ID.
+See [Configuring LUIS secrets](LuisSecrets.md) and [Configuring Lex secrets](LexSecrets.md) for more information on how to point to an existing service, e.g., with a LUIS app ID.
 
 ## Caching speech-to-text transcriptions
 
