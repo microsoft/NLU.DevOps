@@ -10,11 +10,11 @@ dotnet nlu compare -e utterances.json -a results.json
 ```
 
 The `utterances.json` argument is the path to the "expected" utterances file, usually the file path you supplied to the `test` command. The `results.json` is the path to the 
-to the output utterances from a `test` command (see [Testing an NLU service](Testing.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` command as you supplied to `test`.
+to the output utterances from a `test` command (see [Testing an NLU service](Test.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` command as you supplied to `test`.
 
 The `compare` sub-command will generate sensitivity and specifity test results for the text, intents, and entities in the two files. I.e., it will identify true positives, true negatives, false positives, and false negatives for text, intents, entities and entity values.
 
-For example, if you use the training cases supplied in [Training an NLU service](Training.md#getting-started) and the test cases supplied in [Testing an NLU Service](Testing.md#getting-started) on LUIS, you will recall that we had one resulting intent that was incorrectly labeled with the "None" intent. In this case, the `compare` command will generate passing tests (either true positive or true negative) for all text, intents, and entities, except for the one mismatched case. The mismatched case will generate a single failing test result, labeled as a false negative intent. Here is the specific output:
+For example, if you use the training cases supplied in [Training an NLU service](Train.md#getting-started) and the test cases supplied in [Testing an NLU Service](Test.md#getting-started) on LUIS, you will recall that we had one resulting intent that was incorrectly labeled with the "None" intent. In this case, the `compare` command will generate passing tests (either true positive or true negative) for all text, intents, and entities, except for the one mismatched case. The mismatched case will generate a single failing test result, labeled as a false negative intent. Here is the specific output:
 ```bash
 Test Discovery
   Start time: 2018-12-12 21:51:23Z
@@ -63,7 +63,7 @@ Usually, this is the same file you supplied to the `test` command.
 ### `-a, --actual`
 The path to the result utterances from the `test` command.
 
-Be sure to use the [`--output`](Testing.md#-o---output) option when running the `test` command.
+Be sure to use the [`--output`](Test.md#-o---output) option when running the `test` command.
 
 ### `-o, --output-folder`
 (Optional) The path to write the NUnit test results.

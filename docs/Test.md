@@ -39,7 +39,7 @@ The `utterances.json` argument is the path to the generic utterances file, which
 ]
 ```
 
-The resulting output will be a JSON array in the generic utterances format, with the intents and entities labeled by the NLU service. E.g., after training a LUIS service from [Getting Started section in Training NLU Services](Training.md#getting-started), testing with the example utterances above will output the following results:
+The resulting output will be a JSON array in the generic utterances format, with the intents and entities labeled by the NLU service. E.g., after training a LUIS service from [Getting Started section in Training NLU Services](Train.md#getting-started), testing with the example utterances above will output the following results:
 
 ```json
 [
@@ -98,7 +98,7 @@ dotnet nlu test -s luis --speech -u utterances.json
 
 You do not need to train your NLU service with the NLU.DevOps CLI tool in order to test it with the tool. You can just as easily point the tool at existing trained models, e.g., on LUIS or Lex without training from the CLI tool.
 
-See [LUIS Key Configuration](TODO) and [Lex Key Configuration](TODO) for more information on how to point to an existing service, e.g., with a LUIS app ID.
+See [LUIS Key Configuration](LuisSecrets.md) and [Lex Key Configuration](TODO) for more information on how to point to an existing service, e.g., with a LUIS app ID.
 
 ## Caching speech-to-text transcriptions
 
@@ -148,7 +148,7 @@ See [Getting started with speech](#getting-started-with-speech).
 
 See [Caching speech-to-text transcriptions](#caching-speech-to-text-transcriptions).
 
-### `-e, --extra-settings`
+### `-e, --service-settings`
 (Optional) Path to NLU service-specific settings.
 
 This is currently only used for LUIS, see the section on LUIS prebuilt entities in [Configuring prebuilt entities](LuisSettings.md#configuring-prebuilt-entities).
