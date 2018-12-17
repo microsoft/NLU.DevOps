@@ -1,0 +1,100 @@
+steps:
+- task: DotNetCoreCLI@2
+  displayName: Install dotnet-nlu
+  inputs:
+    command: custom
+    custom: tool
+    arguments: install dotnet-nlu --tool-path $(Agent.TempDirectory)/bin
+
+- bash: echo "##vso[task.prependpath]$(Agent.TempDirectory)/bin"
+  displayName: Prepend .NET Core CLI tool path
+
+- task: DotNetCoreCLI@2
+  displayName: Train the NLU service
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: train
+      --service $(nlu.service)
+      --utterances utterances.json
+      --service-settings settings.$(nlu.service).json
+      --save-appsettings
+
+- task: DotNetCoreCLI@2
+  displayName: Test the NLU service with text
+  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: test
+      --service $(nlu.service)
+      --utterances tests.json
+      --service-settings settings.$(nlu.service).json
+      --output results.json
+
+- task: DotNetCoreCLI@2
+  displayName: Cleanup the NLU service
+  condition: and(always(), ne(variables['nlu.ci'], 'false'))
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: clean
+      --service $(nlu.service)
+      --delete-appsettings
+
+- task: DotNetCoreCLI@2
+  displayName: Compare the NLU results
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: compare
+      --expected tests.json
+      --actual results.json
+      --output-folder $(Build.ArtifactStagingDirectory)
+
+- task: DotNetCoreCLI@2
+  displayName: Uninstall dotnet-nlu
+  inputs:
+    command: custom
+    custom: tool
+    arguments: uninstall dotnet-nlu --tool-path $(Agent.TempDirectory)/bin
+
+- task: PublishTestResults@2
+  displayName: Publish test results
+  inputs:
+    testResultsFormat: NUnit
+    testResultsFiles: $(Build.ArtifactStagingDirectory)/TestResults.xml
+
+- task: PublishBuildArtifacts@1
+  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: Publish build artifacts
+  inputs:
+    pathToPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: drop
+    artifactType: container
+
+- task: DownloadBuildArtifacts@0
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  displayName: Download test results from master
+  inputs:
+    buildType: specific
+    project: $(System.TeamProject)
+    pipeline: $(Build.DefinitionName)
+    buildVersionToDownload: latestFromBranch
+    branchName: refs/heads/master
+    downloadType: single
+    artifactName: drop
+    downloadPath: $(Agent.TempDirectory)
+
+- task: UsePythonVersion@0
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  displayName: Set correct Python version
+  inputs:
+    versionSpec: '>= 3.5'   
+
+- task: PythonScript@0
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  displayName: Check for performance regression
+  inputs:
+    scriptPath: compare.py
+    arguments: $(Agent.TempDirectory)/drop/TestResults.xml $(Build.ArtifactStagingDirectory)/TestResult.xml
