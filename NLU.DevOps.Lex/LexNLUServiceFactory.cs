@@ -20,7 +20,7 @@ namespace NLU.DevOps.Lex
     [Export("lex", typeof(INLUServiceFactory))]
     public class LexNLUServiceFactory : INLUServiceFactory
     {
-        private const string LexPrefixConfigurationKey = "lexPrefix";
+        private const string LexBotNamePrefixConfigurationKey = "lexBotNamePrefix";
         private const string LexAccessKeyConfigurationKey = "awsAccessKey";
         private const string LexSecretKeyConfigurationKey = "awsSecretKey";
         private const string LexSecretKeyBase64ConfigurationKey = "awsSecretKeyBase64";
@@ -45,7 +45,7 @@ namespace NLU.DevOps.Lex
             }
 
             var userDefinedName = configuration[LexBotNameConfigurationKey];
-            var botName = userDefinedName ?? GetRandomName(configuration[LexPrefixConfigurationKey]);
+            var botName = userDefinedName ?? GetRandomName(configuration[LexBotNamePrefixConfigurationKey]);
             var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
             var lexSettings = settingsPath != null
                 ? JsonConvert.DeserializeObject<LexSettings>(File.ReadAllText(settingsPath))

@@ -35,7 +35,7 @@ namespace NLU.DevOps.CommandLine.Train
 
                 if (this.Options.UtterancesPath == null && this.Options.SettingsPath == null)
                 {
-                    throw new InvalidOperationException("Must specify either --utterances or --extra-settings when using train.");
+                    throw new InvalidOperationException("Must specify either --utterances or --service-settings when using train.");
                 }
 
                 var trainingUtterances = this.Options.UtterancesPath != null
@@ -45,7 +45,7 @@ namespace NLU.DevOps.CommandLine.Train
             }
             finally
             {
-                if (this.Options.WriteConfig)
+                if (this.Options.SaveAppSettings)
                 {
                     Write($"appsettings.{this.Options.Service}.json", this.NLUService);
                 }

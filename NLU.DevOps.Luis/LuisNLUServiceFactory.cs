@@ -17,7 +17,7 @@ namespace NLU.DevOps.Luis
     [Export("luis", typeof(INLUServiceFactory))]
     public class LuisNLUServiceFactory : INLUServiceFactory
     {
-        private const string LuisPrefixConfigurationKey = "luisPrefix";
+        private const string LuisAppNamePrefixConfigurationKey = "luisAppNamePrefix";
         private const string LuisAuthoringKeyConfigurationKey = "luisAuthoringKey";
         private const string LuisEndpointKeyConfigurationKey = "luisEndpointKey";
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
@@ -25,11 +25,11 @@ namespace NLU.DevOps.Luis
         private const string LuisSpeechKeyConfigurationKey = "luisSpeechKey";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
         private const string LuisAppNameConfigurationKey = "luisAppName";
+        private const string LuisVersionIdConfigurationKey = "luisVersionId";
 
         private const string BuildIdConfigurationKey = "BUILD_BUILDID";
 
         private static readonly string LuisAppIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisAppId));
-        private static readonly string LuisVersionIdConfigurationKey = CamelCase(nameof(LuisNLUService.LuisVersionId));
 
         /// <inheritdoc/>
         public INLUService CreateInstance(IConfiguration configuration, string settingsPath)
@@ -40,7 +40,7 @@ namespace NLU.DevOps.Luis
             }
 
             var userDefinedName = configuration[LuisAppNameConfigurationKey];
-            var appName = userDefinedName ?? GetRandomName(configuration[LuisPrefixConfigurationKey]);
+            var appName = userDefinedName ?? GetRandomName(configuration[LuisAppNamePrefixConfigurationKey]);
 
             var isStagingString = configuration[LuisIsStagingConfigurationKey];
             var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;

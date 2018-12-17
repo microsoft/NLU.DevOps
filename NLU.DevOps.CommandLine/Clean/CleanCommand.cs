@@ -26,7 +26,7 @@ namespace NLU.DevOps.CommandLine.Clean
             this.Log("Cleaning NLU service...");
             await this.NLUService.CleanupAsync().ConfigureAwait(false);
 
-            if (this.Options.DeleteConfig)
+            if (this.Options.DeleteAppSettings)
             {
                 File.Delete($"appsettings.{this.Options.Service}.json");
             }

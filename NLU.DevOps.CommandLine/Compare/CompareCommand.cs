@@ -23,7 +23,10 @@ namespace NLU.DevOps.CommandLine.Compare
                 arguments.Add($"--work={options.OutputFolder}");
             }
 
-            return new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
+            new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
+
+            // We don't care if there are any failing NUnit tests
+            return 0;
         }
 
         private static string CreateParameters(params (string, string)[] parameters)

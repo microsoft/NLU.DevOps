@@ -11,10 +11,10 @@ namespace NLU.DevOps.CommandLine.Train
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = false)]
         public string UtterancesPath { get; set; }
 
-        [Option('e', "extra-settings", HelpText = "Path to NLU service settings.", Required = false)]
+        [Option('e', "service-settings", HelpText = "Path to NLU service settings.", Required = false)]
         public string SettingsPath { get; set; }
 
-        [Option('c', "overwrite-config", HelpText = "Flag to (over)write NLU service configuration.", Required = false)]
-        public bool WriteConfig { get; set; }
+        [Option('a', "save-appsettings", HelpText = "Flag to save NLU service instance appsettings.", Required = false)]
+        public bool SaveAppSettings { get; set; }
     }
 }

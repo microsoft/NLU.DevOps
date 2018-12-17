@@ -50,16 +50,13 @@ namespace NLU.DevOps.Luis
         /// </summary>
         public string LuisAppId { get; private set; }
 
-        /// <summary>
-        /// Gets the LUIS version ID.
-        /// </summary>
-        public string LuisVersionId { get; }
-
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUService>());
 
         private string AppName { get; }
+
+        private string LuisVersionId { get; }
 
         private LuisSettings LuisSettings { get; }
 
