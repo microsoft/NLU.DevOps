@@ -1,0 +1,19 @@
+theme: jekyll-theme-cayman
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+include:
+  - README.md
+  - docs/GenericUtterances.md
+  - docs/Train.md
+  - docs/Test.md
+  - docs/Clean.md
+  - docs/Compare.md
+  - docs/LuisSettings.md
+  - docs/LuisSecrets.md
+  - docs/LexSettings.md
+  - docs/LexSecrets.md
+  - docs/AzurePipelines.md
+  - docs/CliExtensions.md
