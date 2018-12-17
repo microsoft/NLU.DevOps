@@ -1,0 +1,44 @@
+[
+  {
+    "text": "play a song",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play a country song",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "is it cold outside",
+    "intent": "None"
+  },
+  {
+    "text": "what time is it",
+    "intent": "None"
+  },
+  {
+    "text": "call the pizza place",
+    "intent": "None"
+  }
+]
