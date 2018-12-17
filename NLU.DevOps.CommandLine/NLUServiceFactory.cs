@@ -55,7 +55,7 @@ namespace NLU.DevOps.CommandLine
                 return Directory.GetFiles(searchRoot, $"{assemblyName}.dll", SearchOption.AllDirectories).FirstOrDefault();
             }
 
-            var assemblyPath = options.ServiceAssemblyPath ?? getAssemblyPath();
+            var assemblyPath = options.IncludePath ?? getAssemblyPath();
             if (assemblyPath == null)
             {
                 serviceFactory = null;
