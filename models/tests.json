@@ -1,0 +1,45 @@
+[
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None"
+  }
+]

@@ -27,6 +27,7 @@ Detailed information on the CLI tool sub-commands and arguments can be found in 
 - [Configuring LUIS secrets](docs/LuisSecrets.md)
 - [Lex bot configuration](docs/LexSettings.md)
 - [Configuring Lex secrets](docs/LexSecrets.md)
+- [Configuring NLU CI/CD with Azure Pipelines](docs/AzurePipelines.md)
 
 ## Contributing
 
