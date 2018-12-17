@@ -17,6 +17,7 @@ Be sure to replace `demo` with the service identifier you plan to use for your N
 ```bash
 cd dotnet-nlu-demo
 dotnet add package NLU.DevOps.Models
+dotnet add package NLU.DevOps.Core
 dotnet add package System.Composition.AttributedModel
 ```
 
