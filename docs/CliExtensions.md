@@ -16,7 +16,7 @@ Be sure to replace `demo` with the service identifier you plan to use for your N
 ### 2. Add required dependencies:
 ```bash
 cd dotnet-nlu-demo
-dotnet add package NLU.DevOps.Models
+dotnet add package Newtonsoft.Json
 dotnet add package NLU.DevOps.Core
 dotnet add package System.Composition.AttributedModel
 ```
@@ -120,9 +120,9 @@ Build your .NET Core project:
 dotnet build
 ```
 
-When you want to run an NLU.DevOps CLI command, add the `--include` option to your build output folder. E.g.:
+When you want to run an NLU.DevOps CLI command, add the `--include` option with the path to your assembly:
 ```bash
-dotnet nlu train --service demo --utterances utterances --include ./bin
+dotnet nlu train --service demo --utterances utterances --include ./bin/Debug/netcoreapp2.1/dotnet-nlu-demo.dll
 ```
 
 These commands assume you are currently in the `dotnet-nlu-demo` project folder.
