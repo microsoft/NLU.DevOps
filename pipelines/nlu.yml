@@ -1,3 +1,13 @@
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /pipelines/nlu.yml
+    - /models
+    - /src
+  
 steps:
 - task: DotNetCoreCLI@2
   displayName: Install dotnet-nlu
@@ -26,8 +36,8 @@ steps:
     custom: nlu
     arguments: train
       --service $(nlu.service)
-      --utterances utterances.json
-      --service-settings settings.$(nlu.service).json
+      --utterances models/utterances.json
+      --service-settings models/settings.$(nlu.service).json
       --save-appsettings
 
 - task: DotNetCoreCLI@2
@@ -38,9 +48,9 @@ steps:
     custom: nlu
     arguments: test
       --service $(nlu.service)
-      --utterances tests.json
-      --service-settings settings.$(nlu.service).json
-      --output results.json
+      --utterances models/tests.json
+      --service-settings models/settings.$(nlu.service).json
+      --output $(Agent.TempDirectory)/results.json
 
 - task: DotNetCoreCLI@2
   displayName: Cleanup the NLU service
@@ -58,8 +68,8 @@ steps:
     command: custom
     custom: nlu
     arguments: compare
-      --expected tests.json
-      --actual results.json
+      --expected models/tests.json
+      --actual $(Agent.TempDirectory)/results.json
       --output-folder $(Build.ArtifactStagingDirectory)
 
 - task: DotNetCoreCLI@2
