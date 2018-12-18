@@ -21,9 +21,10 @@ namespace NLU.DevOps.Luis
             string authoringRegion,
             string endpointKey,
             string endpointRegion,
+            AzureSubscriptionInfo azureSubscriptionInfo,
             string speechKey,
             bool isStaging)
-            : base(authoringKey, authoringRegion, endpointKey, endpointRegion, isStaging)
+            : base(authoringKey, authoringRegion, endpointKey, endpointRegion, azureSubscriptionInfo, isStaging)
         {
             this.SpeechKey = speechKey;
             this.SpeechEndpoint = string.Format(CultureInfo.InvariantCulture, SpeechEndpointTemplate, endpointRegion ?? authoringRegion, "en-US");

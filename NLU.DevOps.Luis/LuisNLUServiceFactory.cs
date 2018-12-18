@@ -25,6 +25,10 @@ namespace NLU.DevOps.Luis
         private const string LuisSpeechKeyConfigurationKey = "luisSpeechKey";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
         private const string LuisAppNameConfigurationKey = "luisAppName";
+        private const string ArmTokenConfigurationKey = "ARM_TOKEN";
+        private const string LuisSubscriptionIdConfigurationKey = "azureSubscriptionId";
+        private const string LuisResourceGroupConfigurationKey = "azureResourceGroup";
+        private const string LuisAzureAppNameConfigurationKey = "azureLuisResourceName";
         private const string LuisVersionIdConfigurationKey = "luisVersionId";
 
         private const string BuildIdConfigurationKey = "BUILD_BUILDID";
@@ -51,12 +55,18 @@ namespace NLU.DevOps.Luis
 
             var luisSpeechKey = configuration[LuisSpeechKeyConfigurationKey];
 
+            var azureSubscriptionInfo = AzureSubscriptionInfo.Create(
+                configuration[LuisSubscriptionIdConfigurationKey],
+                configuration[LuisResourceGroupConfigurationKey],
+                configuration[LuisAzureAppNameConfigurationKey],
+                configuration[ArmTokenConfigurationKey]);
             var luisClient = luisSpeechKey != null
                 ? new RestSpeechLuisClient(
                     configuration[LuisAuthoringKeyConfigurationKey],
                     configuration[LuisAuthoringRegionConfigurationKey],
                     configuration[LuisEndpointKeyConfigurationKey],
                     configuration[LuisEndpointRegionConfigurationKey],
+                    azureSubscriptionInfo,
                     luisSpeechKey,
                     isStaging)
                 : new LuisClient(
@@ -64,6 +74,7 @@ namespace NLU.DevOps.Luis
                     configuration[LuisAuthoringRegionConfigurationKey],
                     configuration[LuisEndpointKeyConfigurationKey],
                     configuration[LuisEndpointRegionConfigurationKey],
+                    azureSubscriptionInfo,
                     isStaging);
 
             return new LuisNLUService(

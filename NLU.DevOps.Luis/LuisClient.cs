@@ -5,6 +5,9 @@ namespace NLU.DevOps.Luis
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
+    using System.Net.Http;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
@@ -30,12 +33,16 @@ namespace NLU.DevOps.Luis
             string authoringRegion,
             string endpointKey,
             string endpointRegion,
+            AzureSubscriptionInfo azureSubscriptionInfo,
             bool isStaging)
         {
             this.IsStaging = isStaging;
 
             var endpointOrAuthoringKey = endpointKey ?? authoringKey ?? throw new ArgumentException($"Must specify either '{nameof(authoringKey)}' or '{nameof(endpointKey)}'.");
             this.EndpointRegion = endpointRegion ?? authoringRegion ?? throw new ArgumentException($"Must specify either '{nameof(authoringRegion)}' or '{nameof(endpointRegion)}'.");
+            this.AzureSubscriptionInfo = azureSubscriptionInfo;
+            this.AuthoringKey = authoringKey;
+
             var endpointCredentials = new Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.ApiKeyServiceClientCredentials(endpointOrAuthoringKey);
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
@@ -65,6 +72,10 @@ namespace NLU.DevOps.Luis
 
         private string EndpointRegion { get; }
 
+        private AzureSubscriptionInfo AzureSubscriptionInfo { get; }
+
+        private string AuthoringKey { get; }
+
         private bool IsStaging { get; }
 
         private LUISRuntimeClient RuntimeClient { get; }
@@ -83,7 +94,15 @@ namespace NLU.DevOps.Luis
                 Culture = "en-us",
             };
 
+            // Creating LUIS app.
             var appId = await this.AuthoringClient.Apps.AddAsync(request, cancellationToken).ConfigureAwait(false);
+
+            // Assign Azure resource to LUIS app.
+            if (this.AzureSubscriptionInfo != null)
+            {
+                await this.AssignAzureResourceAsync(appId).ConfigureAwait(false);
+            }
+
             return appId.ToString();
         }
 
@@ -182,6 +201,27 @@ namespace NLU.DevOps.Luis
                 {
                 }
             }
+        }
+
+        private async Task AssignAzureResourceAsync(Guid appId)
+        {
+            var jsonBody = JsonConvert.SerializeObject(this.AzureSubscriptionInfo);
+            var data = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            var url = $"{this.AuthoringClient.Endpoint}/luis/api/v2.0/apps/{appId}/azureaccounts";
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(url),
+                Headers =
+                {
+                    { HttpRequestHeader.Authorization.ToString(), $"Bearer {this.AzureSubscriptionInfo.ArmToken}" },
+                    { "Ocp-Apim-Subscription-Key", this.AuthoringKey }
+                },
+                Content = data,
+            };
+
+            var result = await this.AuthoringClient.HttpClient.SendAsync(request).ConfigureAwait(false);
+            result.EnsureSuccessStatusCode();
         }
     }
 }
