@@ -39,7 +39,7 @@ This will allow you to call the `test` sub-command for LUIS (see [Testing an NLU
 
 To simplify the configuration process in continuous integration scenarios, you can use the [`--save-appsettings`](Train.md#-a---save-appsettings) option to save the LUIS app ID generated from a previous call to `train` in a `appsettings.luis.json` file.
 
-Also note that the LUIS authoring key has a [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits) when used for query (up to 1,000 text queries/month and at most 5 requests/second). As such it is recommended that you suppy a [`luisEndpointKey`](#luisendpointkey) and [`luisEndpointRegion`](#luisendpointregion). You may not use the [`luisAuthoringKey`](#luisauthoringkey) for testing with the [`--speech`](Test.md#--speech) option, unless you also supply a [`speechKey`](#speechkey). 
+Also note that the LUIS authoring key has a [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits) when used for query (up to 1,000 text queries/month and at most 5 requests/second). As such it is recommended that you suppy a [`luisEndpointKey`](#luisendpointkey) and [`luisEndpointRegion`](#luisendpointregion). You may not use the [`luisAuthoringKey`](#luisauthoringkey) for testing with the [`--speech`](Test.md#--speech) option, unless you also supply a [`speechKey`](#speechkey). See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for details on how to avoid the quota.
 
 Options to consider for testing a LUIS model include:
 - [`luisAuthoringKey`](#luisauthoringkey)
@@ -48,6 +48,10 @@ Options to consider for testing a LUIS model include:
 - [`luisEndpointRegion`](#luisendpointregion)
 - [`speechKey`](#speechkey)
 - [`luisAppId`](#luisappid)
+- [`azureSubscriptionId`](#azuresubscriptionid)
+- [`azureResourceGroup`](#azureresourcegroup)
+- [`azureLuisResourceName`](#azureluisresourcename)
+- [`ARM_TOKEN`](#arm_token)
 
 ## Configuring secrets for clean
 
@@ -68,6 +72,28 @@ Options to consider for tearing down a LUIS model include:
 - [`luisAuthoringKey`](#luisauthoringkey)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisAppId`](#luisappid)
+
+## Configuring secrets for Azure resource assignment
+
+As mentioned in [Configuring secrets for testing](#configuring-secrets-for-testing), the LUIS authoring key is subject to a [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits).
+
+LUIS exposes an endpoint to assign an Azure resource to the LUIS app, allowing you to test without worrying about the authoring key quota.
+
+You will need to configure the following variables for the CLI tool to assign the Azure resource:
+```json
+{
+  "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+  "azureResourceGroup": "...",
+  "azureLuisResourceName": "...",
+  "ARM_TOKEN": "..."
+}
+```
+
+Options to consider for assigning an Azure resource during training:
+- [`azureSubscriptionId`](#azuresubscriptionid)
+- [`azureResourceGroup`](#azureresourcegroup)
+- [`azureLuisResourceName`](#azureluisresourcename)
+- [`ARM_TOKEN`](#arm_token)
 
 ## App Settings Variables
 
@@ -125,3 +151,23 @@ Optional for `train`. If not supplied, the default version ID is `0.1.1`, for co
 (Optional) Suffix for LUIS version ID.
 
 Optional for `train`. When supplied the `BUILD_BUILDID` value will be appended to the [`luisVersionId`](#luisversionid) (or `0.1.1` if it's not provided). This is useful in continuous integration and deployment scenarios when you need to generate a new version ID to import a new LUIS model. Note that the `BUILD_BUILDID` environment variable is available by default in [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/) builds.
+
+### `azureSubscriptionId`
+(Optional) Azure subscription ID.
+
+Optional for `train`. When supplied along with [`azureResourceGroup`](#azureresourcegroup), [`azureLuisResourceName`](#azureluisresourcename), and [`ARM_TOKEN`](#arm_token), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for more details.
+
+### `azureResourceGroup`
+(Optional) Azure resource group containing the LUIS resource.
+
+Optional for `train`. When supplied along with [`azureSubscriptionId`](#azuresubscriptionid), [`azureLuisResourceName`](#azureluisresourcename), and [`ARM_TOKEN`](#arm_token), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for more details.
+
+### `azureLuisResourceName`
+(Optional) Azure LUIS resource name.
+
+Optional for `train`. When supplied along with [`azureSubscriptionId`](#azuresubscriptionid), [`azureResourceGroup`](#azureresourcegroup), and [`ARM_TOKEN`](#arm_token), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for more details.
+
+### `ARM_TOKEN`
+(Optional) ARM token for authorizing Azure requests.
+
+Optional for `train`. When supplied along with [`azureSubscriptionId`](#azuresubscriptionid), [`azureResourceGroup`](#azureresourcegroup), and [`azureLuisResourceName`](#azureluisresourcename), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for more details.

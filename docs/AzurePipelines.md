@@ -10,6 +10,7 @@ The motivating user story for this continuous integration (CI) guide for LUIS is
 
 This user story can be broken down into the following tasks:
 - [Install the CLI tool on the host](#install-the-cli-tool-on-the-host)
+- [Retrieve an ARM token](#retrieve-an-arm-token)
 - [Train the LUIS model](#train-the-luis-model)
 - [Query LUIS for results from test utterances](#query-luis-for-results-from-test-utterances)
 - [Cleanup the LUIS model](#cleanup-the-luis-model)
@@ -51,6 +52,27 @@ Add the following task to your Azure Pipeline:
 ```
 
 The `--tool-path` flag will install the CLI tool to `$(Agent.TempDirectory)/bin`. To allow the .NET Core CLI to discover the extension in future calls, we added the `task.prependpath` task to add the tool folder to the path. We'll uninstall the tool when we are finished using it in [Uninstall the CLI tool on the host](#uninstall-the-cli-tool-on-the-host).
+
+### Retrieve an ARM Token
+One optional feature you may want to consider is the ability to assign an Azure LUIS resource to the LUIS app you create with the CLI tool. The primary reason for assigning an Azure resource to the LUIS app is to avoid the quota encountered when testing with the [`luisAuthoringKey`](LuisSecrets.md#luisauthoringkey).
+
+To add an Azure resource to the LUIS app you create, a valid ARM token is required. ARM tokens are generally valid for a short period of time, so you will need to configure your pipeline to retrieve a fresh ARM token for each build.
+
+Add the following task to your Azure Pipeline:
+```yaml
+- task: AzureCLI@1
+  displayName: 'Get ARM token for Azure'
+  inputs:
+    azureSubscription: $(azureSubscription)
+    scriptLocation: inlineScript
+    inlineScript: |
+     ACCESS_TOKEN="$(az account get-access-token --query accessToken -o tsv)";
+     echo "##vso[task.setvariable variable=arm_token]${ACCESS_TOKEN}"
+```
+
+You'll need to configure an Azure service principal as a [service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=vsts) and set the name of the service connection to the `azureSubscription` variable.
+
+Also be sure to set the [`azureSubscriptionId`](LuisSecrets.md#azuresubscriptionid), [`azureResourceGroup`](LuisSecrets.md#azureresourcegroup), [`azureLuisResourceName`](LuisSecrets.md#azureluisresourcename), [`luisEndpointKey`](LuisSecrets.md#luisendpointkey) and [`luisEndpointRegion`](LuisSecrets.md#luisendpointregion) variables.
 
 ### Train the LUIS model
 
