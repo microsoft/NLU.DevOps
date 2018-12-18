@@ -15,7 +15,7 @@ dotnet tool install -g dotnet-nlu
 
 This will install the CLI tool to your default .NET Core tools path. See the [documentation](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install) on the `dotnet tool install` command for more information on how to customize the installation directory or package source.
 
-The service by default supports training and testing NLU models against [LUIS](https://www.luis.ai) and [Lex](https://aws.amazon.com/lex/).
+The CLI tool by default supports training and testing NLU models against [LUIS](https://www.luis.ai) and [Lex](https://aws.amazon.com/lex/).
 
 Detailed information on the CLI tool sub-commands and arguments can be found in the [docs](docs) folder:
 - [Training an NLU service](docs/Train.md)
