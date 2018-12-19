@@ -38,8 +38,8 @@ namespace NLU.DevOps.Luis
         {
             this.IsStaging = isStaging;
 
-            var endpointOrAuthoringKey = endpointKey ?? authoringKey ?? throw new ArgumentException($"Must specify either '{nameof(authoringKey)}' or '{nameof(endpointKey)}'.");
-            this.EndpointRegion = endpointRegion ?? authoringRegion ?? throw new ArgumentException($"Must specify either '{nameof(authoringRegion)}' or '{nameof(endpointRegion)}'.");
+            var endpointOrAuthoringKey = endpointKey ?? authoringKey ?? throw new ArgumentException("Must specify either 'luisAuthoringKey' or 'luisEndpointKey' as environment variable. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisauthoringkey .");
+            this.EndpointRegion = endpointRegion ?? authoringRegion ?? throw new ArgumentException("Must specify either 'luisAuthoringRegion' or 'luisEndpointRegion' as environment variable. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisauthoringregion .");
             this.AzureSubscriptionInfo = azureSubscriptionInfo;
             this.AuthoringKey = authoringKey;
 
