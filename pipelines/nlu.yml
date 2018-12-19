@@ -83,7 +83,7 @@ steps:
   displayName: Publish test results
   inputs:
     testResultsFormat: NUnit
-    testResultsFiles: $(Build.ArtifactStagingDirectory)/TestResults.xml
+    testResultsFiles: $(Build.ArtifactStagingDirectory)/TestResult.xml
 
 - task: PublishBuildArtifacts@1
   condition: and(succeeded(), ne(variables['nlu.ci'], 'false'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
@@ -117,4 +117,4 @@ steps:
   displayName: Check for performance regression
   inputs:
     scriptPath: compare.py
-    arguments: $(Agent.TempDirectory)/drop/TestResults.xml $(Build.ArtifactStagingDirectory)/TestResult.xml
+    arguments: $(Agent.TempDirectory)/drop/TestResult.xml $(Build.ArtifactStagingDirectory)/TestResult.xml
