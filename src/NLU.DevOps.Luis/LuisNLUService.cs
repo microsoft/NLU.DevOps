@@ -41,7 +41,7 @@ namespace NLU.DevOps.Luis
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
 
             this.AppName = appName ?? ((appId == null && luisSettings.AppTemplate.Name == null)
-                ? throw new ArgumentNullException(nameof(appName), $"Must supply one of '{nameof(appName)}', '{nameof(appId)}', or '{nameof(Luis.LuisSettings)}.{nameof(Luis.LuisSettings.AppTemplate)}'.")
+                ? throw new ArgumentNullException(nameof(appName), $"Must supply one of '{nameof(appName)}', '{nameof(appId)}', or '{nameof(Luis.LuisSettings)}.{nameof(Luis.LuisSettings.AppTemplate)}'. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisappname .")
                 : appName);
         }
 
@@ -117,7 +117,7 @@ namespace NLU.DevOps.Luis
             if (this.LuisAppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'.");
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisappid .");
             }
 
             var luisResult = await this.LuisClient.QueryAsync(this.LuisAppId, utterance, cancellationToken).ConfigureAwait(false);
@@ -137,7 +137,7 @@ namespace NLU.DevOps.Luis
             if (this.LuisAppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'.");
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisappid .");
             }
 
             var luisResult = await this.LuisClient.RecognizeSpeechAsync(this.LuisAppId, speechFile, cancellationToken).ConfigureAwait(false);
@@ -150,7 +150,7 @@ namespace NLU.DevOps.Luis
             if (this.LuisAppId == null)
             {
                 throw new InvalidOperationException(
-                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.CleanupAsync)}'.");
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.CleanupAsync)}'. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisappid .");
             }
 
             return this.LuisClient.DeleteAppAsync(this.LuisAppId, cancellationToken);

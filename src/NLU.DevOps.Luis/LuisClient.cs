@@ -53,7 +53,7 @@ namespace NLU.DevOps.Luis
             {
                 if (authoringKey == null || authoringRegion == null)
                 {
-                    throw new InvalidOperationException("Must provide authoring key and region to perform authoring operations.");
+                    throw new InvalidOperationException("Must provide authoring key and region to perform authoring operations. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisauthoringkey .");
                 }
 
                 var authoringCredentials = new Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.ApiKeyServiceClientCredentials(authoringKey);
