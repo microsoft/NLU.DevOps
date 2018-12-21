@@ -60,20 +60,34 @@ namespace NLU.DevOps.Luis
                 configuration[LuisResourceGroupConfigurationKey],
                 configuration[LuisAzureAppNameConfigurationKey],
                 configuration[ArmTokenConfigurationKey]);
+            var authoringKey = configuration[LuisAuthoringKeyConfigurationKey];
+            var authoringRegion = configuration[LuisAuthoringRegionConfigurationKey];
+            var endpointKey = configuration[LuisEndpointKeyConfigurationKey];
+            var endpointRegion = configuration[LuisEndpointRegionConfigurationKey];
+            if (authoringKey == null && endpointKey == null)
+            {
+                throw new InvalidOperationException("Must specify either 'luisAuthoringKey' or 'luisEndpointKey' as environment variable. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisauthoringkey .");
+            }
+
+            if (authoringRegion == null && endpointRegion == null)
+            {
+                throw new InvalidOperationException("Must specify either 'luisAuthoringRegion' or 'luisEndpointRegion' as environment variable. See: https://microsoft.github.io/NLU.DevOps/docs/LuisSecrets.html#luisauthoringregion .");
+            }
+
             var luisClient = luisSpeechKey != null
                 ? new RestSpeechLuisClient(
-                    configuration[LuisAuthoringKeyConfigurationKey],
-                    configuration[LuisAuthoringRegionConfigurationKey],
-                    configuration[LuisEndpointKeyConfigurationKey],
-                    configuration[LuisEndpointRegionConfigurationKey],
+                    authoringKey,
+                    authoringRegion,
+                    endpointKey,
+                    endpointRegion,
                     azureSubscriptionInfo,
                     luisSpeechKey,
                     isStaging)
                 : new LuisClient(
-                    configuration[LuisAuthoringKeyConfigurationKey],
-                    configuration[LuisAuthoringRegionConfigurationKey],
-                    configuration[LuisEndpointKeyConfigurationKey],
-                    configuration[LuisEndpointRegionConfigurationKey],
+                    authoringKey,
+                    authoringRegion,
+                    endpointKey,
+                    endpointRegion,
                     azureSubscriptionInfo,
                     isStaging);
 
