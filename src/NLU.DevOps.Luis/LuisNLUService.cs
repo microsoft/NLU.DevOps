@@ -246,7 +246,7 @@ namespace NLU.DevOps.Luis
                     var failed = trainingStatus.Where(modelInfo => modelInfo.Details.Status == "Fail").FirstOrDefault();
                     if (failed != null)
                     {
-                        throw new InvalidOperationException($"Failure occurred while training LUIS model. {failed.Details.FailureReason}");
+                        throw new InvalidOperationException($"Failure occurred while training LUIS model. Reason: {failed.Details.FailureReason}");
                     }
 
                     break;
