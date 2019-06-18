@@ -15,7 +15,7 @@ namespace NLU.DevOps.Luis
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Newtonsoft.Json;
 
-    internal class LuisTrainingClient : ILuisTrainingClient, IDisposable
+    internal sealed class LuisTrainingClient : ILuisTrainingClient, IDisposable
     {
         public LuisTrainingClient(string authoringKey, string authoringRegion, AzureSubscriptionInfo azureSubscriptionInfo, bool isStaging)
         {
