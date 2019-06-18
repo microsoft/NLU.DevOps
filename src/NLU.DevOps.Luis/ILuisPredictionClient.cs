@@ -29,6 +29,5 @@ namespace NLU.DevOps.Luis
         /// <param name="speechFile">Path to file.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
-
     }
 }

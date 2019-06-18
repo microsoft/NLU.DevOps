@@ -33,20 +33,19 @@ namespace NLU.DevOps.Luis
                     Endpoint = $"{LuisClient.Protocol}{authoringRegion}{LuisClient.Domain}",
                 };
             });
-            ;
         }
 
-        private string EndpointRegion { get; set; }
+        private string EndpointRegion { get; }
 
-        private AzureSubscriptionInfo AzureSubscriptionInfo { get; set; }
+        private AzureSubscriptionInfo AzureSubscriptionInfo { get; }
 
-        private string AuthoringKey { get; set; }
+        private string AuthoringKey { get; }
 
-        private bool IsStaging { get; set; }
+        private bool IsStaging { get; }
 
         private LUISAuthoringClient AuthoringClient => this.LazyAuthoringClient.Value;
 
-        private Lazy<LUISAuthoringClient> LazyAuthoringClient { get; set; }
+        private Lazy<LUISAuthoringClient> LazyAuthoringClient { get; }
 
         public async Task<string> CreateAppAsync(string appName, CancellationToken cancellationToken)
         {

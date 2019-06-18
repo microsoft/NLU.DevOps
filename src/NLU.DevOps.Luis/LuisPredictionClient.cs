@@ -1,4 +1,7 @@
-﻿namespace NLU.DevOps.Luis
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+namespace NLU.DevOps.Luis
 {
     using System;
     using System.Threading;
@@ -18,7 +21,6 @@
 
         public LuisPredictionClient(string endpointKey, string endpointRegion)
         {
-
             var endpointCredentials = new ApiKeyServiceClientCredentials(endpointKey);
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
