@@ -238,12 +238,11 @@ namespace NLU.DevOps.Luis
             {
                 var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
                 var inProgress = trainingStatus
-                    .Select(modelInfo => modelInfo.Details.Status)
                     .Any(status => status == "InProgress" || status == "Queued");
 
                 if (!inProgress)
                 {
-                    if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
+                    if (trainingStatus.Any(status => status == "Fail"))
                     {
                         throw new InvalidOperationException("Failure occurred while training LUIS model.");
                     }
