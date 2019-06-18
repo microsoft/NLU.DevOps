@@ -5,6 +5,7 @@ namespace NLU.DevOps.Luis
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Text;
@@ -111,9 +112,10 @@ namespace NLU.DevOps.Luis
             return this.AuthoringClient.Apps.DeleteAsync(Guid.Parse(appId), cancellationToken);
         }
 
-        public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
+        public async Task<IEnumerable<string>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-            return this.AuthoringClient.Train.GetStatusAsync(Guid.Parse(appId), versionId, cancellationToken);
+            IList<ModelTrainingInfo> modelTrainingInfos = await this.AuthoringClient.Train.GetStatusAsync(Guid.Parse(appId), versionId, cancellationToken).ConfigureAwait(false);
+            return modelTrainingInfos.Select(modelInfo => modelInfo.Details.Status);
         }
 
         public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)

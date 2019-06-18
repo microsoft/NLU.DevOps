@@ -4,6 +4,7 @@
 namespace NLU.DevOps.Luis.Tests
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Runtime.CompilerServices;
@@ -441,10 +442,7 @@ namespace NLU.DevOps.Luis.Tests
                 {
                     return new[]
                     {
-                        new ModelTrainingInfo
-                        {
-                            Details = new ModelTrainingDetails { Status = statusArray[count++] }
-                        }
+                        statusArray[count++]
                     };
                 }
 
@@ -483,10 +481,7 @@ namespace NLU.DevOps.Luis.Tests
                 {
                     return new[]
                     {
-                        new ModelTrainingInfo
-                        {
-                            Details = new ModelTrainingDetails { Status = "Fail" }
-                        }
+                        "Fail"
                     };
                 }
 
@@ -681,9 +676,9 @@ namespace NLU.DevOps.Luis.Tests
                 return this.ProcessRequestAsync(appId);
             }
 
-            public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
+            public Task<IEnumerable<string>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<IList<ModelTrainingInfo>>(appId, versionId);
+                return this.ProcessRequestAsync<IEnumerable<string>>(appId, versionId);
             }
 
             public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)
@@ -735,7 +730,7 @@ namespace NLU.DevOps.Luis.Tests
                 var response = this.OnRequestResponse?.Invoke(request);
                 if (response == null && IsTrainingStatusRequest(request))
                 {
-                    response = Array.Empty<ModelTrainingInfo>();
+                    response = Array.Empty<string>();
                 }
 
                 return Task.FromResult((T)response);
