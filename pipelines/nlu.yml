@@ -111,7 +111,6 @@ steps:
     pipeline: $(Build.DefinitionName)
     buildVersionToDownload: latestFromBranch
     branchName: refs/heads/master
-    downloadType: single
     artifactName: drop
     downloadPath: $(Agent.TempDirectory)
 
