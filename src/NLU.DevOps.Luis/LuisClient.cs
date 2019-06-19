@@ -112,10 +112,17 @@ namespace NLU.DevOps.Luis
             return this.AuthoringClient.Apps.DeleteAsync(Guid.Parse(appId), cancellationToken);
         }
 
-        public async Task<IEnumerable<string>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
+        public async Task<ModelTrainingStatus> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
             IList<ModelTrainingInfo> modelTrainingInfos = await this.AuthoringClient.Train.GetStatusAsync(Guid.Parse(appId), versionId, cancellationToken).ConfigureAwait(false);
-            return modelTrainingInfos.Select(modelInfo => modelInfo.Details.Status);
+            if (modelTrainingInfos.Any(m => m.Details.Status == "Fail"))
+            {
+                return ModelTrainingStatus.Fail;
+            }
+
+            return modelTrainingInfos.Any(m => m.Details.Status == "InProgress" || m.Details.Status == "Queued")
+                ? ModelTrainingStatus.InProgress
+                : ModelTrainingStatus.Success;
         }
 
         public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)

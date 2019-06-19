@@ -434,16 +434,13 @@ namespace NLU.DevOps.Luis.Tests
         public static async Task TrainingStatusDelayBetweenPolling()
         {
             var count = 0;
-            string[] statusArray = { "Queued", "InProgress", "Success" };
+            ModelTrainingStatus[] statusArray = { ModelTrainingStatus.InProgress, ModelTrainingStatus.Success };
             var mockClient = new MockLuisClient();
             mockClient.OnRequestResponse = request =>
             {
                 if (IsTrainingStatusRequest(request))
                 {
-                    return new[]
-                    {
-                        statusArray[count++]
-                    };
+                    return statusArray[count++];
                 }
 
                 return null;
@@ -479,10 +476,7 @@ namespace NLU.DevOps.Luis.Tests
             {
                 if (IsTrainingStatusRequest(request))
                 {
-                    return new[]
-                    {
-                        "Fail"
-                    };
+                    return ModelTrainingStatus.Fail;
                 }
 
                 return null;
@@ -824,9 +818,9 @@ namespace NLU.DevOps.Luis.Tests
                 return this.ProcessRequestAsync(appId);
             }
 
-            public Task<IEnumerable<string>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
+            public Task<ModelTrainingStatus> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<IEnumerable<string>>(appId, versionId);
+                return this.ProcessRequestAsync<ModelTrainingStatus>(appId, versionId);
             }
 
             public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)
@@ -878,7 +872,7 @@ namespace NLU.DevOps.Luis.Tests
                 var response = this.OnRequestResponse?.Invoke(request);
                 if (response == null && IsTrainingStatusRequest(request))
                 {
-                    response = Array.Empty<string>();
+                    response = ModelTrainingStatus.Success;
                 }
 
                 return Task.FromResult((T)response);

@@ -39,7 +39,7 @@ namespace NLU.DevOps.Luis
         /// <param name="appId">LUIS app ID.</param>
         /// <param name="versionId">LUIS version ID.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<IEnumerable<string>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken);
+        Task<ModelTrainingStatus> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken);
 
         /// <summary>
         /// Imports the LUIS app version.

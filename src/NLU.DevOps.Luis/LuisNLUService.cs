@@ -237,21 +237,20 @@ namespace NLU.DevOps.Luis
             while (true)
             {
                 var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
-                var inProgress = trainingStatus
-                    .Any(status => status == "InProgress" || status == "Queued");
 
-                if (!inProgress)
+                switch (trainingStatus)
                 {
-                    if (trainingStatus.Any(status => status == "Fail"))
-                    {
+                    case ModelTrainingStatus.InProgress:
+                        Logger.LogTrace($"Training jobs not complete. Polling again.");
+                        await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+                        break;
+                    case ModelTrainingStatus.Fail:
                         throw new InvalidOperationException("Failure occurred while training LUIS model.");
-                    }
-
-                    break;
+                    case ModelTrainingStatus.Success:
+                        return;
+                    default:
+                        throw new InvalidOperationException("Unknown training status");
                 }
-
-                Logger.LogTrace($"Training jobs not complete. Polling again.");
-                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
             }
         }
 
