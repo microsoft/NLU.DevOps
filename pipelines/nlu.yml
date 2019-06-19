@@ -9,6 +9,18 @@ trigger:
     - /src
   
 steps:
+- task: DownloadBuildArtifacts@0
+  displayName: Download test results from master
+  inputs:
+    buildType: specific
+    project: $(System.TeamProject)
+    pipeline: 'LUIS End-to-End CI'
+    buildVersionToDownload: latestFromBranch
+    branchName: refs/heads/master
+    downloadType: single
+    artifactName: drop
+    downloadPath: $(Agent.TempDirectory)
+
 - task: DotNetCoreCLI@2
   displayName: Create NuGet package for NLU.DevOps.CommandLine
   inputs:
@@ -101,18 +113,6 @@ steps:
     pathToPublish: $(Build.ArtifactStagingDirectory)
     artifactName: drop
     artifactType: container
-
-- task: DownloadBuildArtifacts@0
-  displayName: Download test results from master
-  inputs:
-    buildType: specific
-    project: $(System.TeamProject)
-    pipeline: 'LUIS End-to-End CI'
-    buildVersionToDownload: latestFromBranch
-    branchName: refs/heads/master
-    downloadType: single
-    artifactName: drop
-    downloadPath: $(Agent.TempDirectory)
 
 - task: UsePythonVersion@0
   condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
