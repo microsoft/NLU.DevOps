@@ -103,12 +103,11 @@ steps:
     artifactType: container
 
 - task: DownloadBuildArtifacts@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
   displayName: Download test results from master
   inputs:
     buildType: specific
     project: $(System.TeamProject)
-    pipeline: $(Build.DefinitionName)
+    pipeline: 'LUIS End-to-End CI'
     buildVersionToDownload: latestFromBranch
     branchName: refs/heads/master
     downloadType: single
