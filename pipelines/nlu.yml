@@ -10,11 +10,20 @@ trigger:
   
 steps:
 - task: DotNetCoreCLI@2
+  displayName: Create NuGet package for NLU.DevOps.CommandLine
+  inputs:
+    command: pack
+    packagesToPack: 'src/NLU.DevOps.CommandLine/*.csproj'
+    configuration: Release
+
+- task: DotNetCoreCLI@2
   displayName: Install dotnet-nlu
   inputs:
     command: custom
     custom: tool
-    arguments: install dotnet-nlu --tool-path $(Agent.TempDirectory)/bin
+    arguments: install dotnet-nlu --add-source $(Build.ArtifactStagingDirectory) --tool-path $(Agent.TempDirectory)/bin
+    # Unless you've forked NLU.DevOps and are building from source, you can just install 'dotnet-nlu' from NuGet:
+    # arguments: install dotnet-nlu --tool-path $(Agent.TempDirectory)/bin
 
 - bash: echo "##vso[task.prependpath]$(Agent.TempDirectory)/bin"
   displayName: Prepend .NET Core CLI tool path
