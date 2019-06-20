@@ -7,9 +7,6 @@ trigger:
     - /pipelines/nlu.yml
     - /models
     - /src
-queue:
-  name: Default
-
   
 steps:
 - task: DownloadBuildArtifacts@0
