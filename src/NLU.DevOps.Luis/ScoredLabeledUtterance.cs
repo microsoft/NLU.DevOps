@@ -25,11 +25,6 @@ namespace NLU.DevOps.Luis
         }
 
         /// <summary>
-        /// Gets the entities referenced in the utterance.
-        /// </summary>
-        public new IReadOnlyList<ScoredEntity> Entities => (IReadOnlyList<ScoredEntity>)base.Entities;
-
-        /// <summary>
         /// Gets the confidence score for the intent label.
         /// </summary>
         public double Score { get; }
