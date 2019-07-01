@@ -616,6 +616,154 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
+        [Test]
+        public static async Task NoLabeledIntentScore()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
+            {
+                if (request.Method == nameof(ILuisClient.QueryAsync))
+                {
+                    return new LuisResult
+                    {
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                    };
+                }
+
+                return null;
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Should().BeOfType(typeof(Models.LabeledUtterance));
+            }
+        }
+
+        [Test]
+        public static async Task WithLabeledIntentScore()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
+            {
+                if (request.Method == nameof(ILuisClient.QueryAsync))
+                {
+                    return new LuisResult
+                    {
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent", Score = 0.42 },
+                    };
+                }
+
+                return null;
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Should().BeOfType(typeof(ScoredLabeledUtterance));
+                result.As<ScoredLabeledUtterance>().Score.Should().Be(0.42);
+            }
+        }
+
+        [Test]
+        public static async Task NoEntityScore()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
+            {
+                if (request.Method == nameof(ILuisClient.QueryAsync))
+                {
+                    return new LuisResult
+                    {
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                        Entities = new[]
+                        {
+                            new EntityModel
+                            {
+                                Entity = "the",
+                                Type = "type",
+                                StartIndex = 32,
+                                EndIndex = 34,
+                            },
+                        },
+                    };
+                }
+
+                return null;
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].Should().BeOfType(typeof(Entity));
+            }
+        }
+
+        [Test]
+        public static async Task WithEntityScore()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var mockClient = new MockLuisClient();
+            mockClient.OnRequestResponse = request =>
+            {
+                if (request.Method == nameof(ILuisClient.QueryAsync))
+                {
+                    return new LuisResult
+                    {
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                        Entities = new[]
+                        {
+                            new EntityModel
+                            {
+                                Entity = "the",
+                                Type = "type",
+                                StartIndex = 32,
+                                EndIndex = 34,
+                                AdditionalProperties = new Dictionary<string, object>
+                                {
+                                    { "score", 0.42 },
+                                },
+                            },
+                        },
+                    };
+                }
+
+                return null;
+            };
+
+            var builder = GetTestLuisBuilder();
+            builder.LuisClient = mockClient;
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].Should().BeOfType(typeof(ScoredEntity));
+                result.Entities[0].As<ScoredEntity>().Score.Should().Be(0.42);
+            }
+        }
+
         private static LuisNLUServiceBuilder GetTestLuisBuilder()
         {
             return new LuisNLUServiceBuilder
