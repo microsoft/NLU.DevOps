@@ -144,20 +144,17 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var expected = utterances[0].Intent;
             var actual = utterances[1].Intent;
 
-            if ((expected == null || expected == "None") && (actual == null || actual == "None"))
-            {
-                return TrueNegative(
-                    $"TrueNegativeIntent('{text}')",
-                    "Both intents are 'None'.",
-                    "Intent");
-            }
-
             if (actual == null || actual == "None")
             {
-                return FalseNegative(
-                    $"FalseNegativeIntent('{expected}', '{text}')",
-                    $"Actual intent is 'None', expected '{expected}'",
-                    "Intent");
+                return expected == null || expected == "None"
+                    ? TrueNegative(
+                        $"TrueNegativeIntent('{text}')",
+                        "Both intents are 'None'.",
+                        "Intent")
+                    : FalseNegative(
+                        $"FalseNegativeIntent('{expected}', '{text}')",
+                        $"Actual intent is 'None', expected '{expected}'",
+                        "Intent");
             }
 
             if (expected == actual)
@@ -192,10 +189,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
             {
-                return EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
+                return expectedEntity.EntityType == actualEntity.EntityType
+                    && EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
                     || EqualsNormalized(expectedEntity.MatchText, actualEntity.EntityValue)
-                    || EqualsNormalized(expectedEntity.EntityValue, actualEntity.EntityValue)
-                    || EqualsNormalized(expectedEntity.EntityValue, actualEntity.MatchText);
+                    || EqualsNormalized(expectedEntity.EntityValue, actualEntity.EntityValue);
             }
 
             if (expected != null)
@@ -221,27 +218,31 @@ namespace NLU.DevOps.ModelPerformance.Tests
                             entity.EntityType);
                     }
 
-                    // "Semantic" entity value match test cases
-                    bool isEntityValueMatch(Entity actualEntity)
+                    if (entity.EntityValue != null)
                     {
-                        return entity.EntityValue == actualEntity.EntityValue;
-                    }
+                        // "Semantic" entity value match test cases
+                        bool isEntityValueMatch(Entity actualEntity)
+                        {
+                            return entity.EntityType == actualEntity.EntityType
+                                && entity.EntityValue == actualEntity.EntityValue;
+                        }
 
-                    if (entity.EntityValue != null && (actual == null || !actual.Any(isEntityValueMatch)))
-                    {
-                        yield return FalseNegative(
-                            $"FalseNegativeEntityValue('{entity.EntityType}', '{entity.EntityValue}', '{text}')",
-                            $"Actual utterance does not have entity value matching '{entity.EntityValue}'.",
-                            "Entity",
-                            entity.EntityType);
-                    }
-                    else if (entity.EntityValue != null)
-                    {
-                        yield return TruePositive(
-                             $"TruePositiveEntityValue('{entity.EntityType}', '{entity.EntityValue}', '{text}')",
-                             $"Both utterances have entity value '{entity.EntityValue}'.",
-                             "Entity",
-                             entity.EntityType);
+                        if (actual == null || !actual.Any(isEntityValueMatch))
+                        {
+                            yield return FalseNegative(
+                                $"FalseNegativeEntityValue('{entity.EntityType}', '{entity.EntityValue}', '{text}')",
+                                $"Actual utterance does not have entity value matching '{entity.EntityValue}'.",
+                                "Entity",
+                                entity.EntityType);
+                        }
+                        else
+                        {
+                            yield return TruePositive(
+                                 $"TruePositiveEntityValue('{entity.EntityType}', '{entity.EntityValue}', '{text}')",
+                                 $"Both utterances have entity value '{entity.EntityValue}'.",
+                                 "Entity",
+                                 entity.EntityType);
+                        }
                     }
                 }
             }
