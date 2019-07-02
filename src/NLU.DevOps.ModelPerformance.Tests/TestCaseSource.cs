@@ -190,9 +190,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
             bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
             {
                 return expectedEntity.EntityType == actualEntity.EntityType
-                    && EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
+                    && (EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
                     || EqualsNormalized(expectedEntity.MatchText, actualEntity.EntityValue)
-                    || EqualsNormalized(expectedEntity.EntityValue, actualEntity.EntityValue);
+                    || EqualsNormalized(expectedEntity.EntityValue, actualEntity.EntityValue));
             }
 
             if (expected != null)
