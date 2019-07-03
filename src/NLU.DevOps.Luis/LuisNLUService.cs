@@ -289,13 +289,26 @@ namespace NLU.DevOps.Luis
                 }
 
                 Debug.Assert(matchIndex >= 0, "Invalid LUIS response.");
-                return new Entity(entityType, entityValue, matchText, matchIndex);
+
+                var entityScore = default(double?);
+                if (entity.AdditionalProperties != null &&
+                    entity.AdditionalProperties.TryGetValue("score", out var scoreProperty) &&
+                    scoreProperty is double scoreValue)
+                {
+                    entityScore = scoreValue;
+                }
+
+                return entityScore.HasValue
+                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
+                    : new Entity(entityType, entityValue, matchText, matchIndex);
             }
 
-            return new Models.LabeledUtterance(
-                luisResult.Query,
-                luisResult.TopScoringIntent?.Intent,
-                luisResult.Entities?.Select(getEntity).ToList());
+            var intent = luisResult.TopScoringIntent?.Intent;
+            var score = luisResult.TopScoringIntent?.Score;
+            var entities = luisResult.Entities?.Select(getEntity).ToList();
+            return !score.HasValue
+                ? new Models.LabeledUtterance(luisResult.Query, intent, entities)
+                : new ScoredLabeledUtterance(luisResult.Query, intent, score.Value, entities);
         }
     }
 }
