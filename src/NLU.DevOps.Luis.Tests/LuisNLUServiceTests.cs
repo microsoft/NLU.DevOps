@@ -38,11 +38,11 @@ namespace NLU.DevOps.Luis.Tests
             {
                 Func<Task> nullUtterances = () => luis.TrainAsync(null);
                 Func<Task> nullUtterance = () => luis.TrainAsync(new Models.LabeledUtterance[] { null });
-                Func<Task> nullTestUtterance = () => luis.TestAsync(null);
+                Func<Task> nullTestUtterance = () => luis.TestAsync(default(INLUQuery));
                 Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null);
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
-                nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterance");
+                nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("query");
                 nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFile");
             }
         }

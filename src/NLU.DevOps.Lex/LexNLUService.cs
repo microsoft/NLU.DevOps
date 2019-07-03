@@ -18,6 +18,7 @@ namespace NLU.DevOps.Lex
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
     using Amazon.Runtime;
+    using Core;
     using Logging;
     using Microsoft.Extensions.Logging;
     using Models;
@@ -27,7 +28,7 @@ namespace NLU.DevOps.Lex
     /// <summary>
     /// NLU service for Amazon Lex.
     /// </summary>
-    public sealed class LexNLUService : INLUService
+    public sealed class LexNLUService : DefaultNLUService
     {
         private const int GetBotDelaySeconds = 2;
         private const int GetImportDelaySeconds = 2;
@@ -88,7 +89,7 @@ namespace NLU.DevOps.Lex
         private ILexClient LexClient { get; }
 
         /// <inheritdoc />
-        public async Task TrainAsync(IEnumerable<LabeledUtterance> utterances, CancellationToken cancellationToken)
+        public override async Task TrainAsync(IEnumerable<LabeledUtterance> utterances, CancellationToken cancellationToken)
         {
             // Validate arguments
             if (utterances == null)
@@ -128,7 +129,14 @@ namespace NLU.DevOps.Lex
         }
 
         /// <inheritdoc />
-        public async Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
+        public override async Task CleanupAsync(CancellationToken cancellationToken)
+        {
+            await this.DeleteBotAliasAsync(cancellationToken).ConfigureAwait(false);
+            await this.DeleteBotAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        protected override async Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
             if (utterance == null)
             {
@@ -156,7 +164,7 @@ namespace NLU.DevOps.Lex
         }
 
         /// <inheritdoc />
-        public async Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        protected override async Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             if (speechFile == null)
             {
@@ -190,14 +198,7 @@ namespace NLU.DevOps.Lex
         }
 
         /// <inheritdoc />
-        public async Task CleanupAsync(CancellationToken cancellationToken)
-        {
-            await this.DeleteBotAliasAsync(cancellationToken).ConfigureAwait(false);
-            await this.DeleteBotAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
             this.LexClient.Dispose();
         }

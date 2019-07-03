@@ -3,7 +3,6 @@
 
 namespace NLU.DevOps.Models
 {
-    using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -29,10 +28,10 @@ namespace NLU.DevOps.Models
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">NLU service instance.</param>
-        /// <param name="utterance">Unlabeled utterance.</param>
-        public static Task<LabeledUtterance> TestAsync(this INLUService instance, string utterance)
+        /// <param name="query">Query to test.</param>
+        public static Task<LabeledUtterance> TestAsync(this INLUService instance, INLUQuery query)
         {
-            return instance.TestAsync(utterance, CancellationToken.None);
+            return instance.TestAsync(query, CancellationToken.None);
         }
 
         /// <summary>
@@ -43,7 +42,19 @@ namespace NLU.DevOps.Models
         /// <param name="speechFile">Speech file.</param>
         public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile)
         {
-            return instance.TestSpeechAsync(speechFile, CancellationToken.None);
+            return instance.TestSpeechAsync(speechFile, null, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Tests the NLU service using speech.
+        /// </summary>
+        /// <returns>Task to await the resulting labeled utterance.</returns>
+        /// <param name="instance">NLU service instance.</param>
+        /// <param name="speechFile">Speech file.</param>
+        /// <param name="query">Query to test.</param>
+        public static Task<LabeledUtterance> TestSpeechAsync(this INLUService instance, string speechFile, INLUQuery query)
+        {
+            return instance.TestSpeechAsync(speechFile, query, CancellationToken.None);
         }
 
         /// <summary>

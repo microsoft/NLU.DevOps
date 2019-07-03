@@ -8,7 +8,9 @@ namespace NLU.DevOps.CommandLine.Test
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Core;
     using Models;
+    using Newtonsoft.Json.Linq;
 
     internal class TestCommand : BaseCommand<TestOptions>
     {
@@ -46,15 +48,16 @@ namespace NLU.DevOps.CommandLine.Test
         {
             this.Log("Running tests against NLU service...");
 
-            var testUtterances = Read<List<LabeledUtteranceWithSpeechFile>>(this.Options.UtterancesPath);
+            var queryFactory = this.CreateNLUQueryFactory();
+            var testUtterances = this.LoadUtterances(queryFactory);
             if (this.Options.Speech && testUtterances.Any(utterance => utterance.SpeechFile == null))
             {
                 throw new InvalidOperationException("Test utterances must have 'speechFile' when using --speech.");
             }
 
             var testResults = this.Options.Speech
-                ? await testUtterances.SelectAsync(this.TestSpeechAsync).ConfigureAwait(false)
-                : await testUtterances.SelectAsync(this.TestAsync).ConfigureAwait(false);
+                ? await testUtterances.SelectAsync(utterance => this.TestSpeechAsync(utterance, queryFactory)).ConfigureAwait(false)
+                : await testUtterances.SelectAsync(utterance => this.NLUService.TestAsync(utterance.Query)).ConfigureAwait(false);
 
             Stream getFileStream(string filePath)
             {
@@ -74,17 +77,13 @@ namespace NLU.DevOps.CommandLine.Test
             this.SaveTranscriptions();
         }
 
-        private Task<LabeledUtterance> TestAsync(LabeledUtterance utterance)
-        {
-            return this.NLUService.TestAsync(utterance.Text);
-        }
-
-        private async Task<LabeledUtterance> TestSpeechAsync(LabeledUtteranceWithSpeechFile utterance)
+        private async Task<LabeledUtterance> TestSpeechAsync((INLUQuery Query, string SpeechFile) utterance, INLUQueryFactory queryFactory)
         {
             var text = default(string);
             if (this.Transcriptions?.TryGetValue(utterance.SpeechFile, out text) ?? false)
             {
-                return await this.NLUService.TestAsync(text).ConfigureAwait(false);
+                var updatedQuery = queryFactory.Update(utterance.Query, text);
+                return await this.NLUService.TestAsync(updatedQuery).ConfigureAwait(false);
             }
 
             var speechFile = this.Options.SpeechFilesDirectory != null
@@ -121,6 +120,27 @@ namespace NLU.DevOps.CommandLine.Test
                 EnsureDirectory(transcriptionsFile);
                 Write(transcriptionsFile, this.Transcriptions);
             }
+        }
+
+        private IEnumerable<(INLUQuery Query, string SpeechFile)> LoadUtterances(INLUQueryFactory queryFactory)
+        {
+            var queryJson = Read<JArray>(this.Options.UtterancesPath);
+            foreach (var item in queryJson)
+            {
+                var speechFile = item.Value<string>("speechFile");
+                var query = queryFactory.Create(item);
+                yield return (query, speechFile);
+            }
+        }
+
+        private INLUQueryFactory CreateNLUQueryFactory()
+        {
+            if (ServiceResolver.TryResolve<INLUQueryFactory>(this.Options, out var queryFactory))
+            {
+                return queryFactory;
+            }
+
+            return DefaultNLUQueryFactory.Instance;
         }
 
         private class LabeledUtteranceWithSpeechFile : LabeledUtterance
