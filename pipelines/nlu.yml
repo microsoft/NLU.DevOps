@@ -125,5 +125,5 @@ steps:
   condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
   displayName: Check for performance regression
   inputs:
-    scriptPath: compare.py
+    scriptPath: scripts/compare.py
     arguments: $(Agent.TempDirectory)/drop/TestResult.xml $(Build.ArtifactStagingDirectory)/TestResult.xml
