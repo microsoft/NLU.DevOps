@@ -191,7 +191,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             {
                 return expectedEntity.EntityType == actualEntity.EntityType
                     && (EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
-                    // Required case to support NLU providers that do not specify matched text
+                    /* Required case to support NLU providers that do not specify matched text */
                     || EqualsNormalized(expectedEntity.MatchText, actualEntity.EntityValue)
                     || EqualsNormalized(expectedEntity.EntityValue, actualEntity.EntityValue));
             }
