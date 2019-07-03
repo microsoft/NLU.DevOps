@@ -10,6 +10,7 @@ namespace NLU.DevOps.Luis
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using Logging;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
@@ -21,7 +22,7 @@ namespace NLU.DevOps.Luis
     /// Train, test, and cleanup a LUIS model.
     /// Implementation of <see cref="INLUService"/>
     /// </summary>
-    public sealed class LuisNLUService : INLUService, IDisposable
+    public sealed class LuisNLUService : NLUServiceBase<LuisNLUQuery>
     {
         private static readonly TimeSpan TrainStatusDelay = TimeSpan.FromSeconds(2);
 
@@ -63,7 +64,7 @@ namespace NLU.DevOps.Luis
         private ILuisClient LuisClient { get; }
 
         /// <inheritdoc />
-        public async Task TrainAsync(
+        public override async Task TrainAsync(
             IEnumerable<Models.LabeledUtterance> utterances,
             CancellationToken cancellationToken)
         {
@@ -105,47 +106,7 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        public async Task<Models.LabeledUtterance> TestAsync(
-            string utterance,
-            CancellationToken cancellationToken)
-        {
-            if (utterance == null)
-            {
-                throw new ArgumentNullException(nameof(utterance));
-            }
-
-            if (this.LuisAppId == null)
-            {
-                throw new InvalidOperationException(
-                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'.");
-            }
-
-            var luisResult = await this.LuisClient.QueryAsync(this.LuisAppId, utterance, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(luisResult);
-        }
-
-        /// <inheritdoc />
-        public async Task<Models.LabeledUtterance> TestSpeechAsync(
-            string speechFile,
-            CancellationToken cancellationToken)
-        {
-            if (speechFile == null)
-            {
-                throw new ArgumentNullException(nameof(speechFile));
-            }
-
-            if (this.LuisAppId == null)
-            {
-                throw new InvalidOperationException(
-                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'.");
-            }
-
-            var luisResult = await this.LuisClient.RecognizeSpeechAsync(this.LuisAppId, speechFile, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(luisResult);
-        }
-
-        /// <inheritdoc />
-        public Task CleanupAsync(CancellationToken cancellationToken)
+        public override Task CleanupAsync(CancellationToken cancellationToken)
         {
             if (this.LuisAppId == null)
             {
@@ -157,7 +118,38 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override async Task<Models.LabeledUtterance> TestAsync(
+            LuisNLUQuery query,
+            CancellationToken cancellationToken)
+        {
+            if (this.LuisAppId == null)
+            {
+                throw new InvalidOperationException(
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestAsync)}'.");
+            }
+
+            var luisResult = await this.LuisClient.QueryAsync(this.LuisAppId, query.Text, cancellationToken).ConfigureAwait(false);
+            return this.LuisResultToLabeledUtterance(luisResult);
+        }
+
+        /// <inheritdoc />
+        protected override async Task<Models.LabeledUtterance> TestSpeechAsync(
+            string speechFile,
+            LuisNLUQuery query,
+            CancellationToken cancellationToken)
+        {
+            if (this.LuisAppId == null)
+            {
+                throw new InvalidOperationException(
+                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUService.TestSpeechAsync)}'.");
+            }
+
+            var luisResult = await this.LuisClient.RecognizeSpeechAsync(this.LuisAppId, speechFile, cancellationToken).ConfigureAwait(false);
+            return this.LuisResultToLabeledUtterance(luisResult);
+        }
+
+        /// <inheritdoc />
+        protected override void Dispose(bool disposing)
         {
             this.LuisClient.Dispose();
         }

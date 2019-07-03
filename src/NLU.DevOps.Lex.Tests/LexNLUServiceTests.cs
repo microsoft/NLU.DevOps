@@ -40,11 +40,11 @@ namespace NLU.DevOps.Lex.Tests
                 var nullUtterances = new Func<Task>(() => service.TrainAsync(null));
                 var nullUtteranceItem = new Func<Task>(() => service.TrainAsync(new LabeledUtterance[] { null }));
                 var nullSpeechFile = new Func<Task>(() => service.TestSpeechAsync(null));
-                var nullTestUtterance = new Func<Task>(() => service.TestAsync(null));
+                var nullTestUtterance = new Func<Task>(() => service.TestAsync(default(INLUQuery)));
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtteranceItem.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
                 nullSpeechFile.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFile");
-                nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterance");
+                nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("query");
             }
         }
 

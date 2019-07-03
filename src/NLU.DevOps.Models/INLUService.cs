@@ -27,20 +27,22 @@ namespace NLU.DevOps.Models
         /// Tests the NLU service.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
-        /// <param name="utterance">Unlabeled utterances to test on.</param>
+        /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<LabeledUtterance> TestAsync(
-            string utterance,
+            INLUQuery query,
             CancellationToken cancellationToken);
 
         /// <summary>
         /// Tests the NLU service using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
-        /// <param name="speechFile">Speech files to test on.</param>
+        /// <param name="speechFile">Speech file to test on.</param>
+        /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<LabeledUtterance> TestSpeechAsync(
             string speechFile,
+            INLUQuery query,
             CancellationToken cancellationToken);
 
         /// <summary>
