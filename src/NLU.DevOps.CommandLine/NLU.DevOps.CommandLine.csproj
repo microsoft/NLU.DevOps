@@ -6,6 +6,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>dotnet-nlu</AssemblyName>
     <PackAsTool>true</PackAsTool>
+    <DependencyTargetFramework>netstandard2.0</DependencyTargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
@@ -13,8 +14,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NLU.DevOps.Lex\NLU.DevOps.Lex.csproj" />
-    <ProjectReference Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
+    <Content Include="..\NLU.DevOps.Lex\bin\$(Configuration)\$(DependencyTargetFramework)\*">
+      <Link>providers\lex\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\NLU.DevOps.Luis\bin\$(Configuration)\$(DependencyTargetFramework)\*">
+      <Link>providers\luis\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\NLU.DevOps.LuisV3\bin\$(Configuration)\$(DependencyTargetFramework)\*">
+      <Link>providers\luisV3\%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\NLU.DevOps.Core\NLU.DevOps.Core.csproj" />
     <ProjectReference Include="..\NLU.DevOps.ModelPerformance.Tests\NLU.DevOps.ModelPerformance.Tests.csproj" />
   </ItemGroup>
