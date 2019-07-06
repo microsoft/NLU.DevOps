@@ -10,6 +10,18 @@ trigger:
   
 steps:
 - task: DotNetCoreCLI@2
+  displayName: Restore NuGet packages
+  inputs:
+    command: 'restore'
+    projects: 'src/NLU.DevOps.sln'
+
+- task: DotNetCoreCLI@2
+  displayName: Build NLU.DevOps solution
+  inputs:
+    projects: 'src/NLU.DevOps.sln'
+    arguments: '--configuration Release /warnaserror'
+
+- task: DotNetCoreCLI@2
   displayName: Create NuGet package for NLU.DevOps.CommandLine
   inputs:
     command: pack

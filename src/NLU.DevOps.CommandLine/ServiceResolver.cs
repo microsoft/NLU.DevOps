@@ -8,38 +8,20 @@ namespace NLU.DevOps.CommandLine
     using System.IO;
     using System.Linq;
     using System.Reflection;
-    using Lex;
-    using Luis;
 
     internal static class ServiceResolver
     {
         public static bool TryResolve<T>(BaseOptions options, out T instance)
         {
-            var assemblies = new[]
-            {
-                typeof(LuisNLUServiceFactory).Assembly,
-                typeof(LexNLUServiceFactory).Assembly,
-            };
-
-            var foundExport = new ContainerConfiguration()
-                .WithAssemblies(assemblies)
-                .CreateContainer()
-                .TryGetExport(options.Service, out instance);
-
-            if (foundExport)
-            {
-                return true;
-            }
-
-            return TryGetExportExternal(options, out instance);
-        }
-
-        private static bool TryGetExportExternal<T>(BaseOptions options, out T instance)
-        {
-            var assemblyName = $"dotnet-nlu-{options.Service}";
-
             string getAssemblyPath()
             {
+                var assemblyName = $"dotnet-nlu-{options.Service}.dll";
+                var defaultSearchPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "providers", options.Service, assemblyName);
+                if (File.Exists(defaultSearchPath))
+                {
+                    return defaultSearchPath;
+                }
+
                 var paths = new string[9];
                 paths[0] = AppDomain.CurrentDomain.BaseDirectory;
                 Array.Fill(paths, "..", 1, paths.Length - 2);
@@ -50,7 +32,7 @@ namespace NLU.DevOps.CommandLine
                     return null;
                 }
 
-                return Directory.GetFiles(searchRoot, $"{assemblyName}.dll", SearchOption.AllDirectories).FirstOrDefault();
+                return Directory.GetFiles(searchRoot, assemblyName, SearchOption.AllDirectories).FirstOrDefault();
             }
 
             var assemblyPath = options.IncludePath ?? getAssemblyPath();
@@ -60,10 +42,26 @@ namespace NLU.DevOps.CommandLine
                 return false;
             }
 
-            return new ContainerConfiguration()
-               .WithAssembly(Assembly.LoadFrom(assemblyPath))
-               .CreateContainer()
-               .TryGetExport(options.Service, out instance);
+            ResolveEventHandler assemblyResolveHandler = (sender, args) =>
+            {
+                var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
+                var resolvedAssemblyName = args.Name.Split(",").First();
+                var resolvedAssemblyPath = Path.Combine(assemblyDirectory, $"{resolvedAssemblyName}.dll");
+                return Assembly.LoadFrom(resolvedAssemblyPath);
+            };
+
+            AppDomain.CurrentDomain.AssemblyResolve += assemblyResolveHandler;
+            try
+            {
+                return new ContainerConfiguration()
+                   .WithAssembly(Assembly.LoadFrom(assemblyPath))
+                   .CreateContainer()
+                   .TryGetExport(options.Service, out instance);
+            }
+            finally
+            {
+                AppDomain.CurrentDomain.AssemblyResolve -= assemblyResolveHandler;
+            }
         }
     }
 }

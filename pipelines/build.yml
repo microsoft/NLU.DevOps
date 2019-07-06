@@ -18,12 +18,12 @@ steps:
   displayName: Restore NuGet packages
   inputs:
     command: 'restore'
-    projects: '**/*.csproj'
+    projects: 'src/NLU.DevOps.sln'
 
 - task: DotNetCoreCLI@2
   displayName: Build solution
   inputs:
-    projects: '**/*.csproj'
+    projects: 'src/NLU.DevOps.sln'
     arguments: '--configuration Release /warnaserror'
 
 - task: DotNetCoreCLI@2
