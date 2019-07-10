@@ -40,7 +40,7 @@ namespace NLU.DevOps.Luis
             bool isStaging)
         {
             this.IsStaging = isStaging;
-            this.SpeechKey = speechKey ?? throw new ArgumentNullException(nameof(speechKey));
+            this.SpeechKey = speechKey;
 
             var endpointOrAuthoringKey = endpointKey ?? authoringKey ?? throw new ArgumentException($"Must specify either '{nameof(authoringKey)}' or '{nameof(endpointKey)}'.");
             this.EndpointRegion = endpointRegion ?? authoringRegion ?? throw new ArgumentException($"Must specify either '{nameof(authoringRegion)}' or '{nameof(endpointRegion)}'.");
@@ -172,6 +172,11 @@ namespace NLU.DevOps.Luis
 
         public async Task<PredictionResponse> RecognizeSpeechAsync(string appId, string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
+            if (this.SpeechKey == null)
+            {
+                throw new InvalidOperationException("Must provide speech key to perform speech intent recognition.");
+            }
+
             var request = (HttpWebRequest)WebRequest.Create(this.SpeechEndpoint);
             request.Method = "POST";
             request.ContentType = "audio/wav; codec=audio/pcm; samplerate=16000";
