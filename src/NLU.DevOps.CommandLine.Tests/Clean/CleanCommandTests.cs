@@ -34,14 +34,6 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
         }
 
         [Test]
-        public void WhenArgumentsDoNotIncludeAuthoringKeyOrEndpointKey()
-        {
-            this.WhenParserIsRun(false);
-            Action a = () => this.commandUnderTest.Main();
-            a.Should().Throw<ArgumentException>().WithMessage("Must specify either 'authoringKey' or 'endpointKey'.");
-        }
-
-        [Test]
         public void WhenOptionToDeleteAppsettingsFile()
         {
             using (TextWriter tw = new StreamWriter("appsettings.luis.json"))

@@ -22,9 +22,14 @@ namespace NLU.DevOps.CommandLine.Tests
             throw new NotImplementedException();
         }
 
-        protected override INLUService CreateNLUService()
+        protected override INLUTrainClient CreateNLUTrainClient()
         {
-            return new Mock<INLUService>().Object;
+            return new Mock<INLUTrainClient>().Object;
+        }
+
+        protected override INLUTestClient CreateNLUTestClient()
+        {
+            return new Mock<INLUTestClient>().Object;
         }
     }
 }

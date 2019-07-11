@@ -20,7 +20,8 @@ namespace NLU.DevOps.CommandLine
         {
             this.Options = options;
             this.LazyConfiguration = new Lazy<IConfiguration>(this.CreateConfiguration);
-            this.LazyNLUService = new Lazy<INLUService>(this.CreateNLUService);
+            this.LazyNLUTrainClient = new Lazy<INLUTrainClient>(this.CreateNLUTrainClient);
+            this.LazyNLUTestClient = new Lazy<INLUTestClient>(this.CreateNLUTestClient);
             this.LazyLogger = new Lazy<ILogger>(this.CreateLogger);
         }
 
@@ -28,13 +29,17 @@ namespace NLU.DevOps.CommandLine
 
         protected IConfiguration Configuration => this.LazyConfiguration.Value;
 
-        protected INLUService NLUService => this.LazyNLUService.Value;
+        protected INLUTrainClient NLUTrainClient => this.LazyNLUTrainClient.Value;
+
+        protected INLUTestClient NLUTestClient => this.LazyNLUTestClient.Value;
 
         protected ILogger Logger => this.LazyLogger.Value;
 
         private Lazy<IConfiguration> LazyConfiguration { get; }
 
-        private Lazy<INLUService> LazyNLUService { get; }
+        private Lazy<INLUTrainClient> LazyNLUTrainClient { get; }
+
+        private Lazy<INLUTestClient> LazyNLUTestClient { get; }
 
         private Lazy<ILogger> LazyLogger { get; }
 
@@ -75,16 +80,51 @@ namespace NLU.DevOps.CommandLine
             }
         }
 
-        protected virtual INLUService CreateNLUService()
+        protected virtual INLUTrainClient CreateNLUTrainClient()
         {
-            return NLUServiceFactory.Create(this.Options, this.Configuration);
+            return NLUClientFactory.CreateTrainInstance(this.Options, this.Configuration);
+        }
+
+        protected virtual INLUTestClient CreateNLUTestClient()
+        {
+            return NLUClientFactory.CreateTestInstance(this.Options, this.Configuration);
         }
 
         protected void Dispose(bool disposing)
         {
-            if (disposing && this.LazyNLUService.IsValueCreated)
+            if (disposing)
             {
-                this.NLUService.Dispose();
+                var trainClientException = default(Exception);
+                if (this.LazyNLUTrainClient.IsValueCreated)
+                {
+                    try
+                    {
+                        this.NLUTrainClient.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        trainClientException = ex;
+                    }
+                }
+
+                if (this.LazyNLUTestClient.IsValueCreated)
+                {
+                    try
+                    {
+                        this.NLUTestClient.Dispose();
+                    }
+                    catch (Exception ex)
+                    when (trainClientException != null)
+                    {
+                        /* NLUTestClient exception will not be caught if no exception occurred when disposing NLUTrainClient */
+                        throw new AggregateException(trainClientException, ex);
+                    }
+                }
+
+                if (trainClientException != null)
+                {
+                    throw trainClientException;
+                }
             }
         }
 

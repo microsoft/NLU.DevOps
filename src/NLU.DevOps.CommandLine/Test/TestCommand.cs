@@ -30,9 +30,9 @@ namespace NLU.DevOps.CommandLine.Test
             return 0;
         }
 
-        protected override INLUService CreateNLUService()
+        protected override INLUTestClient CreateNLUTestClient()
         {
-            return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.SettingsPath);
+            return NLUClientFactory.CreateTestInstance(this.Options, this.Configuration, this.Options.SettingsPath);
         }
 
         private static void EnsureDirectory(string filePath)
@@ -55,9 +55,12 @@ namespace NLU.DevOps.CommandLine.Test
                 throw new InvalidOperationException("Test utterances must have 'speechFile' when using --speech.");
             }
 
-            var testResults = this.Options.Speech
-                ? await testUtterances.SelectAsync(utterance => this.TestSpeechAsync(utterance, queryFactory)).ConfigureAwait(false)
-                : await testUtterances.SelectAsync(utterance => this.NLUService.TestAsync(utterance.Query)).ConfigureAwait(false);
+            var testResults = await (this.Options.Speech
+                    ? testUtterances.SelectAsync(utterance =>
+                        this.TestSpeechAsync(utterance, queryFactory))
+                    : testUtterances.SelectAsync(utterance =>
+                        this.NLUTestClient.TestAsync(utterance.Query)))
+                .ConfigureAwait(false);
 
             Stream getFileStream(string filePath)
             {
@@ -83,14 +86,14 @@ namespace NLU.DevOps.CommandLine.Test
             if (this.Transcriptions?.TryGetValue(utterance.SpeechFile, out text) ?? false)
             {
                 var updatedQuery = queryFactory.Update(utterance.Query, text);
-                return await this.NLUService.TestAsync(updatedQuery).ConfigureAwait(false);
+                return await this.NLUTestClient.TestAsync(updatedQuery).ConfigureAwait(false);
             }
 
             var speechFile = this.Options.SpeechFilesDirectory != null
                 ? Path.Combine(this.Options.SpeechFilesDirectory, utterance.SpeechFile)
                 : utterance.SpeechFile;
 
-            var result = await this.NLUService.TestSpeechAsync(speechFile).ConfigureAwait(false);
+            var result = await this.NLUTestClient.TestSpeechAsync(speechFile).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(result.Text))
             {
                 this.Transcriptions?.Add(utterance.SpeechFile, result.Text);

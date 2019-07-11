@@ -1,9 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.Core
+namespace NLU.DevOps.Models
 {
-    using Models;
     using Newtonsoft.Json.Linq;
 
     /// <summary>

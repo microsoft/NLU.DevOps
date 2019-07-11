@@ -21,9 +21,9 @@ namespace NLU.DevOps.CommandLine.Train
             return 0;
         }
 
-        protected override INLUService CreateNLUService()
+        protected override INLUTrainClient CreateNLUTrainClient()
         {
-            return NLUServiceFactory.Create(this.Options, this.Configuration, this.Options.SettingsPath);
+            return NLUClientFactory.CreateTrainInstance(this.Options, this.Configuration, this.Options.SettingsPath);
         }
 
         private async Task RunAsync()
@@ -40,13 +40,13 @@ namespace NLU.DevOps.CommandLine.Train
                 var trainingUtterances = this.Options.UtterancesPath != null
                     ? Read<IList<LabeledUtterance>>(this.Options.UtterancesPath)
                     : Array.Empty<LabeledUtterance>();
-                await this.NLUService.TrainAsync(trainingUtterances).ConfigureAwait(false);
+                await this.NLUTrainClient.TrainAsync(trainingUtterances).ConfigureAwait(false);
             }
             finally
             {
                 if (this.Options.SaveAppSettings)
                 {
-                    Write($"appsettings.{this.Options.Service}.json", this.NLUService);
+                    Write($"appsettings.{this.Options.Service}.json", this.NLUTrainClient);
                 }
             }
         }
