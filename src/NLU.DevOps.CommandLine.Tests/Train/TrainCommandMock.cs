@@ -13,7 +13,7 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         {
         }
 
-        protected override INLUService CreateNLUService() =>
-            new NLUServiceMock();
+        protected override INLUTrainClient CreateNLUTrainClient() =>
+            new MockNLUTrainClient();
     }
 }

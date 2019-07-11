@@ -7,8 +7,6 @@ namespace NLU.DevOps.CommandLine.Tests
     using CommandLine.Train;
     using FluentAssertions;
     using global::CommandLine;
-    using Lex;
-    using Luis;
     using Models;
     using NUnit.Framework;
 
@@ -30,8 +28,8 @@ namespace NLU.DevOps.CommandLine.Tests
         {
             this.options.Add("luis");
             this.args = this.options.ToArray();
-            var serviceFactory = this.GetServiceFactory();
-            serviceFactory.Should().BeOfType<LuisNLUServiceFactory>();
+            var serviceFactory = this.GetClientFactory();
+            serviceFactory.Should().NotBeNull();
         }
 
         [Test]
@@ -39,18 +37,18 @@ namespace NLU.DevOps.CommandLine.Tests
         {
             this.options.Add("lex");
             this.args = this.options.ToArray();
-            var serviceFactory = this.GetServiceFactory();
-            serviceFactory.Should().BeOfType<LexNLUServiceFactory>();
+            var serviceFactory = this.GetClientFactory();
+            serviceFactory.Should().NotBeNull();
         }
 
-        private INLUServiceFactory GetServiceFactory()
+        private INLUClientFactory GetClientFactory()
         {
-            BaseOptions options = null;
+            BaseOptions baseOptions = null;
             var parser = Parser.Default.ParseArguments<TrainOptions>(this.args).WithParsed<TrainOptions>(o =>
             {
-                options = o;
+                baseOptions = o;
             });
-            ServiceResolver.TryResolve<INLUServiceFactory>(options, out var serviceFactory);
+            ServiceResolver.TryResolve<INLUClientFactory>(baseOptions, out var serviceFactory);
             return serviceFactory;
         }
     }

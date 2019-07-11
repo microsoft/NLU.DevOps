@@ -50,28 +50,6 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         }
 
         [Test]
-        public void WhenArgumentsIncludeSettingsValue()
-        {
-            Environment.SetEnvironmentVariable("luisAuthoringKey", null);
-            this.options.Add("-e");
-            this.options.Add("./testdata/settings.luis.json");
-            this.WhenParserIsRun(false);
-            Action a = () => this.commandUnderTest.Main();
-            a.Should().Throw<ArgumentException>().WithMessage("Must specify either 'authoringKey' or 'endpointKey'.");
-        }
-
-        [Test]
-        public void WhenArgumentsIncludeUtteranceValue()
-        {
-            Environment.SetEnvironmentVariable("luisAuthoringKey", "abc");
-            this.options.Add("-u");
-            this.options.Add("./testdata/utterances.json");
-            this.WhenParserIsRun(false);
-            Action a = () => this.commandUnderTest.Main();
-            a.Should().Throw<ArgumentException>().WithMessage("Must specify either 'authoringRegion' or 'endpointRegion'.");
-        }
-
-        [Test]
         public void ExceptionIsThrownWhenStagingValueIsNotABoolean()
         {
             Environment.SetEnvironmentVariable("luisIsStaging", "Truely");

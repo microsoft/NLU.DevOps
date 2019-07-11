@@ -4,7 +4,6 @@
 namespace NLU.DevOps.Luis
 {
     using System;
-    using System.Composition;
     using Models;
 
     /// <summary>

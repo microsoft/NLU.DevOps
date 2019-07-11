@@ -3,7 +3,6 @@
 
 namespace NLU.DevOps.CommandLine.Clean
 {
-    using System;
     using System.IO;
     using System.Threading.Tasks;
     using Models;
@@ -24,7 +23,7 @@ namespace NLU.DevOps.CommandLine.Clean
         private async Task RunAsync()
         {
             this.Log("Cleaning NLU service...");
-            await this.NLUService.CleanupAsync().ConfigureAwait(false);
+            await this.NLUTrainClient.CleanupAsync().ConfigureAwait(false);
 
             if (this.Options.DeleteAppSettings)
             {

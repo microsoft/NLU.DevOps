@@ -32,8 +32,10 @@ namespace NLU.DevOps.CommandLine.Tests
             IConfiguration configuration = new ConfigurationBuilder()
                 .Build();
 
-            Action a = () => NLUServiceFactory.Create(options, configuration);
-            a.Should().Throw<InvalidOperationException>().WithMessage("Invalid service type 'foo'.");
+            Action createTrainInstance = () => NLUClientFactory.CreateTrainInstance(options, configuration);
+            createTrainInstance.Should().Throw<InvalidOperationException>().WithMessage("Invalid service type 'foo'.");
+            Action createTestInstance = () => NLUClientFactory.CreateTestInstance(options, configuration);
+            createTestInstance.Should().Throw<InvalidOperationException>().WithMessage("Invalid service type 'foo'.");
         }
     }
 }

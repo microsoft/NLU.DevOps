@@ -20,8 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NLU.DevOps.CommandLine\NLU.DevOps.CommandLine.csproj" />
-    <ProjectReference Include="..\NLU.DevOps.Lex\NLU.DevOps.Lex.csproj" />
-    <ProjectReference Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="testdata\settings.luis.json">
