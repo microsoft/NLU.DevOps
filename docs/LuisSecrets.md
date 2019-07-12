@@ -1,10 +1,13 @@
 # Configuring LUIS secrets
 
-Before using the NLU.DevOps tool, you need to supply subscription keys to be able to train or test LUIS. To split up the keys settings that are "safe" for check-in to source control and those that should remain secure, the NLU.DevOps tool splits the settings into the [`--service-settings`](Train.md#-e---service-settings) command line option, which points to a file that can be checked in to source control, and settings configured through [`Microsoft.Extensions.Configuration`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.configuration?view=aspnetcore-2.1) (i.e., an `appsettings.json` file or environment variables). This document focuses on the latter. See [LUIS app configuration](LuisSettings.md) for details about the former.
+Before using the NLU.DevOps tool, you need to supply subscription keys to be able to train or test LUIS. To split up the keys settings that are "safe" for check-in to source control and those that should remain secure, the NLU.DevOps tool splits the settings into the [`--service-settings`](Train.md#-e---service-settings) command line option, which points to a file that can be checked in to source control, and settings configured through [`Microsoft.Extensions.Configuration`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.configuration?view=aspnetcore-2.1) (i.e., an `appsettings.local.json` file or environment variables). This document focuses on the latter. See [LUIS app configuration](LuisSettings.md) for details about the former.
 
 ## Configuring secrets for training
 
 At a minimum to get started, you must supply the [LUIS authoring key](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-concept-keys) and authoring region to train a model with the NLU.DevOps CLI tools.
+
+Within an `appsettings.local.json` file use the following:
+
 ```json
 {
   "luisAuthoringKey": "...",
@@ -12,9 +15,24 @@ At a minimum to get started, you must supply the [LUIS authoring key](https://do
 }
 ```
 
+If using environment variables set the values (example shown using Powershell and Bash):
+
+```powershell
+$env:luisAuthoringKey='...'
+$env:luisAuthoringRegion='westus'
+```
+
+Example below uses the export command to create environment variables on a Mac:
+
+```vim
+export luisAuthoringKey='...'
+export luisAuthoringRegion='westus'
+```
+
 This will allow you to call the `train` sub-command for LUIS (see [Training an NLU Service](Train.md) for more details).
 
 Options to consider for training a LUIS model include:
+
 - [`luisAuthoringKey`](#luisauthoringkey)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisAppId`](#luisappid)
@@ -27,12 +45,31 @@ Options to consider for training a LUIS model include:
 ## Configuring secrets for testing
 
 At a minimum to get started, you must supply a [LUIS authoring or endpoint key](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-concept-keys), an authoring or endpoint region, and an app ID to test a model with the NLU.DevOps CLI tools.
+
+Within an `appsettings.local.json` file use the following:
+
 ```json
 {
   "luisAuthoringKey": "...",
   "luisAuthoringRegion": "westus",
   "luisAppId": "00000000-0000-0000-0000-000000000000"
 }
+```
+
+If using environment variables set the values (example shown using Powershell):
+
+```powershell
+$env:luisAuthoringKey='...'
+$env:luisAuthoringRegion='westus'
+$env:luisAppId='00000000-0000-0000-0000-000000000000'
+```
+
+Example below uses the export command to create environment variables on a Mac:
+
+```vim
+export luisAuthoringKey='...'
+export luisAuthoringRegion='westus'
+export luisAppId='00000000-0000-0000-0000-000000000000'
 ```
 
 This will allow you to call the `test` sub-command for LUIS (see [Testing an NLU Service](Test.md) for more details).
@@ -42,6 +79,7 @@ To simplify the configuration process in continuous integration scenarios, you c
 Also note that the LUIS authoring key has a [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits) when used for query (up to 1,000 text queries/month and at most 5 requests/second). As such it is recommended that you suppy a [`luisEndpointKey`](#luisendpointkey) and [`luisEndpointRegion`](#luisendpointregion). You may not use the [`luisAuthoringKey`](#luisauthoringkey) for testing with the [`--speech`](Test.md#--speech) option, unless you also supply a [`speechKey`](#speechkey). See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for details on how to avoid the quota.
 
 Options to consider for testing a LUIS model include:
+
 - [`luisAuthoringKey`](#luisauthoringkey)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisEndpointKey`](#luisendpointkey)
@@ -56,6 +94,9 @@ Options to consider for testing a LUIS model include:
 ## Configuring secrets for clean
 
 At a minimum to get started, you must supply a LUIS authoring key, an authoring region, and an app ID to delete a LUIS model with the NLU.DevOps CLI tools.
+
+Within an `appsettings.luis.json` file use the following:
+
 ```json
 {
   "luisAuthoringKey": "...",
@@ -64,11 +105,28 @@ At a minimum to get started, you must supply a LUIS authoring key, an authoring 
 }
 ```
 
+If using environment variables set the values (example shown using Powershell):
+
+```powershell
+$env:luisAuthoringKey='...'
+$env:luisAuthoringRegion='westus'
+$env:luisAppId='00000000-0000-0000-0000-000000000000'
+```
+
+Example below uses the export command to create environment variables on a Mac:
+
+```vim
+export luisAuthoringKey='...'
+export luisAuthoringRegion='westus'
+export luisAppId='00000000-0000-0000-0000-000000000000'
+```
+
 This will allow you to call the `clean` sub-command for LUIS (see [Tearing down an NLU Service](Clean.md) for more details).
 
 To simplify the configuration process in continuous integration scenarios, you can use the [`--save-appsettings`](Train.md#-a---save-appsettings) option to save the LUIS app ID generated from a previous call to `train` in a `appsettings.luis.json` file.
 
 Options to consider for tearing down a LUIS model include:
+
 - [`luisAuthoringKey`](#luisauthoringkey)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisAppId`](#luisappid)
@@ -80,6 +138,9 @@ As mentioned in [Configuring secrets for testing](#configuring-secrets-for-testi
 LUIS exposes an endpoint to assign an Azure resource to the LUIS app, allowing you to test without worrying about the authoring key quota.
 
 You will need to configure the following variables for the CLI tool to assign the Azure resource:
+
+Within an `appsettings.luis.json` file use the following:
+
 ```json
 {
   "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
@@ -89,7 +150,26 @@ You will need to configure the following variables for the CLI tool to assign th
 }
 ```
 
+If using environment variables set the values (example shown using Powershell):
+
+```powershell
+$env:azureSubscriptionId='00000000-0000-0000-0000-000000000000'
+$env:azureResourceGroup='...'
+$env:azureLuisResourceName='...'
+$env:ARM_TOKEN='...'
+```
+
+Example below uses the export command to create environment variables on a Mac:
+
+```vim
+azureSubscriptionId='00000000-0000-0000-0000-000000000000'
+export azureResourceGroup='...'
+export azureLuisResourceName='...'
+export ARM_TOKEN='...'
+```
+
 Options to consider for assigning an Azure resource during training:
+
 - [`azureSubscriptionId`](#azuresubscriptionid)
 - [`azureResourceGroup`](#azureresourcegroup)
 - [`azureLuisResourceName`](#azureluisresourcename)
@@ -171,3 +251,7 @@ Optional for `train`. When supplied along with [`azureSubscriptionId`](#azuresub
 (Optional) ARM token for authorizing Azure requests.
 
 Optional for `train`. When supplied along with [`azureSubscriptionId`](#azuresubscriptionid), [`azureResourceGroup`](#azureresourcegroup), and [`azureLuisResourceName`](#azureluisresourcename), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuring-secrets-for-azure-resource-assignment) for more details.
+
+## Additional Information
+
+A detailed walkthrough of configuring the Luis secrets: [NLU.DevOps for LUIS](https://medium.com/@in4margaret/nlu-devops-for-luis-64cd1cb7fd6e)
