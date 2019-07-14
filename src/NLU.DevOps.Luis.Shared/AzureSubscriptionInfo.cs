@@ -3,20 +3,16 @@
 
 namespace NLU.DevOps.Luis
 {
-    using Newtonsoft.Json;
-
     internal class AzureSubscriptionInfo
     {
         private AzureSubscriptionInfo(
             string azureSubscriptionId,
             string resourceGroup,
-            string accountName,
-            string armToken)
+            string accountName)
         {
             this.AzureSubscriptionId = azureSubscriptionId;
             this.ResourceGroup = resourceGroup;
             this.AccountName = accountName;
-            this.ArmToken = armToken;
         }
 
         public string AzureSubscriptionId { get; }
@@ -25,24 +21,20 @@ namespace NLU.DevOps.Luis
 
         public string AccountName { get; }
 
-        [JsonIgnore]
-        public string ArmToken { get; }
-
-        public static AzureSubscriptionInfo Create(
-            string azureSubscriptionId,
-            string resourceGroup,
-            string accountName,
-            string armToken)
+        public static AzureSubscriptionInfo Create(ILuisConfiguration luisConfiguration)
         {
-            if (azureSubscriptionId == null
-                || resourceGroup == null
-                || accountName == null
-                || armToken == null)
+            if (luisConfiguration.AzureSubscriptionId == null
+                || luisConfiguration.AzureResourceGroup == null
+                || luisConfiguration.AzureAppName == null
+                || luisConfiguration.ArmToken == null)
             {
                 return null;
             }
 
-            return new AzureSubscriptionInfo(azureSubscriptionId, resourceGroup, accountName, armToken);
+            return new AzureSubscriptionInfo(
+                luisConfiguration.AzureSubscriptionId,
+                luisConfiguration.AzureResourceGroup,
+                luisConfiguration.AzureAppName);
         }
     }
 }

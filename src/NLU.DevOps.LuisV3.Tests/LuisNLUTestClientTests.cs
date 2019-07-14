@@ -21,10 +21,8 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullAppId = () => new LuisNLUTestClient(null, new LuisSettings(), new MockLuisTestClient());
-            Action nullLuisSettings = () => new LuisNLUTestClient(string.Empty, null, new MockLuisTestClient());
-            Action nullLuisClient = () => new LuisNLUTestClient(string.Empty, new LuisSettings(), null);
-            nullAppId.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appId");
+            Action nullLuisSettings = () => new LuisNLUTestClient(null, new MockLuisTestClient());
+            Action nullLuisClient = () => new LuisNLUTestClient(new LuisSettings(), null);
             nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
@@ -456,7 +454,6 @@ namespace NLU.DevOps.Luis.Tests
         {
             return new LuisNLUServiceBuilder
             {
-                AppId = Guid.NewGuid().ToString(),
                 LuisSettings = new LuisSettings(null, null),
                 LuisClient = new MockLuisTestClient(),
             };
@@ -508,15 +505,13 @@ namespace NLU.DevOps.Luis.Tests
 
         private class LuisNLUServiceBuilder
         {
-            public string AppId { get; set; }
-
             public LuisSettings LuisSettings { get; set; }
 
             public ILuisTestClient LuisClient { get; set; }
 
             public LuisNLUTestClient Build()
             {
-                return new LuisNLUTestClient(this.AppId, this.LuisSettings, this.LuisClient);
+                return new LuisNLUTestClient(this.LuisSettings, this.LuisClient);
             }
         }
 
@@ -532,14 +527,14 @@ namespace NLU.DevOps.Luis.Tests
 
             private List<Timestamped<LuisRequest>> RequestsInternal { get; } = new List<Timestamped<LuisRequest>>();
 
-            public Task<PredictionResponse> QueryAsync(string appId, PredictionRequest predictionRequest, CancellationToken cancellationToken)
+            public Task<PredictionResponse> QueryAsync(PredictionRequest predictionRequest, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<PredictionResponse>(appId, predictionRequest);
+                return this.ProcessRequestAsync<PredictionResponse>(predictionRequest);
             }
 
-            public Task<PredictionResponse> RecognizeSpeechAsync(string appId, string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
+            public Task<PredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
             {
-                return this.ProcessRequestAsync<PredictionResponse>(appId, speechFile, predictionRequest);
+                return this.ProcessRequestAsync<PredictionResponse>(speechFile, predictionRequest);
             }
 
             public void Dispose()

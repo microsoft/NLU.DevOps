@@ -26,13 +26,15 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("-o");
             optionsList.Add("outputFolder");
             var args = optionsList.ToArray();
-            var parser = Parser.Default.ParseArguments<CompareOptions>(args).WithParsed<CompareOptions>(o =>
-            {
-                o.ExpectedUtterancesPath.Should().Be("expectedUtterances");
-                o.ActualUtterancesPath.Should().Be("actualUtterances");
-                o.TestLabel.Should().Be("testLabel");
-                o.OutputFolder.Should().Be("outputFolder");
-            }).WithNotParsed<CompareOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<CompareOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.ExpectedUtterancesPath.Should().Be("expectedUtterances");
+                    o.ActualUtterancesPath.Should().Be("actualUtterances");
+                    o.TestLabel.Should().Be("testLabel");
+                    o.OutputFolder.Should().Be("outputFolder");
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
@@ -44,11 +46,13 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("-a");
             optionsList.Add("actualUtterances");
             var args = optionsList.ToArray();
-            var parser = Parser.Default.ParseArguments<CompareOptions>(args).WithParsed<CompareOptions>(o =>
-            {
-                o.TestLabel.Should().Be(null);
-                o.OutputFolder.Should().Be(null);
-            }).WithNotParsed<CompareOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<CompareOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.TestLabel.Should().Be(null);
+                    o.OutputFolder.Should().Be(null);
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
@@ -59,12 +63,8 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("actualUtterances");
             var args = optionsList.ToArray();
             var parser = Parser.Default.ParseArguments<CompareOptions>(args);
-            parser.Tag.Should().Be(ParserResultType.NotParsed);
-            var notParsed = (NotParsed<CompareOptions>)parser;
-            var error = notParsed.Errors.First();
-            error.Should().BeOfType<MissingRequiredOptionError>();
-            var missingOptionError = (MissingRequiredOptionError)error;
-            missingOptionError.NameInfo.LongName.Should().Be("expected");
+            var error = parser.As<NotParsed<CompareOptions>>().Errors.First();
+            error.As<MissingRequiredOptionError>().NameInfo.LongName.Should().Be("expected");
         }
 
         [Test]
@@ -76,11 +76,8 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             var args = optionsList.ToArray();
             var parser = Parser.Default.ParseArguments<CompareOptions>(args);
             parser.Tag.Should().Be(ParserResultType.NotParsed);
-            var notParsed = (NotParsed<CompareOptions>)parser;
-            var error = notParsed.Errors.First();
-            error.Should().BeOfType<MissingRequiredOptionError>();
-            var missingOptionError = (MissingRequiredOptionError)error;
-            missingOptionError.NameInfo.LongName.Should().Be("actual");
+            var error = parser.As<NotParsed<CompareOptions>>().Errors.First();
+            error.As<MissingRequiredOptionError>().NameInfo.LongName.Should().Be("actual");
         }
     }
 }

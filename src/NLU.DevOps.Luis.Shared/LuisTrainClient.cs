@@ -21,26 +21,13 @@ namespace NLU.DevOps.Luis
         private const string Protocol = "https://";
         private const string Domain = ".api.cognitive.microsoft.com";
 
-        public LuisTrainClient(
-            string authoringKey,
-            string authoringRegion,
-            string endpointRegion,
-            AzureSubscriptionInfo azureSubscriptionInfo,
-            bool isStaging)
+        public LuisTrainClient(ILuisConfiguration luisConfiguration)
         {
-            this.IsStaging = isStaging;
-            this.AzureSubscriptionInfo = azureSubscriptionInfo;
-            this.AuthoringKey = authoringKey ?? throw new ArgumentNullException(nameof(authoringKey));
-
-            var validAuthoringRegion = authoringRegion ?? throw new ArgumentNullException(nameof(authoringRegion));
-            this.EndpointRegion = endpointRegion ?? validAuthoringRegion;
-
-            var authoringCredentials = new ApiKeyServiceClientCredentials(
-                authoringKey ?? throw new ArgumentNullException(nameof(authoringKey)));
-
+            this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
+            var authoringCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.AuthoringKey);
             this.AuthoringClient = new LUISAuthoringClient(authoringCredentials)
             {
-                Endpoint = $"{Protocol}{validAuthoringRegion}{Domain}",
+                Endpoint = $"{Protocol}{luisConfiguration.AuthoringRegion}{Domain}",
             };
         }
 
@@ -48,15 +35,7 @@ namespace NLU.DevOps.Luis
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTrainClient>());
 
-        private AzureSubscriptionInfo AzureSubscriptionInfo { get; }
-
-        private string AuthoringKey { get; }
-
-        private string EndpointRegion { get; }
-
-        private string VersionId { get; }
-
-        private bool IsStaging { get; }
+        private ILuisConfiguration LuisConfiguration { get; }
 
         private LUISAuthoringClient AuthoringClient { get; }
 
@@ -72,9 +51,10 @@ namespace NLU.DevOps.Luis
             var appId = await this.AuthoringClient.Apps.AddAsync(request, cancellationToken).ConfigureAwait(false);
 
             // Assign Azure resource to LUIS app.
-            if (this.AzureSubscriptionInfo != null)
+            var azureSubscriptionInfo = AzureSubscriptionInfo.Create(this.LuisConfiguration);
+            if (azureSubscriptionInfo != null)
             {
-                await this.AssignAzureResourceAsync(appId).ConfigureAwait(false);
+                await this.AssignAzureResourceAsync(azureSubscriptionInfo, appId).ConfigureAwait(false);
             }
 
             return appId.ToString();
@@ -97,15 +77,19 @@ namespace NLU.DevOps.Luis
 
         public Task PublishAppAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-            var request = new ApplicationPublishObject
-            {
-                IsStaging = this.IsStaging,
-#if LUIS_V2
-                Region = this.EndpointRegion,
+#if LUIS_V3
+            var request = new ApplicationPublishObjectWithDirectVersionPublish();
+#else
+            var request = new ApplicationPublishObject();
 #endif
-                VersionId = versionId,
-            };
-
+            request.IsStaging = this.LuisConfiguration.IsStaging;
+            request.VersionId = this.LuisConfiguration.VersionId;
+#if LUIS_V2
+            request.Region = this.LuisConfiguration.EndpointRegion;
+#endif
+#if LUIS_V3
+            request.DirectVersionPublish = this.LuisConfiguration.DirectVersionPublish;
+#endif
             return this.AuthoringClient.Apps.PublishAsync(Guid.Parse(appId), request, cancellationToken);
         }
 
@@ -128,9 +112,9 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        private async Task AssignAzureResourceAsync(Guid appId)
+        private async Task AssignAzureResourceAsync(AzureSubscriptionInfo azureSubscriptionInfo, Guid appId)
         {
-            var jsonBody = JsonConvert.SerializeObject(this.AzureSubscriptionInfo);
+            var jsonBody = JsonConvert.SerializeObject(azureSubscriptionInfo);
             var data = new StringContent(jsonBody, Encoding.UTF8, "application/json");
             var url = $"{this.AuthoringClient.Endpoint}/luis/api/v2.0/apps/{appId}/azureaccounts";
             var request = new HttpRequestMessage
@@ -139,8 +123,8 @@ namespace NLU.DevOps.Luis
                 RequestUri = new Uri(url),
                 Headers =
                 {
-                    { HttpRequestHeader.Authorization.ToString(), $"Bearer {this.AzureSubscriptionInfo.ArmToken}" },
-                    { "Ocp-Apim-Subscription-Key", this.AuthoringKey }
+                    { HttpRequestHeader.Authorization.ToString(), $"Bearer {this.LuisConfiguration.ArmToken}" },
+                    { "Ocp-Apim-Subscription-Key", this.LuisConfiguration.AuthoringKey }
                 },
                 Content = data,
             };
@@ -148,5 +132,12 @@ namespace NLU.DevOps.Luis
             var result = await this.AuthoringClient.HttpClient.SendAsync(request).ConfigureAwait(false);
             result.EnsureSuccessStatusCode();
         }
+
+#if LUIS_V3
+        private class ApplicationPublishObjectWithDirectVersionPublish : ApplicationPublishObject
+        {
+            public bool DirectVersionPublish { get; set; }
+        }
+#endif
     }
 }

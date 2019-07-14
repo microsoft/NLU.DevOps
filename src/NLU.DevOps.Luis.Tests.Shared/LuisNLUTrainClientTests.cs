@@ -11,6 +11,7 @@ namespace NLU.DevOps.Luis.Tests
     using System.Threading.Tasks;
     using FluentAssertions;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
+    using Microsoft.Extensions.Configuration;
     using Models;
     using NUnit.Framework;
 
@@ -25,10 +26,11 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullAppName = () => new LuisNLUTrainClient(null, null, null, new LuisSettings(), new MockLuisTrainClient());
-            Action nullLuisSettings = () => new LuisNLUTrainClient(string.Empty, null, null, null, new MockLuisTrainClient());
-            Action nullLuisClient = () => new LuisNLUTrainClient(string.Empty, null, null, new LuisSettings(), null);
-            nullAppName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("appName");
+            var luisConfiguration = new LuisConfiguration(new ConfigurationBuilder().Build());
+            Action nullLuisConfiguration = () => new LuisNLUTrainClient(null, new LuisSettings(), new MockLuisTrainClient());
+            Action nullLuisSettings = () => new LuisNLUTrainClient(luisConfiguration, null, new MockLuisTrainClient());
+            Action nullLuisClient = () => new LuisNLUTrainClient(luisConfiguration, new LuisSettings(), null);
+            nullLuisConfiguration.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisConfiguration");
             nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
@@ -397,8 +399,20 @@ namespace NLU.DevOps.Luis.Tests
 
             public ILuisTrainClient LuisClient { get; set; }
 
-            public LuisNLUTrainClient Build() =>
-                new LuisNLUTrainClient(this.AppName, this.AppId, this.AppVersion, this.LuisSettings, this.LuisClient);
+            public LuisNLUTrainClient Build()
+            {
+                var configuration = new ConfigurationBuilder()
+                    .AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { "luisAppId", this.AppId },
+                        { "luisVersionId", this.AppVersion },
+                        { "luisAppName", this.AppName },
+                    })
+                    .Build();
+
+                var luisConfiguration = new LuisConfiguration(configuration);
+                return new LuisNLUTrainClient(luisConfiguration, this.LuisSettings, this.LuisClient);
+            }
         }
 
         private sealed class MockLuisTrainClient : ILuisTrainClient

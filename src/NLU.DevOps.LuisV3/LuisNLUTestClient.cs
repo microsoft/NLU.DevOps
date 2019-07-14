@@ -24,12 +24,10 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
-        /// <param name="appId">App ID.</param>
         /// <param name="luisSettings">LUIS settings.</param>
         /// <param name="luisClient">LUIS client.</param>
-        public LuisNLUTestClient(string appId, LuisSettings luisSettings, ILuisTestClient luisClient)
+        public LuisNLUTestClient(LuisSettings luisSettings, ILuisTestClient luisClient)
         {
-            this.LuisAppId = appId ?? throw new ArgumentNullException(nameof(appId));
             this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
@@ -37,8 +35,6 @@ namespace NLU.DevOps.Luis
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
-
-        private string LuisAppId { get; }
 
         private LuisSettings LuisSettings { get; }
 
@@ -49,7 +45,7 @@ namespace NLU.DevOps.Luis
             LuisNLUQuery query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.QueryAsync(this.LuisAppId, query.PredictionRequest, cancellationToken).ConfigureAwait(false);
+            var luisResult = await this.LuisClient.QueryAsync(query.PredictionRequest, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
@@ -59,7 +55,7 @@ namespace NLU.DevOps.Luis
             LuisNLUQuery query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.RecognizeSpeechAsync(this.LuisAppId, speechFile, query?.PredictionRequest, cancellationToken).ConfigureAwait(false);
+            var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, query?.PredictionRequest, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
