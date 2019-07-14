@@ -25,21 +25,15 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTrainClient"/> class.
         /// </summary>
-        /// <param name="appName">App name.</param>
-        /// <param name="appId">App ID.</param>
-        /// <param name="versionId">Version ID.</param>
+        /// <param name="luisConfiguration">LUIS configuration.</param>
         /// <param name="luisSettings">LUIS settings.</param>
         /// <param name="luisClient">LUIS client.</param>
-        public LuisNLUTrainClient(string appName, string appId, string versionId, LuisSettings luisSettings, ILuisTrainClient luisClient)
+        public LuisNLUTrainClient(ILuisConfiguration luisConfiguration, LuisSettings luisSettings, ILuisTrainClient luisClient)
         {
-            this.LuisAppId = appId;
-            this.LuisVersionId = versionId ?? "0.1.1";
+            this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
             this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
-
-            this.AppName = appName ?? ((appId == null && luisSettings.AppTemplate.Name == null)
-                ? throw new ArgumentNullException(nameof(appName), $"Must supply one of '{nameof(appName)}', '{nameof(appId)}', or '{nameof(Luis.LuisSettings)}.{nameof(Luis.LuisSettings.AppTemplate)}'.")
-                : appName);
+            this.LuisAppId = luisConfiguration.AppId;
         }
 
         /// <summary>
@@ -51,9 +45,7 @@ namespace NLU.DevOps.Luis
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTrainClient>());
 
-        private string AppName { get; }
-
-        private string LuisVersionId { get; }
+        private ILuisConfiguration LuisConfiguration { get; }
 
         private LuisSettings LuisSettings { get; }
 
@@ -78,27 +70,27 @@ namespace NLU.DevOps.Luis
             // Create application if not passed in.
             if (this.LuisAppId == null)
             {
-                this.LuisAppId = await this.LuisClient.CreateAppAsync(this.AppName, cancellationToken).ConfigureAwait(false);
-                Logger.LogTrace($"Created LUIS app '{this.AppName}' with ID '{this.LuisAppId}'.");
+                this.LuisAppId = await this.LuisClient.CreateAppAsync(this.LuisConfiguration.AppName, cancellationToken).ConfigureAwait(false);
+                Logger.LogTrace($"Created LUIS app '{this.LuisConfiguration.AppName}' with ID '{this.LuisConfiguration}'.");
             }
 
             // Create LUIS import JSON
             var luisApp = this.CreateLuisApp(utterances);
 
             // Import the LUIS model
-            Logger.LogTrace($"Importing LUIS app '{this.AppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
-            await this.LuisClient.ImportVersionAsync(this.LuisAppId, this.LuisVersionId, luisApp, cancellationToken).ConfigureAwait(false);
+            Logger.LogTrace($"Importing LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
+            await this.LuisClient.ImportVersionAsync(this.LuisAppId, this.LuisConfiguration.VersionId, luisApp, cancellationToken).ConfigureAwait(false);
 
             // Train the LUIS model
-            Logger.LogTrace($"Training LUIS app '{this.AppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
-            await this.LuisClient.TrainAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
+            Logger.LogTrace($"Training LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
+            await this.LuisClient.TrainAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
 
             // Wait for training to complete
             await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
 
             // Publishes the LUIS app version
-            Logger.LogTrace($"Publishing LUIS app '{this.AppName ?? this.LuisAppId}' version '{this.LuisVersionId}'.");
-            await this.LuisClient.PublishAppAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
+            Logger.LogTrace($"Publishing LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
+            await this.LuisClient.PublishAppAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -147,8 +139,8 @@ namespace NLU.DevOps.Luis
         private LuisApp CreateLuisAppTemplate()
         {
             var defaultTemplate = new LuisApp(
-                name: this.AppName,
-                versionId: this.LuisVersionId,
+                name: this.LuisConfiguration.AppName,
+                versionId: this.LuisConfiguration.VersionId,
                 desc: string.Empty,
                 culture: "en-us",
                 entities: new List<HierarchicalModel>(),
@@ -170,7 +162,7 @@ namespace NLU.DevOps.Luis
         {
             while (true)
             {
-                var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisVersionId, cancellationToken).ConfigureAwait(false);
+                var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
                 var inProgress = trainingStatus
                     .Select(modelInfo => modelInfo.Details.Status)
                     .Any(status => status == "InProgress" || status == "Queued");

@@ -34,7 +34,7 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         [Test]
         public void WhenArgumentsDoNotIncludeUtterancesOrSettings()
         {
-            this.WhenParserIsRun(true);
+            this.WhenParserIsRun();
             Action a = () => this.commandUnderTest.Main();
             a.Should().Throw<InvalidOperationException>().WithMessage("Must specify either --utterances or --service-settings when using train.");
         }
@@ -44,31 +44,18 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         {
             this.options.Add("-u");
             this.options.Add("./bogusfolder/utterances.json");
-            this.WhenParserIsRun(true);
+            this.WhenParserIsRun();
             Action a = () => this.commandUnderTest.Main();
             a.Should().Throw<DirectoryNotFoundException>();
         }
 
         [Test]
-        public void ExceptionIsThrownWhenStagingValueIsNotABoolean()
-        {
-            Environment.SetEnvironmentVariable("luisIsStaging", "Truely");
-            this.options.Add("-u");
-            this.options.Add("./testdata/utterances.json");
-            this.WhenParserIsRun(false);
-            Action a = () => this.commandUnderTest.Main();
-            a.Should().Throw<ArgumentException>().WithMessage("The configuration value 'luisIsStaging' must be a valid boolean.");
-            Environment.SetEnvironmentVariable("luisIsStaging", null);
-        }
-
-        [Test]
         public void SaveAppsettingsShouldCreateAFile()
         {
-            var useMock = true;
             this.options.Add("-u");
             this.options.Add("./testdata/utterances.json");
             this.options.Add("-a");
-            this.WhenParserIsRun(useMock);
+            this.WhenParserIsRun();
             this.commandUnderTest.Main();
             File.Exists("appsettings.luis.json").Should().BeTrue();
             File.Delete("appsettings.luis.json");
@@ -79,19 +66,12 @@ namespace NLU.DevOps.CommandLine.Tests.Train
             this.commandUnderTest?.Dispose();
         }
 
-        private void WhenParserIsRun(bool useMock)
+        private void WhenParserIsRun()
         {
             var args = this.options.ToArray();
-            ParserResult<TrainOptions> results = Parser.Default.ParseArguments<TrainOptions>(args);
-            var options = (Parsed<TrainOptions>)results;
-            if (useMock)
-            {
-                this.commandUnderTest = new TrainCommandMock(options.Value);
-            }
-            else
-            {
-                this.commandUnderTest = new TrainCommand(options.Value);
-            }
+            var results = Parser.Default.ParseArguments<TrainOptions>(args);
+            var trainOptions = (Parsed<TrainOptions>)results;
+            this.commandUnderTest = new TrainCommandMock(trainOptions.Value);
         }
     }
 }

@@ -22,45 +22,37 @@ namespace NLU.DevOps.Luis
 
         private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
-        public LuisTestClient(
-            string endpointKey,
-            string endpointRegion,
-            bool isStaging)
+        public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
-            this.IsStaging = isStaging;
+            this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
 
-            this.EndpointRegion = endpointRegion ?? throw new ArgumentNullException(nameof(endpointRegion));
-
-            var endpointCredentials = new Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.ApiKeyServiceClientCredentials(
-                endpointKey ?? throw new ArgumentNullException(nameof(endpointKey)));
-
+            var endpointCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.EndpointKey);
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
-                Endpoint = $"{Protocol}{this.EndpointRegion}{Domain}",
+                Endpoint = $"{Protocol}{luisConfiguration.EndpointRegion}{Domain}",
             };
 
-            this.LazySpeechConfig = new Lazy<SpeechConfig>(() => SpeechConfig.FromSubscription(endpointKey, endpointRegion));
+            this.LazySpeechConfig = new Lazy<SpeechConfig>(() =>
+                SpeechConfig.FromSubscription(luisConfiguration.EndpointKey, luisConfiguration.EndpointRegion));
         }
 
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTrainClient>());
 
-        private string EndpointRegion { get; }
-
-        private bool IsStaging { get; }
+        private ILuisConfiguration LuisConfiguration { get; }
 
         private LUISRuntimeClient RuntimeClient { get; }
 
         private Lazy<SpeechConfig> LazySpeechConfig { get; }
 
-        public async Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken)
+        public async Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken)
         {
             while (true)
             {
                 try
                 {
-                    return await this.RuntimeClient.Prediction.ResolveAsync(appId, text, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    return await this.RuntimeClient.Prediction.ResolveAsync(this.LuisConfiguration.AppId, text, cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
                 catch (APIErrorException ex)
                 when ((int)ex.Response.StatusCode == 429)
@@ -71,13 +63,13 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public virtual async Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+        public virtual async Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
             using (var recognizer = new IntentRecognizer(this.LazySpeechConfig.Value, audioInput))
             {
                 // Add intents to intent recognizer
-                var model = LanguageUnderstandingModel.FromAppId(appId);
+                var model = LanguageUnderstandingModel.FromAppId(this.LuisConfiguration.AppId);
                 recognizer.AddIntent(model, "None", "None");
                 var result = await recognizer.RecognizeOnceAsync().ConfigureAwait(false);
 

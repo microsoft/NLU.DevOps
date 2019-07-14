@@ -20,11 +20,8 @@ namespace NLU.DevOps.CommandLine.Tests
             var args = Array.Empty<string>();
             var parser = Parser.Default.ParseArguments<TrainOptions>(args);
             parser.Tag.Should().Be(ParserResultType.NotParsed);
-            var notParsed = (NotParsed<TrainOptions>)parser;
-            var error = notParsed.Errors.First();
-            error.Should().BeOfType<MissingRequiredOptionError>();
-            var missingOptionError = (MissingRequiredOptionError)error;
-            missingOptionError.NameInfo.LongName.Should().Be("service");
+            var error = parser.As<NotParsed<TrainOptions>>().Errors.First();
+            error.As<MissingRequiredOptionError>().NameInfo.LongName.Should().Be("service");
         }
 
         [Test]
@@ -34,10 +31,12 @@ namespace NLU.DevOps.CommandLine.Tests
             options.Add("-s");
             options.Add("luis");
             var args = options.ToArray();
-            var parser = Parser.Default.ParseArguments<TrainOptions>(args).WithParsed<TrainOptions>(o =>
-            {
-                o.Service.Should().Be("luis");
-            }).WithNotParsed<TrainOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<TrainOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.Service.Should().Be("luis");
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
@@ -53,13 +52,15 @@ namespace NLU.DevOps.CommandLine.Tests
             options.Add("-i");
             options.Add("includepath");
             var args = options.ToArray();
-            var parser = Parser.Default.ParseArguments<TrainOptions>(args).WithParsed<TrainOptions>(o =>
-            {
-                o.Service.Should().Be("service");
-                o.Quiet.Should().BeTrue();
-                o.Verbose.Should().BeTrue();
-                o.IncludePath.Should().Be("includepath");
-            }).WithNotParsed<TrainOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<TrainOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.Service.Should().Be("service");
+                    o.Quiet.Should().BeTrue();
+                    o.Verbose.Should().BeTrue();
+                    o.IncludePath.Should().Be("includepath");
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
     }
 }

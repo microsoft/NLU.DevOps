@@ -25,12 +25,10 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
-        /// <param name="appId">App ID.</param>
         /// <param name="luisSettings">LUIS settings.</param>
         /// <param name="luisClient">LUIS test client.</param>
-        public LuisNLUTestClient(string appId, LuisSettings luisSettings, ILuisTestClient luisClient)
+        public LuisNLUTestClient(LuisSettings luisSettings, ILuisTestClient luisClient)
         {
-            this.LuisAppId = appId ?? throw new ArgumentNullException(nameof(appId));
             this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
@@ -38,8 +36,6 @@ namespace NLU.DevOps.Luis
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
-
-        private string LuisAppId { get; }
 
         private LuisSettings LuisSettings { get; }
 
@@ -50,7 +46,7 @@ namespace NLU.DevOps.Luis
             LuisNLUQuery query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.QueryAsync(this.LuisAppId, query.Text, cancellationToken).ConfigureAwait(false);
+            var luisResult = await this.LuisClient.QueryAsync(query.Text, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
@@ -60,7 +56,7 @@ namespace NLU.DevOps.Luis
             LuisNLUQuery query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.RecognizeSpeechAsync(this.LuisAppId, speechFile, cancellationToken).ConfigureAwait(false);
+            var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
@@ -93,11 +89,11 @@ namespace NLU.DevOps.Luis
                 : resolvedValue.Value<string>();
         }
 
-        private Models.LabeledUtterance LuisResultToLabeledUtterance(LuisResult luisResult)
+        private LabeledUtterance LuisResultToLabeledUtterance(LuisResult luisResult)
         {
             if (luisResult == null)
             {
-                return new Models.LabeledUtterance(null, null, null);
+                return new LabeledUtterance(null, null, null);
             }
 
             var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
@@ -144,7 +140,7 @@ namespace NLU.DevOps.Luis
             var score = luisResult.TopScoringIntent?.Score;
             var entities = luisResult.Entities?.Select(getEntity).ToList();
             return !score.HasValue
-                ? new Models.LabeledUtterance(luisResult.Query, intent, entities)
+                ? new LabeledUtterance(luisResult.Query, intent, entities)
                 : new ScoredLabeledUtterance(luisResult.Query, intent, score.Value, entities);
         }
     }

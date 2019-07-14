@@ -38,7 +38,7 @@ namespace NLU.DevOps.CommandLine.Tests
         public void WhenBaseOptionsAreSetACommandIsReturned()
         {
             var args = this.options.ToArray();
-            ParserResult<TrainOptions> results = Parser.Default.ParseArguments<TrainOptions>(args);
+            var results = Parser.Default.ParseArguments<TrainOptions>(args);
             results.Tag.Should().Be(ParserResultType.Parsed);
         }
 
@@ -47,10 +47,9 @@ namespace NLU.DevOps.CommandLine.Tests
         {
             this.options.Add("-z");
             var args = this.options.ToArray();
-            ParserResult<TrainOptions> results = Parser.Default.ParseArguments<TrainOptions>(args);
+            var results = Parser.Default.ParseArguments<TrainOptions>(args);
             results.Tag.Should().Be(ParserResultType.NotParsed);
-            var notParsed = (NotParsed<TrainOptions>)results;
-            notParsed.Errors.First().Tag.Should().Be(ErrorType.UnknownOptionError);
+            results.As<NotParsed<TrainOptions>>().Errors.First().Tag.Should().Be(ErrorType.UnknownOptionError);
         }
 
         [Test]
@@ -60,7 +59,7 @@ namespace NLU.DevOps.CommandLine.Tests
             this.options.Add("-q");
             var args = this.options.ToArray();
             var results = Parser.Default.ParseArguments<BaseOptions>(args);
-            var logOptions = (Parsed<BaseOptions>)results;
+            var logOptions = results.As<Parsed<BaseOptions>>();
             var command = new BaseCommandMock(logOptions.Value);
             var logger = command.Logger;
             logger.IsEnabled(LogLevel.Information).Should().BeFalse();
@@ -73,7 +72,7 @@ namespace NLU.DevOps.CommandLine.Tests
         {
             var args = this.options.ToArray();
             var results = Parser.Default.ParseArguments<BaseOptions>(args);
-            var logOptions = (Parsed<BaseOptions>)results;
+            var logOptions = results.As<Parsed<BaseOptions>>();
             var command = new BaseCommandMock(logOptions.Value);
             var logger = command.Logger;
             logger.IsEnabled(LogLevel.Debug).Should().BeFalse();
@@ -87,7 +86,7 @@ namespace NLU.DevOps.CommandLine.Tests
             this.options.Add("-v");
             var args = this.options.ToArray();
             var results = Parser.Default.ParseArguments<BaseOptions>(args);
-            var logOptions = (Parsed<BaseOptions>)results;
+            var logOptions = results.As<Parsed<BaseOptions>>();
             var command = new BaseCommandMock(logOptions.Value);
             var logger = command.Logger;
             logger.IsEnabled(LogLevel.Trace).Should().BeTrue();

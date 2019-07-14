@@ -43,7 +43,7 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
 
             File.Exists("appsettings.luis.json").Should().BeTrue();
             this.options.Add("-a");
-            this.WhenParserIsRun(true);
+            this.WhenParserIsRun();
             this.commandUnderTest.Main();
             File.Exists("appsettings.luis.json").Should().BeFalse();
         }
@@ -53,19 +53,12 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
             this.commandUnderTest?.Dispose();
         }
 
-        private void WhenParserIsRun(bool useMock)
+        private void WhenParserIsRun()
         {
             var args = this.options.ToArray();
-            ParserResult<CleanOptions> results = Parser.Default.ParseArguments<CleanOptions>(args);
-            var options = (Parsed<CleanOptions>)results;
-            if (useMock)
-            {
-                this.commandUnderTest = new CleanCommandMock(options.Value);
-            }
-            else
-            {
-                this.commandUnderTest = new CleanCommand(options.Value);
-            }
+            var results = Parser.Default.ParseArguments<CleanOptions>(args);
+            var cleanOptions = (Parsed<CleanOptions>)results;
+            this.commandUnderTest = new CleanCommandMock(cleanOptions.Value);
         }
     }
 }

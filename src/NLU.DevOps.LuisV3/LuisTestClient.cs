@@ -21,30 +21,13 @@ namespace NLU.DevOps.Luis
 
         private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
-        public LuisTestClient(
-            string endpointKey,
-            string endpointRegion,
-            string speechKey,
-            string slotName,
-            string versionId)
+        public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
-            this.SpeechKey = speechKey;
-
-            this.EndpointRegion = endpointRegion ?? throw new ArgumentNullException(nameof(endpointRegion));
-
-            this.SlotName = slotName;
-            this.VersionId = versionId;
-            if (slotName == null && versionId == null)
-            {
-                throw new ArgumentException($"Either '{nameof(slotName)}' or '{nameof(versionId)}' must not be null.");
-            }
-
-            var endpointCredentials = new ApiKeyServiceClientCredentials(
-                endpointKey ?? throw new ArgumentNullException(nameof(endpointKey)));
-
+            this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
+            var endpointCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.EndpointKey);
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
-                Endpoint = $"{Protocol}{this.EndpointRegion}{Domain}",
+                Endpoint = $"{Protocol}{luisConfiguration.EndpointRegion}{Domain}",
             };
         }
 
@@ -52,27 +35,36 @@ namespace NLU.DevOps.Luis
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
 
-        private string EndpointRegion { get; }
-
-        private string SpeechEndpoint { get; }
-
-        private string SpeechKey { get; }
-
-        private string SlotName { get; }
-
-        private string VersionId { get; }
+        private ILuisConfiguration LuisConfiguration { get; }
 
         private LUISRuntimeClient RuntimeClient { get; }
 
-        public async Task<PredictionResponse> QueryAsync(string appId, PredictionRequest predictionRequest, CancellationToken cancellationToken)
+        public async Task<PredictionResponse> QueryAsync(PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
             while (true)
             {
                 try
                 {
-                    return await (this.SlotName != null
-                        ? this.RuntimeClient.Prediction.GetSlotPredictionAsync(Guid.Parse(appId), this.SlotName, predictionRequest, verbose: true, cancellationToken: cancellationToken).ConfigureAwait(false)
-                        : this.RuntimeClient.Prediction.GetVersionPredictionAsync(Guid.Parse(appId), this.VersionId, predictionRequest, verbose: true, cancellationToken: cancellationToken).ConfigureAwait(false));
+                    if (this.LuisConfiguration.DirectVersionPublish)
+                    {
+                        Logger.LogTrace($"Testing on app '{this.LuisConfiguration.AppId}' version '{this.LuisConfiguration.VersionId}'.");
+                        return await this.RuntimeClient.Prediction.GetVersionPredictionAsync(
+                                Guid.Parse(this.LuisConfiguration.AppId),
+                                this.LuisConfiguration.VersionId,
+                                predictionRequest,
+                                verbose: true,
+                                cancellationToken: cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+
+                    Logger.LogTrace($"Testing on app '{this.LuisConfiguration.AppId}' slot '{this.LuisConfiguration.SlotName}'.");
+                    return await this.RuntimeClient.Prediction.GetSlotPredictionAsync(
+                            Guid.Parse(this.LuisConfiguration.AppId),
+                            this.LuisConfiguration.SlotName,
+                            predictionRequest,
+                            verbose: true,
+                            cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
                 }
                 catch (ErrorException ex)
                 when ((int)ex.Response.StatusCode == 429)
@@ -83,20 +75,20 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public async Task<PredictionResponse> RecognizeSpeechAsync(string appId, string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
+        public async Task<PredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
-            if (this.SpeechKey == null)
+            if (this.LuisConfiguration.SpeechKey == null)
             {
                 throw new InvalidOperationException("Must provide speech key to perform speech intent recognition.");
             }
 
-            var request = (HttpWebRequest)WebRequest.Create(this.SpeechEndpoint);
+            var request = (HttpWebRequest)WebRequest.Create(this.LuisConfiguration.SpeechEndpoint);
             request.Method = "POST";
             request.ContentType = "audio/wav; codec=audio/pcm; samplerate=16000";
             request.ServicePoint.Expect100Continue = true;
             request.SendChunked = true;
             request.Accept = "application/json";
-            request.Headers.Add("Ocp-Apim-Subscription-Key", this.SpeechKey);
+            request.Headers.Add("Ocp-Apim-Subscription-Key", this.LuisConfiguration.SpeechKey);
 
             JObject responseJson;
             using (var fileStream = File.OpenRead(speechFile))
@@ -124,7 +116,7 @@ namespace NLU.DevOps.Luis
                 Options = predictionRequest?.Options,
             };
 
-            return await this.QueryAsync(appId, predictionRequest, cancellationToken).ConfigureAwait(false);
+            return await this.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
         }
 
         public void Dispose()

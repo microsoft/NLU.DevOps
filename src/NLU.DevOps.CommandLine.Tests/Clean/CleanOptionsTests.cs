@@ -27,20 +27,18 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
         {
             this.options.Add("-a");
             var args = this.options.ToArray();
-            var parser = Parser.Default.ParseArguments<CleanOptions>(args).WithParsed<CleanOptions>(o =>
-            {
-                o.DeleteAppSettings.Should().BeTrue();
-            }).WithNotParsed<CleanOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<CleanOptions>(args)
+                .WithParsed(o => o.DeleteAppSettings.Should().BeTrue())
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
         public void SettingForCleanOptionsWhenNotSet()
         {
             var args = this.options.ToArray();
-            var parser = Parser.Default.ParseArguments<CleanOptions>(args).WithParsed<CleanOptions>(o =>
-            {
-                o.DeleteAppSettings.Should().BeFalse();
-            }).WithNotParsed<CleanOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<CleanOptions>(args)
+                .WithParsed(o => o.DeleteAppSettings.Should().BeFalse())
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
     }
 }

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Lex.Tests", "NLU
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "NLU.DevOps.Luis.Shared", "NLU.DevOps.Luis.Shared\NLU.DevOps.Luis.Shared.shproj", "{03CC905A-48D1-466C-A816-E19BF944A7EE}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "NLU.DevOps.Luis.Tests.Shared", "NLU.DevOps.Luis.Tests.Shared\NLU.DevOps.Luis.Tests.Shared.shproj", "{D7F8EF09-9289-432D-9255-677844F96A5B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Luis", "NLU.DevOps.Luis\NLU.DevOps.Luis.csproj", "{B52DDC83-32C8-4DCA-8C39-8DBD0A550382}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.ModelPerformance.Tests", "NLU.DevOps.ModelPerformance.Tests\NLU.DevOps.ModelPerformance.Tests.csproj", "{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}"

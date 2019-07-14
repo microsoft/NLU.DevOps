@@ -38,15 +38,17 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             this.options.Add("-o");
             this.options.Add("outputpath");
             var args = this.options.ToArray();
-            var parser = Parser.Default.ParseArguments<TestOptions>(args).WithParsed<TestOptions>(o =>
-            {
-                o.UtterancesPath.Should().Be("utterances");
-                o.SettingsPath.Should().Be("servicesettings");
-                o.Speech.Should().BeTrue();
-                o.SpeechFilesDirectory.Should().Be("speechdirectory");
-                o.TranscriptionsFile.Should().Be("transcriptionfile");
-                o.OutputPath.Should().Be("outputpath");
-            }).WithNotParsed<TestOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<TestOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.UtterancesPath.Should().Be("utterances");
+                    o.SettingsPath.Should().Be("servicesettings");
+                    o.Speech.Should().BeTrue();
+                    o.SpeechFilesDirectory.Should().Be("speechdirectory");
+                    o.TranscriptionsFile.Should().Be("transcriptionfile");
+                    o.OutputPath.Should().Be("outputpath");
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
@@ -55,11 +57,8 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             var args = this.options.ToArray();
             var parser = Parser.Default.ParseArguments<TestOptions>(args);
             parser.Tag.Should().Be(ParserResultType.NotParsed);
-            var notParsed = (NotParsed<TestOptions>)parser;
-            var error = notParsed.Errors.First();
-            error.Should().BeOfType<MissingRequiredOptionError>();
-            var missingOptionError = (MissingRequiredOptionError)error;
-            missingOptionError.NameInfo.LongName.Should().Be("utterances");
+            var error = parser.As<NotParsed<TestOptions>>().Errors.First();
+            error.As<MissingRequiredOptionError>().NameInfo.LongName.Should().Be("utterances");
         }
 
         [Test]
@@ -68,15 +67,17 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             this.options.Add("-u");
             this.options.Add("utterances");
             var args = this.options.ToArray();
-            var parser = Parser.Default.ParseArguments<TestOptions>(args).WithParsed<TestOptions>(o =>
-            {
-                o.UtterancesPath.Should().Be("utterances");
-                o.SettingsPath.Should().Be(null);
-                o.Speech.Should().BeFalse();
-                o.SpeechFilesDirectory.Should().Be(null);
-                o.TranscriptionsFile.Should().Be(null);
-                o.OutputPath.Should().Be(null);
-            }).WithNotParsed<TestOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<TestOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.UtterancesPath.Should().Be("utterances");
+                    o.SettingsPath.Should().Be(null);
+                    o.Speech.Should().BeFalse();
+                    o.SpeechFilesDirectory.Should().Be(null);
+                    o.TranscriptionsFile.Should().Be(null);
+                    o.OutputPath.Should().Be(null);
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
     }
 }

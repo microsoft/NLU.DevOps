@@ -14,23 +14,18 @@ namespace NLU.DevOps.Luis
 
     internal sealed class RestSpeechLuisTestClient : LuisTestClient
     {
-        public RestSpeechLuisTestClient(
-            string endpointKey,
-            string endpointRegion,
-            string speechKey,
-            string speechEndpoint,
-            bool isStaging)
-            : base(endpointKey, endpointRegion, isStaging)
+        public RestSpeechLuisTestClient(ILuisConfiguration luisConfiguration)
+            : base(luisConfiguration)
         {
-            this.SpeechKey = speechKey;
-            this.SpeechEndpoint = speechEndpoint;
+            this.SpeechKey = luisConfiguration.SpeechKey;
+            this.SpeechEndpoint = luisConfiguration.SpeechEndpoint;
         }
 
         private string SpeechEndpoint { get; }
 
         private string SpeechKey { get; }
 
-        public override async Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken)
+        public override async Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             var request = (HttpWebRequest)WebRequest.Create(this.SpeechEndpoint);
             request.Method = "POST";
@@ -58,7 +53,7 @@ namespace NLU.DevOps.Luis
                 throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");
             }
 
-            return await this.QueryAsync(appId, responseJson.Value<string>("DisplayText"), cancellationToken).ConfigureAwait(false);
+            return await this.QueryAsync(responseJson.Value<string>("DisplayText"), cancellationToken).ConfigureAwait(false);
         }
     }
 }

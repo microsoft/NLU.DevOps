@@ -31,24 +31,28 @@ namespace NLU.DevOps.CommandLine.Tests.Train
             this.options.Add("settings");
             this.options.Add("-a");
             var args = this.options.ToArray();
-            var parser = Parser.Default.ParseArguments<TrainOptions>(args).WithParsed<TrainOptions>(o =>
-            {
-                o.UtterancesPath.Should().Be("utterances");
-                o.SettingsPath.Should().Be("settings");
-                o.SaveAppSettings.Should().BeTrue();
-            }).WithNotParsed<TrainOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<TrainOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.UtterancesPath.Should().Be("utterances");
+                    o.SettingsPath.Should().Be("settings");
+                    o.SaveAppSettings.Should().BeTrue();
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
         public void SettingForTrainOptionsWhenNotSet()
         {
             var args = this.options.ToArray();
-            var parser = Parser.Default.ParseArguments<TrainOptions>(args).WithParsed<TrainOptions>(o =>
-            {
-                o.UtterancesPath.Should().Be(null);
-                o.SettingsPath.Should().Be(null);
-                o.SaveAppSettings.Should().BeFalse();
-            }).WithNotParsed<TrainOptions>(o => Assert.Fail("Could not Parse Options"));
+            var parser = Parser.Default.ParseArguments<TrainOptions>(args)
+                .WithParsed(o =>
+                {
+                    o.UtterancesPath.Should().Be(null);
+                    o.SettingsPath.Should().Be(null);
+                    o.SaveAppSettings.Should().BeFalse();
+                })
+                .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
     }
 }

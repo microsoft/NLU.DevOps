@@ -7,6 +7,7 @@
     <IsPackable>false</IsPackable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <RootNamespace>NLU.DevOps.Luis</RootNamespace>
+    <DefineConstants>$(DefineConstants);LUIS_V3</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">

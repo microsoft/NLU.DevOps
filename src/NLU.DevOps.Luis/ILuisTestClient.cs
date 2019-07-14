@@ -17,18 +17,16 @@ namespace NLU.DevOps.Luis
         /// Queries the LUIS app to extract intent and entities.
         /// </summary>
         /// <returns>Task to await the LUIS results.</returns>
-        /// <param name="appId">LUIS app ID.</param>
         /// <param name="text">Query text.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<LuisResult> QueryAsync(string appId, string text, CancellationToken cancellationToken);
+        Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken);
 
         /// <summary>
         /// Performs intent recognition from speech using the given audio file.
         /// </summary>
         /// <returns>Task to await the LUIS results.</returns>
-        /// <param name="appId">LUIS app ID.</param>
         /// <param name="speechFile">Path to file.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<LuisResult> RecognizeSpeechAsync(string appId, string speechFile, CancellationToken cancellationToken);
+        Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken);
     }
 }
