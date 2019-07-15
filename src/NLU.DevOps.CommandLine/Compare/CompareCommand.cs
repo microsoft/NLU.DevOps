@@ -5,7 +5,7 @@ namespace NLU.DevOps.CommandLine.Compare
 {
     using System.Collections.Generic;
     using System.Linq;
-    using ModelPerformance.Tests;
+    using ModelPerformance;
     using NUnitLite;
 
     internal static class CompareCommand
