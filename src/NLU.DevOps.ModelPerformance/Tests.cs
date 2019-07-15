@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.ModelPerformance.Tests
+namespace NLU.DevOps.ModelPerformance
 {
     using NUnit.Framework;
 

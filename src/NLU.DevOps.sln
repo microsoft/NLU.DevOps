@@ -13,13 +13,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Lex.Tests", "NLU
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Luis", "NLU.DevOps.Luis\NLU.DevOps.Luis.csproj", "{B52DDC83-32C8-4DCA-8C39-8DBD0A550382}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.ModelPerformance", "NLU.DevOps.ModelPerformance\NLU.DevOps.ModelPerformance.csproj", "{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.Luis.Tests", "NLU.DevOps.Luis.Tests\NLU.DevOps.Luis.Tests.csproj", "{280B55DA-272D-44D5-AE73-8730CA96EC0B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.LuisV3", "NLU.DevOps.LuisV3\NLU.DevOps.LuisV3.csproj", "{874C5D08-0DD9-4385-878A-0FB7CD6A4314}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.LuisV3.Tests", "NLU.DevOps.LuisV3.Tests\NLU.DevOps.LuisV3.Tests.csproj", "{F5CE52E9-C95F-4601-9575-C654C619A767}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.ModelPerformance.Tests", "NLU.DevOps.ModelPerformance.Tests\NLU.DevOps.ModelPerformance.Tests.csproj", "{BC30BFA1-6046-4DE0-9FFE-34FEE9E4F75B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.CommandLine", "NLU.DevOps.CommandLine\NLU.DevOps.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.CommandLine", "N
 		{874C5D08-0DD9-4385-878A-0FB7CD6A4314} = {874C5D08-0DD9-4385-878A-0FB7CD6A4314}
 		{26972FE8-130F-479B-B8A5-58BC8DD7A308} = {26972FE8-130F-479B-B8A5-58BC8DD7A308}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.ModelPerformance.Tests", "NLU.DevOps.ModelPerformance.Tests\NLU.DevOps.ModelPerformance.Tests.csproj", "{ACF99A4D-1B40-44CD-9EE6-8EB7B07A71D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,6 +76,10 @@ Global
 		{F5CE52E9-C95F-4601-9575-C654C619A767}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5CE52E9-C95F-4601-9575-C654C619A767}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5CE52E9-C95F-4601-9575-C654C619A767}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACF99A4D-1B40-44CD-9EE6-8EB7B07A71D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACF99A4D-1B40-44CD-9EE6-8EB7B07A71D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACF99A4D-1B40-44CD-9EE6-8EB7B07A71D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACF99A4D-1B40-44CD-9EE6-8EB7B07A71D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

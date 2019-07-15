@@ -44,3 +44,6 @@ Thumbs.db
 
 # Local appsettings
 appsettings.local.json
+
+# rider
+*.idea/

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.ModelPerformance.Tests
+namespace NLU.DevOps.ModelPerformance
 {
     using System;
     using System.Collections.Generic;
@@ -12,7 +12,6 @@ namespace NLU.DevOps.ModelPerformance.Tests
     using Models;
     using Newtonsoft.Json;
     using NUnit.Framework;
-    using static ConfigurationConstants;
 
     internal static class TestCaseSource
     {
@@ -27,83 +26,23 @@ namespace NLU.DevOps.ModelPerformance.Tests
             .Where(IsFalse)
             .Select(ToTestCaseData);
 
-        private static IConfiguration Configuration { get; } = new ConfigurationBuilder()
-            .AddJsonFile(AppSettingsPath)
-            .AddJsonFile(AppSettingsLocalPath, true)
-            .AddEnvironmentVariables()
-            .Build();
-
         /// <summary>
         /// Gets the test label.
         /// </summary>
         /// <remarks>
         /// The test label is useful for discriminating between tests, e.g., for audio and text.
         /// </remarks>
-        private static string TestLabel => TestContext.Parameters.Get(TestLabelKey) ?? Configuration[TestLabelKey];
+        internal static string TestLabel => TestContext.Parameters.Get(ConfigurationConstants.TestLabelKey) ?? Configuration[ConfigurationConstants.TestLabelKey];
+
+        private static IConfiguration Configuration { get; } = new ConfigurationBuilder()
+            .AddJsonFile(AppSettingsPath)
+            .AddJsonFile(AppSettingsLocalPath, true)
+            .AddEnvironmentVariables()
+            .Build();
 
         private static IReadOnlyList<TestCase> TestCases { get; } = LoadTestCases();
 
-        private static TestCaseData ToTestCaseData(this TestCase testCase)
-        {
-            var testCaseData = new TestCaseData(testCase.Because)
-            {
-                TestName = testCase.TestName,
-            };
-
-            testCase.Categories.ForEach(category => testCaseData.SetCategory(category));
-            return testCaseData;
-        }
-
-        private static bool IsTrue(this TestCase testCase)
-        {
-            return testCase.Kind == TestResultKind.TruePositive
-                || testCase.Kind == TestResultKind.TrueNegative;
-        }
-
-        private static bool IsFalse(this TestCase testCase)
-        {
-            return testCase.Kind == TestResultKind.FalsePositive
-                || testCase.Kind == TestResultKind.FalseNegative;
-        }
-
-        private static IReadOnlyList<TestCase> LoadTestCases()
-        {
-            var expectedPath = TestContext.Parameters.Get(ExpectedUtterancesPathKey) ?? Configuration[ExpectedUtterancesPathKey];
-            var actualPath = TestContext.Parameters.Get(ActualUtterancesPathKey) ?? Configuration[ActualUtterancesPathKey];
-
-            if (string.IsNullOrEmpty(expectedPath) || string.IsNullOrEmpty(actualPath))
-            {
-                throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
-            }
-
-            var expectedUtterances = Read(expectedPath);
-            var actualUtterances = Read(actualPath);
-
-            if (expectedUtterances.Count != actualUtterances.Count)
-            {
-                throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
-            }
-
-            var zippedUtterances = expectedUtterances
-                .Zip(actualUtterances, (expected, actual) => new[] { expected, actual })
-                .ToList();
-
-            return zippedUtterances.Select(ToTextTestCase)
-                .Concat(zippedUtterances.Select(ToIntentTestCase))
-                .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
-                .ToList();
-        }
-
-        private static List<LabeledUtterance> Read(string path)
-        {
-            var serializer = JsonSerializer.CreateDefault();
-            using (var jsonReader = new JsonTextReader(File.OpenText(path)))
-            {
-                return serializer.Deserialize<List<LabeledUtterance>>(jsonReader);
-            }
-        }
-
-        private static TestCase ToTextTestCase(LabeledUtterance[] utterances)
+        internal static TestCase ToTextTestCase(LabeledUtterance[] utterances)
         {
             var expected = utterances[0].Text;
             var actual = utterances[1].Text;
@@ -138,7 +77,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 "Text");
         }
 
-        private static TestCase ToIntentTestCase(LabeledUtterance[] utterances)
+        internal static TestCase ToIntentTestCase(LabeledUtterance[] utterances)
         {
             var text = utterances[0].Text;
             var expected = utterances[0].Intent;
@@ -171,7 +110,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 "Intent");
         }
 
-        private static IEnumerable<TestCase> ToEntityTestCases(LabeledUtterance[] utterances)
+        internal static IEnumerable<TestCase> ToEntityTestCases(LabeledUtterance[] utterances)
         {
             var text = utterances[0].Text;
             var expected = utterances[0].Entities;
@@ -265,6 +204,66 @@ namespace NLU.DevOps.ModelPerformance.Tests
             }
         }
 
+        private static TestCaseData ToTestCaseData(this TestCase testCase)
+        {
+            var testCaseData = new TestCaseData(testCase.Because)
+            {
+                TestName = testCase.TestName,
+            };
+
+            testCase.Categories.ForEach(category => testCaseData.SetCategory(category));
+            return testCaseData;
+        }
+
+        private static bool IsTrue(this TestCase testCase)
+        {
+            return testCase.Kind == TestResultKind.TruePositive
+                || testCase.Kind == TestResultKind.TrueNegative;
+        }
+
+        private static bool IsFalse(this TestCase testCase)
+        {
+            return testCase.Kind == TestResultKind.FalsePositive
+                || testCase.Kind == TestResultKind.FalseNegative;
+        }
+
+        private static IReadOnlyList<TestCase> LoadTestCases()
+        {
+            var expectedPath = TestContext.Parameters.Get(ConfigurationConstants.ExpectedUtterancesPathKey) ?? Configuration[ConfigurationConstants.ExpectedUtterancesPathKey];
+            var actualPath = TestContext.Parameters.Get(ConfigurationConstants.ActualUtterancesPathKey) ?? Configuration[ConfigurationConstants.ActualUtterancesPathKey];
+
+            if (string.IsNullOrEmpty(expectedPath) || string.IsNullOrEmpty(actualPath))
+            {
+                throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
+            }
+
+            var expectedUtterances = Read(expectedPath);
+            var actualUtterances = Read(actualPath);
+
+            if (expectedUtterances.Count != actualUtterances.Count)
+            {
+                throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
+            }
+
+            var zippedUtterances = expectedUtterances
+                .Zip(actualUtterances, (expected, actual) => new[] { expected, actual })
+                .ToList();
+
+            return zippedUtterances.Select(ToTextTestCase)
+                .Concat(zippedUtterances.Select(ToIntentTestCase))
+                .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
+                .ToList();
+        }
+
+        private static List<LabeledUtterance> Read(string path)
+        {
+            var serializer = JsonSerializer.CreateDefault();
+            using (var jsonReader = new JsonTextReader(File.OpenText(path)))
+            {
+                return serializer.Deserialize<List<LabeledUtterance>>(jsonReader);
+            }
+        }
+
         private static bool EqualsNormalized(string x, string y)
         {
             string normalize(string s)
@@ -300,33 +299,6 @@ namespace NLU.DevOps.ModelPerformance.Tests
         private static TestCase FalseNegative(string message, string because, params string[] categories)
         {
             return new TestCase(TestResultKind.FalseNegative, message, because, categories.Append("FalseNegative"));
-        }
-
-        private class TestCase
-        {
-            public TestCase(TestResultKind kind, string message, string because, IEnumerable<string> categories)
-            {
-                this.Kind = kind;
-                this.Message = message;
-                this.Because = because;
-                this.Categories = categories.ToList();
-            }
-
-            public string TestName => this.ToString();
-
-            public TestResultKind Kind { get; }
-
-            public string Because { get; }
-
-            public List<string> Categories { get; }
-
-            private string Message { get; }
-
-            public override string ToString()
-            {
-                var testLabelText = TestLabel != null ? $"{TestLabel}: " : string.Empty;
-                return $"{testLabelText}{this.Message}";
-            }
         }
     }
 }
