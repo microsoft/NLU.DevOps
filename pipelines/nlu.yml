@@ -7,6 +7,10 @@ trigger:
     - /pipelines/nlu.yml
     - /models
     - /src
+
+variables:
+- name: recordingsDirectory
+  value: $(Build.SourcesDirectory)/models/speech_files
   
 steps:
 - task: DotNetCoreCLI@2
@@ -69,6 +73,20 @@ steps:
     arguments: test
       --service $(nlu.service)
       --utterances models/tests.json
+      --service-settings models/settings.$(nlu.service).json
+      --output $(Agent.TempDirectory)/results.json
+
+- task: DotNetCoreCLI@2
+  displayName: Test the NLU service with speech
+  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: test
+      --service $(nlu.service)
+      --speech 
+      --utterances models/tests.speech.json
+      --speech-directory $(recordingsDirectory)
       --service-settings models/settings.$(nlu.service).json
       --output $(Agent.TempDirectory)/results.json
 
