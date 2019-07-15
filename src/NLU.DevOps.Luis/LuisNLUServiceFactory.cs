@@ -5,6 +5,7 @@ namespace NLU.DevOps.Luis
 {
     using System;
     using System.Composition;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using Microsoft.Extensions.Configuration;
@@ -22,7 +23,9 @@ namespace NLU.DevOps.Luis
         private const string LuisEndpointKeyConfigurationKey = "luisEndpointKey";
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
         private const string LuisEndpointRegionConfigurationKey = "luisEndpointRegion";
-        private const string LuisSpeechKeyConfigurationKey = "luisSpeechKey";
+        private const string SpeechKeyConfigurationKey = "speechKey";
+        private const string CustomSpeechAppIdConfigurationKey = "customSpeechAppId";
+        private const string SpeechRegionConfigurationKey = "speechRegion";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
         private const string LuisAppNameConfigurationKey = "luisAppName";
         private const string ArmTokenConfigurationKey = "ARM_TOKEN";
@@ -30,6 +33,8 @@ namespace NLU.DevOps.Luis
         private const string LuisResourceGroupConfigurationKey = "azureResourceGroup";
         private const string LuisAzureAppNameConfigurationKey = "azureLuisResourceName";
         private const string LuisVersionIdConfigurationKey = "luisVersionId";
+        private const string CustomSpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language={1}&?cid={2}";
+        private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}";
 
         private const string BuildIdConfigurationKey = "BUILD_BUILDID";
 
@@ -53,22 +58,28 @@ namespace NLU.DevOps.Luis
                 ? JsonConvert.DeserializeObject<LuisSettings>(File.ReadAllText(settingsPath))
                 : new LuisSettings();
 
-            var luisSpeechKey = configuration[LuisSpeechKeyConfigurationKey];
-
+            var speechKey = configuration[SpeechKeyConfigurationKey];
+            var customSpeechAppId = configuration[CustomSpeechAppIdConfigurationKey];
+            var speechRegion = configuration[SpeechRegionConfigurationKey] ?? configuration[LuisEndpointRegionConfigurationKey];
             var azureSubscriptionInfo = AzureSubscriptionInfo.Create(
                 configuration[LuisSubscriptionIdConfigurationKey],
                 configuration[LuisResourceGroupConfigurationKey],
                 configuration[LuisAzureAppNameConfigurationKey],
                 configuration[ArmTokenConfigurationKey]);
-            var luisClient = luisSpeechKey != null
+            var speechEndpoint = customSpeechAppId != null ?
+                string.Format(CultureInfo.InvariantCulture, CustomSpeechEndpointTemplate, speechRegion, "en-US", customSpeechAppId) :
+                string.Format(CultureInfo.InvariantCulture, SpeechEndpointTemplate, speechRegion, "en-US");
+
+            var luisClient = speechKey != null
                 ? new RestSpeechLuisClient(
-                    configuration[LuisAuthoringKeyConfigurationKey],
-                    configuration[LuisAuthoringRegionConfigurationKey],
-                    configuration[LuisEndpointKeyConfigurationKey],
-                    configuration[LuisEndpointRegionConfigurationKey],
-                    azureSubscriptionInfo,
-                    luisSpeechKey,
-                    isStaging)
+                        configuration[LuisAuthoringKeyConfigurationKey],
+                        configuration[LuisAuthoringRegionConfigurationKey],
+                        configuration[LuisEndpointKeyConfigurationKey],
+                        configuration[LuisEndpointRegionConfigurationKey],
+                        azureSubscriptionInfo,
+                        speechKey,
+                        speechEndpoint,
+                        isStaging)
                 : new LuisClient(
                     configuration[LuisAuthoringKeyConfigurationKey],
                     configuration[LuisAuthoringRegionConfigurationKey],

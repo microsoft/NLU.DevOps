@@ -12,10 +12,8 @@ namespace NLU.DevOps.Luis
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Newtonsoft.Json.Linq;
 
-    internal sealed class RestSpeechLuisClient : LuisClient
+    internal class RestSpeechLuisClient : LuisClient
     {
-        private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}";
-
         public RestSpeechLuisClient(
             string authoringKey,
             string authoringRegion,
@@ -23,14 +21,15 @@ namespace NLU.DevOps.Luis
             string endpointRegion,
             AzureSubscriptionInfo azureSubscriptionInfo,
             string speechKey,
+            string speechEndpoint,
             bool isStaging)
             : base(authoringKey, authoringRegion, endpointKey, endpointRegion, azureSubscriptionInfo, isStaging)
         {
             this.SpeechKey = speechKey;
-            this.SpeechEndpoint = string.Format(CultureInfo.InvariantCulture, SpeechEndpointTemplate, endpointRegion ?? authoringRegion, "en-US");
+            this.SpeechEndpoint = speechEndpoint;
         }
 
-        private string SpeechEndpoint { get; }
+        protected string SpeechEndpoint { get; set; }
 
         private string SpeechKey { get; }
 
