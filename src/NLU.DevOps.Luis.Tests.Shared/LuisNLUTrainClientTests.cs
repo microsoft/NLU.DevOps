@@ -6,13 +6,13 @@ namespace NLU.DevOps.Luis.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Configuration;
     using Models;
+    using Moq;
     using NUnit.Framework;
 
     [TestFixture]
@@ -26,15 +26,16 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
+            var luisTrainClient = new Mock<ILuisTrainClient>().Object;
             var luisConfiguration = new LuisConfiguration(new ConfigurationBuilder().Build());
-            Action nullLuisConfiguration = () => new LuisNLUTrainClient(null, new LuisSettings(), new MockLuisTrainClient());
-            Action nullLuisSettings = () => new LuisNLUTrainClient(luisConfiguration, null, new MockLuisTrainClient());
+            Action nullLuisConfiguration = () => new LuisNLUTrainClient(null, new LuisSettings(), luisTrainClient);
+            Action nullLuisSettings = () => new LuisNLUTrainClient(luisConfiguration, null, luisTrainClient);
             Action nullLuisClient = () => new LuisNLUTrainClient(luisConfiguration, new LuisSettings(), null);
             nullLuisConfiguration.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisConfiguration");
             nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
-            using (var luis = GetTestLuisBuilder().Build())
+            using (var luis = new LuisNLUTrainClientBuilder().Build())
             {
                 Func<Task> nullUtterances = () => luis.TrainAsync(null);
                 Func<Task> nullUtterance = () => luis.TrainAsync(new Models.LabeledUtterance[] { null });
@@ -46,17 +47,15 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static async Task TrainEmptyModel()
         {
-            var mockClient = new MockLuisTrainClient();
-            var builder = GetTestLuisBuilder();
+            var builder = new LuisNLUTrainClientBuilder();
             builder.AppVersion = Guid.NewGuid().ToString();
-            builder.LuisClient = mockClient;
             using (var luis = builder.Build())
             {
                 var utterances = Array.Empty<Models.LabeledUtterance>();
                 await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.ImportVersionAsync));
+                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 importRequest.Arguments[2].Should().NotBeNull();
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
@@ -66,14 +65,12 @@ namespace NLU.DevOps.Luis.Tests
                 luisApp.Intents.First().Name.Should().Be("None");
 
                 // Assert train request
-                var trainRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.TrainAsync));
+                var trainRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.TrainAsync));
                 trainRequest.Should().NotBeNull();
 
                 // Assert publish request
-                var publishRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.PublishAppAsync));
+                var publishRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.PublishAppAsync));
                 publishRequest.Should().NotBeNull();
-
-                // Expects publish settings:
                 publishRequest.Arguments[0].Should().Be(builder.AppId);
                 publishRequest.Arguments[1].Should().Be(builder.AppVersion);
             }
@@ -82,9 +79,7 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static async Task TrainModelWithUtterances()
         {
-            var mockClient = new MockLuisTrainClient();
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+            var builder = new LuisNLUTrainClientBuilder();
             using (var luis = builder.Build())
             {
                 var utterances = new[]
@@ -96,7 +91,7 @@ namespace NLU.DevOps.Luis.Tests
                 await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.ImportVersionAsync));
+                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
 
@@ -124,9 +119,7 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static async Task TrainModelWithUtterancesAndSimpleEntities()
         {
-            var mockClient = new MockLuisTrainClient();
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+            var builder = new LuisNLUTrainClientBuilder();
             using (var luis = builder.Build())
             {
                 var utterances = new[]
@@ -144,7 +137,7 @@ namespace NLU.DevOps.Luis.Tests
                 await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.ImportVersionAsync));
+                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
 
@@ -178,13 +171,11 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static async Task CleanupModel()
         {
-            var mockClient = new MockLuisTrainClient();
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+            var builder = new LuisNLUTrainClientBuilder();
             using (var luis = builder.Build())
             {
                 await luis.CleanupAsync().ConfigureAwait(false);
-                var cleanupRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.DeleteAppAsync));
+                var cleanupRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.DeleteAppAsync));
                 cleanupRequest.Should().NotBeNull();
             }
         }
@@ -194,40 +185,35 @@ namespace NLU.DevOps.Luis.Tests
         {
             var count = 0;
             string[] statusArray = { "Queued", "InProgress", "Success" };
-            var mockClient = new MockLuisTrainClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (IsTrainingStatusRequest(request))
+
+            var timestamps = new DateTimeOffset[statusArray.Length];
+            var builder = new LuisNLUTrainClientBuilder();
+            builder.MockLuisTrainClient
+                .Setup(luis => luis.GetTrainingStatusAsync(
+                    It.Is<string>(appId => appId == builder.AppId),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult<IList<ModelTrainingInfo>>(new[]
                 {
-                    return new[]
+                    new ModelTrainingInfo
                     {
-                        new ModelTrainingInfo
-                        {
-                            Details = new ModelTrainingDetails { Status = statusArray[count++] }
-                        }
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                        Details = new ModelTrainingDetails { Status = statusArray[count++] }
+                    }
+                }))
+                .Callback(() => timestamps[count - 1] = DateTimeOffset.Now);
 
             using (var luis = builder.Build())
             {
                 await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>()).ConfigureAwait(false);
 
                 // Ensure correct number of training status requests are made.
-                mockClient.Requests.Where(IsTrainingStatusRequest).Count().Should().Be(statusArray.Length);
+                builder.MockLuisTrainClient.Invocations.Where(request => request.Method.Name == nameof(ILuisTrainClient.GetTrainingStatusAsync))
+                    .Count().Should().Be(statusArray.Length);
 
                 // Ensure 2 second delay between requests
-                var previousRequest = mockClient.TimestampedRequests.Where(t => IsTrainingStatusRequest(t.Instance)).First();
                 for (var i = 1; i < statusArray.Length; ++i)
                 {
-                    var nextRequest = mockClient.TimestampedRequests.Where(t => IsTrainingStatusRequest(t.Instance)).Skip(i).First();
-                    var timeDifference = nextRequest.Timestamp - previousRequest.Timestamp;
-                    previousRequest = nextRequest;
+                    var timeDifference = timestamps[i] - timestamps[i - 1];
                     timeDifference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
                 }
             }
@@ -236,25 +222,19 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void TrainingFailedThrowsInvalidOperation()
         {
-            var mockClient = new MockLuisTrainClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (IsTrainingStatusRequest(request))
+            var builder = new LuisNLUTrainClientBuilder();
+            builder.MockLuisTrainClient
+                .Setup(luis => luis.GetTrainingStatusAsync(
+                    It.Is<string>(appId => appId == builder.AppId),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult<IList<ModelTrainingInfo>>(new[]
                 {
-                    return new[]
+                    new ModelTrainingInfo
                     {
-                        new ModelTrainingInfo
-                        {
-                            Details = new ModelTrainingDetails { Status = "Fail" }
-                        }
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                        Details = new ModelTrainingDetails { Status = "Fail" }
+                    }
+                }));
 
             using (var luis = builder.Build())
             {
@@ -267,20 +247,14 @@ namespace NLU.DevOps.Luis.Tests
         public static async Task CreatesAppIfAppIdNotProvided()
         {
             var appId = Guid.NewGuid().ToString();
-            var mockClient = new MockLuisTrainClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTrainClient.CreateAppAsync))
-                {
-                    return appId;
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+            var builder = new LuisNLUTrainClientBuilder();
             builder.AppId = null;
+            builder.MockLuisTrainClient
+                .Setup(luis => luis.CreateAppAsync(
+                    It.Is<string>(appName => appName == builder.AppName),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(appId));
+
             using (var luis = builder.Build())
             {
                 await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>()).ConfigureAwait(false);
@@ -309,17 +283,15 @@ namespace NLU.DevOps.Luis.Tests
                 PrebuiltEntities = new List<PrebuiltEntity>(),
             };
 
-            var mockClient = new MockLuisTrainClient();
-            var builder = GetTestLuisBuilder();
+            var builder = new LuisNLUTrainClientBuilder();
             builder.LuisSettings = new LuisSettings(appTemplate);
-            builder.LuisClient = mockClient;
             using (var luis = builder.Build())
             {
                 var utterance = new Models.LabeledUtterance(null, intentName, null);
                 await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // Ensure LUIS app intent still has role
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.ImportVersionAsync));
+                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
                 luisApp.Intents.Should().Contain(intent => intent.Name == intentName);
@@ -339,11 +311,8 @@ namespace NLU.DevOps.Luis.Tests
                 { entityTypeName1, entityTypeName2 },
             };
 
-            var mockClient = new MockLuisTrainClient();
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+            var builder = new LuisNLUTrainClientBuilder();
             builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
-
             using (var luis = builder.Build())
             {
                 var entity1 = new Entity(entityTypeName1, null, text, 0);
@@ -352,7 +321,7 @@ namespace NLU.DevOps.Luis.Tests
                 await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // Ensure LUIS app intent still has role
-                var importRequest = mockClient.Requests.FirstOrDefault(request => request.Method == nameof(ILuisTrainClient.ImportVersionAsync));
+                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
                 importRequest.Should().NotBeNull();
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
                 luisApp.Utterances.Should().Contain(u => u.Text == text);
@@ -362,150 +331,35 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
-        private static LuisNLUTrainClientBuilder GetTestLuisBuilder()
-        {
-            return new LuisNLUTrainClientBuilder
-            {
-                AppName = "test",
-                AppId = Guid.NewGuid().ToString(),
-                AppVersion = "0.1",
-                LuisSettings = new LuisSettings(null, null),
-                LuisClient = new MockLuisTrainClient(),
-            };
-        }
-
-        private static bool IsTrainingStatusRequest(LuisRequest request)
-        {
-            return request.Method == nameof(ILuisTrainClient.GetTrainingStatusAsync);
-        }
-
-        private static class Timestamped
-        {
-            public static Timestamped<T> Create<T>(T instance)
-            {
-                return new Timestamped<T>(instance);
-            }
-        }
-
         private class LuisNLUTrainClientBuilder
         {
-            public string AppId { get; set; }
+            public string AppId { get; set; } = Guid.NewGuid().ToString();
 
-            public string AppVersion { get; set; }
+            public string AppVersion { get; set; } = "0.1";
 
-            public string AppName { get; set; }
+            public string AppName { get; set; } = "test";
 
-            public LuisSettings LuisSettings { get; set; }
+            public Mock<ILuisTrainClient> MockLuisTrainClient { get; } = new Mock<ILuisTrainClient>();
 
-            public ILuisTrainClient LuisClient { get; set; }
+            public LuisSettings LuisSettings { get; set; } = new LuisSettings();
 
             public LuisNLUTrainClient Build()
             {
-                var configuration = new ConfigurationBuilder()
+                this.MockLuisTrainClient.SetReturnsDefault(
+                    Task.FromResult<IList<ModelTrainingInfo>>(
+                        Array.Empty<ModelTrainingInfo>()));
+
+                var luisConfiguration = new LuisConfiguration(new ConfigurationBuilder()
                     .AddInMemoryCollection(new Dictionary<string, string>
                     {
                         { "luisAppId", this.AppId },
                         { "luisVersionId", this.AppVersion },
                         { "luisAppName", this.AppName },
                     })
-                    .Build();
+                    .Build());
 
-                var luisConfiguration = new LuisConfiguration(configuration);
-                return new LuisNLUTrainClient(luisConfiguration, this.LuisSettings, this.LuisClient);
+                return new LuisNLUTrainClient(luisConfiguration, this.LuisSettings, this.MockLuisTrainClient.Object);
             }
-        }
-
-        private sealed class MockLuisTrainClient : ILuisTrainClient
-        {
-            public Action<LuisRequest> OnRequest { get; set; }
-
-            public Func<LuisRequest, object> OnRequestResponse { get; set; }
-
-            public IEnumerable<LuisRequest> Requests => this.RequestsInternal.Select(x => x.Instance);
-
-            public IEnumerable<Timestamped<LuisRequest>> TimestampedRequests => this.RequestsInternal;
-
-            private List<Timestamped<LuisRequest>> RequestsInternal { get; } = new List<Timestamped<LuisRequest>>();
-
-            public Task<string> CreateAppAsync(string appName, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync<string>(appName);
-            }
-
-            public Task DeleteAppAsync(string appId, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(appId);
-            }
-
-            public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync<IList<ModelTrainingInfo>>(appId, versionId);
-            }
-
-            public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(appId, versionId, luisApp);
-            }
-
-            public Task PublishAppAsync(string appId, string versionId, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(appId, versionId);
-            }
-
-            public Task TrainAsync(string appId, string versionId, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(appId, versionId);
-            }
-
-            public void Dispose()
-            {
-            }
-
-            private Task ProcessRequestAsync(object arg0, object arg1 = null, object arg2 = null, [CallerMemberName] string methodName = null)
-            {
-                return this.ProcessRequestAsync<object>(arg0, arg1, arg2, methodName);
-            }
-
-            private Task<T> ProcessRequestAsync<T>(object arg0, object arg1 = null, object arg2 = null, [CallerMemberName] string methodName = null)
-            {
-                var request = new LuisRequest
-                {
-                    Method = methodName,
-                    Arguments = new[] { arg0, arg1, arg2 },
-                };
-
-                this.RequestsInternal.Add(Timestamped.Create(request));
-
-                this.OnRequest?.Invoke(request);
-
-                var response = this.OnRequestResponse?.Invoke(request);
-                if (response == null && IsTrainingStatusRequest(request))
-                {
-                    response = Array.Empty<ModelTrainingInfo>();
-                }
-
-                return Task.FromResult((T)response);
-            }
-        }
-
-        private sealed class LuisRequest
-        {
-            public string Method { get; set; }
-
-            public object[] Arguments { get; set; }
-        }
-
-        private sealed class Timestamped<T>
-        {
-            public Timestamped(T instance)
-            {
-                this.Instance = instance;
-                this.Timestamp = DateTimeOffset.Now;
-            }
-
-            public T Instance { get; }
-
-            public DateTimeOffset Timestamp { get; }
         }
     }
 }

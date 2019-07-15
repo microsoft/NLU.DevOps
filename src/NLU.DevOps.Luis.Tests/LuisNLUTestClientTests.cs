@@ -5,14 +5,12 @@ namespace NLU.DevOps.Luis.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
+    using Moq;
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
@@ -22,12 +20,12 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullLuisSettings = () => new LuisNLUTestClient(null, new MockLuisTestClient());
+            Action nullLuisSettings = () => new LuisNLUTestClient(null, default(ILuisTestClient));
             Action nullLuisClient = () => new LuisNLUTestClient(new LuisSettings(), null);
             nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
-            using (var luis = GetTestLuisBuilder().Build())
+            using (var luis = new LuisNLUTestClientBuilder().Build())
             {
                 Func<Task> nullTestUtterance = () => luis.TestAsync(default(INLUQuery));
                 Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null);
@@ -41,16 +39,16 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
-                    {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent" },
-                        Entities = new[]
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
                         {
                             new EntityModel
                             {
@@ -60,14 +58,7 @@ namespace NLU.DevOps.Luis.Tests
                                 EndIndex = 34,
                             },
                         },
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                }));
 
             using (var luis = builder.Build())
             {
@@ -87,61 +78,54 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
+                    Query = "the quick brown fox jumped over the lazy dog today",
+                    Entities = new[]
                     {
-                        Query = "the quick brown fox jumped over the lazy dog today",
-                        Entities = new[]
+                        new EntityModel
                         {
-                            new EntityModel
+                            Entity = "today",
+                            StartIndex = 45,
+                            EndIndex = 49,
+                            AdditionalProperties = new Dictionary<string, object>
                             {
-                                Entity = "today",
-                                StartIndex = 45,
-                                EndIndex = 49,
-                                AdditionalProperties = new Dictionary<string, object>
                                 {
+                                    "resolution",
+                                    new JObject
                                     {
-                                        "resolution",
-                                        new JObject
-                                        {
-                                            { "values", new JArray { new JObject { { "value", "2018-11-16" } } } },
-                                        }
-                                    },
+                                        { "values", new JArray { new JObject { { "value", "2018-11-16" } } } },
+                                    }
                                 },
                             },
-                            new EntityModel
+                        },
+                        new EntityModel
+                        {
+                            Entity = "brown fox",
+                            StartIndex = 10,
+                            EndIndex = 18,
+                            AdditionalProperties = new Dictionary<string, object>
                             {
-                                Entity = "brown fox",
-                                StartIndex = 10,
-                                EndIndex = 18,
-                                AdditionalProperties = new Dictionary<string, object>
-                                {
-                                    { "resolution", new JObject { { "values", new JArray { "Fox" } } } },
-                                },
+                                { "resolution", new JObject { { "values", new JArray { "Fox" } } } },
                             },
-                            new EntityModel
+                        },
+                        new EntityModel
+                        {
+                            Entity = "the",
+                            StartIndex = 0,
+                            EndIndex = 2,
+                            AdditionalProperties = new Dictionary<string, object>
                             {
-                                Entity = "the",
-                                StartIndex = 0,
-                                EndIndex = 2,
-                                AdditionalProperties = new Dictionary<string, object>
-                                {
-                                    { "resolution", new JObject { { "value", "THE" } } },
-                                },
-                            }
+                                { "resolution", new JObject { { "value", "THE" } } },
+                            },
                         }
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                    }
+                }));
 
             using (var luis = builder.Build())
             {
@@ -156,39 +140,33 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static async Task TestSpeech()
         {
+            var testFile = "somefile";
             var test = "the quick brown fox jumped over the lazy dog entity";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.RecognizeSpeechAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.RecognizeSpeechAsync(
+                    It.Is<string>(speechFile => speechFile == testFile),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
                     {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent" },
-                        Entities = new[]
+                        new EntityModel
                         {
-                            new EntityModel
-                            {
-                                Entity = "entity",
-                                Type = "type",
-                                StartIndex = 45,
-                                EndIndex = 50,
-                            },
+                            Entity = "entity",
+                            Type = "type",
+                            StartIndex = 45,
+                            EndIndex = 50,
                         },
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                    },
+                }));
 
             using (var luis = builder.Build())
             {
-                var result = await luis.TestSpeechAsync("somefile").ConfigureAwait(false);
+                var result = await luis.TestSpeechAsync(testFile).ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -204,39 +182,35 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
             var builtinType = Guid.NewGuid().ToString();
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
-                {
-                    return new LuisResult
-                    {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent" },
-                        Entities = new[]
-                        {
-                            new EntityModel
-                            {
-                                Entity = "the",
-                                Type = "builtin.test",
-                                StartIndex = 32,
-                                EndIndex = 34
-                            },
-                        },
-                    };
-                }
 
-                return null;
-            };
-
+            var builder = new LuisNLUTestClientBuilder();
             var prebuiltEntityTypes = new Dictionary<string, string>
             {
                 { "type", "test" },
             };
 
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
             builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
+
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
+                {
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
+                    {
+                        new EntityModel
+                        {
+                            Entity = "the",
+                            Type = "builtin.test",
+                            StartIndex = 32,
+                            EndIndex = 34
+                        },
+                    },
+                }));
+
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
@@ -254,7 +228,7 @@ namespace NLU.DevOps.Luis.Tests
         public static async Task TestSpeechAsyncNoMatchResponse()
         {
             var utterance = Guid.NewGuid().ToString();
-            var builder = GetTestLuisBuilder();
+            var builder = new LuisNLUTestClientBuilder();
             using (var luis = builder.Build())
             {
                 var results = await luis.TestSpeechAsync(utterance).ConfigureAwait(false);
@@ -269,23 +243,16 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
-                    {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent" },
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                }));
 
             using (var luis = builder.Build())
             {
@@ -299,23 +266,16 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
-                    {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent", Score = 0.42 },
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent", Score = 0.42 },
+                }));
 
             using (var luis = builder.Build())
             {
@@ -330,33 +290,26 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
                     {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent" },
-                        Entities = new[]
+                        new EntityModel
                         {
-                            new EntityModel
-                            {
-                                Entity = "the",
-                                Type = "type",
-                                StartIndex = 32,
-                                EndIndex = 34,
-                            },
+                            Entity = "the",
+                            Type = "type",
+                            StartIndex = 32,
+                            EndIndex = 34,
                         },
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                    },
+                }));
 
             using (var luis = builder.Build())
             {
@@ -371,37 +324,30 @@ namespace NLU.DevOps.Luis.Tests
         {
             var test = "the quick brown fox jumped over the lazy dog";
 
-            var mockClient = new MockLuisTestClient();
-            mockClient.OnRequestResponse = request =>
-            {
-                if (request.Method == nameof(ILuisTestClient.QueryAsync))
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
                 {
-                    return new LuisResult
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
                     {
-                        Query = test,
-                        TopScoringIntent = new IntentModel { Intent = "intent" },
-                        Entities = new[]
+                        new EntityModel
                         {
-                            new EntityModel
+                            Entity = "the",
+                            Type = "type",
+                            StartIndex = 32,
+                            EndIndex = 34,
+                            AdditionalProperties = new Dictionary<string, object>
                             {
-                                Entity = "the",
-                                Type = "type",
-                                StartIndex = 32,
-                                EndIndex = 34,
-                                AdditionalProperties = new Dictionary<string, object>
-                                {
-                                    { "score", 0.42 },
-                                },
+                                { "score", 0.42 },
                             },
                         },
-                    };
-                }
-
-                return null;
-            };
-
-            var builder = GetTestLuisBuilder();
-            builder.LuisClient = mockClient;
+                    },
+                }));
 
             using (var luis = builder.Build())
             {
@@ -412,109 +358,14 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
-        private static LuisNLUTestClientBuilder GetTestLuisBuilder()
-        {
-            return new LuisNLUTestClientBuilder
-            {
-                LuisSettings = new LuisSettings(null, null),
-                LuisClient = new MockLuisTestClient(),
-            };
-        }
-
-        private static bool IsTrainingStatusRequest(LuisRequest request)
-        {
-            return request.Method == nameof(ILuisTrainClient.GetTrainingStatusAsync);
-        }
-
-        private static class Timestamped
-        {
-            public static Timestamped<T> Create<T>(T instance)
-            {
-                return new Timestamped<T>(instance);
-            }
-        }
-
         private class LuisNLUTestClientBuilder
         {
-            public LuisSettings LuisSettings { get; set; }
+            public LuisSettings LuisSettings { get; set; } = new LuisSettings(null, null);
 
-            public ILuisTestClient LuisClient { get; set; }
+            public Mock<ILuisTestClient> LuisTestClientMock { get; } = new Mock<ILuisTestClient>();
 
             public LuisNLUTestClient Build() =>
-                new LuisNLUTestClient(this.LuisSettings, this.LuisClient);
-        }
-
-        private sealed class MockLuisTestClient : ILuisTestClient
-        {
-            public Action<LuisRequest> OnRequest { get; set; }
-
-            public Func<LuisRequest, object> OnRequestResponse { get; set; }
-
-            public IEnumerable<LuisRequest> Requests => this.RequestsInternal.Select(x => x.Instance);
-
-            public IEnumerable<Timestamped<LuisRequest>> TimestampedRequests => this.RequestsInternal;
-
-            private List<Timestamped<LuisRequest>> RequestsInternal { get; } = new List<Timestamped<LuisRequest>>();
-
-            public Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync<LuisResult>(text);
-            }
-
-            public Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync<LuisResult>(speechFile);
-            }
-
-            public void Dispose()
-            {
-            }
-
-            private Task ProcessRequestAsync(object arg0, object arg1 = null, object arg2 = null, [CallerMemberName] string methodName = null)
-            {
-                return this.ProcessRequestAsync<object>(arg0, arg1, arg2, methodName);
-            }
-
-            private Task<T> ProcessRequestAsync<T>(object arg0, object arg1 = null, object arg2 = null, [CallerMemberName] string methodName = null)
-            {
-                var request = new LuisRequest
-                {
-                    Method = methodName,
-                    Arguments = new[] { arg0, arg1, arg2 },
-                };
-
-                this.RequestsInternal.Add(Timestamped.Create(request));
-
-                this.OnRequest?.Invoke(request);
-
-                var response = this.OnRequestResponse?.Invoke(request);
-                if (response == null && IsTrainingStatusRequest(request))
-                {
-                    response = Array.Empty<ModelTrainingInfo>();
-                }
-
-                return Task.FromResult((T)response);
-            }
-        }
-
-        private sealed class LuisRequest
-        {
-            public string Method { get; set; }
-
-            public object[] Arguments { get; set; }
-        }
-
-        private sealed class Timestamped<T>
-        {
-            public Timestamped(T instance)
-            {
-                this.Instance = instance;
-                this.Timestamp = DateTimeOffset.Now;
-            }
-
-            public T Instance { get; }
-
-            public DateTimeOffset Timestamp { get; }
+                new LuisNLUTestClient(this.LuisSettings, this.LuisTestClientMock.Object);
         }
     }
 }
