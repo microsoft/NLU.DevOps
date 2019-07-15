@@ -339,6 +339,7 @@ namespace NLU.DevOps.Lex
                 // If failed, throw an exception
                 if (getImportResponse.ImportStatus == ImportStatus.FAILED)
                 {
+                    Debug.Assert(getImportResponse.FailureReason != null, "Default behavior is an empty list for 'FailureReason'.");
                     var exceptionMessage = string.Join(Environment.NewLine, getImportResponse.FailureReason);
                     throw new InvalidOperationException(exceptionMessage);
                 }

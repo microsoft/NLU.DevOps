@@ -6,12 +6,13 @@ namespace NLU.DevOps.Lex.Tests
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Amazon.Lex.Model;
     using FluentAssertions;
     using Models;
+    using Moq;
     using NUnit.Framework;
 
     [TestFixture]
@@ -29,7 +30,7 @@ namespace NLU.DevOps.Lex.Tests
             nullLexSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexSettings");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), new MockLexTestClient()))
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), new Mock<ILexTestClient>().Object))
             {
                 var nullSpeechFile = new Func<Task>(() => lex.TestSpeechAsync(null));
                 var nullTestUtterance = new Func<Task>(() => lex.TestAsync(default(INLUQuery)));
@@ -42,57 +43,88 @@ namespace NLU.DevOps.Lex.Tests
         public static void DisposesLexClient()
         {
             var handle = new ManualResetEvent(false);
-            var mockClient = new MockLexTestClient
-            {
-                OnDispose = () => handle.Set(),
-            };
+            var mockClient = new Mock<ILexTestClient>();
+            mockClient.Setup(client => client.Dispose())
+                .Callback(() => handle.Set());
 
-            var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient);
+            var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object);
             lex.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
         }
 
         [Test]
-        public static async Task TestsWithSpeech()
+        [TestCase(null, null, null)]
+        [TestCase("{\"foo\":\"bar\"}", "foo", "bar")]
+        public static async Task TestsWithSpeech(string slots, string entityType, string entityValue)
         {
+            var fileName = "sample.txt";
             var intent = Guid.NewGuid().ToString();
             var transcript = Guid.NewGuid().ToString();
-            var entityType = Guid.NewGuid().ToString();
-            var entityValue = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTestClient();
-            mockClient.Get<PostContentResponse>().IntentName = intent;
-            mockClient.Get<PostContentResponse>().InputTranscript = transcript;
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient))
+
+            var content = default(string);
+            var mockClient = new Mock<ILexTestClient>();
+            mockClient.Setup(lex => lex.PostContentAsync(
+                    It.Is<PostContentRequest>(request => ((FileStream)request.InputStream).Name.EndsWith(fileName, StringComparison.InvariantCulture)),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PostContentResponse
+                {
+                    IntentName = intent,
+                    InputTranscript = transcript,
+                    Slots = slots,
+                }))
+                .Callback<PostContentRequest, CancellationToken>(
+                    (request, cancellationToken) => content = GetContent(request.InputStream));
+
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
                 var result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt")).ConfigureAwait(false);
 
                 // assert reads content from file (file contents are "hello world")
-                var request = mockClient.Requests.OfType<PostContentRequest>().Single();
-                using (var reader = new StreamReader(request.InputStream))
-                {
-                    reader.ReadToEnd().Should().Be("hello world");
-                }
+                content.Should().Be("hello world");
 
-                // assert results
+                // assert intent and text
                 result.Intent.Should().Be(intent);
                 result.Text.Should().Be(transcript);
-                result.Entities.Should().BeNull();
 
-                // test with valid slots response
-                mockClient.Get<PostContentResponse>().Slots = $"{{\"{entityType}\":\"{entityValue}\"}}";
-                result = await lex.TestSpeechAsync(Path.Combine("assets", "sample.txt")).ConfigureAwait(false);
-
-                result.Entities.Count.Should().Be(1);
-                result.Entities[0].EntityType.Should().Be(entityType);
-                result.Entities[0].EntityValue.Should().Be(entityValue);
+                // assert entities
+                if (slots == null)
+                {
+                    result.Entities.Should().BeNull();
+                }
+                else
+                {
+                    result.Entities.Count.Should().Be(1);
+                    result.Entities[0].EntityType.Should().Be(entityType);
+                    result.Entities[0].EntityValue.Should().Be(entityValue);
+                }
             }
         }
 
         [Test]
         public static async Task CreatesLabeledUtterances()
+        {
+            var text = Guid.NewGuid().ToString();
+            var intent = Guid.NewGuid().ToString();
+            var mockClient = new Mock<ILexTestClient>();
+            mockClient.Setup(lex => lex.PostTextAsync(
+                    It.Is<PostTextRequest>(request => request.InputText == text),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PostTextResponse { IntentName = intent }));
+
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            {
+                var response = await lex.TestAsync(text).ConfigureAwait(false);
+                response.Text.Should().Be(text);
+                response.Intent.Should().Be(intent);
+                response.Entities.Should().BeEmpty();
+            }
+        }
+
+        [Test]
+        public static async Task CreatesLabeledUtterancesWithEntities()
         {
             var text = Guid.NewGuid().ToString();
             var intent = Guid.NewGuid().ToString();
@@ -103,98 +135,25 @@ namespace NLU.DevOps.Lex.Tests
                 { entityType, entityValue },
             };
 
-            var mockClient = new MockLexTestClient();
-            mockClient.Get<PostTextResponse>().IntentName = intent;
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient))
+            var mockClient = new Mock<ILexTestClient>();
+            mockClient.Setup(lex => lex.PostTextAsync(
+                    It.Is<PostTextRequest>(request => request.InputText == text),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PostTextResponse { Slots = slots }));
+
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
-                response.Text.Should().Be(text);
-                response.Intent.Should().Be(intent);
-                response.Entities.Should().BeEmpty();
-
-                mockClient.Get<PostTextResponse>().Slots = slots;
-                response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Entities[0].EntityType.Should().Be(entityType);
                 response.Entities[0].EntityValue.Should().Be(entityValue);
             }
         }
 
-        private class MockLexTestClient : ILexTestClient
+        private static string GetContent(Stream stream)
         {
-            public Action OnDispose { get; set; }
-
-            public Action<object> OnRequest { get; set; }
-
-            public Func<object, Task> OnRequestAsync { get; set; }
-
-            public IEnumerable<object> Requests => this.RequestsInternal.Select(tuple => tuple.Item1);
-
-            public IEnumerable<Tuple<object, DateTimeOffset>> TimestampedRequests => this.RequestsInternal;
-
-            private List<Tuple<object, DateTimeOffset>> RequestsInternal { get; } = new List<Tuple<object, DateTimeOffset>>();
-
-            private IDictionary<Type, object> Responses { get; } = new Dictionary<Type, object>();
-
-            public void Set<T>(T instance)
+            using (var streamReader = new StreamReader(stream, Encoding.UTF8, true, 4096, true))
             {
-                this.Responses[typeof(T)] = instance;
-            }
-
-            public T Get<T>()
-                where T : new()
-            {
-                if (!this.Responses.TryGetValue(typeof(T), out var result))
-                {
-                    result = new T();
-                    this.Responses.Add(typeof(T), result);
-                }
-
-                return (T)result;
-            }
-
-            public async Task<PostContentResponse> PostContentAsync(PostContentRequest request, CancellationToken cancellationToken)
-            {
-                var streamCopy = new MemoryStream();
-                request.InputStream.CopyTo(streamCopy);
-                streamCopy.Position = 0;
-                var requestCopy = new PostContentRequest
-                {
-                    Accept = request.Accept,
-                    BotAlias = request.BotAlias,
-                    BotName = request.BotName,
-                    ContentType = request.ContentType,
-                    InputStream = streamCopy,
-                    UserId = request.UserId,
-                };
-
-                await this.ProcessRequestAsync(requestCopy).ConfigureAwait(false);
-
-                return this.Get<PostContentResponse>();
-            }
-
-            public async Task<PostTextResponse> PostTextAsync(PostTextRequest request, CancellationToken cancellationToken)
-            {
-                await this.ProcessRequestAsync(request).ConfigureAwait(false);
-                return this.Get<PostTextResponse>();
-            }
-
-            public void Dispose()
-            {
-                // Dispose each copy of the PostContentRequest input stream
-                this.RequestsInternal
-                    .Select(tuple => tuple.Item1)
-                    .OfType<PostContentRequest>()
-                    .ToList()
-                    .ForEach(request => request.InputStream.Dispose());
-
-                this.OnDispose?.Invoke();
-            }
-
-            private Task ProcessRequestAsync(object request)
-            {
-                this.RequestsInternal.Add(Tuple.Create(request, DateTimeOffset.Now));
-                this.OnRequest?.Invoke(request);
-                return this.OnRequestAsync?.Invoke(request) ?? Task.CompletedTask;
+                return streamReader.ReadToEnd();
             }
         }
     }

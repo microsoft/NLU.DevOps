@@ -14,6 +14,7 @@ namespace NLU.DevOps.Lex.Tests
     using Amazon.LexModelBuildingService.Model;
     using FluentAssertions;
     using Models;
+    using Moq;
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
@@ -34,7 +35,7 @@ namespace NLU.DevOps.Lex.Tests
             nullLexSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexSettings");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), new MockLexTrainClient()))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), new Mock<ILexTrainClient>().Object))
             {
                 var nullUtterances = new Func<Task>(() => lex.TrainAsync(null));
                 var nullUtteranceItem = new Func<Task>(() => lex.TrainAsync(new LabeledUtterance[] { null }));
@@ -48,7 +49,8 @@ namespace NLU.DevOps.Lex.Tests
         {
             var text = "foo";
             var match = "bar";
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), new MockLexTrainClient()))
+            var mockClient = CreateLexTrainClientMock();
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var entity = new Entity(string.Empty, string.Empty, match, 0);
                 var utterance = new LabeledUtterance(text, string.Empty, new[] { entity });
@@ -64,24 +66,26 @@ namespace NLU.DevOps.Lex.Tests
             var intent = Guid.NewGuid().ToString();
             var entityTypeName = "Planet";
             var botName = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTrainClient();
+
+            var payload = default(JObject);
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.Setup(lex => lex.StartImportAsync(
+                    It.IsAny<StartImportRequest>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<StartImportRequest, CancellationToken>((request, cancellationToken) =>
+                    payload = GetPayloadJson(request.Payload));
+
             var slot = CreateSlot(entityTypeName, entityTypeName);
             var lexSettings = new LexSettings(new JArray { slot });
-            using (var lex = new LexNLUTrainClient(botName, string.Empty, lexSettings, mockClient))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, lexSettings, mockClient.Object))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
 
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
-                // get StartImport request
-                var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
-                startImportRequest.Should().NotBeNull();
-
-                // get payload
-                var payloadJson = GetPayloadJson(startImportRequest.Payload);
-                payloadJson.Should().NotBeNull().And.NotBeEmpty();
-                var payload = JObject.Parse(payloadJson);
+                // assert payload
+                payload.Should().NotBeNull();
 
                 // assert name is set
                 payload.SelectToken(".resource.name").Value<string>().Should().Be(botName);
@@ -114,21 +118,26 @@ namespace NLU.DevOps.Lex.Tests
             string sampleUtterance)
         {
             var intent = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTrainClient();
+
+            var payload = default(JObject);
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.Setup(lex => lex.StartImportAsync(
+                    It.IsAny<StartImportRequest>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<StartImportRequest, CancellationToken>((request, cancellationToken) =>
+                    payload = GetPayloadJson(request.Payload));
+
             var slot = CreateSlot(entityTypeName, entityTypeName);
             var lexSettings = new LexSettings(new JArray { slot });
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient.Object))
             {
                 var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
 
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
-                var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
-                var payloadJson = GetPayloadJson(startImportRequest.Payload);
-                var payload = JObject.Parse(payloadJson);
-
                 // assert template utterance is set
+                payload.Should().NotBeNull();
                 payload.SelectToken(".resource.intents[0].sampleUtterances").Count().Should().Be(1);
                 payload.SelectToken(".resource.intents[0].sampleUtterances[0]").Value<string>().Should().Be(sampleUtterance);
             }
@@ -139,44 +148,33 @@ namespace NLU.DevOps.Lex.Tests
         {
             var importId = Guid.NewGuid().ToString();
 
-            var mockClient = new MockLexTrainClient();
-            mockClient.Get<StartImportResponse>().ImportId = importId;
-            mockClient.Get<StartImportResponse>().ImportStatus = ImportStatus.IN_PROGRESS;
-            mockClient.Get<GetImportResponse>().ImportId = importId;
-            mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.IN_PROGRESS;
-
-            // Wait for the second GetImport action to set status to complete
-            var count = 0;
-            void onRequest(object request)
-            {
-                if (request is GetImportRequest && ++count == 2)
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.SetReturnsDefault(Task.FromResult(new StartImportResponse
                 {
-                    mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.COMPLETE;
-                }
-            }
+                    ImportId = importId,
+                    ImportStatus = ImportStatus.IN_PROGRESS,
+                }));
 
-            mockClient.OnRequest = onRequest;
+            var count = 0;
+            var timestamps = new DateTimeOffset[2];
+            mockClient.Setup(lex => lex.GetImportAsync(
+                    It.Is<GetImportRequest>(request => request.ImportId == importId),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new GetImportResponse
+                {
+                    ImportId = importId,
+                    ImportStatus = ++count < 2 ? ImportStatus.IN_PROGRESS : ImportStatus.COMPLETE,
+                }))
+                .Callback(() => timestamps[count - 1] = DateTimeOffset.Now);
 
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
-                // Assert two GetImport actions occur
-                mockClient.Requests.OfType<GetImportRequest>().Count().Should().Be(2);
-
                 // Assert that the time difference is at least two seconds
-                var requests = mockClient.TimestampedRequests
-                    .Where(tuple => tuple.Item1 is GetImportRequest)
-                    .Select(tuple => new
-                    {
-                        Request = (GetImportRequest)tuple.Item1,
-                        Timestamp = tuple.Item2
-                    })
-                   .ToArray();
-
-                var difference = requests[1].Timestamp - requests[0].Timestamp;
+                var difference = timestamps[1] - timestamps[0];
                 difference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
             }
         }
@@ -191,21 +189,29 @@ namespace NLU.DevOps.Lex.Tests
                 Guid.NewGuid().ToString(),
             };
 
-            var mockClient = new MockLexTrainClient();
-            mockClient.Get<StartImportResponse>().ImportId = importId;
-            mockClient.Get<StartImportResponse>().ImportStatus = ImportStatus.FAILED;
-            mockClient.Get<GetImportResponse>().ImportId = importId;
-            mockClient.Get<GetImportResponse>().ImportStatus = ImportStatus.FAILED;
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient))
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.SetReturnsDefault(Task.FromResult(new StartImportResponse
+                {
+                    ImportId = importId,
+                    ImportStatus = ImportStatus.FAILED,
+                }));
+
+            mockClient.Setup(lex => lex.GetImportAsync(
+                    It.Is<GetImportRequest>(request => request.ImportId == importId),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new GetImportResponse
+                {
+                    ImportId = importId,
+                    ImportStatus = ImportStatus.FAILED,
+                    FailureReason = failureReason,
+                }));
+
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
                 // Null failure reason should be okay
                 var importFails = new Func<Task>(() => lex.TrainAsync(new[] { utterance }));
-                importFails.Should().Throw<InvalidOperationException>().And.Message.Should().BeEmpty();
-
-                // Failure reason is concatenated in message
-                mockClient.Get<GetImportResponse>().FailureReason = failureReason;
                 var expectedMessage = string.Join(Environment.NewLine, failureReason);
                 importFails.Should().Throw<InvalidOperationException>().And.Message.Should().Be(expectedMessage);
             }
@@ -215,12 +221,11 @@ namespace NLU.DevOps.Lex.Tests
         public static void DisposesLexClient()
         {
             var handle = new ManualResetEvent(false);
-            var mockClient = new MockLexTrainClient
-            {
-                OnDispose = () => handle.Set(),
-            };
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.Setup(client => client.Dispose())
+                .Callback(() => handle.Set());
 
-            var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient);
+            var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object);
             lex.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
@@ -229,73 +234,65 @@ namespace NLU.DevOps.Lex.Tests
         [Test]
         public static async Task WaitsForBuildCompletion()
         {
-            var mockClient = new MockLexTrainClient();
-            mockClient.Get<GetBotResponse>().Status = Status.BUILDING;
+            var botName = Guid.NewGuid().ToString();
 
-            // Wait for the third GetBot action to set status to complete
             var count = 0;
-            void onRequest(object request)
-            {
-                if (request is GetBotRequest && ++count == 3)
+            var timestamps = new DateTimeOffset[3];
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.Setup(lex => lex.GetBotAsync(
+                    It.Is<GetBotRequest>(request => request.Name == botName),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new GetBotResponse
                 {
-                    mockClient.Get<GetBotResponse>().Status = Status.READY;
-                }
-            }
+                    AbortStatement = new Statement { Messages = { new Message() } },
+                    ClarificationPrompt = new Prompt { Messages = { new Message() } },
+                    Status = ++count < 3 ? Status.BUILDING : Status.READY,
+                }))
+                .Callback(() => timestamps[count - 1] = DateTimeOffset.Now);
 
-            mockClient.OnRequest = onRequest;
-
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
-                // Assert three GetBot actions occur
-                mockClient.Requests.OfType<GetBotRequest>().Count().Should().Be(3);
-
-                // Assert that the time difference is at least two seconds
-                var requests = mockClient.TimestampedRequests
-                    .Where(tuple => tuple.Item1 is GetBotRequest)
-                    .Select(tuple => new
-                    {
-                        Request = (GetBotRequest)tuple.Item1,
-                        Timestamp = tuple.Item2
-                    })
-                   .ToArray();
-
-                var difference = requests[2].Timestamp - requests[1].Timestamp;
+                var difference = timestamps[2] - timestamps[1];
                 difference.Should().BeGreaterThan(TimeSpan.FromSeconds(2) - Epsilon);
             }
         }
 
         [Test]
-        public static void BuildFailureThrowsInvalidOperation()
+        [TestCase("FAILED", true)]
+        [TestCase("UNKNOWN", true)]
+        [TestCase("NOT_BUILT", false)]
+        public static void BuildFailureThrowsInvalidOperation(string status, bool shouldThrow)
         {
-            var mockClient = new MockLexTrainClient();
-            mockClient.Get<GetBotResponse>().Status = Status.BUILDING;
+            var botName = Guid.NewGuid().ToString();
 
-            // Wait for the second GetBot action to set status to failed
             var count = 0;
-            void onRequest(object request)
-            {
-                if (request is GetBotRequest && ++count == 2)
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.Setup(lex => lex.GetBotAsync(
+                    It.Is<GetBotRequest>(request => request.Name == botName),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new GetBotResponse
                 {
-                    mockClient.Get<GetBotResponse>().Status = Status.FAILED;
-                }
-            }
+                    AbortStatement = new Statement { Messages = { new Message() } },
+                    ClarificationPrompt = new Prompt { Messages = { new Message() } },
+                    Status = ++count < 2 ? Status.NOT_BUILT : new Status(status),
+                }));
 
-            mockClient.OnRequest = onRequest;
-
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 var buildFailed = new Func<Task>(() => lex.TrainAsync(new[] { utterance }));
-                buildFailed.Should().Throw<InvalidOperationException>();
 
-                mockClient.Get<GetBotResponse>().Status = new Status("UNKNOWN");
-                buildFailed.Should().Throw<InvalidOperationException>();
-
-                mockClient.Get<GetBotResponse>().Status = Status.NOT_BUILT;
-                buildFailed.Should().NotThrow<InvalidOperationException>();
+                if (shouldThrow)
+                {
+                    buildFailed.Should().Throw<InvalidOperationException>();
+                }
+                else
+                {
+                    buildFailed.Should().NotThrow<InvalidOperationException>();
+                }
             }
         }
 
@@ -304,14 +301,14 @@ namespace NLU.DevOps.Lex.Tests
         {
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTrainClient();
-            using (var lex = new LexNLUTrainClient(botName, botAlias, new LexSettings(), mockClient))
+            var mockClient = CreateLexTrainClientMock();
+            using (var lex = new LexNLUTrainClient(botName, botAlias, new LexSettings(), mockClient.Object))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
-                mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
-                mockClient.Requests.OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
-                mockClient.Requests.OfType<DeleteBotRequest>().Count().Should().Be(1);
-                mockClient.Requests.OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotRequest>().Count().Should().Be(1);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
             }
         }
 
@@ -320,22 +317,25 @@ namespace NLU.DevOps.Lex.Tests
         {
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTrainClient();
-            mockClient.OnRequest = request =>
-            {
-                if (request is DeleteBotAliasRequest || request is DeleteBotRequest)
-                {
-                    throw new Amazon.LexModelBuildingService.Model.NotFoundException(string.Empty);
-                }
-            };
+            var mockClient = CreateLexTrainClientMock();
 
-            using (var lex = new LexNLUTrainClient(botName, botAlias, new LexSettings(), mockClient))
+            mockClient.Setup(lex => lex.DeleteBotAsync(
+                    It.Is<DeleteBotRequest>(request => request.Name == botName),
+                    It.IsAny<CancellationToken>()))
+                .Throws(new NotFoundException(string.Empty));
+
+            mockClient.Setup(lex => lex.DeleteBotAliasAsync(
+                    It.Is<DeleteBotAliasRequest>(request => request.Name == botAlias),
+                    It.IsAny<CancellationToken>()))
+                .Throws(new NotFoundException(string.Empty));
+
+            using (var lex = new LexNLUTrainClient(botName, botAlias, new LexSettings(), mockClient.Object))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
-                mockClient.Requests.OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
-                mockClient.Requests.OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
-                mockClient.Requests.OfType<DeleteBotRequest>().Count().Should().Be(1);
-                mockClient.Requests.OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotAliasRequest>().First().Name.Should().Be(botAlias);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotRequest>().Count().Should().Be(1);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotRequest>().First().Name.Should().Be(botName);
             }
         }
 
@@ -343,8 +343,8 @@ namespace NLU.DevOps.Lex.Tests
         public static async Task DoesNotCreateIfBotExists()
         {
             var botName = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTrainClient();
-            mockClient.Set(new GetBotsResponse
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.SetReturnsDefault(Task.FromResult(new GetBotsResponse
             {
                 Bots = new List<BotMetadata>
                 {
@@ -353,16 +353,16 @@ namespace NLU.DevOps.Lex.Tests
                         Name = botName,
                     },
                 },
-            });
+            }));
 
-            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient.Object))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>()).ConfigureAwait(false);
 
                 // There are at most two put bot requests, the first to create the bot, the second to build
                 // If the bot exists, only the second put bot to build should occur.
-                mockClient.Requests.OfType<PutBotRequest>().Count().Should().Be(1);
-                mockClient.Requests.OfType<PutBotRequest>().First().ProcessBehavior.Should().Be(ProcessBehavior.BUILD);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<PutBotRequest>().Count().Should().Be(1);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<PutBotRequest>().First().ProcessBehavior.Should().Be(ProcessBehavior.BUILD);
             }
         }
 
@@ -370,8 +370,8 @@ namespace NLU.DevOps.Lex.Tests
         public static async Task DoesNotPublishIfAliasExists()
         {
             var botAlias = Guid.NewGuid().ToString();
-            var mockClient = new MockLexTrainClient();
-            mockClient.Set(new GetBotAliasesResponse
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.SetReturnsDefault(Task.FromResult(new GetBotAliasesResponse
             {
                 BotAliases = new List<BotAliasMetadata>
                 {
@@ -380,14 +380,14 @@ namespace NLU.DevOps.Lex.Tests
                         Name = botAlias,
                     },
                 },
-            });
+            }));
 
-            using (var lex = new LexNLUTrainClient(string.Empty, botAlias, new LexSettings(), mockClient))
+            using (var lex = new LexNLUTrainClient(string.Empty, botAlias, new LexSettings(), mockClient.Object))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>()).ConfigureAwait(false);
 
                 // If the bot alias exists, the 'PutBotAlias' request should not occur
-                mockClient.Requests.OfType<PutBotAliasRequest>().Count().Should().Be(0);
+                mockClient.Invocations.Select(i => i.Arguments[0]).OfType<PutBotAliasRequest>().Count().Should().Be(0);
             }
         }
 
@@ -424,10 +424,17 @@ namespace NLU.DevOps.Lex.Tests
                 }
             };
 
-            var mockClient = new MockLexTrainClient();
+            var payload = default(JObject);
+            var mockClient = CreateLexTrainClientMock();
+            mockClient.Setup(lex => lex.StartImportAsync(
+                    It.IsAny<StartImportRequest>(),
+                    It.IsAny<CancellationToken>()))
+                .Callback<StartImportRequest, CancellationToken>(
+                    (request, cancellationToken) => payload = GetPayloadJson(request.Payload));
+
             var slot = CreateSlot(entityTypeName, Guid.NewGuid().ToString());
             var lexSettings = new LexSettings(new JArray { slot }, importBotTemplate);
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient.Object))
             {
                 var text = Guid.NewGuid().ToString();
                 var entity = new Entity(entityTypeName, null, text, 0);
@@ -435,13 +442,11 @@ namespace NLU.DevOps.Lex.Tests
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // get StartImport request
-                var startImportRequest = mockClient.Requests.OfType<StartImportRequest>().FirstOrDefault();
+                var startImportRequest = mockClient.Invocations.Select(i => i.Arguments[0]).OfType<StartImportRequest>().FirstOrDefault();
                 startImportRequest.Should().NotBeNull();
 
-                // get payload
-                var payloadJson = GetPayloadJson(startImportRequest.Payload);
-                payloadJson.Should().NotBeNull().And.NotBeEmpty();
-                var payload = JObject.Parse(payloadJson);
+                // assert payload
+                payload.Should().NotBeNull();
 
                 // get intent
                 var intents = payload.SelectTokens($".resource.intents[?(@.name == '{intentName}')]");
@@ -465,142 +470,36 @@ namespace NLU.DevOps.Lex.Tests
             };
         }
 
-        private static string GetPayloadJson(Stream payloadStream)
+        private static JObject GetPayloadJson(Stream payloadStream)
         {
-            using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read, true))
+            using (var zipArchive = new ZipArchive(payloadStream, ZipArchiveMode.Read))
             using (var streamReader = new StreamReader(zipArchive.Entries.Single().Open()))
             {
-                return streamReader.ReadToEnd();
+                return JObject.Parse(streamReader.ReadToEnd());
             }
         }
 
-        private class MockLexTrainClient : ILexTrainClient
+        private static Mock<ILexTrainClient> CreateLexTrainClientMock()
         {
-            public MockLexTrainClient()
+            var mockClient = new Mock<ILexTrainClient>();
+
+            mockClient.SetReturnsDefault(Task.FromResult(new GetBotsResponse()));
+            mockClient.SetReturnsDefault(Task.FromResult(new GetBotAliasesResponse()));
+            mockClient.SetReturnsDefault(Task.FromResult(new GetImportResponse()));
+
+            mockClient.SetReturnsDefault(Task.FromResult(new GetBotResponse
             {
-                this.Set(new GetBotResponse
-                {
-                    AbortStatement = new Statement { Messages = { new Message() } },
-                    ClarificationPrompt = new Prompt { Messages = { new Message() } },
-                    Status = Status.READY,
-                });
+                AbortStatement = new Statement { Messages = { new Message() } },
+                ClarificationPrompt = new Prompt { Messages = { new Message() } },
+                Status = Status.READY,
+            }));
 
-                this.Set(new StartImportResponse
-                {
-                    ImportStatus = ImportStatus.COMPLETE,
-                });
-            }
-
-            public Action OnDispose { get; set; }
-
-            public Action<object> OnRequest { get; set; }
-
-            public Func<object, Task> OnRequestAsync { get; set; }
-
-            public IEnumerable<object> Requests => this.RequestsInternal.Select(tuple => tuple.Item1);
-
-            public IEnumerable<Tuple<object, DateTimeOffset>> TimestampedRequests => this.RequestsInternal;
-
-            private List<Tuple<object, DateTimeOffset>> RequestsInternal { get; } = new List<Tuple<object, DateTimeOffset>>();
-
-            private IDictionary<Type, object> Responses { get; } = new Dictionary<Type, object>();
-
-            public void Set<T>(T instance)
+            mockClient.SetReturnsDefault(Task.FromResult(new StartImportResponse
             {
-                this.Responses[typeof(T)] = instance;
-            }
+                ImportStatus = ImportStatus.COMPLETE,
+            }));
 
-            public T Get<T>()
-                where T : new()
-            {
-                if (!this.Responses.TryGetValue(typeof(T), out var result))
-                {
-                    result = new T();
-                    this.Responses.Add(typeof(T), result);
-                }
-
-                return (T)result;
-            }
-
-            public Task DeleteBotAliasAsync(DeleteBotAliasRequest request, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(request);
-            }
-
-            public Task DeleteBotAsync(DeleteBotRequest request, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(request);
-            }
-
-            public async Task<GetBotAliasesResponse> GetBotAliasesAsync(GetBotAliasesRequest request, CancellationToken cancellationToken)
-            {
-                await this.ProcessRequestAsync(request).ConfigureAwait(false);
-                return this.Get<GetBotAliasesResponse>();
-            }
-
-            public async Task<GetBotResponse> GetBotAsync(GetBotRequest request, CancellationToken cancellationToken)
-            {
-                await this.ProcessRequestAsync(request).ConfigureAwait(false);
-                return this.Get<GetBotResponse>();
-            }
-
-            public async Task<GetBotsResponse> GetBotsAsync(GetBotsRequest request, CancellationToken cancellationToken)
-            {
-                await this.ProcessRequestAsync(request).ConfigureAwait(false);
-                return this.Get<GetBotsResponse>();
-            }
-
-            public async Task<GetImportResponse> GetImportAsync(GetImportRequest request, CancellationToken cancellationToken)
-            {
-                await this.ProcessRequestAsync(request).ConfigureAwait(false);
-                return this.Get<GetImportResponse>();
-            }
-
-            public Task PutBotAliasAsync(PutBotAliasRequest request, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(request);
-            }
-
-            public Task PutBotAsync(PutBotRequest request, CancellationToken cancellationToken)
-            {
-                return this.ProcessRequestAsync(request);
-            }
-
-            public async Task<StartImportResponse> StartImportAsync(StartImportRequest request, CancellationToken cancellationToken)
-            {
-                var streamCopy = new MemoryStream();
-                request.Payload.CopyTo(streamCopy);
-                streamCopy.Position = 0;
-                var requestCopy = new StartImportRequest
-                {
-                    MergeStrategy = request.MergeStrategy,
-                    Payload = streamCopy,
-                    ResourceType = request.ResourceType,
-                };
-
-                await this.ProcessRequestAsync(requestCopy).ConfigureAwait(false);
-
-                return this.Get<StartImportResponse>();
-            }
-
-            public void Dispose()
-            {
-                // Dispose each copy of the StartImportRequest payload
-                this.RequestsInternal
-                    .Select(tuple => tuple.Item1)
-                    .OfType<StartImportRequest>()
-                    .ToList()
-                    .ForEach(request => request.Payload.Dispose());
-
-                this.OnDispose?.Invoke();
-            }
-
-            private Task ProcessRequestAsync(object request)
-            {
-                this.RequestsInternal.Add(Tuple.Create(request, DateTimeOffset.Now));
-                this.OnRequest?.Invoke(request);
-                return this.OnRequestAsync?.Invoke(request) ?? Task.CompletedTask;
-            }
+            return mockClient;
         }
     }
 }
