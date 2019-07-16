@@ -4,24 +4,23 @@
 namespace NLU.DevOps.Core
 {
     using System;
-    using Models;
 
     /// <summary>
-    /// Default NLU query containing only the text utterance.
+    /// Default NLU test query.
     /// </summary>
-    public class NLUQuery : INLUQuery
+    public class DefaultQuery
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="NLUQuery"/> class.
+        /// Initializes a new instance of the <see cref="DefaultQuery"/> class.
         /// </summary>
         /// <param name="text">Utterance text.</param>
-        public NLUQuery(string text)
+        public DefaultQuery(string text)
         {
             this.Text = text ?? throw new ArgumentNullException(nameof(text));
         }
 
         /// <summary>
-        /// Gets the utterance text.
+        /// Gets the text.
         /// </summary>
         public string Text { get; }
     }

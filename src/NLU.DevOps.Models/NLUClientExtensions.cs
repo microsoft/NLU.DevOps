@@ -6,6 +6,7 @@ namespace NLU.DevOps.Models
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// NLU client extensions.
@@ -39,7 +40,7 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">NLU testing client instance.</param>
         /// <param name="query">Query to test.</param>
-        public static Task<LabeledUtterance> TestAsync(this INLUTestClient instance, INLUQuery query)
+        public static Task<LabeledUtterance> TestAsync(this INLUTestClient instance, JToken query)
         {
             return instance.TestAsync(query, CancellationToken.None);
         }
@@ -62,7 +63,7 @@ namespace NLU.DevOps.Models
         /// <param name="instance">NLU testing client instance.</param>
         /// <param name="speechFile">Speech file.</param>
         /// <param name="query">Query to test.</param>
-        public static Task<LabeledUtterance> TestSpeechAsync(this INLUTestClient instance, string speechFile, INLUQuery query)
+        public static Task<LabeledUtterance> TestSpeechAsync(this INLUTestClient instance, string speechFile, JToken query)
         {
             return instance.TestSpeechAsync(speechFile, query, CancellationToken.None);
         }

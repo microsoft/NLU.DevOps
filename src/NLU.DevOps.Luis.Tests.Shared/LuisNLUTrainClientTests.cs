@@ -127,11 +127,11 @@ namespace NLU.DevOps.Luis.Tests
                     new Models.LabeledUtterance(
                         "Book me a flight.",
                         "BookFlight",
-                        new Entity[] { new Entity("Name", string.Empty, "me", 0) }),
+                        new Entity[] { new Entity("Name", null, null, "me", 0) }),
                     new Models.LabeledUtterance(
                         "Cancel my flight.",
                         "CancelFlight",
-                        new Entity[] { new Entity("Subject", string.Empty, "flight", 0) })
+                        new Entity[] { new Entity("Subject", null, null, "flight", 0) })
                 };
 
                 await luis.TrainAsync(utterances).ConfigureAwait(false);
@@ -315,8 +315,8 @@ namespace NLU.DevOps.Luis.Tests
             builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
             using (var luis = builder.Build())
             {
-                var entity1 = new Entity(entityTypeName1, null, text, 0);
-                var entity2 = new Entity(entityTypeName2, null, text, 0);
+                var entity1 = new Entity(entityTypeName1, null, null, text, 0);
+                var entity2 = new Entity(entityTypeName2, null, null, text, 0);
                 var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
                 await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 

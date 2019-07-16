@@ -5,10 +5,10 @@ namespace NLU.DevOps.Luis.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
+    using FluentAssertions.Json;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
     using Moq;
@@ -29,7 +29,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = new LuisNLUTestClientBuilder().Build())
             {
-                Func<Task> nullTestUtterance = () => luis.TestAsync(default(INLUQuery));
+                Func<Task> nullTestUtterance = () => luis.TestAsync(default(JToken));
                 Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null);
                 nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("query");
                 nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFile");
@@ -72,7 +72,8 @@ namespace NLU.DevOps.Luis.Tests
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
-                result.Entities[0].EntityValue.Should().Be(default(string));
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("the"));
+                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }
@@ -82,6 +83,18 @@ namespace NLU.DevOps.Luis.Tests
         public static async Task TestModelWithEntityResolution()
         {
             var test = "the quick brown fox jumped over the lazy dog";
+            var resolution = new JObject
+            {
+                { "value", "Fox" },
+            };
+
+            var entityValues = new JToken[]
+            {
+                "2018-11-16",
+                new JArray { new JArray { "Fox" } },
+                new JArray { new JArray { "foo", "bar" } },
+                new JArray { new JObject() },
+            };
 
             var builder = new LuisNLUTestClientBuilder();
             builder.LuisTestClientMock
@@ -97,13 +110,7 @@ namespace NLU.DevOps.Luis.Tests
                         {
                             {
                                 "type",
-                                new JArray
-                                {
-                                    "2018-11-16",
-                                    new JArray { new JArray { "Fox" } },
-                                    new JArray { new JArray { "foo", "bar" } },
-                                    new JArray { new JObject() }
-                                }
+                                new JArray(entityValues)
                             },
                             {
                                 "$instance",
@@ -117,6 +124,7 @@ namespace NLU.DevOps.Luis.Tests
                                             {
                                                 { "startIndex", 45 },
                                                 { "length", 5 },
+                                                { "resolution", resolution.DeepClone() },
                                             },
                                             new JObject
                                             {
@@ -146,13 +154,17 @@ namespace NLU.DevOps.Luis.Tests
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(4);
                 result.Entities[0].MatchText.Should().Be("today");
-                result.Entities[0].EntityValue.Should().Be("2018-11-16");
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(entityValues[0]);
+                result.Entities[0].EntityResolution.Should().BeEquivalentTo(resolution);
                 result.Entities[1].MatchText.Should().Be("brown fox");
-                result.Entities[1].EntityValue.Should().Be(null);
+                result.Entities[1].EntityValue.Should().BeEquivalentTo(entityValues[1]);
+                result.Entities[1].EntityResolution.Should().BeNull();
                 result.Entities[2].MatchText.Should().Be("the");
-                result.Entities[2].EntityValue.Should().Be(null);
+                result.Entities[2].EntityValue.Should().BeEquivalentTo(entityValues[2]);
+                result.Entities[2].EntityResolution.Should().BeNull();
                 result.Entities[3].MatchText.Should().Be("quick");
-                result.Entities[3].EntityValue.Should().Be(null);
+                result.Entities[3].EntityValue.Should().BeEquivalentTo(entityValues[3]);
+                result.Entities[3].EntityResolution.Should().BeNull();
             }
         }
 
@@ -243,7 +255,8 @@ namespace NLU.DevOps.Luis.Tests
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
-                result.Entities[0].EntityValue.Should().Be(default(string));
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("the"));
+                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }
@@ -427,7 +440,7 @@ namespace NLU.DevOps.Luis.Tests
                     entityMetadata.Add("score", (double)score);
                 }
 
-                ((JArray)result[entity.Type]).Add(null);
+                ((JArray)result[entity.Type]).Add(entity.Entity);
                 ((JArray)((JObject)result["$instance"])[entity.Type]).Add(entityMetadata);
             }
 

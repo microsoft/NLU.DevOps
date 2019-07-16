@@ -20,4 +20,25 @@
     <ProjectReference Include="..\NLU.DevOps.ModelPerformance\NLU.DevOps.ModelPerformance.csproj" />
     <ProjectReference Include="..\NLU.DevOps.Models\NLU.DevOps.Models.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="..\NLU.DevOps.ModelPerformance\ConfusionMatrixTests.cs">
+      <Link>ConfusionMatrixTests.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.local.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="models\actualUtterances.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="models\expectedUtterances.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

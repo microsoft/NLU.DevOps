@@ -6,14 +6,15 @@ namespace NLU.DevOps.Core
     using System.Threading;
     using System.Threading.Tasks;
     using Models;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// Default NLU test client, which removes the <see cref="INLUQuery"/> abstraction.
+    /// Default NLU test client, which extracts the text from the JSON query object.
     /// </summary>
-    public abstract class DefaultNLUTestClient : NLUTestClientBase<NLUQuery>
+    public abstract class DefaultNLUTestClient : NLUTestClientBase<DefaultQuery>
     {
         /// <inheritdoc />
-        protected sealed override Task<LabeledUtterance> TestAsync(NLUQuery query, CancellationToken cancellationToken)
+        protected sealed override Task<LabeledUtterance> TestAsync(DefaultQuery query, CancellationToken cancellationToken)
         {
             return this.TestAsync(query.Text, cancellationToken);
         }
@@ -27,7 +28,7 @@ namespace NLU.DevOps.Core
         protected abstract Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken);
 
         /// <inheritdoc />
-        protected sealed override Task<LabeledUtterance> TestSpeechAsync(string speechFile, NLUQuery query, CancellationToken cancellationToken)
+        protected sealed override Task<LabeledUtterance> TestSpeechAsync(string speechFile, DefaultQuery query, CancellationToken cancellationToken)
         {
             return this.TestSpeechAsync(speechFile, cancellationToken);
         }

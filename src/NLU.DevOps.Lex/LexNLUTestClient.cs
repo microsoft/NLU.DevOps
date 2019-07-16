@@ -91,7 +91,7 @@ namespace NLU.DevOps.Lex
             var postTextResponse = await this.LexClient.PostTextAsync(postTextRequest, cancellationToken).ConfigureAwait(false);
             var entities = postTextResponse.Slots?
                 .Where(slot => slot.Value != null)
-                .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                .Select(slot => new Entity(slot.Key, slot.Value, null, null, 0))
                 .ToArray();
 
             return new LabeledUtterance(
@@ -123,7 +123,7 @@ namespace NLU.DevOps.Lex
                 var postContentResponse = await this.LexClient.PostContentAsync(postContentRequest, cancellationToken).ConfigureAwait(false);
                 var slots = postContentResponse.Slots != null
                     ? JsonConvert.DeserializeObject<Dictionary<string, string>>(postContentResponse.Slots)
-                        .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
+                        .Select(slot => new Entity(slot.Key, slot.Value, null, null, 0))
                         .ToArray()
                     : null;
 

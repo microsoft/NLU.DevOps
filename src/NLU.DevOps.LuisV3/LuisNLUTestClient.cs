@@ -19,7 +19,7 @@ namespace NLU.DevOps.Luis
     /// Test a LUIS model with text and speech.
     /// Implementation of <see cref="INLUTestClient"/>
     /// </summary>
-    public sealed class LuisNLUTestClient : NLUTestClientBase<LuisNLUQuery>
+    public sealed class LuisNLUTestClient : INLUTestClient
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
@@ -41,26 +41,44 @@ namespace NLU.DevOps.Luis
         private ILuisTestClient LuisClient { get; }
 
         /// <inheritdoc />
-        protected override async Task<Models.LabeledUtterance> TestAsync(
-            LuisNLUQuery query,
+        public async Task<LabeledUtterance> TestAsync(
+            JToken query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.QueryAsync(query.PredictionRequest, cancellationToken).ConfigureAwait(false);
+            if (query == null)
+            {
+                throw new ArgumentNullException(nameof(query));
+            }
+
+            var predictionRequest = query.ToObject<PredictionRequest>();
+            predictionRequest.Query = predictionRequest.Query ?? query.Value<string>("text");
+            var luisResult = await this.LuisClient.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
         /// <inheritdoc />
-        protected override async Task<Models.LabeledUtterance> TestSpeechAsync(
+        public async Task<LabeledUtterance> TestSpeechAsync(
             string speechFile,
-            LuisNLUQuery query,
+            JToken query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, query?.PredictionRequest, cancellationToken).ConfigureAwait(false);
+            if (speechFile == null)
+            {
+                throw new ArgumentNullException(nameof(speechFile));
+            }
+
+            var predictionRequest = query?.ToObject<PredictionRequest>();
+            if (predictionRequest != null)
+            {
+                predictionRequest.Query = predictionRequest.Query ?? query.Value<string>("text");
+            }
+
+            var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, predictionRequest, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
         /// <inheritdoc />
-        protected override void Dispose(bool disposing)
+        public void Dispose()
         {
             this.LuisClient.Dispose();
         }
@@ -87,10 +105,7 @@ namespace NLU.DevOps.Luis
                     currentStart = nextStart + 1;
                 }
 
-                // TODO: support complex entity resolution values
-                var entityValue = entityJson.Type == JTokenType.String
-                    ? entityJson.Value<string>()
-                    : null;
+                var entityValue = PruneMetadata(entityJson);
 
                 var modifiedEntityType = entityType;
                 if (mappedTypes.TryGetValue(entityType, out var mappedEntityType))
@@ -98,9 +113,10 @@ namespace NLU.DevOps.Luis
                     modifiedEntityType = mappedEntityType;
                 }
 
+                var entityResolution = entityMetadata["resolution"];
                 return score.HasValue
-                    ? new ScoredEntity(modifiedEntityType, entityValue, matchText, matchIndex, score.Value)
-                    : new Entity(modifiedEntityType, entityValue, matchText, matchIndex);
+                    ? new ScoredEntity(modifiedEntityType, entityValue, entityResolution, matchText, matchIndex, score.Value)
+                    : new Entity(modifiedEntityType, entityValue, entityResolution, matchText, matchIndex);
             }
 
             var instanceMetadata = default(JObject);
@@ -129,11 +145,30 @@ namespace NLU.DevOps.Luis
                         getEntity(entityInfo.EntityType, entity.EntityValue, entity.EntityMetadata)));
         }
 
-        private Models.LabeledUtterance LuisResultToLabeledUtterance(PredictionResponse predictionResponse)
+        private static JToken PruneMetadata(JToken json)
+        {
+            if (json is JObject jsonObject)
+            {
+                var prunedObject = new JObject();
+                foreach (var property in jsonObject.Properties())
+                {
+                    if (property.Name != "$instance")
+                    {
+                        prunedObject.Add(property.Name, PruneMetadata(property.Value));
+                    }
+                }
+
+                return prunedObject;
+            }
+
+            return json;
+        }
+
+        private LabeledUtterance LuisResultToLabeledUtterance(PredictionResponse predictionResponse)
         {
             if (predictionResponse == null)
             {
-                return new Models.LabeledUtterance(null, null, null);
+                return new LabeledUtterance(null, null, null);
             }
 
             var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
@@ -145,7 +180,7 @@ namespace NLU.DevOps.Luis
             predictionResponse.Prediction.Intents?.TryGetValue(intent, out intentData);
             return intentData != null && intentData.Score.HasValue
                 ? new ScoredLabeledUtterance(predictionResponse.Query, intent, intentData.Score.Value, entities)
-                : new Models.LabeledUtterance(predictionResponse.Query, intent, entities);
+                : new LabeledUtterance(predictionResponse.Query, intent, entities);
         }
     }
 }

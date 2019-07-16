@@ -11,8 +11,10 @@ namespace NLU.DevOps.Lex.Tests
     using System.Threading.Tasks;
     using Amazon.Lex.Model;
     using FluentAssertions;
+    using FluentAssertions.Json;
     using Models;
     using Moq;
+    using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
     [TestFixture]
@@ -33,7 +35,7 @@ namespace NLU.DevOps.Lex.Tests
             using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), new Mock<ILexTestClient>().Object))
             {
                 var nullSpeechFile = new Func<Task>(() => lex.TestSpeechAsync(null));
-                var nullTestUtterance = new Func<Task>(() => lex.TestAsync(default(INLUQuery)));
+                var nullTestUtterance = new Func<Task>(() => lex.TestAsync(default(JToken)));
                 nullSpeechFile.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("speechFile");
                 nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("query");
             }
@@ -98,7 +100,8 @@ namespace NLU.DevOps.Lex.Tests
                 {
                     result.Entities.Count.Should().Be(1);
                     result.Entities[0].EntityType.Should().Be(entityType);
-                    result.Entities[0].EntityValue.Should().Be(entityValue);
+                    result.Entities[0].EntityValue.Value<string>().Should().BeEquivalentTo(entityValue);
+                    result.Entities[0].EntityResolution.Should().BeNull();
                 }
             }
         }
@@ -145,7 +148,8 @@ namespace NLU.DevOps.Lex.Tests
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Entities[0].EntityType.Should().Be(entityType);
-                response.Entities[0].EntityValue.Should().Be(entityValue);
+                response.Entities[0].EntityValue.Value<string>().Should().BeEquivalentTo(entityValue);
+                response.Entities[0].EntityResolution.Should().BeNull();
             }
         }
 

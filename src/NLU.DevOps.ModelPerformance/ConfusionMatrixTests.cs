@@ -6,7 +6,7 @@ namespace NLU.DevOps.ModelPerformance
     using NUnit.Framework;
 
     [TestFixture]
-    internal static class Tests
+    internal static class ConfusionMatrixTests
     {
         [Test]
         [TestCaseSource(typeof(TestCaseSource), "PassingTests")]

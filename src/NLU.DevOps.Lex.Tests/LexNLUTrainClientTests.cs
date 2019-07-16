@@ -52,8 +52,8 @@ namespace NLU.DevOps.Lex.Tests
             var mockClient = CreateLexTrainClientMock();
             using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
-                var entity = new Entity(string.Empty, string.Empty, match, 0);
-                var utterance = new LabeledUtterance(text, string.Empty, new[] { entity });
+                var entity = new Entity(null, null, null, match, 0);
+                var utterance = new LabeledUtterance(text, null, new[] { entity });
                 var invalidEntityMatch = new Func<Task>(() => lex.TrainAsync(new[] { utterance }));
                 invalidEntityMatch.Should().Throw<InvalidOperationException>();
             }
@@ -79,7 +79,7 @@ namespace NLU.DevOps.Lex.Tests
             var lexSettings = new LexSettings(new JArray { slot });
             using (var lex = new LexNLUTrainClient(botName, string.Empty, lexSettings, mockClient.Object))
             {
-                var entity = new Entity(entityTypeName, "Earth", "world", 0);
+                var entity = new Entity(entityTypeName, "Earth", null, "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
 
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
@@ -131,7 +131,7 @@ namespace NLU.DevOps.Lex.Tests
             var lexSettings = new LexSettings(new JArray { slot });
             using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient.Object))
             {
-                var entity = new Entity(entityTypeName, string.Empty, entityMatch, matchIndex);
+                var entity = new Entity(entityTypeName, null, null, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
 
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
@@ -437,7 +437,7 @@ namespace NLU.DevOps.Lex.Tests
             using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient.Object))
             {
                 var text = Guid.NewGuid().ToString();
-                var entity = new Entity(entityTypeName, null, text, 0);
+                var entity = new Entity(entityTypeName, null, null, text, 0);
                 var utterance = new LabeledUtterance(text, intentName, new[] { entity });
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
