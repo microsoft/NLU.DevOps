@@ -30,6 +30,8 @@ namespace NLU.DevOps.CommandLine
 
         protected INLUService NLUService => this.LazyNLUService.Value;
 
+        protected ILogger Logger => this.LazyLogger.Value;
+
         private Lazy<IConfiguration> LazyConfiguration { get; }
 
         private Lazy<INLUService> LazyNLUService { get; }

@@ -5,7 +5,6 @@ namespace NLU.DevOps.CommandLine.Train
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Threading.Tasks;
     using Models;
 
