@@ -1,0 +1,12 @@
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.BaseCommandTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.Clean.CleanCommandTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.Clean.CleanOptionsTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.Compare.CompareOptionsTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.ServiceResolverTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.Test.TestOptionsTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.Train.TrainCommandTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "NUnit will instantiate this instance through reflection.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.Train.TrainOptionsTests")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1822:Mark members as static", Justification = "Instance property is used for testing serialization", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Tests.NLUServiceMock")]

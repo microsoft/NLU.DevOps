@@ -52,7 +52,11 @@ namespace NLU.DevOps.Luis
             var appName = userDefinedName ?? GetRandomName(configuration[LuisAppNamePrefixConfigurationKey]);
 
             var isStagingString = configuration[LuisIsStagingConfigurationKey];
-            var isStaging = isStagingString != null ? bool.Parse(isStagingString) : false;
+            var isStaging = false;
+            if (isStagingString != null && !bool.TryParse(isStagingString, out isStaging))
+            {
+                throw new ArgumentException("The configuration value 'luisIsStaging' must be a valid boolean.");
+            }
 
             var luisSettings = settingsPath != null
                 ? JsonConvert.DeserializeObject<LuisSettings>(File.ReadAllText(settingsPath))
