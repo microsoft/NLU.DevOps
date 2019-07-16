@@ -11,6 +11,7 @@ namespace NLU.DevOps.ModelPerformance
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
     internal static class TestCaseSource
@@ -35,7 +36,7 @@ namespace NLU.DevOps.ModelPerformance
         internal static string TestLabel => TestContext.Parameters.Get(ConfigurationConstants.TestLabelKey) ?? Configuration[ConfigurationConstants.TestLabelKey];
 
         private static IConfiguration Configuration { get; } = new ConfigurationBuilder()
-            .AddJsonFile(AppSettingsPath)
+            .AddJsonFile(AppSettingsPath, true)
             .AddJsonFile(AppSettingsLocalPath, true)
             .AddEnvironmentVariables()
             .Build();
@@ -129,10 +130,13 @@ namespace NLU.DevOps.ModelPerformance
             bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
             {
                 return expectedEntity.EntityType == actualEntity.EntityType
-                    && (EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
+                    && ((EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
+                    && expectedEntity.MatchIndex == actualEntity.MatchIndex)
                     /* Required case to support NLU providers that do not specify matched text */
-                    || EqualsNormalized(expectedEntity.MatchText, actualEntity.EntityValue)
-                    || EqualsNormalized(expectedEntity.EntityValue, actualEntity.EntityValue));
+                    || EqualsNormalizedJson(expectedEntity.MatchText, actualEntity.EntityValue)
+                    || EqualsNormalizedJson(expectedEntity.EntityValue, actualEntity.EntityValue)
+                    /* Required case to support FalsePositiveEntity scenarios */
+                    || EqualsNormalizedJson(expectedEntity.EntityValue, actualEntity.MatchText));
             }
 
             if (expected != null)
@@ -158,30 +162,57 @@ namespace NLU.DevOps.ModelPerformance
                             entity.EntityType);
                     }
 
-                    if (entity.EntityValue != null)
+                    if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
                     {
                         // "Semantic" entity value match test cases
                         bool isEntityValueMatch(Entity actualEntity)
                         {
                             return entity.EntityType == actualEntity.EntityType
-                                && entity.EntityValue == actualEntity.EntityValue;
+                                && ContainsSubtree(entity.EntityValue, actualEntity.EntityValue);
                         }
 
+                        var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
                         if (actual == null || !actual.Any(isEntityValueMatch))
                         {
                             yield return FalseNegative(
-                                $"FalseNegativeEntityValue('{entity.EntityType}', '{entity.EntityValue}', '{text}')",
-                                $"Actual utterance does not have entity value matching '{entity.EntityValue}'.",
+                                $"FalseNegativeEntityValue('{entity.EntityType}', '{formattedEntityValue}', '{text}')",
+                                $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
                                 "Entity",
                                 entity.EntityType);
                         }
                         else
                         {
                             yield return TruePositive(
-                                 $"TruePositiveEntityValue('{entity.EntityType}', '{entity.EntityValue}', '{text}')",
-                                 $"Both utterances have entity value '{entity.EntityValue}'.",
+                                 $"TruePositiveEntityValue('{entity.EntityType}', '{formattedEntityValue}', '{text}')",
+                                 $"Both utterances have entity value '{formattedEntityValue}'.",
                                  "Entity",
                                  entity.EntityType);
+                        }
+                    }
+
+                    if (entity.EntityResolution != null && entity.EntityResolution.Type != JTokenType.Null)
+                    {
+                        bool isEntityResolutionMatch(Entity actualEntity)
+                        {
+                            return ContainsSubtree(entity.EntityResolution, actualEntity.EntityResolution);
+                        }
+
+                        var formattedEntityResolution = entity.EntityResolution.ToString(Formatting.None);
+                        if (actual == null || !actual.Any(isEntityResolutionMatch))
+                        {
+                            yield return FalseNegative(
+                                $"FalseNegativeEntityResolution('{entity.EntityType}', '{formattedEntityResolution}', '{text}')",
+                                $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
+                                "Entity",
+                                entity.EntityType);
+                        }
+                        else
+                        {
+                            yield return TruePositive(
+                            $"TruePositiveEntityResolution('{entity.EntityType}', '{formattedEntityResolution}', '{text}')",
+                                $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
+                                "Entity",
+                                entity.EntityType);
                         }
                     }
                 }
@@ -264,6 +295,32 @@ namespace NLU.DevOps.ModelPerformance
             }
         }
 
+        private static bool EqualsNormalizedJson(JToken x, JToken y)
+        {
+            // Entity is not a match if both values are null
+            if (x == null && y == null)
+            {
+                return false;
+            }
+
+            return x?.Type == JTokenType.String
+                ? EqualsNormalizedJson(x.Value<string>(), y)
+                : false;
+        }
+
+        private static bool EqualsNormalizedJson(string x, JToken y)
+        {
+            // Entity is not a match if both values are null
+            if (x == null && y == null)
+            {
+                return false;
+            }
+
+            return y?.Type == JTokenType.String
+                ? EqualsNormalized(x, y.Value<string>())
+                : false;
+        }
+
         private static bool EqualsNormalized(string x, string y)
         {
             string normalize(string s)
@@ -279,6 +336,59 @@ namespace NLU.DevOps.ModelPerformance
             }
 
             return string.Equals(normalize(x), normalize(y), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool ContainsSubtree(JToken expected, JToken actual)
+        {
+            if (expected == null)
+            {
+                return true;
+            }
+
+            if (actual == null)
+            {
+                return false;
+            }
+
+            switch (expected)
+            {
+                case JObject expectedObject:
+                    var actualObject = actual as JObject;
+                    if (actualObject == null)
+                    {
+                        return false;
+                    }
+
+                    foreach (var expectedProperty in expectedObject.Properties())
+                    {
+                        var actualProperty = actualObject.Property(expectedProperty.Name, StringComparison.Ordinal);
+                        if (!ContainsSubtree(expectedProperty.Value, actualProperty?.Value))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                case JArray expectedArray:
+                    var actualArray = actual as JArray;
+                    if (actualArray == null)
+                    {
+                        return false;
+                    }
+
+                    foreach (var expectedItem in expectedArray)
+                    {
+                        // Order is not asserted
+                        if (!actualArray.Any(actualItem => ContainsSubtree(expectedItem, actualItem)))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                default:
+                    return JToken.DeepEquals(expected, actual);
+            }
         }
 
         private static TestCase TruePositive(string message, string because, params string[] categories)

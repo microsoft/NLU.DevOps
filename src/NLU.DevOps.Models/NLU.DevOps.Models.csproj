@@ -8,4 +8,8 @@
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NLU.DevOps.Models.xml</DocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" /> 
+  </ItemGroup>
 </Project>

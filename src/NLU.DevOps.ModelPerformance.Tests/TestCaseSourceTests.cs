@@ -8,18 +8,21 @@ namespace NLU.DevOps.ModelPerformance.Tests
     using System.Text.RegularExpressions;
     using FluentAssertions;
     using Models;
+    using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
     [TestFixture]
     internal static class TestCaseSourceTests
     {
-        private const string FalseNegativeEntityValueRegEx = @"FalseNegativeEntityValue\(.*?\)";
-        private const string TruePositiveEntityValueRegEx = @"TruePositiveEntityValue\(.*?\)";
-        private const string FalseNegativeEntityRegEx = @"FalseNegativeEntity\(.*?\)";
-        private const string FalsePositiveEntityRegEx = @"FalsePositiveEntity\(.*?\)";
-        private const string TruePositiveEntityRegEx = @"TruePositiveEntity\(.*?\)";
-        private const string FalsePositiveIntentRegEx = @"FalsePositiveIntent\(.*?\)";
-        private const string FalseNegativeIntentRegEx = @"FalseNegativeIntent\(.*?\)";
+        private const string TruePositiveEntityResolutionRegex = @"TruePositiveEntityResolution\(.*?\)";
+        private const string FalseNegativeEntityResolutionRegex = @"FalseNegativeEntityResolution\(.*?\)";
+        private const string FalseNegativeEntityValueRegex = @"FalseNegativeEntityValue\(.*?\)";
+        private const string TruePositiveEntityValueRegex = @"TruePositiveEntityValue\(.*?\)";
+        private const string FalseNegativeEntityRegex = @"FalseNegativeEntity\(.*?\)";
+        private const string FalsePositiveEntityRegex = @"FalsePositiveEntity\(.*?\)";
+        private const string TruePositiveEntityRegex = @"TruePositiveEntity\(.*?\)";
+        private const string FalsePositiveIntentRegex = @"FalsePositiveIntent\(.*?\)";
+        private const string FalseNegativeIntentRegex = @"FalseNegativeIntent\(.*?\)";
 
         [Test]
         public static void TestToIntentTestCaseExpectingNoneActualDayTime()
@@ -32,7 +35,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var test = TestCaseSource.ToIntentTestCase(utterances);
 
-            test.TestName.Should().MatchRegex(FalsePositiveIntentRegEx);
+            test.TestName.Should().MatchRegex(FalsePositiveIntentRegex);
             test.Kind.Should().Be(TestResultKind.FalsePositive);
         }
 
@@ -47,7 +50,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var test = TestCaseSource.ToIntentTestCase(utterances);
 
-            test.TestName.Should().MatchRegex(FalseNegativeIntentRegEx);
+            test.TestName.Should().MatchRegex(FalseNegativeIntentRegex);
             test.Kind.Should().Be(TestResultKind.FalseNegative);
         }
 
@@ -64,7 +67,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
             actualTestResult.First().Kind.Should().Be(TestResultKind.FalseNegative);
-            actualTestResult.First().TestName.Should().MatchRegex(FalseNegativeEntityRegEx);
+            actualTestResult.First().TestName.Should().MatchRegex(FalseNegativeEntityRegex);
         }
 
         [Test]
@@ -84,11 +87,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             testResult.Count().Should().Be(3);
             var actualFalsePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalsePositive);
             var actualFalseNegative = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalseNegative);
-            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegEx));
+            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegex));
             actualFalsePositive.Should().NotBeNull();
-            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegEx);
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
             actualFalseNegative.Should().NotBeNull();
-            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegEx);
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
             actualFalseNegativeEntityValue.Should().NotBeNull();
         }
 
@@ -96,7 +99,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         public static void TestToEntityTestCasesMissingEntityInExpectedFile()
         {
             var actualEntity = CreateEntityList("EntityType");
-            actualEntity.Add(new Entity("RecognizedEntity", "value", "text", 2));
+            actualEntity.Add(new Entity("RecognizedEntity", "value", null, "text", 2));
             var expectedEntity = CreateEntityList("EntityType");
             var utterances = new[]
             {
@@ -110,11 +113,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             testResult.Count().Should().Be(3);
             var actualFalsePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalsePositive);
             var actualTruePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.TruePositive);
-            var actualTruePositiveEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, TruePositiveEntityValueRegEx));
+            var actualTruePositiveEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, TruePositiveEntityValueRegex));
             actualFalsePositive.Should().NotBeNull();
-            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegEx);
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
             actualTruePositive.Should().NotBeNull();
-            actualTruePositive.TestName.Should().MatchRegex(TruePositiveEntityRegEx);
+            actualTruePositive.TestName.Should().MatchRegex(TruePositiveEntityRegex);
             actualTruePositiveEntityValue.Should().NotBeNull();
         }
 
@@ -133,16 +136,16 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(2);
             var actualFalseNegative = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalseNegative);
-            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegEx));
+            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegex));
             actualFalseNegative.Should().NotBeNull();
-            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegEx);
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
             actualFalseNegativeEntityValue.Should().NotBeNull();
         }
 
         [Test]
         public static void TestToEntityTestCasesWithDifferentEntityValueInActualVersusExpected()
         {
-            var actualEntity = new List<Entity> { new Entity("EntityType", "differentEntityValue", "differentMatchedText", 1) };
+            var actualEntity = new List<Entity> { new Entity("EntityType", "differentEntityValue", null, "differentMatchedText", 1) };
             var expectedEntity = CreateEntityList("EntityType");
             var utterances = new[]
             {
@@ -156,11 +159,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             testResult.Count().Should().Be(3);
             var actualFalsePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalsePositive);
             var actualFalseNegative = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalseNegative);
-            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegEx));
+            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegex));
             actualFalsePositive.Should().NotBeNull();
-            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegEx);
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
             actualFalseNegative.Should().NotBeNull();
-            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegEx);
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
             actualFalseNegativeEntityValue.Should().NotBeNull();
         }
 
@@ -220,14 +223,101 @@ namespace NLU.DevOps.ModelPerformance.Tests
             actualResult.Kind.Should().Be(TestResultKind.FalsePositive);
         }
 
+        [Test]
+        [TestCase("{}", null, FalseNegativeEntityResolutionRegex)]
+        [TestCase("{}", "null", FalseNegativeEntityResolutionRegex)]
+        [TestCase("[]", "null", FalseNegativeEntityResolutionRegex)]
+        [TestCase("42", "null", FalseNegativeEntityResolutionRegex)]
+        [TestCase("{\"foo\":42}", "{}", FalseNegativeEntityResolutionRegex)]
+        [TestCase("[\"foo\"]", "[]", FalseNegativeEntityResolutionRegex)]
+        [TestCase("{\"foo\":42, \"bar\":42}", "{\"bar\":42, \"foo\":42}", TruePositiveEntityResolutionRegex)]
+        [TestCase("[1,2]", "[2,1]", TruePositiveEntityResolutionRegex)]
+        public static void ToEntityTestCasesWithEntityResolution(string expectedJson, string actualJson, string testMessageRegex)
+        {
+            var actualEntity = new List<Entity> { new Entity("EntityType", "EntityValue", ParseResolutionJson(actualJson), "differentMatchedText", 1) };
+            var expectedEntity = new List<Entity> { new Entity("EntityType", "EntityValue", ParseResolutionJson(expectedJson), "differentMatchedText", 1) };
+            var utterances = new[]
+            {
+                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
+                 new LabeledUtterance("FOO", "DayTime", actualEntity)
+            };
+
+            var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
+
+            var testResult = actualTestResult.ToList();
+            testResult.Count().Should().Be(3);
+            var actual = testResult.FirstOrDefault(t => Matches(t.Message, testMessageRegex));
+            actual.Should().NotBeNull();
+        }
+
+        [Test]
+        public static void ToEntityTestCasesWithNullExpectedEntityResolution()
+        {
+            var actualEntity = new List<Entity> { new Entity("EntityType", "EntityValue", "foo", "differentMatchedText", 1) };
+            var expectedEntity = new List<Entity> { new Entity("EntityType", "EntityValue", JValue.CreateNull(), "differentMatchedText", 1) };
+            var utterances = new[]
+            {
+                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
+                 new LabeledUtterance("FOO", "DayTime", actualEntity)
+            };
+
+            var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
+
+            var testResult = actualTestResult.ToList();
+            testResult.Count().Should().Be(2);
+            testResult.Should().NotContain(t => Matches(t.Message, TruePositiveEntityResolutionRegex));
+        }
+
+        [Test]
+        public static void ToEntityTestCasesWithNullExpectedEntityValue()
+        {
+            var actualEntity = new List<Entity> { new Entity("EntityType", "EntityValue", null, "differentMatchedText", 1) };
+            var expectedEntity = new List<Entity> { new Entity("EntityType", JValue.CreateNull(), null, "differentMatchedText", 1) };
+            var utterances = new[]
+            {
+                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
+                 new LabeledUtterance("FOO", "DayTime", actualEntity)
+            };
+
+            var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
+
+            var testResult = actualTestResult.ToList();
+            testResult.Count().Should().Be(1);
+            testResult.Should().NotContain(t => Matches(t.Message, TruePositiveEntityValueRegex));
+        }
+
+        [Test]
+        public static void ToEntityTestCasesWithIncorrectMatchIndex()
+        {
+            var actualEntity = new List<Entity> { new Entity("EntityType", "EntityValue", null, "differentMatchedText", 1) };
+            var expectedEntity = new List<Entity> { new Entity("EntityType", null, null, "differentMatchedText", 2) };
+            var utterances = new[]
+            {
+                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
+                 new LabeledUtterance("FOO", "DayTime", actualEntity)
+            };
+
+            var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
+
+            var testResult = actualTestResult.ToList();
+            testResult.Count().Should().Be(2);
+            testResult.Should().Contain(t => Matches(t.Message, FalsePositiveEntityRegex));
+            testResult.Should().Contain(t => Matches(t.Message, FalseNegativeEntityRegex));
+        }
+
         private static List<Entity> CreateEntityList(string type)
         {
-            return new List<Entity> { new Entity(type, "EntityValue", "matchedText", 1) };
+            return new List<Entity> { new Entity(type, "EntityValue", null, "matchedText", 1) };
         }
 
         private static bool Matches(string input, string regEx)
         {
             return Regex.IsMatch(input, regEx);
+        }
+
+        private static JToken ParseResolutionJson(string json)
+        {
+            return json != null ? JToken.Parse(json) : null;
         }
     }
 }

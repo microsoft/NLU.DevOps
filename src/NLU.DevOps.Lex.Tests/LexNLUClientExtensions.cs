@@ -6,12 +6,13 @@ namespace NLU.DevOps.Lex.Tests
     using System.Threading.Tasks;
     using Core;
     using Models;
+    using Newtonsoft.Json.Linq;
 
     internal static class LexNLUClientExtensions
     {
         public static Task<LabeledUtterance> TestAsync(this LexNLUTestClient client, string utterance)
         {
-            return client.TestAsync(new NLUQuery(utterance));
+            return client.TestAsync(new JObject { { "text", utterance } });
         }
     }
 }

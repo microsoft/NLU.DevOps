@@ -4,6 +4,7 @@
 namespace NLU.DevOps.Luis
 {
     using Models;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Entity appearing in utterance with confidence score.
@@ -15,11 +16,12 @@ namespace NLU.DevOps.Luis
         /// </summary>
         /// <param name="entityType">Entity type name.</param>
         /// <param name="entityValue">Entity value, generally a canonical form of the entity.</param>
+        /// <param name="entityResolution">Entity resolution, generally additional details about the entity.</param>
         /// <param name="matchText">Matching text in the utterance.</param>
         /// <param name="matchIndex">Occurrence index of matching token in the utterance.</param>
         /// <param name="score">Confidence score for the entity.</param>
-        public ScoredEntity(string entityType, string entityValue, string matchText, int matchIndex, double score)
-            : base(entityType, entityValue, matchText, matchIndex)
+        public ScoredEntity(string entityType, JToken entityValue, JToken entityResolution, string matchText, int matchIndex, double score)
+            : base(entityType, entityValue, entityResolution, matchText, matchIndex)
         {
             this.Score = score;
         }

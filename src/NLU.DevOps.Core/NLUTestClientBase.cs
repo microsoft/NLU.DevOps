@@ -7,49 +7,41 @@ namespace NLU.DevOps.Core
     using System.Threading;
     using System.Threading.Tasks;
     using Models;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Base class for NLU test client implementation.
     /// </summary>
     /// <typeparam name="TQuery">Type of test query.</typeparam>
     public abstract class NLUTestClientBase<TQuery> : INLUTestClient
-        where TQuery : INLUQuery
     {
         /// <inheritdoc />
-        public Task<LabeledUtterance> TestAsync(INLUQuery query, CancellationToken cancellationToken)
+        public Task<LabeledUtterance> TestAsync(JToken query, CancellationToken cancellationToken)
         {
             if (query == null)
             {
                 throw new ArgumentNullException(nameof(query));
             }
 
-            if (query is TQuery typedQuery)
-            {
-                return this.TestAsync(typedQuery, cancellationToken);
-            }
-
-            throw new ArgumentException($"Expected query of type '{typeof(TQuery)}.'", nameof(query));
+            var typedQuery = query.ToObject<TQuery>();
+            return this.TestAsync(typedQuery, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<LabeledUtterance> TestSpeechAsync(string speechFile, INLUQuery query, CancellationToken cancellationToken)
+        public Task<LabeledUtterance> TestSpeechAsync(string speechFile, JToken query, CancellationToken cancellationToken)
         {
             if (speechFile == null)
             {
                 throw new ArgumentNullException(nameof(speechFile));
             }
 
-            if (query is TQuery typedQuery)
+            if (query != null)
             {
+                var typedQuery = query.ToObject<TQuery>();
                 return this.TestSpeechAsync(speechFile, typedQuery, cancellationToken);
             }
 
-            if (query == null)
-            {
-                return this.TestSpeechAsync(speechFile, default(TQuery), cancellationToken);
-            }
-
-            throw new ArgumentException($"Expected query of type '{typeof(TQuery)}.'", nameof(query));
+            return this.TestSpeechAsync(speechFile, default(TQuery), cancellationToken);
         }
 
         /// <inheritdoc />

@@ -1,0 +1,82 @@
+﻿[
+  {
+    "text": "Book me a flight to Cairo.",
+    "intent": "BookFlight",
+    "entities": [
+      {
+        "entityType": "City",
+        "entityValue": "Cairo",
+        "matchText": null,
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "entities": [],
+    "intent": "None",
+    "text": "Order me 2 pizzas"
+  },
+  {
+    "intent": "None",
+    "text": "whens  the next game "
+  },
+  {
+    "entities": [
+      {
+        "entityType": "City",
+        "entityValue": "New York City",
+        "matchText": null,
+        "matchIndex": 0,
+        "entityResolution": {
+          "location": "NYC",
+          "latitude": 40.7128,
+          "longitude": -74.0060
+        }
+      }
+    ],
+    "intent": "BookFlight",
+    "text": "show me flights to the big apple"
+  },
+  {
+    "entities": [
+      {
+        "entityType": "City",
+        "entityValue": [
+          "San Francisco",
+          "SF"
+        ],
+        "matchText": "SF",
+        "matchIndex": 0
+      }
+    ],
+    "intent": "BookFlight",
+    "text": "get a flight to SF"
+  },
+  {
+    "entities": [
+      {
+        "entityType": "accountInfo",
+        "entityValue": {
+          "personName": [
+            "Bob"
+          ]
+        },
+        "matchText": "Bob",
+        "matchIndex": 0
+      },
+      {
+        "entityType": "accountInfo",
+        "entityValue": {
+          "email": [
+            "bob@example.com"
+          ],
+          "alias": "bob"
+        },
+        "matchText": "bob@example.com",
+        "matchIndex": 0
+      }
+    ],
+    "intent": "AddAccount",
+    "text": "create a new account for Bob with email bob@example.com"
+  }
+]

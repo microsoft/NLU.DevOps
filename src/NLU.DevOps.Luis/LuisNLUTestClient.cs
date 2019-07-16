@@ -20,7 +20,7 @@ namespace NLU.DevOps.Luis
     /// Test a LUIS model with text or speech.
     /// Implementation of <see cref="INLUTestClient"/>
     /// </summary>
-    public sealed class LuisNLUTestClient : NLUTestClientBase<LuisNLUQuery>
+    public sealed class LuisNLUTestClient : DefaultNLUTestClient
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
@@ -42,18 +42,17 @@ namespace NLU.DevOps.Luis
         private ILuisTestClient LuisClient { get; }
 
         /// <inheritdoc />
-        protected override async Task<Models.LabeledUtterance> TestAsync(
-            LuisNLUQuery query,
+        protected override async Task<LabeledUtterance> TestAsync(
+            string utterance,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.QueryAsync(query.Text, cancellationToken).ConfigureAwait(false);
+            var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
             return this.LuisResultToLabeledUtterance(luisResult);
         }
 
         /// <inheritdoc />
-        protected override async Task<Models.LabeledUtterance> TestSpeechAsync(
+        protected override async Task<LabeledUtterance> TestSpeechAsync(
             string speechFile,
-            LuisNLUQuery query,
             CancellationToken cancellationToken)
         {
             var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, cancellationToken).ConfigureAwait(false);
@@ -66,27 +65,24 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private static string GetEntityValue(EntityModel entity)
+        private static JToken GetEntityValue(JToken resolution)
         {
-            var resolution = default(JToken);
-            if (entity.AdditionalProperties == null ||
-                !entity.AdditionalProperties.TryGetValue("resolution", out var resolutionJson) ||
-                (resolution = resolutionJson as JToken) == null)
+            if (resolution == null)
             {
                 return null;
             }
 
-            var value = resolution.Value<string>("value");
+            var value = resolution["value"];
             if (value != null)
             {
                 return value;
             }
 
-            // TODO: choose "the best" entity value from resolution.
+            // TODO: should we return multiple values?
             var resolvedValue = resolution["values"][0];
             return resolvedValue is JObject resolvedObject
-                ? resolvedObject.Value<string>("value")
-                : resolvedValue.Value<string>();
+                ? resolvedObject["value"]
+                : resolvedValue;
         }
 
         private LabeledUtterance LuisResultToLabeledUtterance(LuisResult luisResult)
@@ -107,7 +103,15 @@ namespace NLU.DevOps.Luis
                     entityType = mappedType;
                 }
 
-                var entityValue = GetEntityValue(entity);
+                var entityValue = default(JToken);
+                var entityResolution = default(JToken);
+                if (entity.AdditionalProperties != null &&
+                    entity.AdditionalProperties.TryGetValue("resolution", out var resolution) &&
+                    resolution is JToken resolutionJson)
+                {
+                    entityValue = GetEntityValue(resolutionJson);
+                    entityResolution = resolutionJson;
+                }
 
                 var matchText = entity.Entity;
                 var matches = Regex.Matches(luisResult.Query, matchText, RegexOptions.IgnoreCase);
@@ -132,8 +136,8 @@ namespace NLU.DevOps.Luis
                 }
 
                 return entityScore.HasValue
-                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
-                    : new Entity(entityType, entityValue, matchText, matchIndex);
+                    ? new ScoredEntity(entityType, entityValue, entityResolution, matchText, matchIndex, entityScore.Value)
+                    : new Entity(entityType, entityValue, entityResolution, matchText, matchIndex);
             }
 
             var intent = luisResult.TopScoringIntent?.Intent;

@@ -8,6 +8,7 @@ namespace NLU.DevOps.Luis.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
+    using FluentAssertions.Json;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
     using Moq;
@@ -27,7 +28,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = new LuisNLUTestClientBuilder().Build())
             {
-                Func<Task> nullTestUtterance = () => luis.TestAsync(default(INLUQuery));
+                Func<Task> nullTestUtterance = () => luis.TestAsync(default(JToken));
                 Func<Task> nullTestSpeechUtterance = () => luis.TestSpeechAsync(null);
                 nullTestUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("query");
                 nullTestSpeechUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("speechFile");
@@ -49,15 +50,15 @@ namespace NLU.DevOps.Luis.Tests
                     Query = test,
                     TopScoringIntent = new IntentModel { Intent = "intent" },
                     Entities = new[]
+                    {
+                        new EntityModel
                         {
-                            new EntityModel
-                            {
-                                Entity = "the",
-                                Type = "type",
-                                StartIndex = 32,
-                                EndIndex = 34,
-                            },
+                            Entity = "the",
+                            Type = "type",
+                            StartIndex = 32,
+                            EndIndex = 34,
                         },
+                    },
                 }));
 
             using (var luis = builder.Build())
@@ -67,7 +68,8 @@ namespace NLU.DevOps.Luis.Tests
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
-                result.Entities[0].EntityValue.Should().Be(default(string));
+                result.Entities[0].EntityValue.Should().BeNull();
+                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }
@@ -77,6 +79,12 @@ namespace NLU.DevOps.Luis.Tests
         public static async Task TestModelWithEntityResolution()
         {
             var test = "the quick brown fox jumped over the lazy dog";
+            var valueResolution = new JObject { { "value", "THE" } };
+            var valuesStringResolution = new JObject { { "values", new JArray { "Fox" } } };
+            var valuesValueResolution = new JObject
+            {
+                { "values", new JArray { new JObject { { "value", "2018-11-16" } } } },
+            };
 
             var builder = new LuisNLUTestClientBuilder();
             builder.LuisTestClientMock
@@ -90,18 +98,12 @@ namespace NLU.DevOps.Luis.Tests
                     {
                         new EntityModel
                         {
-                            Entity = "today",
-                            StartIndex = 45,
-                            EndIndex = 49,
+                            Entity = "the",
+                            StartIndex = 0,
+                            EndIndex = 2,
                             AdditionalProperties = new Dictionary<string, object>
                             {
-                                {
-                                    "resolution",
-                                    new JObject
-                                    {
-                                        { "values", new JArray { new JObject { { "value", "2018-11-16" } } } },
-                                    }
-                                },
+                                { "resolution", valueResolution.DeepClone() },
                             },
                         },
                         new EntityModel
@@ -111,19 +113,19 @@ namespace NLU.DevOps.Luis.Tests
                             EndIndex = 18,
                             AdditionalProperties = new Dictionary<string, object>
                             {
-                                { "resolution", new JObject { { "values", new JArray { "Fox" } } } },
+                                { "resolution", valuesStringResolution.DeepClone() },
                             },
                         },
                         new EntityModel
                         {
-                            Entity = "the",
-                            StartIndex = 0,
-                            EndIndex = 2,
+                            Entity = "today",
+                            StartIndex = 45,
+                            EndIndex = 49,
                             AdditionalProperties = new Dictionary<string, object>
                             {
-                                { "resolution", new JObject { { "value", "THE" } } },
+                                { "resolution", valuesValueResolution.DeepClone() },
                             },
-                        }
+                        },
                     }
                 }));
 
@@ -131,9 +133,12 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(3);
-                result.Entities[0].EntityValue.Should().Be("2018-11-16");
-                result.Entities[1].EntityValue.Should().Be("Fox");
-                result.Entities[2].EntityValue.Should().Be("THE");
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("THE"));
+                result.Entities[0].EntityResolution.Should().BeEquivalentTo(valueResolution);
+                result.Entities[1].EntityValue.Should().BeEquivalentTo(new JValue("Fox"));
+                result.Entities[1].EntityResolution.Should().BeEquivalentTo(valuesStringResolution);
+                result.Entities[2].EntityValue.Should().BeEquivalentTo(new JValue("2018-11-16"));
+                result.Entities[2].EntityResolution.Should().BeEquivalentTo(valuesValueResolution);
             }
         }
 
@@ -218,7 +223,8 @@ namespace NLU.DevOps.Luis.Tests
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
-                result.Entities[0].EntityValue.Should().Be(default(string));
+                result.Entities[0].EntityValue.Should().BeNull();
+                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }

@@ -6,6 +6,7 @@ namespace NLU.DevOps.Models
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// NLU testing interface.
@@ -19,7 +20,7 @@ namespace NLU.DevOps.Models
         /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<LabeledUtterance> TestAsync(
-            INLUQuery query,
+            JToken query,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace NLU.DevOps.Models
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<LabeledUtterance> TestSpeechAsync(
             string speechFile,
-            INLUQuery query,
+            JToken query,
             CancellationToken cancellationToken);
     }
 }

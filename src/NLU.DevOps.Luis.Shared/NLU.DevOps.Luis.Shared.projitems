@@ -13,7 +13,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)AzureSubscriptionInfo.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
     <Compile Include="$(MSBuildThisFileDirectory)LabeledUtteranceExtensions.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
     <Compile Include="$(MSBuildThisFileDirectory)LuisTrainClient.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUQueryFactory.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
     <Compile Include="$(MSBuildThisFileDirectory)LuisSettings.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
     <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClient.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
     <Compile Include="$(MSBuildThisFileDirectory)ScoredEntity.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />

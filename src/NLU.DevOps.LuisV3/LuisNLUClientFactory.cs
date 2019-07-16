@@ -6,7 +6,6 @@ namespace NLU.DevOps.Luis
     using System;
     using System.Composition;
     using System.IO;
-    using System.Linq;
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;
