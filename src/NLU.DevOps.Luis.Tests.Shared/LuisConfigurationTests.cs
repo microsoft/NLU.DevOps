@@ -54,8 +54,11 @@ namespace NLU.DevOps.Luis.Tests
 
         [Test]
         [TestCase(nameof(ILuisConfiguration.IsStaging), "luisIsStaging")]
+#if LUIS_V2
+        [TestCase(nameof(ILuisConfiguration.UseSpeechEndpoint), "luisUseSpeechEndpoint")]
+#endif
 #if LUIS_V3
-        [TestCase(nameof(ILuisConfiguration.DirectVersionPublish, "luisDirectVersionPublish"))]
+        [TestCase(nameof(ILuisConfiguration.DirectVersionPublish), "luisDirectVersionPublish")]
 #endif
         public static void ReadsBooleanConfigurationValues(string propertyName, string configurationKey)
         {
@@ -198,10 +201,10 @@ namespace NLU.DevOps.Luis.Tests
                 .Build());
 
             luisConfiguration.SpeechEndpoint.Should().Be(
-                string.Format(
+                new Uri(string.Format(
                     CultureInfo.InvariantCulture,
                     @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US",
-                    regionValue));
+                    regionValue)));
         }
 
         [Test]
@@ -219,11 +222,11 @@ namespace NLU.DevOps.Luis.Tests
                 .Build());
 
             luisConfiguration.SpeechEndpoint.Should().Be(
-                string.Format(
+                new Uri(string.Format(
                     CultureInfo.InvariantCulture,
                     @"https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language=en-US&?cid={1}",
                     regionValue,
-                    appId));
+                    appId)));
         }
 
         [Test]
@@ -243,7 +246,6 @@ namespace NLU.DevOps.Luis.Tests
                     @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US",
                     speechRegion));
         }
-
 #if LUIS_V3
 
         [Test]
@@ -253,17 +255,17 @@ namespace NLU.DevOps.Luis.Tests
             emptyLuisConfiguration.SlotName.Should().Be("Production");
 
             var isStagingLuisConfiguration = new LuisConfiguration(new ConfigurationBuilder()
-                .AddInMemoryConfiguration(new Dictionary<string, string>
+                .AddInMemoryCollection(new Dictionary<string, string>
                 {
-                    { "luisIsStaging", true },
+                    { "luisIsStaging", true.ToString(CultureInfo.InvariantCulture) },
                 })
                 .Build());
             isStagingLuisConfiguration.SlotName.Should().Be("Staging");
 
             var notIsStagingLuisConfiguration = new LuisConfiguration(new ConfigurationBuilder()
-                .AddInMemoryConfiguration(new Dictionary<string, string>
+                .AddInMemoryCollection(new Dictionary<string, string>
                 {
-                    { "luisIsStaging", false },
+                    { "luisIsStaging", false.ToString(CultureInfo.InvariantCulture) },
                 })
                 .Build());
             notIsStagingLuisConfiguration.SlotName.Should().Be("Production");

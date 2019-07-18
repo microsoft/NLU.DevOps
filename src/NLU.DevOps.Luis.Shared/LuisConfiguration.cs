@@ -31,6 +31,9 @@ namespace NLU.DevOps.Luis
         private const string SpeechKeyConfigurationKey = "speechKey";
         private const string SpeechRegionConfigurationKey = "speechRegion";
         private const string CustomSpeechAppIdConfigurationKey = "customSpeechAppId";
+#if LUIS_V2
+        private const string LuisUseSpeechEndpoint = "luisUseSpeechEndpoint";
+#endif
 #if LUIS_V3
         private const string LuisSlotNameConfigurationKey = "luisSlotName";
         private const string LuisDirectVersionPublishConfigurationKey = "luisDirectVersionPublish";
@@ -52,8 +55,6 @@ namespace NLU.DevOps.Luis
         {
             this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.LazyAppName = new Lazy<string>(this.GetOrCreateAppName);
-            this.LazyVersionId = new Lazy<string>(this.GetOrCreateVersionId);
-            this.LazySpeechEndpoint = new Lazy<string>(this.GetSpeechEndpoint);
         }
 
         /// <inheritdoc />
@@ -79,7 +80,7 @@ namespace NLU.DevOps.Luis
             LuisAuthoringRegionConfigurationKey);
 
         /// <inheritdoc />
-        public virtual string VersionId => this.LazyVersionId.Value;
+        public virtual string VersionId => this.GetVersionId();
 
         /// <inheritdoc />
         public bool IsStaging => this.GetConfigurationBoolean(LuisIsStagingConfigurationKey);
@@ -90,7 +91,12 @@ namespace NLU.DevOps.Luis
             LuisEndpointKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string SpeechEndpoint => this.LazySpeechEndpoint.Value;
+        public Uri SpeechEndpoint => this.GetSpeechEndpoint();
+#if LUIS_V2
+
+        /// <inheritdoc />
+        public bool UseSpeechEndpoint => this.GetConfigurationBoolean(LuisUseSpeechEndpoint);
+#endif
 #if LUIS_V3
 
         /// <inheritdoc />
@@ -116,10 +122,6 @@ namespace NLU.DevOps.Luis
         private IConfiguration Configuration { get; }
 
         private Lazy<string> LazyAppName { get; }
-
-        private Lazy<string> LazyVersionId { get; }
-
-        private Lazy<string> LazySpeechEndpoint { get; }
 
         private string SpeechRegion => this.EnsureConfigurationString(
             SpeechRegionConfigurationKey,
@@ -171,7 +173,7 @@ namespace NLU.DevOps.Luis
             return $"{prefix}{randomString}";
         }
 
-        private string GetOrCreateVersionId()
+        private string GetVersionId()
         {
             var versionId = this.Configuration[LuisVersionIdConfigurationKey];
             if (versionId != null)
@@ -189,11 +191,11 @@ namespace NLU.DevOps.Luis
             return $"{versionIdPrefix}.{buildId}";
         }
 
-        private string GetSpeechEndpoint()
+        private Uri GetSpeechEndpoint()
         {
-            return this.CustomSpeechAppId != null
+            return new Uri(this.CustomSpeechAppId != null
                 ? string.Format(CultureInfo.InvariantCulture, CustomSpeechEndpointTemplate, this.SpeechRegion, "en-US", this.CustomSpeechAppId)
-                : string.Format(CultureInfo.InvariantCulture, SpeechEndpointTemplate, this.SpeechRegion, "en-US");
+                : string.Format(CultureInfo.InvariantCulture, SpeechEndpointTemplate, this.SpeechRegion, "en-US"));
         }
 
         private string EnsureConfigurationString(params string[] keys)

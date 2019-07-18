@@ -52,10 +52,7 @@ namespace NLU.DevOps.Luis
                 : new LuisSettings();
 
             var luisConfiguration = new TestLuisConfiguration(configuration);
-            var luisClient = luisConfiguration.SpeechKey != null
-                ? new RestSpeechLuisTestClient(luisConfiguration)
-                : new LuisTestClient(luisConfiguration);
-
+            var luisClient = new LuisTestClient(luisConfiguration);
             return new LuisNLUTestClient(luisSettings, luisClient);
         }
     }

@@ -4,6 +4,8 @@
 namespace NLU.DevOps.Luis
 {
     using System;
+    using System.IO;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
@@ -14,8 +16,9 @@ namespace NLU.DevOps.Luis
     using Microsoft.CognitiveServices.Speech.Intent;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
-    internal class LuisTestClient : ILuisTestClient
+    internal sealed class LuisTestClient : ILuisTestClient
     {
         private const string Protocol = "https://";
         private const string Domain = ".api.cognitive.microsoft.com";
@@ -31,9 +34,6 @@ namespace NLU.DevOps.Luis
             {
                 Endpoint = $"{Protocol}{luisConfiguration.EndpointRegion}{Domain}",
             };
-
-            this.LazySpeechConfig = new Lazy<SpeechConfig>(() =>
-                SpeechConfig.FromSubscription(luisConfiguration.EndpointKey, luisConfiguration.EndpointRegion));
         }
 
         private static ILogger Logger => LazyLogger.Value;
@@ -43,8 +43,6 @@ namespace NLU.DevOps.Luis
         private ILuisConfiguration LuisConfiguration { get; }
 
         private LUISRuntimeClient RuntimeClient { get; }
-
-        private Lazy<SpeechConfig> LazySpeechConfig { get; }
 
         public async Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken)
         {
@@ -63,10 +61,23 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public virtual async Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        public Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
+            return this.LuisConfiguration.UseSpeechEndpoint
+                ? this.RecognizeSpeechWithEndpointAsync(speechFile, cancellationToken)
+                : this.RecognizeSpeechWithIntentRecognizerAsync(speechFile);
+        }
+
+        public void Dispose()
+        {
+            this.RuntimeClient.Dispose();
+        }
+
+        private async Task<LuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
+        {
+            var speechConfig = SpeechConfig.FromEndpoint(this.LuisConfiguration.SpeechEndpoint, this.LuisConfiguration.EndpointKey);
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
-            using (var recognizer = new IntentRecognizer(this.LazySpeechConfig.Value, audioInput))
+            using (var recognizer = new IntentRecognizer(speechConfig, audioInput))
             {
                 // Add intents to intent recognizer
                 var model = LanguageUnderstandingModel.FromAppId(this.LuisConfiguration.AppId);
@@ -94,18 +105,35 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public void Dispose()
+        private async Task<LuisResult> RecognizeSpeechWithEndpointAsync(string speechFile, CancellationToken cancellationToken)
         {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            var request = (HttpWebRequest)WebRequest.Create(this.LuisConfiguration.SpeechEndpoint);
+            request.Method = "POST";
+            request.ContentType = "audio/wav; codec=audio/pcm; samplerate=16000";
+            request.ServicePoint.Expect100Continue = true;
+            request.SendChunked = true;
+            request.Accept = "application/json";
+            request.Headers.Add("Ocp-Apim-Subscription-Key", this.LuisConfiguration.SpeechKey);
 
-        protected void Dispose(bool disposing)
-        {
-            if (disposing)
+            JObject responseJson;
+            using (var fileStream = File.OpenRead(speechFile))
+            using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
             {
-                this.RuntimeClient.Dispose();
+                await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
+                using (var response = await request.GetResponseAsync().ConfigureAwait(false))
+                using (var streamReader = new StreamReader(response.GetResponseStream()))
+                {
+                    var responseText = await streamReader.ReadToEndAsync().ConfigureAwait(false);
+                    responseJson = JObject.Parse(responseText);
+                }
             }
+
+            if (responseJson.Value<string>("RecognitionStatus") != "Success")
+            {
+                throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");
+            }
+
+            return await this.QueryAsync(responseJson.Value<string>("DisplayText"), cancellationToken).ConfigureAwait(false);
         }
     }
 }

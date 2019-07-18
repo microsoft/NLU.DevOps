@@ -3,6 +3,8 @@
 
 namespace NLU.DevOps.Luis
 {
+    using System;
+
     /// <summary>
     /// LUIS configuration.
     /// </summary>
@@ -56,7 +58,14 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Gets the Cognitive Services speech endpoint.
         /// </summary>
-        string SpeechEndpoint { get; }
+        Uri SpeechEndpoint { get; }
+#if LUIS_V2
+
+        /// <summary>
+        /// Gets a value indicating whether the REST speech endpoint should be used as opposed to the Speech SDK.
+        /// </summary>
+        bool UseSpeechEndpoint { get; }
+#endif
 #if LUIS_V3
 
         /// <summary>
