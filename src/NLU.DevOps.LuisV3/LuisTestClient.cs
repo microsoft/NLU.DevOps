@@ -14,7 +14,7 @@ namespace NLU.DevOps.Luis
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json.Linq;
 
-    internal class LuisTestClient : ILuisTestClient
+    internal sealed class LuisTestClient : ILuisTestClient
     {
         private const string Protocol = "https://";
         private const string Domain = ".api.cognitive.microsoft.com";
@@ -121,16 +121,7 @@ namespace NLU.DevOps.Luis
 
         public void Dispose()
         {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                this.RuntimeClient.Dispose();
-            }
+            this.RuntimeClient.Dispose();
         }
     }
 }
