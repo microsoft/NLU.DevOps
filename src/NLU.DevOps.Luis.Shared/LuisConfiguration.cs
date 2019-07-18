@@ -88,7 +88,8 @@ namespace NLU.DevOps.Luis
         /// <inheritdoc />
         public string SpeechKey => this.EnsureConfigurationString(
             SpeechKeyConfigurationKey,
-            LuisEndpointKeyConfigurationKey);
+            LuisEndpointKeyConfigurationKey,
+            LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
         public Uri SpeechEndpoint => this.GetSpeechEndpoint();
@@ -125,7 +126,8 @@ namespace NLU.DevOps.Luis
 
         private string SpeechRegion => this.EnsureConfigurationString(
             SpeechRegionConfigurationKey,
-            LuisEndpointRegionConfigurationKey);
+            LuisEndpointRegionConfigurationKey,
+            LuisAuthoringRegionConfigurationKey);
 
         private string CustomSpeechAppId => this.Configuration[CustomSpeechAppIdConfigurationKey];
 
