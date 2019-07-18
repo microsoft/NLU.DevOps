@@ -10,12 +10,6 @@ trigger:
   
 steps:
 - task: DotNetCoreCLI@2
-  displayName: Restore NuGet packages
-  inputs:
-    command: 'restore'
-    projects: 'src/NLU.DevOps.sln'
-
-- task: DotNetCoreCLI@2
   displayName: Build NLU.DevOps solution
   inputs:
     projects: 'src/NLU.DevOps.sln'
