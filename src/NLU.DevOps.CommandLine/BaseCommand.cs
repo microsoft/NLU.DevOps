@@ -62,7 +62,7 @@ namespace NLU.DevOps.CommandLine
 
         protected static void Write(string path, object value)
         {
-            using (var stream = File.OpenWrite(path))
+            using (var stream = File.Open(path, FileMode.Create))
             {
                 Write(stream, value);
             }
