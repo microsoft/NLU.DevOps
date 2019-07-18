@@ -65,7 +65,7 @@ namespace NLU.DevOps.CommandLine.Test
             Stream getFileStream(string filePath)
             {
                 EnsureDirectory(filePath);
-                return File.OpenWrite(filePath);
+                return File.Open(filePath, FileMode.Create);
             }
 
             var stream = this.Options.OutputPath != null

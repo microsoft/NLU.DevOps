@@ -4,6 +4,7 @@
 namespace NLU.DevOps.CommandLine.Tests
 {
     using System;
+    using System.IO;
     using Microsoft.Extensions.Logging;
     using Models;
     using Moq;
@@ -16,6 +17,11 @@ namespace NLU.DevOps.CommandLine.Tests
         }
 
         public new ILogger Logger => base.Logger;
+
+        public static new void Write(string path, object value)
+        {
+            BaseCommand<BaseOptions>.Write(path, value);
+        }
 
         public override int Main()
         {
