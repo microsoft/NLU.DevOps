@@ -43,7 +43,7 @@ Thumbs.db
 *.dotCover
 
 # Local appsettings
-appsettings.local.json
+appsettings.*.json
 
 # rider
 *.idea/
