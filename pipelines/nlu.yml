@@ -74,7 +74,7 @@ steps:
       --service $(nlu.service)
       --utterances models/tests.json
       --service-settings models/settings.$(nlu.service).json
-      --output $(Agent.TempDirectory)/results.json
+      --output $(Agent.TempDirectory)/text/results.json
 
 - task: DotNetCoreCLI@2
   displayName: Test the NLU service with speech
@@ -88,7 +88,7 @@ steps:
       --utterances models/tests.speech.json
       --speech-directory $(recordingsDirectory)
       --service-settings models/settings.$(nlu.service).json
-      --output $(Agent.TempDirectory)/results.json
+      --output $(Agent.TempDirectory)/speech/results.speech.json
 
 - task: DotNetCoreCLI@2
   displayName: Cleanup the NLU service
@@ -101,14 +101,24 @@ steps:
       --delete-appsettings
 
 - task: DotNetCoreCLI@2
-  displayName: Compare the NLU results
+  displayName: Compare the NLU text results
   inputs:
     command: custom
     custom: nlu
     arguments: compare
       --expected models/tests.json
-      --actual $(Agent.TempDirectory)/results.json
-      --output-folder $(Build.ArtifactStagingDirectory)
+      --actual $(Agent.TempDirectory)/text/results.json
+      --output-folder $(Build.ArtifactStagingDirectory)/text
+
+- task: DotNetCoreCLI@2
+  displayName: Compare the NLU speech results
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: compare
+      --expected models/tests.json
+      --actual $(Agent.TempDirectory)/speech/results.speech.json
+      --output-folder $(Build.ArtifactStagingDirectory)/speech
 
 - task: DotNetCoreCLI@2
   displayName: Uninstall dotnet-nlu
@@ -155,4 +165,4 @@ steps:
   displayName: Check for performance regression
   inputs:
     scriptPath: scripts/compare.py
-    arguments: $(Agent.TempDirectory)/drop/TestResult.xml $(Build.ArtifactStagingDirectory)/TestResult.xml
+    arguments: $(Agent.TempDirectory)/drop/TestResult.xml $(Build.ArtifactStagingDirectory)/text/TestResult.xml
