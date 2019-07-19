@@ -32,7 +32,7 @@ namespace NLU.DevOps.Luis
         private const string SpeechRegionConfigurationKey = "speechRegion";
         private const string CustomSpeechAppIdConfigurationKey = "customSpeechAppId";
 #if LUIS_V2
-        private const string LuisUseSpeechEndpoint = "luisUseSpeechEndpoint";
+        private const string LuisUseSpeechEndpointConfigurationKey = "luisUseSpeechEndpoint";
 #endif
 #if LUIS_V3
         private const string LuisSlotNameConfigurationKey = "luisSlotName";
@@ -88,15 +88,22 @@ namespace NLU.DevOps.Luis
         /// <inheritdoc />
         public string SpeechKey => this.EnsureConfigurationString(
             SpeechKeyConfigurationKey,
-            LuisEndpointKeyConfigurationKey,
-            LuisAuthoringKeyConfigurationKey);
+            LuisEndpointKeyConfigurationKey);
+
+        /// <inheritdoc />
+        public string SpeechRegion => this.EnsureConfigurationString(
+            SpeechRegionConfigurationKey,
+            LuisEndpointRegionConfigurationKey);
 
         /// <inheritdoc />
         public Uri SpeechEndpoint => this.GetSpeechEndpoint();
 #if LUIS_V2
 
         /// <inheritdoc />
-        public bool UseSpeechEndpoint => this.GetConfigurationBoolean(LuisUseSpeechEndpoint);
+        public bool UseSpeechEndpoint =>
+            this.GetConfigurationBoolean(LuisUseSpeechEndpointConfigurationKey) ||
+            this.CustomSpeechAppId != null;
+
 #endif
 #if LUIS_V3
 
@@ -123,11 +130,6 @@ namespace NLU.DevOps.Luis
         private IConfiguration Configuration { get; }
 
         private Lazy<string> LazyAppName { get; }
-
-        private string SpeechRegion => this.EnsureConfigurationString(
-            SpeechRegionConfigurationKey,
-            LuisEndpointRegionConfigurationKey,
-            LuisAuthoringRegionConfigurationKey);
 
         private string CustomSpeechAppId => this.Configuration[CustomSpeechAppIdConfigurationKey];
 
