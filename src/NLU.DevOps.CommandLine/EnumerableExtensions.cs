@@ -10,11 +10,13 @@ namespace NLU.DevOps.CommandLine
 
     internal static class EnumerableExtensions
     {
-        public static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(this IEnumerable<T> items, Func<T, Task<TResult>> selector, int degreeOfParallelism)
+        private const int DegreeOfParallelism = 3;
+
+        public static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(this IEnumerable<T> items, Func<T, Task<TResult>> selector)
         {
             var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
             var results = new TResult[items.Count()];
-            var tasks = new List<Task<Tuple<int, TResult>>>(degreeOfParallelism);
+            var tasks = new List<Task<Tuple<int, TResult>>>(DegreeOfParallelism);
 
             async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
             {
@@ -24,7 +26,7 @@ namespace NLU.DevOps.CommandLine
 
             foreach (var indexedItem in indexedItems)
             {
-                if (tasks.Count == degreeOfParallelism)
+                if (tasks.Count == DegreeOfParallelism)
                 {
                     var task = await Task.WhenAny(tasks).ConfigureAwait(false);
                     tasks.Remove(task);

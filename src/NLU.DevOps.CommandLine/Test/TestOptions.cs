@@ -25,8 +25,5 @@ namespace NLU.DevOps.CommandLine.Test
 
         [Option('o', "output", HelpText = "Path to labeled results output.", Required = false)]
         public string OutputPath { get; set; }
-
-        [Option('p', "parallelism", HelpText = "Numeric value to determine the numer of parallel tests.  Default value is 3.", Required = false)]
-        public int Parallelism { get; set; } = 3;
     }
 }
