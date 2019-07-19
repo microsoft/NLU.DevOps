@@ -56,6 +56,11 @@ namespace NLU.DevOps.Luis
         string SpeechKey { get; }
 
         /// <summary>
+        /// Gets the Cognitive Services speech region.
+        /// </summary>
+        string SpeechRegion { get; }
+
+        /// <summary>
         /// Gets the Cognitive Services speech endpoint.
         /// </summary>
         Uri SpeechEndpoint { get; }

@@ -75,7 +75,7 @@ namespace NLU.DevOps.Luis
 
         private async Task<LuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
         {
-            var speechConfig = SpeechConfig.FromEndpoint(this.LuisConfiguration.SpeechEndpoint, this.LuisConfiguration.EndpointKey);
+            var speechConfig = SpeechConfig.FromSubscription(this.LuisConfiguration.SpeechKey, this.LuisConfiguration.SpeechRegion);
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
             using (var recognizer = new IntentRecognizer(speechConfig, audioInput))
             {

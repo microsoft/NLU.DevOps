@@ -98,6 +98,7 @@ namespace NLU.DevOps.Luis.Tests
         [TestCase(nameof(ILuisConfiguration.AuthoringRegion), "luisAuthoringRegion")]
         [TestCase(nameof(ILuisConfiguration.EndpointKey), "luisEndpointKey", "luisAuthoringKey")]
         [TestCase(nameof(ILuisConfiguration.EndpointRegion), "luisEndpointRegion", "luisAuthoringRegion")]
+        [TestCase(nameof(ILuisConfiguration.SpeechRegion), "speechRegion", "luisEndpointRegion")]
         [TestCase(nameof(ILuisConfiguration.SpeechKey), "speechKey")]
         public static void ThrowsInvalidOperationForMissingConfiguration(string propertyName, params string[] configurationKeys)
         {
@@ -246,6 +247,22 @@ namespace NLU.DevOps.Luis.Tests
                     @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US",
                     speechRegion));
         }
+#if LUIS_V2
+
+        [Test]
+        public static void UseSpeechEndpointWithCustomSpeechAppId()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "customSpeechAppId", Guid.NewGuid().ToString() },
+                })
+                .Build();
+
+            var luisConfiguration = new LuisConfiguration(configuration);
+            luisConfiguration.UseSpeechEndpoint.Should().BeTrue();
+        }
+#endif
 #if LUIS_V3
 
         [Test]
