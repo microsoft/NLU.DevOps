@@ -44,6 +44,6 @@
     <PackageReference Include="NUnitLite" Version="3.11.0" />
     <PackageReference Include="System.Composition" Version="1.2.0" />
     <!-- temporary hack until we can resolve the native dependency for Microsoft.CognitiveServices.Speech from the NLU.DevOps.Luis plugin -->
-    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.1.0" />
+    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.6.0" />
   </ItemGroup>
 </Project>
