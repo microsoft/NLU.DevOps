@@ -37,6 +37,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLU.DevOps.CommandLine.Tests", "NLU.DevOps.CommandLine.Tests\NLU.DevOps.CommandLine.Tests.csproj", "{1F5ADDE0-4414-4B49-9810-69B58EED51AF}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		NLU.DevOps.Luis.Shared\NLU.DevOps.Luis.Shared.projitems*{03cc905a-48d1-466c-a816-e19bf944a7ee}*SharedItemsImports = 13
+		NLU.DevOps.Luis.Tests.Shared\NLU.DevOps.Luis.Tests.Shared.projitems*{d7f8ef09-9289-432d-9255-677844f96a5b}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -46,6 +50,10 @@ Global
 		{6B6B7069-F43F-43AD-87EB-7F0B7583404E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B6B7069-F43F-43AD-87EB-7F0B7583404E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6B6B7069-F43F-43AD-87EB-7F0B7583404E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{26972FE8-130F-479B-B8A5-58BC8DD7A308}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{26972FE8-130F-479B-B8A5-58BC8DD7A308}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26972FE8-130F-479B-B8A5-58BC8DD7A308}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -82,10 +90,6 @@ Global
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CC9970B5-9DA3-4F7F-8C6C-EE3F2DA2DDCC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1F5ADDE0-4414-4B49-9810-69B58EED51AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1F5ADDE0-4414-4B49-9810-69B58EED51AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F5ADDE0-4414-4B49-9810-69B58EED51AF}.Release|Any CPU.ActiveCfg = Release|Any CPU

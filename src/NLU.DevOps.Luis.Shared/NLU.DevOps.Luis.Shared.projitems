@@ -9,14 +9,14 @@
     <Import_RootNamespace>NLU.DevOps.Luis</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)ILuisTrainClient.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)AzureSubscriptionInfo.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)LabeledUtteranceExtensions.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisTrainClient.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisSettings.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClient.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)ScoredEntity.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)ScoredLabeledUtterance.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
+    <Compile Include="$(MSBuildThisFileDirectory)ILuisTrainClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AzureSubscriptionInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LabeledUtteranceExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisTrainClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ScoredEntity.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ScoredLabeledUtterance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfiguration.cs" />
