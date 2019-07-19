@@ -8,6 +8,7 @@ namespace NLU.DevOps.CommandLine
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Runtime.Loader;
 
     internal static class ServiceResolver
     {
@@ -42,25 +43,62 @@ namespace NLU.DevOps.CommandLine
                 return false;
             }
 
-            ResolveEventHandler assemblyResolveHandler = (sender, args) =>
-            {
-                var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
-                var resolvedAssemblyName = args.Name.Split(",").First();
-                var resolvedAssemblyPath = Path.Combine(assemblyDirectory, $"{resolvedAssemblyName}.dll");
-                return Assembly.LoadFrom(resolvedAssemblyPath);
-            };
+            var providerDirectory = Path.GetDirectoryName(assemblyPath);
+            var assemblyLoadContext = new ProviderAssemblyLoadContext(providerDirectory);
+            return new ContainerConfiguration()
+               .WithAssembly(assemblyLoadContext.LoadFromAssemblyPath(assemblyPath))
+               .CreateContainer()
+               .TryGetExport(options.Service, out instance);
+        }
 
-            AppDomain.CurrentDomain.AssemblyResolve += assemblyResolveHandler;
-            try
+        private class ProviderAssemblyLoadContext : AssemblyLoadContext
+        {
+            public ProviderAssemblyLoadContext(string providerDirectory)
             {
-                return new ContainerConfiguration()
-                   .WithAssembly(Assembly.LoadFrom(assemblyPath))
-                   .CreateContainer()
-                   .TryGetExport(options.Service, out instance);
+                this.ProviderDirectory = providerDirectory;
             }
-            finally
+
+            private string ProviderDirectory { get; }
+
+            protected override Assembly Load(AssemblyName assemblyName)
             {
-                AppDomain.CurrentDomain.AssemblyResolve -= assemblyResolveHandler;
+                if (HasDefaultAssembly(assemblyName))
+                {
+                    return null;
+                }
+
+                var assemblyPath = Path.Combine(this.ProviderDirectory, $"{assemblyName.Name}.dll");
+                if (!File.Exists(assemblyPath))
+                {
+                    return null;
+                }
+
+                return this.LoadFromAssemblyPath(assemblyPath);
+            }
+
+            protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+            {
+                var assemblyPath = Path.Combine(this.ProviderDirectory, $"{unmanagedDllName}");
+                if (!File.Exists(assemblyPath))
+                {
+                    return IntPtr.Zero;
+                }
+
+                return this.LoadUnmanagedDllFromPath(assemblyPath);
+            }
+
+            private static bool HasDefaultAssembly(AssemblyName assemblyName)
+            {
+                try
+                {
+                    return Default.LoadFromAssemblyName(assemblyName) != null;
+                }
+                catch (Exception)
+                {
+                    // Swallow exceptions from default context
+                }
+
+                return false;
             }
         }
     }
