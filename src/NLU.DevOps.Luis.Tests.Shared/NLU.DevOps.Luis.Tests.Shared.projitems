@@ -11,7 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)LuisConfigurationTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfigurationTests.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClientTests.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUClientFactoryTests.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClientTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUClientFactoryTests.cs" />
   </ItemGroup>
 </Project>

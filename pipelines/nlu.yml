@@ -23,7 +23,7 @@ steps:
   displayName: Create NuGet package for NLU.DevOps.CommandLine
   inputs:
     command: pack
-    packagesToPack: src/NLU.DevOps.CommandLine/*.csproj
+    packagesToPack: src/NLU.DevOps.CommandLine
     configuration: Release
 
 - task: DotNetCoreCLI@2

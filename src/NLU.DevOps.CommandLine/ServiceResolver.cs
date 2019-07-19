@@ -76,17 +76,6 @@ namespace NLU.DevOps.CommandLine
                 return this.LoadFromAssemblyPath(assemblyPath);
             }
 
-            protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
-            {
-                var assemblyPath = Path.Combine(this.ProviderDirectory, $"{unmanagedDllName}");
-                if (!File.Exists(assemblyPath))
-                {
-                    return IntPtr.Zero;
-                }
-
-                return this.LoadUnmanagedDllFromPath(assemblyPath);
-            }
-
             private static bool HasDefaultAssembly(AssemblyName assemblyName)
             {
                 try
