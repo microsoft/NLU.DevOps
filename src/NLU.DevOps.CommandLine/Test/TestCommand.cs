@@ -55,10 +55,12 @@ namespace NLU.DevOps.CommandLine.Test
             }
 
             var testResults = await (this.Options.Speech
-                    ? testUtterances.SelectAsync(utterance =>
-                        this.TestSpeechAsync(utterance))
-                    : testUtterances.SelectAsync(utterance =>
-                        this.NLUTestClient.TestAsync(utterance.Query)))
+                    ? testUtterances.SelectAsync(
+                        utterance =>
+                        this.TestSpeechAsync(utterance), this.Options.Parallelism)
+                    : testUtterances.SelectAsync(
+                        utterance =>
+                        this.NLUTestClient.TestAsync(utterance.Query), this.Options.Parallelism))
                 .ConfigureAwait(false);
 
             Stream getFileStream(string filePath)
