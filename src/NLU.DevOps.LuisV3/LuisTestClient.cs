@@ -116,7 +116,7 @@ namespace NLU.DevOps.Luis
                 Options = predictionRequest?.Options,
             };
 
-            return await this.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
+            return await this.QueryAsync(speechPredictionRequest, cancellationToken).ConfigureAwait(false);
         }
 
         public void Dispose()
