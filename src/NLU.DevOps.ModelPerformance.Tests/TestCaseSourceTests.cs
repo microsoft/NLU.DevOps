@@ -36,7 +36,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var test = TestCaseSource.ToIntentTestCase(utterances);
 
             test.TestName.Should().MatchRegex(FalsePositiveIntentRegex);
-            test.Kind.Should().Be(TestResultKind.FalsePositive);
+            test.ResultKind.Should().Be(ConfusionMatrixResultKind.FalsePositive);
         }
 
         [Test]
@@ -51,7 +51,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var test = TestCaseSource.ToIntentTestCase(utterances);
 
             test.TestName.Should().MatchRegex(FalseNegativeIntentRegex);
-            test.Kind.Should().Be(TestResultKind.FalseNegative);
+            test.ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
-            actualTestResult.First().Kind.Should().Be(TestResultKind.FalseNegative);
+            actualTestResult.First().ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
             actualTestResult.First().TestName.Should().MatchRegex(FalseNegativeEntityRegex);
         }
 
@@ -85,9 +85,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(3);
-            var actualFalsePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalsePositive);
-            var actualFalseNegative = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalseNegative);
-            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegex));
+            var actualFalsePositive = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
+            var actualFalseNegative = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
+            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.TestName, FalseNegativeEntityValueRegex));
             actualFalsePositive.Should().NotBeNull();
             actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
             actualFalseNegative.Should().NotBeNull();
@@ -111,9 +111,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(3);
-            var actualFalsePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalsePositive);
-            var actualTruePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.TruePositive);
-            var actualTruePositiveEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, TruePositiveEntityValueRegex));
+            var actualFalsePositive = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
+            var actualTruePositive = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.TruePositive);
+            var actualTruePositiveEntityValue = testResult.FirstOrDefault(t => Matches(t.TestName, TruePositiveEntityValueRegex));
             actualFalsePositive.Should().NotBeNull();
             actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
             actualTruePositive.Should().NotBeNull();
@@ -135,8 +135,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(2);
-            var actualFalseNegative = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalseNegative);
-            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegex));
+            var actualFalseNegative = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
+            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.TestName, FalseNegativeEntityValueRegex));
             actualFalseNegative.Should().NotBeNull();
             actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
             actualFalseNegativeEntityValue.Should().NotBeNull();
@@ -157,9 +157,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(3);
-            var actualFalsePositive = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalsePositive);
-            var actualFalseNegative = testResult.FirstOrDefault(t => t.Kind == TestResultKind.FalseNegative);
-            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.Message, FalseNegativeEntityValueRegex));
+            var actualFalsePositive = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
+            var actualFalseNegative = testResult.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
+            var actualFalseNegativeEntityValue = testResult.FirstOrDefault(t => Matches(t.TestName, FalseNegativeEntityValueRegex));
             actualFalsePositive.Should().NotBeNull();
             actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
             actualFalseNegative.Should().NotBeNull();
@@ -178,7 +178,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
-            actualResult.Kind.Should().Be(TestResultKind.TrueNegative);
+            actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.TrueNegative);
         }
 
         [Test]
@@ -192,7 +192,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
              var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
-             actualResult.Kind.Should().Be(TestResultKind.FalseNegative);
+             actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
          }
 
         [Test]
@@ -206,7 +206,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
-            actualResult.Kind.Should().Be(TestResultKind.TruePositive);
+            actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.TruePositive);
         }
 
         [Test]
@@ -220,7 +220,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
-            actualResult.Kind.Should().Be(TestResultKind.FalsePositive);
+            actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.FalsePositive);
         }
 
         [Test]
@@ -246,7 +246,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(3);
-            var actual = testResult.FirstOrDefault(t => Matches(t.Message, testMessageRegex));
+            var actual = testResult.FirstOrDefault(t => Matches(t.TestName, testMessageRegex));
             actual.Should().NotBeNull();
         }
 
@@ -265,7 +265,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(2);
-            testResult.Should().NotContain(t => Matches(t.Message, TruePositiveEntityResolutionRegex));
+            testResult.Should().NotContain(t => Matches(t.TestName, TruePositiveEntityResolutionRegex));
         }
 
         [Test]
@@ -283,7 +283,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(1);
-            testResult.Should().NotContain(t => Matches(t.Message, TruePositiveEntityValueRegex));
+            testResult.Should().NotContain(t => Matches(t.TestName, TruePositiveEntityValueRegex));
         }
 
         [Test]
@@ -301,8 +301,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(2);
-            testResult.Should().Contain(t => Matches(t.Message, FalsePositiveEntityRegex));
-            testResult.Should().Contain(t => Matches(t.Message, FalseNegativeEntityRegex));
+            testResult.Should().Contain(t => Matches(t.TestName, FalsePositiveEntityRegex));
+            testResult.Should().Contain(t => Matches(t.TestName, FalseNegativeEntityRegex));
         }
 
         private static List<Entity> CreateEntityList(string type)

@@ -14,26 +14,29 @@ namespace NLU.DevOps.ModelPerformance
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
-    internal static class TestCaseSource
+    /// <summary>
+    /// Test case generator for NLU confusion matrix tests.
+    /// </summary>
+    public static class TestCaseSource
     {
         private const string AppSettingsPath = "appsettings.json";
         private const string AppSettingsLocalPath = "appsettings.local.json";
 
+        /// <summary>
+        /// Gets the passing tests.
+        /// </summary>
         public static IEnumerable<TestCaseData> PassingTests => TestCases
             .Where(IsTrue)
             .Select(ToTestCaseData);
 
+        /// <summary>
+        /// Gets the failing tests.
+        /// </summary>
         public static IEnumerable<TestCaseData> FailingTests => TestCases
             .Where(IsFalse)
             .Select(ToTestCaseData);
 
-        /// <summary>
-        /// Gets the test label.
-        /// </summary>
-        /// <remarks>
-        /// The test label is useful for discriminating between tests, e.g., for audio and text.
-        /// </remarks>
-        internal static string TestLabel => TestContext.Parameters.Get(ConfigurationConstants.TestLabelKey) ?? Configuration[ConfigurationConstants.TestLabelKey];
+        private static string TestLabel => TestContext.Parameters.Get(ConfigurationConstants.TestLabelKey) ?? Configuration[ConfigurationConstants.TestLabelKey];
 
         private static IConfiguration Configuration { get; } = new ConfigurationBuilder()
             .AddJsonFile(AppSettingsPath, true)
@@ -45,13 +48,18 @@ namespace NLU.DevOps.ModelPerformance
 
         internal static TestCase ToTextTestCase(LabeledUtterance[] utterances)
         {
-            var expected = utterances[0].Text;
-            var actual = utterances[1].Text;
+            var expectedUtterance = utterances[0];
+            var actualUtterance = utterances[1];
+            var expected = expectedUtterance.Text;
+            var actual = actualUtterance.Text;
 
             if (expected == null && actual == null)
             {
                 return TrueNegative(
-                    $"TrueNegativeText",
+                    ComparisonTargetKind.Text,
+                    expectedUtterance,
+                    actualUtterance,
+                    Array.Empty<string>(),
                     "Both utterances are 'null'.",
                     "Text");
             }
@@ -59,7 +67,10 @@ namespace NLU.DevOps.ModelPerformance
             if (actual == null)
             {
                 return FalseNegative(
-                    $"FalseNegativeText('{expected}')",
+                    ComparisonTargetKind.Text,
+                    expectedUtterance,
+                    actualUtterance,
+                    new[] { expected },
                     $"Actual text is 'null', expected '{expected}'",
                     "Text");
             }
@@ -67,32 +78,46 @@ namespace NLU.DevOps.ModelPerformance
             if (EqualsNormalized(expected, actual))
             {
                 return TruePositive(
-                    $"TruePositiveText('{expected}')",
+                    ComparisonTargetKind.Text,
+                    expectedUtterance,
+                    actualUtterance,
+                    new[] { expected },
                     "Utterances have matching text.",
                     "Text");
             }
 
             return FalsePositive(
-                $"FalsePositiveText('{expected}', '{actual}')",
+                ComparisonTargetKind.Text,
+                expectedUtterance,
+                actualUtterance,
+                new[] { expected, actual },
                 $"Expected text '{expected}', actual text '{actual}'.",
                 "Text");
         }
 
         internal static TestCase ToIntentTestCase(LabeledUtterance[] utterances)
         {
-            var text = utterances[0].Text;
-            var expected = utterances[0].Intent;
-            var actual = utterances[1].Intent;
+            var expectedUtterance = utterances[0];
+            var actualUtterance = utterances[1];
+            var text = expectedUtterance.Text;
+            var expected = expectedUtterance.Intent;
+            var actual = actualUtterance.Intent;
 
             if (actual == null || actual == "None")
             {
                 return expected == null || expected == "None"
                     ? TrueNegative(
-                        $"TrueNegativeIntent('{text}')",
+                        ComparisonTargetKind.Intent,
+                        expectedUtterance,
+                        actualUtterance,
+                        new[] { text },
                         "Both intents are 'None'.",
                         "Intent")
                     : FalseNegative(
-                        $"FalseNegativeIntent('{expected}', '{text}')",
+                        ComparisonTargetKind.Intent,
+                        expectedUtterance,
+                        actualUtterance,
+                        new[] { expected, text },
                         $"Actual intent is 'None', expected '{expected}'",
                         "Intent");
             }
@@ -100,27 +125,38 @@ namespace NLU.DevOps.ModelPerformance
             if (expected == actual)
             {
                 return TruePositive(
-                    $"TruePositiveIntent('{expected}', '{text}')",
+                    ComparisonTargetKind.Intent,
+                    expectedUtterance,
+                    actualUtterance,
+                    new[] { expected, text },
                     "Utterances have matching intent.",
                     "Intent");
             }
 
             return FalsePositive(
-                $"FalsePositiveIntent('{expected}', '{actual}', '{text}')",
+                ComparisonTargetKind.Intent,
+                expectedUtterance,
+                actualUtterance,
+                new[] { expected, actual, text },
                 $"Expected intent '{expected}', actual intent '{actual}'.",
                 "Intent");
         }
 
         internal static IEnumerable<TestCase> ToEntityTestCases(LabeledUtterance[] utterances)
         {
-            var text = utterances[0].Text;
-            var expected = utterances[0].Entities;
-            var actual = utterances[1].Entities;
+            var expectedUtterance = utterances[0];
+            var actualUtterance = utterances[1];
+            var text = expectedUtterance.Text;
+            var expected = expectedUtterance.Entities;
+            var actual = actualUtterance.Entities;
 
             if ((expected == null || expected.Count == 0) && (actual == null || actual.Count == 0))
             {
                 yield return TrueNegative(
-                    $"TrueNegativeEntity('{text}')",
+                    ComparisonTargetKind.Entity,
+                    expectedUtterance,
+                    actualUtterance,
+                    new[] { text },
                     "Neither utterances have entities.",
                     "Entity");
 
@@ -145,10 +181,14 @@ namespace NLU.DevOps.ModelPerformance
                 {
                     // "Soft" entity match test cases
                     var entityValue = entity.MatchText ?? entity.EntityValue;
+                    var formattedEntityValue = entityValue.ToString(Formatting.None);
                     if (actual == null || !actual.Any(actualEntity => isEntityMatch(entity, actualEntity)))
                     {
                         yield return FalseNegative(
-                            $"FalseNegativeEntity('{entity.EntityType}', '{entityValue}', '{text}')",
+                            ComparisonTargetKind.Entity,
+                            expectedUtterance,
+                            actualUtterance,
+                            new[] { entity.EntityType, formattedEntityValue, text },
                             $"Actual utterance does not have entity matching '{entityValue}'.",
                             "Entity",
                             entity.EntityType);
@@ -156,7 +196,10 @@ namespace NLU.DevOps.ModelPerformance
                     else
                     {
                         yield return TruePositive(
-                            $"TruePositiveEntity('{entity.EntityType}', '{entityValue}', '{text}')",
+                            ComparisonTargetKind.Entity,
+                            expectedUtterance,
+                            actualUtterance,
+                            new[] { entity.EntityType, formattedEntityValue, text },
                             $"Both utterances have entity '{entityValue}'.",
                             "Entity",
                             entity.EntityType);
@@ -171,11 +214,13 @@ namespace NLU.DevOps.ModelPerformance
                                 && ContainsSubtree(entity.EntityValue, actualEntity.EntityValue);
                         }
 
-                        var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
                         if (actual == null || !actual.Any(isEntityValueMatch))
                         {
                             yield return FalseNegative(
-                                $"FalseNegativeEntityValue('{entity.EntityType}', '{formattedEntityValue}', '{text}')",
+                                ComparisonTargetKind.EntityValue,
+                                expectedUtterance,
+                                actualUtterance,
+                                new[] { entity.EntityType, formattedEntityValue, text },
                                 $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
                                 "Entity",
                                 entity.EntityType);
@@ -183,10 +228,13 @@ namespace NLU.DevOps.ModelPerformance
                         else
                         {
                             yield return TruePositive(
-                                 $"TruePositiveEntityValue('{entity.EntityType}', '{formattedEntityValue}', '{text}')",
-                                 $"Both utterances have entity value '{formattedEntityValue}'.",
-                                 "Entity",
-                                 entity.EntityType);
+                                ComparisonTargetKind.EntityValue,
+                                expectedUtterance,
+                                actualUtterance,
+                                new[] { entity.EntityType, formattedEntityValue, text },
+                                $"Both utterances have entity value '{formattedEntityValue}'.",
+                                "Entity",
+                                entity.EntityType);
                         }
                     }
 
@@ -201,7 +249,10 @@ namespace NLU.DevOps.ModelPerformance
                         if (actual == null || !actual.Any(isEntityResolutionMatch))
                         {
                             yield return FalseNegative(
-                                $"FalseNegativeEntityResolution('{entity.EntityType}', '{formattedEntityResolution}', '{text}')",
+                                ComparisonTargetKind.EntityResolution,
+                                expectedUtterance,
+                                actualUtterance,
+                                new[] { entity.EntityType, formattedEntityResolution, text },
                                 $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
                                 "Entity",
                                 entity.EntityType);
@@ -209,7 +260,10 @@ namespace NLU.DevOps.ModelPerformance
                         else
                         {
                             yield return TruePositive(
-                            $"TruePositiveEntityResolution('{entity.EntityType}', '{formattedEntityResolution}', '{text}')",
+                                ComparisonTargetKind.EntityResolution,
+                                expectedUtterance,
+                                actualUtterance,
+                                new[] { entity.EntityType, formattedEntityResolution, text },
                                 $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
                                 "Entity",
                                 entity.EntityType);
@@ -226,7 +280,10 @@ namespace NLU.DevOps.ModelPerformance
                     if (expected == null || !expected.Any(expectedEntity => isEntityMatch(entity, expectedEntity)))
                     {
                         yield return FalsePositive(
-                            $"FalsePositiveEntity('{entity.EntityType}', '{entityValue}, '{text}')",
+                            ComparisonTargetKind.Entity,
+                            expectedUtterance,
+                            actualUtterance,
+                            new[] { entity.EntityType, entityValue.ToString(Formatting.None), text },
                             $"Expected utterance does not have entity matching '{entityValue}'.",
                             "Entity",
                             entity.EntityType);
@@ -248,14 +305,14 @@ namespace NLU.DevOps.ModelPerformance
 
         private static bool IsTrue(this TestCase testCase)
         {
-            return testCase.Kind == TestResultKind.TruePositive
-                || testCase.Kind == TestResultKind.TrueNegative;
+            return testCase.ResultKind == ConfusionMatrixResultKind.TruePositive
+                || testCase.ResultKind == ConfusionMatrixResultKind.TrueNegative;
         }
 
         private static bool IsFalse(this TestCase testCase)
         {
-            return testCase.Kind == TestResultKind.FalsePositive
-                || testCase.Kind == TestResultKind.FalseNegative;
+            return testCase.ResultKind == ConfusionMatrixResultKind.FalsePositive
+                || testCase.ResultKind == ConfusionMatrixResultKind.FalseNegative;
         }
 
         private static IReadOnlyList<TestCase> LoadTestCases()
@@ -391,24 +448,96 @@ namespace NLU.DevOps.ModelPerformance
             }
         }
 
-        private static TestCase TruePositive(string message, string because, params string[] categories)
+        private static TestCase TruePositive(
+            ComparisonTargetKind targetKind,
+            LabeledUtterance expectedUtterance,
+            LabeledUtterance actualUtterance,
+            string[] args,
+            string because,
+            params string[] categories)
         {
-            return new TestCase(TestResultKind.TruePositive, message, because, categories.Append("TruePositive"));
+            return CreateTestCase(
+                ConfusionMatrixResultKind.TruePositive,
+                targetKind,
+                expectedUtterance,
+                actualUtterance,
+                args,
+                because,
+                categories.Append("TruePositive"));
         }
 
-        private static TestCase TrueNegative(string message, string because, params string[] categories)
+        private static TestCase TrueNegative(
+            ComparisonTargetKind targetKind,
+            LabeledUtterance expectedUtterance,
+            LabeledUtterance actualUtterance,
+            string[] args,
+            string because,
+            params string[] categories)
         {
-            return new TestCase(TestResultKind.TrueNegative, message, because, categories.Append("TrueNegative"));
+            return CreateTestCase(
+                ConfusionMatrixResultKind.TrueNegative,
+                targetKind,
+                expectedUtterance,
+                actualUtterance,
+                args,
+                because,
+                categories.Append("TrueNegative"));
         }
 
-        private static TestCase FalsePositive(string message, string because, params string[] categories)
+        private static TestCase FalsePositive(
+            ComparisonTargetKind targetKind,
+            LabeledUtterance expectedUtterance,
+            LabeledUtterance actualUtterance,
+            string[] args,
+            string because,
+            params string[] categories)
         {
-            return new TestCase(TestResultKind.FalsePositive, message, because, categories.Append("FalsePositive"));
+            return CreateTestCase(
+                ConfusionMatrixResultKind.FalsePositive,
+                targetKind,
+                expectedUtterance,
+                actualUtterance,
+                args,
+                because,
+                categories.Append("FalsePositive"));
         }
 
-        private static TestCase FalseNegative(string message, string because, params string[] categories)
+        private static TestCase FalseNegative(
+            ComparisonTargetKind targetKind,
+            LabeledUtterance expectedUtterance,
+            LabeledUtterance actualUtterance,
+            string[] args,
+            string because,
+            params string[] categories)
         {
-            return new TestCase(TestResultKind.FalseNegative, message, because, categories.Append("FalseNegative"));
+            return CreateTestCase(
+                ConfusionMatrixResultKind.FalseNegative,
+                targetKind,
+                expectedUtterance,
+                actualUtterance,
+                args,
+                because,
+                categories.Append("FalseNegative"));
+        }
+
+        private static TestCase CreateTestCase(
+            ConfusionMatrixResultKind resultKind,
+            ComparisonTargetKind targetKind,
+            LabeledUtterance expectedUtterance,
+            LabeledUtterance actualUtterance,
+            string[] args,
+            string because,
+            IEnumerable<string> categories)
+        {
+            var testLabel = TestLabel != null ? $"[{TestLabel}] " : string.Empty;
+            return new TestCase(
+                resultKind,
+                targetKind,
+                expectedUtterance,
+                actualUtterance,
+                $"{testLabel}{resultKind}{targetKind}('{string.Join("', '", args)}')",
+                because,
+                categories);
         }
     }
 }

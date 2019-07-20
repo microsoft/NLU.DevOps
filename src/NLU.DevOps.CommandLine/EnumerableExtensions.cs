@@ -12,6 +12,11 @@ namespace NLU.DevOps.CommandLine
     {
         public static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(this IEnumerable<T> items, Func<T, Task<TResult>> selector, int degreeOfParallelism)
         {
+            if (degreeOfParallelism < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(degreeOfParallelism), "Value must be greater than zero.");
+            }
+
             var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
             var results = new TResult[items.Count()];
             var tasks = new List<Task<Tuple<int, TResult>>>(degreeOfParallelism);

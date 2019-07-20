@@ -3,34 +3,44 @@
 
 namespace NLU.DevOps.ModelPerformance
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
+    using Models;
 
     internal class TestCase
     {
-        public TestCase(TestResultKind kind, string message, string because, IEnumerable<string> categories)
+        public TestCase(
+            ConfusionMatrixResultKind resultKind,
+            ComparisonTargetKind targetKind,
+            LabeledUtterance expectedUtterance,
+            LabeledUtterance actualUtterance,
+            string testName,
+            string because,
+            IEnumerable<string> categories)
         {
-            this.Kind = kind;
-            this.Message = message;
+            this.ResultKind = resultKind;
+            this.TargetKind = targetKind;
+            this.ExpectedUtterance = expectedUtterance;
+            this.ActualUtterance = actualUtterance;
+            this.TestName = testName;
             this.Because = because;
             this.Categories = categories.ToList();
         }
 
-        public string TestName => this.ToString();
+        public string TestName { get; }
 
-        public TestResultKind Kind { get; }
+        public ConfusionMatrixResultKind ResultKind { get; }
+
+        public ComparisonTargetKind TargetKind { get; }
+
+        public LabeledUtterance ExpectedUtterance { get; }
+
+        public LabeledUtterance ActualUtterance { get; }
 
         public string Because { get; }
 
         public List<string> Categories { get; }
 
-        internal string Message { get; }
-
-        public override string ToString()
-        {
-            var testLabelText = TestCaseSource.TestLabel != null ? $"{TestCaseSource.TestLabel}: " : string.Empty;
-            return $"{testLabelText}{this.Message}";
-        }
+        public override string ToString() => this.TestName;
     }
 }
