@@ -17,6 +17,9 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('l', "label", HelpText = "Label for differentiating comparison runs.", Required = false)]
         public string TestLabel { get; set; }
 
+        [Option('m', "metadata", HelpText = "Return test case metadata as opposed to NUnit test results.", Required = false)]
+        public bool Metadata { get; set; }
+
         [Option('o', "output-folder", HelpText = "Output path for test results.", Required = false)]
         public string OutputFolder { get; set; }
     }

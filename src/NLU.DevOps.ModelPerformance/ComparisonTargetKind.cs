@@ -9,6 +9,11 @@ namespace NLU.DevOps.ModelPerformance
     public enum ComparisonTargetKind
     {
         /// <summary>
+        /// Default <see cref="ComparisonTargetKind"/>.
+        /// </summary>
+        None,
+
+        /// <summary>
         /// Text.
         /// </summary>
         Text,

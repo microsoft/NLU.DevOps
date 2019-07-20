@@ -25,14 +25,16 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Gets the passing tests.
         /// </summary>
-        public static IEnumerable<TestCaseData> PassingTests => TestCases
+        public static IEnumerable<TestCaseData> PassingTests => LazyTestCases
+            .Value
             .Where(IsTrue)
             .Select(ToTestCaseData);
 
         /// <summary>
         /// Gets the failing tests.
         /// </summary>
-        public static IEnumerable<TestCaseData> FailingTests => TestCases
+        public static IEnumerable<TestCaseData> FailingTests => LazyTestCases
+            .Value
             .Where(IsFalse)
             .Select(ToTestCaseData);
 
@@ -44,7 +46,33 @@ namespace NLU.DevOps.ModelPerformance
             .AddEnvironmentVariables()
             .Build();
 
-        private static IReadOnlyList<TestCase> TestCases { get; } = LoadTestCases();
+        private static Lazy<IReadOnlyList<TestCase>> LazyTestCases { get; } =
+            new Lazy<IReadOnlyList<TestCase>>(LoadTestCases);
+
+        /// <summary>
+        /// Generates the test cases.
+        /// </summary>
+        /// <returns>The test cases.</returns>
+        /// <param name="expectedUtterances">Expected utterances.</param>
+        /// <param name="actualUtterances">Actual utterances.</param>
+        public static IReadOnlyList<TestCase> GenerateTestCases(
+            IReadOnlyList<LabeledUtterance> expectedUtterances,
+            IReadOnlyList<LabeledUtterance> actualUtterances)
+        {
+            if (expectedUtterances.Count != actualUtterances.Count)
+            {
+                throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
+            }
+
+            var zippedUtterances = expectedUtterances
+                .Zip(actualUtterances, (expected, actual) => new[] { expected, actual })
+                .ToList();
+
+            return zippedUtterances.Select(ToTextTestCase)
+                .Concat(zippedUtterances.Select(ToIntentTestCase))
+                .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
+                .ToList();
+        }
 
         internal static TestCase ToTextTestCase(LabeledUtterance[] utterances)
         {
@@ -325,22 +353,9 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
-            var expectedUtterances = Read(expectedPath);
-            var actualUtterances = Read(actualPath);
-
-            if (expectedUtterances.Count != actualUtterances.Count)
-            {
-                throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
-            }
-
-            var zippedUtterances = expectedUtterances
-                .Zip(actualUtterances, (expected, actual) => new[] { expected, actual })
-                .ToList();
-
-            return zippedUtterances.Select(ToTextTestCase)
-                .Concat(zippedUtterances.Select(ToIntentTestCase))
-                .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
-                .ToList();
+            var expected = Read(expectedPath);
+            var actual = Read(actualPath);
+            return GenerateTestCases(expected, actual);
         }
 
         private static List<LabeledUtterance> Read(string path)

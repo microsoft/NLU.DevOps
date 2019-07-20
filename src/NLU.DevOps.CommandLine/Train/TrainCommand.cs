@@ -7,6 +7,7 @@ namespace NLU.DevOps.CommandLine.Train
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Models;
+    using static Serializer;
 
     internal class TrainCommand : BaseCommand<TrainOptions>
     {

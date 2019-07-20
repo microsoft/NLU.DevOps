@@ -8,9 +8,9 @@ namespace NLU.DevOps.CommandLine.Test
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using Core;
     using Models;
     using Newtonsoft.Json.Linq;
+    using static Serializer;
 
     internal class TestCommand : BaseCommand<TestOptions>
     {

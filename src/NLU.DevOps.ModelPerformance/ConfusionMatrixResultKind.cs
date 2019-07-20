@@ -9,9 +9,14 @@ namespace NLU.DevOps.ModelPerformance
     public enum ConfusionMatrixResultKind
     {
         /// <summary>
+        /// Default <see cref="ConfusionMatrixResultKind"/>.
+        /// </summary>
+        None,
+
+        /// <summary>
         /// True positive.
         /// </summary>
-        TruePositive,
+        TruePositive = 1,
 
         /// <summary>
         /// True negative.
