@@ -5,13 +5,10 @@ namespace NLU.DevOps.CommandLine
 {
     using System;
     using System.IO;
-    using System.Text;
     using Logging;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Models;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
 
     internal abstract class BaseCommand<TOptions> : ICommand
         where TOptions : BaseOptions
@@ -49,35 +46,6 @@ namespace NLU.DevOps.CommandLine
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
-        }
-
-        protected static T Read<T>(string path)
-        {
-            var serializer = JsonSerializer.CreateDefault();
-            using (var jsonReader = new JsonTextReader(File.OpenText(path)))
-            {
-                return serializer.Deserialize<T>(jsonReader);
-            }
-        }
-
-        protected static void Write(string path, object value)
-        {
-            using (var stream = File.Open(path, FileMode.Create))
-            {
-                Write(stream, value);
-            }
-        }
-
-        protected static void Write(Stream stream, object value)
-        {
-            var serializer = JsonSerializer.CreateDefault();
-            serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
-            serializer.DefaultValueHandling = DefaultValueHandling.Ignore;
-            serializer.Formatting = Formatting.Indented;
-            using (var textWriter = new StreamWriter(stream, Encoding.UTF8, 4096, true))
-            {
-                serializer.Serialize(textWriter, value);
-            }
         }
 
         protected virtual INLUTrainClient CreateNLUTrainClient()

@@ -14,7 +14,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
     internal class CompareOptionsTests
     {
         [Test]
-        public void SettingForCleanOptionsWhenSet()
+        public void SettingForCompareOptionsWhenSet()
         {
             var optionsList = new List<string>();
             optionsList.Add("-e");
@@ -25,6 +25,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("testLabel");
             optionsList.Add("-o");
             optionsList.Add("outputFolder");
+            optionsList.Add("-m");
             var args = optionsList.ToArray();
             var parser = Parser.Default.ParseArguments<CompareOptions>(args)
                 .WithParsed(o =>
@@ -33,12 +34,13 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
                     o.ActualUtterancesPath.Should().Be("actualUtterances");
                     o.TestLabel.Should().Be("testLabel");
                     o.OutputFolder.Should().Be("outputFolder");
+                    o.Metadata.Should().BeTrue();
                 })
                 .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
-        public void SettingForCleanOptionsWhenNotSet()
+        public void SettingForCompareOptionsWhenNotSet()
         {
             var optionsList = new List<string>();
             optionsList.Add("-e");
@@ -51,12 +53,13 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
                 {
                     o.TestLabel.Should().Be(null);
                     o.OutputFolder.Should().Be(null);
+                    o.Metadata.Should().BeFalse();
                 })
                 .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
 
         [Test]
-        public void ExceptionWhenExpectedUtterancesNotSetForCleanOptions()
+        public void ExceptionWhenExpectedUtterancesNotSetForCompareOptions()
         {
             var optionsList = new List<string>();
             optionsList.Add("-a");
@@ -68,7 +71,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
         }
 
         [Test]
-        public void ExceptionWhenActualUtterancesNotSetForCleanOptions()
+        public void ExceptionWhenActualUtterancesNotSetForCompareOptions()
         {
             var optionsList = new List<string>();
             optionsList.Add("-e");

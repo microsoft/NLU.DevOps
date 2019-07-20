@@ -18,11 +18,6 @@ namespace NLU.DevOps.CommandLine.Tests
 
         public new ILogger Logger => base.Logger;
 
-        public static new void Write(string path, object value)
-        {
-            BaseCommand<BaseOptions>.Write(path, value);
-        }
-
         public override int Main()
         {
             throw new NotImplementedException();
