@@ -50,7 +50,12 @@ namespace NLU.DevOps.Luis
             {
                 try
                 {
-                    return await this.RuntimeClient.Prediction.ResolveAsync(this.LuisConfiguration.AppId, text, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    return await this.RuntimeClient.Prediction.ResolveAsync(
+                            this.LuisConfiguration.AppId,
+                            text,
+                            staging: this.LuisConfiguration.IsStaging,
+                            cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
                 }
                 catch (APIErrorException ex)
                 when ((int)ex.Response.StatusCode == 429)
