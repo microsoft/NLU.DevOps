@@ -19,6 +19,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="targetKind">Comparison target kind.</param>
         /// <param name="expectedUtterance">Expected utterance.</param>
         /// <param name="actualUtterance">Actual utterance.</param>
+        /// <param name="group">Test case group name.</param>
         /// <param name="testName">Test name.</param>
         /// <param name="because">Because.</param>
         /// <param name="categories">Categories.</param>
@@ -27,6 +28,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            string group,
             string testName,
             string because,
             IEnumerable<string> categories)
@@ -35,6 +37,7 @@ namespace NLU.DevOps.ModelPerformance
             this.TargetKind = targetKind;
             this.ExpectedUtterance = expectedUtterance;
             this.ActualUtterance = actualUtterance;
+            this.Group = group;
             this.TestName = testName;
             this.Because = because;
             this.Categories = categories.ToList();
@@ -44,6 +47,11 @@ namespace NLU.DevOps.ModelPerformance
         /// Gets the test name.
         /// </summary>
         public string TestName { get; }
+
+        /// <summary>
+        /// Gets the test case group name.
+        /// </summary>
+        public string Group { get; }
 
         /// <summary>
         /// Gets the kind of the confusion matrix result.

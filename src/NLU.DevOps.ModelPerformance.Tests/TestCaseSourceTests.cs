@@ -3,6 +3,7 @@
 
 namespace NLU.DevOps.ModelPerformance.Tests
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -303,6 +304,207 @@ namespace NLU.DevOps.ModelPerformance.Tests
             testResult.Count().Should().Be(2);
             testResult.Should().Contain(t => Matches(t.TestName, FalsePositiveEntityRegex));
             testResult.Should().Contain(t => Matches(t.TestName, FalseNegativeEntityRegex));
+        }
+
+        [Test]
+        [TestCase("foo", "foo", 1, 0, 0, 0)]
+        [TestCase(null, null, 0, 1, 0, 0)]
+        [TestCase(null, "foo", 0, 0, 1, 0)]
+        [TestCase("foo", "bar", 0, 0, 1, 0)]
+        [TestCase("foo", null, 0, 0, 0, 1)]
+        public static void GetNLUCompareResultsTextStatistics(
+            string expected,
+            string actual,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var expectedUtterance = new LabeledUtterance(expected, null, null);
+            var actualUtterance = new LabeledUtterance(actual, null, null);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.Statistics.Text.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.Text.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.Text.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.Text.FalseNegative.Should().Be(falseNegative);
+        }
+
+        [Test]
+        [TestCase("foo", "foo", 1, 0, 0, 0)]
+        [TestCase(null, null, 0, 1, 0, 0)]
+        [TestCase(null, "None", 0, 1, 0, 0)]
+        [TestCase("None", null, 0, 1, 0, 0)]
+        [TestCase(null, "foo", 0, 0, 1, 0)]
+        [TestCase("None", "foo", 0, 0, 1, 0)]
+        [TestCase("foo", "bar", 0, 0, 1, 0)]
+        [TestCase("foo", null, 0, 0, 0, 1)]
+        [TestCase("foo", "None", 0, 0, 0, 1)]
+        public static void GetNLUCompareResultsIntentStatistics(
+            string expected,
+            string actual,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var expectedUtterance = new LabeledUtterance(null, expected, null);
+            var actualUtterance = new LabeledUtterance(null, actual, null);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.Statistics.Intent.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.Intent.FalseNegative.Should().Be(falseNegative);
+            if (expected != null && expected != "None")
+            {
+                compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
+            }
+            else if (actual != null && actual != "None")
+            {
+                compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
+            }
+        }
+
+        [Test]
+        [TestCase("foo", "foo", 1, 0, 0, 0)]
+        [TestCase(null, null, 0, 1, 0, 0)]
+        [TestCase(null, "foo", 0, 0, 1, 0)]
+        [TestCase("foo", "bar", 0, 0, 1, 1)]
+        [TestCase("foo", null, 0, 0, 0, 1)]
+        public static void GetNLUCompareResultsEntityStatistics(
+            string expected,
+            string actual,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var entityType = Guid.NewGuid().ToString();
+            var expectedEntity = expected != null ? new[] { new Entity(entityType, null, null, expected, 0) } : null;
+            var actualEntity = actual != null ? new[] { new Entity(entityType, null, null, actual, 0) } : null;
+            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.Statistics.Entity.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.Entity.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.Entity.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.Entity.FalseNegative.Should().Be(falseNegative);
+            if (expected != null || actual != null)
+            {
+                compareResults.Statistics.ByEntityType[entityType].TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.ByEntityType[entityType].TrueNegative.Should().Be(trueNegative);
+                compareResults.Statistics.ByEntityType[entityType].FalsePositive.Should().Be(falsePositive);
+                compareResults.Statistics.ByEntityType[entityType].FalseNegative.Should().Be(falseNegative);
+            }
+        }
+
+        [Test]
+        [TestCase("foo", "foo", 1, 0, 0, 0)]
+        [TestCase(null, null, 0, 0, 0, 0)]
+        [TestCase(null, "foo", 0, 0, 0, 0)]
+        [TestCase("foo", "bar", 0, 0, 0, 1)]
+        [TestCase("foo", null, 0, 0, 0, 1)]
+        public static void GetNLUCompareResultsEntityValueStatistics(
+            string expected,
+            string actual,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var entityType = Guid.NewGuid().ToString();
+            var matchText = Guid.NewGuid().ToString();
+            var expectedJson = expected == null ? JValue.CreateNull() : (JValue)expected;
+            var actualJson = actual == null ? JValue.CreateNull() : (JValue)actual;
+            var expectedEntity = new[] { new Entity(entityType, expectedJson, null, matchText, 0) };
+            var actualEntity = new[] { new Entity(entityType, actualJson, null, matchText, 0) };
+            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.Statistics.EntityValue.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.EntityValue.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.EntityValue.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.EntityValue.FalseNegative.Should().Be(falseNegative);
+            if (expected != null)
+            {
+                compareResults.Statistics.ByEntityValueType[entityType].TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.ByEntityValueType[entityType].TrueNegative.Should().Be(trueNegative);
+                compareResults.Statistics.ByEntityValueType[entityType].FalsePositive.Should().Be(falsePositive);
+                compareResults.Statistics.ByEntityValueType[entityType].FalseNegative.Should().Be(falseNegative);
+            }
+        }
+
+        [Test]
+        [TestCase("foo", "foo", 1, 0, 0, 0)]
+        [TestCase(null, null, 0, 0, 0, 0)]
+        [TestCase(null, "foo", 0, 0, 0, 0)]
+        [TestCase("foo", "bar", 0, 0, 0, 1)]
+        [TestCase("foo", null, 0, 0, 0, 1)]
+        public static void GetNLUCompareResultsEntityResolutionStatistics(
+            string expected,
+            string actual,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var entityType = Guid.NewGuid().ToString();
+            var matchText = Guid.NewGuid().ToString();
+            var expectedJson = expected == null ? JValue.CreateNull() : (JValue)expected;
+            var actualJson = actual == null ? JValue.CreateNull() : (JValue)actual;
+            var expectedEntity = new[] { new Entity(entityType, null, expectedJson, matchText, 0) };
+            var actualEntity = new[] { new Entity(entityType, null, actualJson, matchText, 0) };
+            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.Statistics.EntityResolution.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.EntityResolution.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.EntityResolution.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.EntityResolution.FalseNegative.Should().Be(falseNegative);
+            if (expected != null)
+            {
+                compareResults.Statistics.ByEntityResolutionType[entityType].TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.ByEntityResolutionType[entityType].TrueNegative.Should().Be(trueNegative);
+                compareResults.Statistics.ByEntityResolutionType[entityType].FalsePositive.Should().Be(falsePositive);
+                compareResults.Statistics.ByEntityResolutionType[entityType].FalseNegative.Should().Be(falseNegative);
+            }
+        }
+
+        [Test]
+        public static void GetNLUCompareResultsFalsePositiveEntityDifferentType()
+        {
+            var expectedEntityType = Guid.NewGuid().ToString();
+            var actualEntityType = Guid.NewGuid().ToString();
+            var matchText = Guid.NewGuid().ToString();
+            var expectedEntity = new[] { new Entity(expectedEntityType, null, null, matchText, 0) };
+            var actualEntity = new[] { new Entity(actualEntityType, null, null, matchText, 0) };
+            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.Statistics.Entity.TruePositive.Should().Be(0);
+            compareResults.Statistics.Entity.TrueNegative.Should().Be(0);
+            compareResults.Statistics.Entity.FalsePositive.Should().Be(1);
+            compareResults.Statistics.Entity.FalseNegative.Should().Be(1);
+            compareResults.Statistics.ByEntityType[expectedEntityType].TruePositive.Should().Be(0);
+            compareResults.Statistics.ByEntityType[expectedEntityType].TrueNegative.Should().Be(0);
+            compareResults.Statistics.ByEntityType[expectedEntityType].FalsePositive.Should().Be(0);
+            compareResults.Statistics.ByEntityType[expectedEntityType].FalseNegative.Should().Be(1);
+            compareResults.Statistics.ByEntityType[actualEntityType].TruePositive.Should().Be(0);
+            compareResults.Statistics.ByEntityType[actualEntityType].TrueNegative.Should().Be(0);
+            compareResults.Statistics.ByEntityType[actualEntityType].FalsePositive.Should().Be(1);
+            compareResults.Statistics.ByEntityType[actualEntityType].FalseNegative.Should().Be(0);
         }
 
         private static List<Entity> CreateEntityList(string type)
