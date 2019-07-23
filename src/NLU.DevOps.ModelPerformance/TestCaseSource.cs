@@ -55,7 +55,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>The test cases.</returns>
         /// <param name="expectedUtterances">Expected utterances.</param>
         /// <param name="actualUtterances">Actual utterances.</param>
-        public static IReadOnlyList<TestCase> GenerateTestCases(
+        public static NLUCompareResults GetNLUCompareResults(
             IReadOnlyList<LabeledUtterance> expectedUtterances,
             IReadOnlyList<LabeledUtterance> actualUtterances)
         {
@@ -68,10 +68,12 @@ namespace NLU.DevOps.ModelPerformance
                 .Zip(actualUtterances, (expected, actual) => new[] { expected, actual })
                 .ToList();
 
-            return zippedUtterances.Select(ToTextTestCase)
+            var testCases = zippedUtterances.Select(ToTextTestCase)
                 .Concat(zippedUtterances.Select(ToIntentTestCase))
                 .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
                 .ToList();
+
+            return new NLUCompareResults(testCases);
         }
 
         internal static TestCase ToTextTestCase(LabeledUtterance[] utterances)
@@ -87,6 +89,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
+                    null,
                     Array.Empty<string>(),
                     "Both utterances are 'null'.",
                     "Text");
@@ -98,6 +101,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
+                    null,
                     new[] { expected },
                     $"Actual text is 'null', expected '{expected}'",
                     "Text");
@@ -109,6 +113,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
+                    null,
                     new[] { expected },
                     "Utterances have matching text.",
                     "Text");
@@ -118,6 +123,7 @@ namespace NLU.DevOps.ModelPerformance
                 ComparisonTargetKind.Text,
                 expectedUtterance,
                 actualUtterance,
+                null,
                 new[] { expected, actual },
                 $"Expected text '{expected}', actual text '{actual}'.",
                 "Text");
@@ -131,13 +137,19 @@ namespace NLU.DevOps.ModelPerformance
             var expected = expectedUtterance.Intent;
             var actual = actualUtterance.Intent;
 
-            if (actual == null || actual == "None")
+            bool isNoneIntent(string intent)
             {
-                return expected == null || expected == "None"
+                return intent == null || intent == "None";
+            }
+
+            if (isNoneIntent(actual))
+            {
+                return isNoneIntent(expected)
                     ? TrueNegative(
                         ComparisonTargetKind.Intent,
                         expectedUtterance,
                         actualUtterance,
+                        null,
                         new[] { text },
                         "Both intents are 'None'.",
                         "Intent")
@@ -145,6 +157,7 @@ namespace NLU.DevOps.ModelPerformance
                         ComparisonTargetKind.Intent,
                         expectedUtterance,
                         actualUtterance,
+                        expected,
                         new[] { expected, text },
                         $"Actual intent is 'None', expected '{expected}'",
                         "Intent");
@@ -156,6 +169,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
                     actualUtterance,
+                    expected,
                     new[] { expected, text },
                     "Utterances have matching intent.",
                     "Intent");
@@ -165,6 +179,7 @@ namespace NLU.DevOps.ModelPerformance
                 ComparisonTargetKind.Intent,
                 expectedUtterance,
                 actualUtterance,
+                isNoneIntent(expected) ? actual : expected,
                 new[] { expected, actual, text },
                 $"Expected intent '{expected}', actual intent '{actual}'.",
                 "Intent");
@@ -184,6 +199,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Entity,
                     expectedUtterance,
                     actualUtterance,
+                    null,
                     new[] { text },
                     "Neither utterances have entities.",
                     "Entity");
@@ -216,10 +232,10 @@ namespace NLU.DevOps.ModelPerformance
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
+                            entity.EntityType,
                             new[] { entity.EntityType, formattedEntityValue, text },
                             $"Actual utterance does not have entity matching '{entityValue}'.",
-                            "Entity",
-                            entity.EntityType);
+                            "Entity");
                     }
                     else
                     {
@@ -227,10 +243,10 @@ namespace NLU.DevOps.ModelPerformance
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
+                            entity.EntityType,
                             new[] { entity.EntityType, formattedEntityValue, text },
                             $"Both utterances have entity '{entityValue}'.",
-                            "Entity",
-                            entity.EntityType);
+                            "Entity");
                     }
 
                     if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
@@ -248,10 +264,10 @@ namespace NLU.DevOps.ModelPerformance
                                 ComparisonTargetKind.EntityValue,
                                 expectedUtterance,
                                 actualUtterance,
+                                entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityValue, text },
                                 $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
-                                "Entity",
-                                entity.EntityType);
+                                "Entity");
                         }
                         else
                         {
@@ -259,10 +275,10 @@ namespace NLU.DevOps.ModelPerformance
                                 ComparisonTargetKind.EntityValue,
                                 expectedUtterance,
                                 actualUtterance,
+                                entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityValue, text },
                                 $"Both utterances have entity value '{formattedEntityValue}'.",
-                                "Entity",
-                                entity.EntityType);
+                                "Entity");
                         }
                     }
 
@@ -280,10 +296,10 @@ namespace NLU.DevOps.ModelPerformance
                                 ComparisonTargetKind.EntityResolution,
                                 expectedUtterance,
                                 actualUtterance,
+                                entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityResolution, text },
                                 $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
-                                "Entity",
-                                entity.EntityType);
+                                "Entity");
                         }
                         else
                         {
@@ -291,10 +307,10 @@ namespace NLU.DevOps.ModelPerformance
                                 ComparisonTargetKind.EntityResolution,
                                 expectedUtterance,
                                 actualUtterance,
+                                entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityResolution, text },
                                 $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
-                                "Entity",
-                                entity.EntityType);
+                                "Entity");
                         }
                     }
                 }
@@ -311,10 +327,10 @@ namespace NLU.DevOps.ModelPerformance
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
+                            entity.EntityType,
                             new[] { entity.EntityType, entityValue.ToString(Formatting.None), text },
                             $"Expected utterance does not have entity matching '{entityValue}'.",
-                            "Entity",
-                            entity.EntityType);
+                            "Entity");
                     }
                 }
             }
@@ -355,7 +371,7 @@ namespace NLU.DevOps.ModelPerformance
 
             var expected = Read(expectedPath);
             var actual = Read(actualPath);
-            return GenerateTestCases(expected, actual);
+            return GetNLUCompareResults(expected, actual).TestCases;
         }
 
         private static List<LabeledUtterance> Read(string path)
@@ -467,6 +483,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            string group,
             string[] args,
             string because,
             params string[] categories)
@@ -476,6 +493,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                group,
                 args,
                 because,
                 categories.Append("TruePositive"));
@@ -485,6 +503,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            string group,
             string[] args,
             string because,
             params string[] categories)
@@ -494,6 +513,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                group,
                 args,
                 because,
                 categories.Append("TrueNegative"));
@@ -503,6 +523,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            string group,
             string[] args,
             string because,
             params string[] categories)
@@ -512,6 +533,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                group,
                 args,
                 because,
                 categories.Append("FalsePositive"));
@@ -521,6 +543,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            string group,
             string[] args,
             string because,
             params string[] categories)
@@ -530,6 +553,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                group,
                 args,
                 because,
                 categories.Append("FalseNegative"));
@@ -540,19 +564,27 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            string group,
             string[] args,
             string because,
             IEnumerable<string> categories)
         {
             var testLabel = TestLabel != null ? $"[{TestLabel}] " : string.Empty;
+            var categoriesWithGroup = categories;
+            if (group != null)
+            {
+                categoriesWithGroup.Append(group);
+            }
+
             return new TestCase(
                 resultKind,
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                group,
                 $"{testLabel}{resultKind}{targetKind}('{string.Join("', '", args)}')",
                 because,
-                categories);
+                categoriesWithGroup);
         }
     }
 }

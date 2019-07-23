@@ -14,6 +14,7 @@ namespace NLU.DevOps.CommandLine.Compare
     internal static class CompareCommand
     {
         private const string TestMetadataFileName = "metadata.json";
+        private const string TestStatisticsFileName = "statistics.json";
 
         public static int Run(CompareOptions options)
         {
@@ -32,9 +33,11 @@ namespace NLU.DevOps.CommandLine.Compare
             {
                 var expectedUtterances = Read<List<LabeledUtterance>>(options.ExpectedUtterancesPath);
                 var actualUtterances = Read<List<LabeledUtterance>>(options.ExpectedUtterancesPath);
-                var testCases = TestCaseSource.GenerateTestCases(expectedUtterances, actualUtterances);
-                var outputFile = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
-                Write(outputFile, testCases);
+                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances);
+                var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
+                var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
+                Write(metadataPath, compareResults.TestCases);
+                Write(statisticsPath, compareResults.Statistics);
             }
             else
             {
