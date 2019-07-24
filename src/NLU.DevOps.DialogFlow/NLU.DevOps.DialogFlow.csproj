@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\CodeAnalysis.props" />
+
+  <PropertyGroup>
+    <AssemblyName>dotnet-nlu-dialogflow</AssemblyName>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NLU.DevOps.Models\NLU.DevOps.Models.csproj" />
+    <ProjectReference Include="..\NLU.DevOps.Core\NLU.DevOps.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Dialogflow.V2" Version="1.0.0" />
+    <PackageReference Include="System.Composition.AttributedModel" Version="1.2.0" />
+  </ItemGroup>
+</Project>
