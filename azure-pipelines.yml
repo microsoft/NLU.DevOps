@@ -10,7 +10,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: HelloWorld@0
 - task: NLUDevOps@0
   inputs:
     command: train
