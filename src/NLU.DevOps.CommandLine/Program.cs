@@ -3,6 +3,8 @@
 
 namespace NLU.DevOps.CommandLine
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using Clean;
     using Compare;
     using global::CommandLine;
@@ -24,7 +26,7 @@ namespace NLU.DevOps.CommandLine
                     (CompareOptions options) => CompareCommand.Run(options),
                     (TestOptions options) => Run(new TestCommand(options)),
                     (TrainOptions options) => Run(new TrainCommand(options)),
-                    errors => 1);
+                    errors => IsVersionError(errors) ? 0 : 1);
         }
 
         private static int Run(ICommand command)
@@ -33,6 +35,11 @@ namespace NLU.DevOps.CommandLine
             {
                 return command.Main();
             }
+        }
+
+        private static bool IsVersionError(IEnumerable<Error> errors)
+        {
+            return errors.Count() == 1 && errors.Single().Tag == ErrorType.VersionRequestedError;
         }
     }
 }
