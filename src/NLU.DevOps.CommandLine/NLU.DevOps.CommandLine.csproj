@@ -42,14 +42,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.5.0" />
+    <PackageReference Include="McMaster.NETCore.Plugins" Version="0.2.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
     <PackageReference Include="NUnitLite" Version="3.11.0" />
     <PackageReference Include="System.Composition" Version="1.2.0" />
-    <!-- temporary hack until we can resolve the native dependencies -->
-    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.6.0" />
-    <PackageReference Include="Google.Cloud.Dialogflow.V2" Version="1.0.0" />
   </ItemGroup>
 </Project>
