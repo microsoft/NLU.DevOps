@@ -15,8 +15,8 @@ steps:
     command: train
     service: luis
     utterances: models/utterances.json
+    serviceSettings: models/settings.luis.json
 - task: NLUDevOps@0
   inputs:
     command: clean
     service: luis
-    utterances: models/utterances.json
