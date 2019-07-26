@@ -10,13 +10,17 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: NLUDevOps@0
+- task: NLUTrain@0
   inputs:
-    command: train
     service: luis
     utterances: models/utterances.json
     serviceSettings: models/settings.luis.json
-- task: NLUDevOps@0
+- task: NLUTest@0
   inputs:
-    command: clean
+    service: luis
+    utterances: models/tests.json
+    compareOutput: $(Agent.TempDirectory)
+- bash: cat $(Agent.TempDirectory)/statistics.json
+- task: NLUClean@0
+  inputs:
     service: luis
