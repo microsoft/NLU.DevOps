@@ -1,0 +1,123 @@
+{
+    "id": "b05f23dd-168e-475a-a6f9-6297f8fd21bc",
+    "name": "NLUTest",
+    "friendlyName": "Run NLU.DevOps test command",
+    "description": "Run NLU.DevOps test command.",
+    "helpUrl": "https://github.com/microsoft/NLU.DevOps",
+    "helpMarkDown": "[Learn more about this task](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md)",
+    "category": "Test",
+    "visibility": [
+        "Build"
+    ],
+    "runsOn": [
+        "Agent",
+        "DeploymentGroup"
+    ],
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 1
+    },
+    "demands": [],
+    "minimumAgentVersion": "2.102.0",
+    "instanceNameFormat": "NLU.DevOps Test",
+    "inputs": [
+        {
+            "name": "service",
+            "type": "string",
+            "label": "NLU.DevOps service moniker.",
+            "required": true,
+            "helpMarkDown": "Usually one of: 'luis', 'luisV3', 'dialogflow', or 'lex'"
+        },
+        {
+            "name": "utterances",
+            "type": "string",
+            "label": "Utterances path",
+            "required": true,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-u---utterances)."
+        },
+        {
+            "name": "modelSettings",
+            "type": "string",
+            "label": "Model settings path",
+            "required": false,
+            "defaultValue": null,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-m---model-settings)."
+        },
+        {
+            "name": "output",
+            "type": "string",
+            "label": "Output path.",
+            "required": false,
+            "defaultValue": null,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-o---output)."
+        },
+        {
+            "name": "speech",
+            "type": "boolean",
+            "label": "Signals whether to test with speech utterances.",
+            "required": false,
+            "defaultValue": false,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#--speech)."
+        },
+        {
+            "name": "speechDirectory",
+            "type": "string",
+            "label": "Base directory where speech files are located.",
+            "required": false,
+            "defaultValue": null,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-d---speech-directory)."
+        },
+        {
+            "name": "compareOutput",
+            "type": "string",
+            "label": "Base directory where compare output will be stored.",
+            "required": false,
+            "defaultValue": null,
+            "helpMarkDown": "[Learn more about this option]()."
+        },
+        {
+            "name": "publishTestResults",
+            "type": "boolean",
+            "label": "Signals whether to publish a test results tab.",
+            "required": false,
+            "defaultValue": false,
+            "helpMarkDown": "Uses generated NUnit output from NLU.DevOps `compare` command to populate the test results tab. [Learn more about the `compare` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Compare.md)."
+        },
+        {
+            "name": "publishNLUResults",
+            "type": "boolean",
+            "label": "Signals whether to publish an NLU results tab.",
+            "required": false,
+            "defaultValue": false,
+            "helpMarkDown": "Uses generated JSON metadata output from NLU.DevOps `compare` command to populate the NLU results tab. [Learn more about the `compare` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Compare.md)."
+        },
+        {
+            "name": "workingDirectory",
+            "type": "filePath",
+            "label": "Working Directory",
+            "helpMarkDown": "Current working directory where the script is run. Empty is the root of the repo (build) or artifacts (release), which is $(System.DefaultWorkingDirectory)",
+            "required": false
+        },
+        {
+            "name": "nupkgPath",
+            "type": "string",
+            "label": "Path containing .nupkg to use for installing dotnet-nlu",
+            "helpMarkDown": "Path containing .nupkg to use for installing dotnet-nlu.",
+            "required": false
+        },
+        {
+            "name": "toolVersion",
+            "type": "string",
+            "label": "Version of dotnet-nlu to install.",
+            "helpMarkDown": "Version of dotnet-nlu to install.",
+            "required": false
+        }
+    ],
+    "execution": {
+        "Node": {
+            "target": "index.js"
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "strictNullChecks": true,
+        "target": "ES6",
+        "module": "commonjs",
+        "rootDir": ".",
+        "resolveJsonModule" : true,
+        "esModuleInterop": true
+    },
+    "include": [
+        "**/*.ts"
+    ]
+}
