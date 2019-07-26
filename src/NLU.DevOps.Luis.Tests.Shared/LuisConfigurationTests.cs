@@ -155,7 +155,7 @@ namespace NLU.DevOps.Luis.Tests
         public static void GeneratesDefaultVersionId()
         {
             var luisConfiguration = new LuisConfiguration(new ConfigurationBuilder().Build());
-            luisConfiguration.VersionId.Should().Be("1.0.1");
+            luisConfiguration.VersionId.Should().Be("0.1.1");
 
             var luisConfigurationWithVersionPrefix = new LuisConfiguration(new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
@@ -164,7 +164,7 @@ namespace NLU.DevOps.Luis.Tests
                 })
                 .Build());
 
-            luisConfigurationWithVersionPrefix.VersionId.Should().Be("1.0.1");
+            luisConfigurationWithVersionPrefix.VersionId.Should().Be("0.1.1");
 
             var luisConfigurationWithBuildId = new LuisConfiguration(new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
@@ -172,7 +172,7 @@ namespace NLU.DevOps.Luis.Tests
                     { "BUILD_ID", 999.ToString(CultureInfo.InvariantCulture) },
                 })
                 .Build());
-            luisConfigurationWithBuildId.VersionId.Should().Be("1.0.1");
+            luisConfigurationWithBuildId.VersionId.Should().Be("0.1.1");
         }
 
         [Test]

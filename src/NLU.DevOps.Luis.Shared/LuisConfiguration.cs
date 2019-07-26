@@ -189,7 +189,7 @@ namespace NLU.DevOps.Luis
             var buildId = this.Configuration[BuildIdConfigurationKey];
             if (versionIdPrefix == null || buildId == null)
             {
-                return "1.0.1";
+                return "0.1.1";
             }
 
             return $"{versionIdPrefix}.{buildId}";
