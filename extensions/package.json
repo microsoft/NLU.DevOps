@@ -1,0 +1,33 @@
+{
+    "name": "nlu-devops",
+    "version": "0.0.1",
+    "description": "A collection of Azure DevOps extensions to run NLU.DevOps and visualize results.",
+    "scripts": {
+        "lintCommon": "tslint -p common/tsconfig.json -c tslint.json",
+        "lintTasks": "tslint -p tasks/tsconfig.json -c tslint.json",
+        "eclint": "eclint check",
+        "eclintFix": "eclint fix",
+        "lint": "npm run lintCommon && npm run lintTasks && npm run eclint",
+        "lintFix": "npm run lintCommon -- --fix && npm run lintTasks -- --fix && npm run eclintFix",
+        "buildCommon": "npm-recursive-install --rootDir=common && tsc -p common && npm pack common/nlu-devops-common/",
+        "buildTasks": "npm-recursive-install --rootDir=tasks && tsc -p tasks",
+        "build": "npm run buildCommon && npm run buildTasks",
+        "postbuild": "npm run package",
+        "package": "tfx extension create --rev-version --manifest-globs",
+        "clean": "rimraf ./*.vsix && rimraf ./*.tgz"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/microsoft/NLU.DevOps/tree/master/extensions"
+    },
+    "author": "Microsoft",
+    "devDependencies": {
+        "@types/node": "^12.6.8",
+        "eclint": "^2.8.1",
+        "recursive-install": "^1.4.0",
+        "rimraf": "^2.6.3",
+        "tfx-cli": "^0.7.8",
+        "tslint": "^5.18.0",
+        "typescript": "^3.5.3"
+    }
+}

@@ -1,0 +1,26 @@
+# Default 
+[{.,common,tasks}/**.{ts,json}]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+# package.json typically uses 2 space indents
+[{.,common,tasks}/**/package.json]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+
+# Ignore pattern
+[{.,common,tasks}/**/{node_modules/**,package-lock.json,yarn-lock.json}]
+end_of_line = none
+charset = utf-8
+trim_trailing_whitespace = none
+insert_final_newline = none
+indent_style = none
+indent_size = none

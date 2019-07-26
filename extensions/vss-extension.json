@@ -1,0 +1,66 @@
+{
+    "manifestVersion": 1,
+    "id": "nlu-devops",
+    "version": "0.1.0",
+    "name": "NLU.DevOps",
+    "description": "A collection of tasks and results tabs for NLU.DevOps",
+    "publisher": "NLUDevOps",
+    "public": true,
+    "tags": [
+        "Build"
+    ],
+    "categories": [
+        "Azure Boards"
+    ],
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],
+    "files": [
+        {
+            "path": "tasks/NLUTrainV0",
+            "addressable": true
+        },
+        {
+            "path": "tasks/NLUTestV0",
+            "addressable": true
+        },
+        {
+            "path": "tasks/NLUCleanV0",
+            "addressable": true
+        }
+    ],
+    "contributions": [
+        {
+            "id": "NLUTrainV0",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "tasks/NLUTrainV0"
+            }
+        },
+        {
+            "id": "NLUTestV0",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "tasks/NLUTestV0"
+            }
+        },
+        {
+            "id": "NLUCleanV0",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "tasks/NLUCleanV0"
+            }
+        }
+    ]
+}

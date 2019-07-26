@@ -1,0 +1,16 @@
+# TypeScript
+*.js
+node_modules
+
+# Yarn / NPM
+yarn.lock
+package-lock.json
+
+# NPM pack
+*.tgz
+
+# TFX
+*.vsix
+
+# TBD
+.taskkey
