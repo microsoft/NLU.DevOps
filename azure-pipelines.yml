@@ -20,8 +20,7 @@ steps:
     service: luis
     utterances: models/tests.json
     compareOutput: $(Agent.TempDirectory)
-- bash: cat $(Agent.TempDirectory)/statistics.json
-- bash: ls $(Agent.TempDirectory)/
+- bash: ls $(Agent.TempDirectory)
 - task: NLUClean@0
   inputs:
     service: luis
