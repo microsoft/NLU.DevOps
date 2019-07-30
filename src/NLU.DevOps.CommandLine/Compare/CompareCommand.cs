@@ -39,10 +39,8 @@ namespace NLU.DevOps.CommandLine.Compare
                 Write(metadataPath, compareResults.TestCases);
                 Write(statisticsPath, compareResults.Statistics);
             }
-            else
-            {
-                new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
-            }
+
+            new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
 
             // We don't care if there are any failing NUnit tests
             return 0;
