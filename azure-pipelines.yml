@@ -19,7 +19,7 @@ steps:
   inputs:
     service: luis
     utterances: models/tests.json
-    compareOutput: $(Build.ArtifactStagingDirectory)
+    publishTestResults: true
 - task: PublishBuildArtifacts@1
   inputs:
     pathToPublish: $(Build.ArtifactStagingDirectory)
