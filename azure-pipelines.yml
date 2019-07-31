@@ -21,11 +21,6 @@ steps:
     utterances: models/tests.json
     modelSettings: models/settings.luis.json
     publishTestResults: true
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: $(Build.ArtifactStagingDirectory)
-    artifactName: drop
-    artifactType: container
 - task: NLUClean@0
   inputs:
     service: luis
