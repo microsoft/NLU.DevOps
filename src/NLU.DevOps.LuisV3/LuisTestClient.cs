@@ -39,15 +39,17 @@ namespace NLU.DevOps.Luis
 
         private LUISRuntimeClient RuntimeClient { get; }
 
+        private bool QueryTargetTraced { get; set; }
+
         public async Task<PredictionResponse> QueryAsync(PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
             while (true)
             {
                 try
                 {
+                    this.TraceQueryTarget();
                     if (this.LuisConfiguration.DirectVersionPublish)
                     {
-                        Logger.LogTrace($"Testing on app '{this.LuisConfiguration.AppId}' version '{this.LuisConfiguration.VersionId}'.");
                         return await this.RuntimeClient.Prediction.GetVersionPredictionAsync(
                                 Guid.Parse(this.LuisConfiguration.AppId),
                                 this.LuisConfiguration.VersionId,
@@ -57,7 +59,6 @@ namespace NLU.DevOps.Luis
                             .ConfigureAwait(false);
                     }
 
-                    Logger.LogTrace($"Testing on app '{this.LuisConfiguration.AppId}' slot '{this.LuisConfiguration.SlotName}'.");
                     return await this.RuntimeClient.Prediction.GetSlotPredictionAsync(
                             Guid.Parse(this.LuisConfiguration.AppId),
                             this.LuisConfiguration.SlotName,
@@ -122,6 +123,19 @@ namespace NLU.DevOps.Luis
         public void Dispose()
         {
             this.RuntimeClient.Dispose();
+        }
+
+        private void TraceQueryTarget()
+        {
+            if (!this.QueryTargetTraced)
+            {
+                this.QueryTargetTraced = true;
+                var queryTarget = this.LuisConfiguration.DirectVersionPublish
+                    ? $"version '{this.LuisConfiguration.VersionId}'"
+                    : $"slot '{this.LuisConfiguration.SlotName}'";
+
+                Logger.LogTrace($"Testing on app '{this.LuisConfiguration.AppId}' {queryTarget}.");
+            }
         }
     }
 }
