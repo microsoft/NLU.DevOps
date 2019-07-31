@@ -8,7 +8,7 @@ namespace NLU.DevOps.Luis
     using System.IO;
     using Microsoft.Extensions.Configuration;
     using Models;
-    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Factory for creating <see cref="LuisNLUTrainClient"/> and <see cref="LuisNLUTestClient"/> instances.
@@ -26,7 +26,7 @@ namespace NLU.DevOps.Luis
 
             var luisConfiguration = new LuisConfiguration(configuration);
             var luisSettings = settingsPath != null
-                ? JsonConvert.DeserializeObject<LuisSettings>(File.ReadAllText(settingsPath))
+                ? LuisSettings.FromJson(JObject.Parse(File.ReadAllText(settingsPath)))
                 : new LuisSettings();
 
             var luisClient = new LuisTrainClient(luisConfiguration);
@@ -45,7 +45,7 @@ namespace NLU.DevOps.Luis
             }
 
             var luisSettings = settingsPath != null
-                ? JsonConvert.DeserializeObject<LuisSettings>(File.ReadAllText(settingsPath))
+                ? LuisSettings.FromJson(JObject.Parse(File.ReadAllText(settingsPath)))
                 : new LuisSettings();
 
             var luisConfiguration = new TestLuisConfiguration(configuration);

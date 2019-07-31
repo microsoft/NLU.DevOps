@@ -3,9 +3,11 @@
 
 namespace NLU.DevOps.Luis
 {
+    using System;
     using System.Collections.Generic;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Luis settings.
@@ -59,5 +61,25 @@ namespace NLU.DevOps.Luis
         /// Gets the prebuilt entity type mappings.
         /// </summary>
         public IReadOnlyDictionary<string, string> PrebuiltEntityTypes { get; }
+
+        /// <summary>
+        /// Converts a <see cref="JObject"/> to <see cref="LuisSettings"/>.
+        /// </summary>
+        /// <param name="settings">Settings JSON.</param>
+        /// <returns>A <see cref="LuisSettings"/> instance.</returns>
+        public static LuisSettings FromJson(JObject settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (settings.ContainsKey("appTemplate") || settings.ContainsKey("prebuiltEntityTypes"))
+            {
+                return settings.ToObject<LuisSettings>();
+            }
+
+            return new LuisSettings(settings.ToObject<LuisApp>());
+        }
     }
 }

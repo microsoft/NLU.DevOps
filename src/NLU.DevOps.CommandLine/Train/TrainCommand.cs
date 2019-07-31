@@ -35,7 +35,7 @@ namespace NLU.DevOps.CommandLine.Train
 
                 if (this.Options.UtterancesPath == null && this.Options.SettingsPath == null)
                 {
-                    throw new InvalidOperationException("Must specify either --utterances or --service-settings when using train.");
+                    throw new InvalidOperationException("Must specify either --utterances or --model-settings when using train.");
                 }
 
                 var trainingUtterances = this.Options.UtterancesPath != null
