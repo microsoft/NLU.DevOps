@@ -8,6 +8,7 @@ async function run() {
         const output = getOutputPath();
         await runNLUTest(output);
         await runNLUCompare(output);
+        publishTestResults();
     } catch (error) {
         tl.setResult(tl.TaskResult.Failed, (error as Error).message);
     }
@@ -100,6 +101,36 @@ async function runNLUCompare(output): Promise<any> {
 
     if (result !== 0 || isError) {
         throw new Error("NLU.DevOps compare command failed.");
+    }
+}
+
+function publishTestResults() {
+    if (!tl.getBoolInput("publishTestResults")) {
+        return;
+    }
+
+    const compareOutput = getCompareOutputPath() as string;
+
+    // Sending allowBrokenSymbolicLinks as true, so we don't want to throw error when symlinks are broken.
+    // And can continue with other files if there are any.
+    const findOptions = {
+        allowBrokenSymbolicLinks: true,
+        followSpecifiedSymbolicLink: true,
+        followSymbolicLinks: true,
+    } as tl.FindOptions;
+
+    const resultFiles = tl.findMatch(compareOutput, ["**/TestResult.xml"], findOptions);
+
+    if (!resultFiles || resultFiles.length === 0) {
+        tl.warning("No test result files matching 'TestResult.xml' were found.");
+    } else {
+        const properties = {
+            resultFiles,
+            testRunSystem: "VSTS - NLU.DevOps",
+            type: "NUnit",
+        };
+
+        tl.command("results.publish", properties, "");
     }
 }
 
