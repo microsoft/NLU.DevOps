@@ -10,9 +10,7 @@ namespace NLU.DevOps.Luis
     using System.Threading;
     using System.Threading.Tasks;
     using Core;
-    using Logging;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
-    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json.Linq;
 
@@ -32,10 +30,6 @@ namespace NLU.DevOps.Luis
             this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
-
-        private static ILogger Logger => LazyLogger.Value;
-
-        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
 
         private LuisSettings LuisSettings { get; }
 

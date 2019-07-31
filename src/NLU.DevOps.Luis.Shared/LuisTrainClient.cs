@@ -10,10 +10,8 @@ namespace NLU.DevOps.Luis
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Logging;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
-    using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
     internal class LuisTrainClient : ILuisTrainClient
@@ -30,10 +28,6 @@ namespace NLU.DevOps.Luis
                 Endpoint = $"{Protocol}{luisConfiguration.AuthoringRegion}{Domain}",
             };
         }
-
-        private static ILogger Logger => LazyLogger.Value;
-
-        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTrainClient>());
 
         private ILuisConfiguration LuisConfiguration { get; }
 
