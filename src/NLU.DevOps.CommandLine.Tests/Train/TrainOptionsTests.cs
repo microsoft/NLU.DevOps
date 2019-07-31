@@ -27,7 +27,7 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         {
             this.options.Add("-u");
             this.options.Add("utterances");
-            this.options.Add("-e");
+            this.options.Add("-m");
             this.options.Add("settings");
             this.options.Add("-a");
             var args = this.options.ToArray();

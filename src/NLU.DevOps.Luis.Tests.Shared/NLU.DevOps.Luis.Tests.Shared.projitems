@@ -13,5 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfigurationTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClientTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisNLUClientFactoryTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisSettingsTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GlobalSuppressions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTestClientExtensions.cs" />
   </ItemGroup>
 </Project>

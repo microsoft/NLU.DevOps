@@ -31,7 +31,7 @@ namespace NLU.DevOps.CommandLine.Tests.Test
         {
             this.options.Add("-u");
             this.options.Add("utterances");
-            this.options.Add("-e");
+            this.options.Add("-m");
             this.options.Add("servicesettings");
             this.options.Add("--speech");
             this.options.Add("-d");
@@ -62,7 +62,7 @@ namespace NLU.DevOps.CommandLine.Tests.Test
         {
             this.options.Add("--utterances");
             this.options.Add("utterances");
-            this.options.Add("--service-settings");
+            this.options.Add("--model-settings");
             this.options.Add("servicesettings");
             this.options.Add("--speech");
             this.options.Add("--speech-directory");

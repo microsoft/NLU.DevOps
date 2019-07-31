@@ -11,7 +11,7 @@ namespace NLU.DevOps.CommandLine.Train
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = false)]
         public string UtterancesPath { get; set; }
 
-        [Option('e', "service-settings", HelpText = "Path to NLU service settings.", Required = false)]
+        [Option('m', "model-settings", HelpText = "Path to NLU model settings.", Required = false)]
         public string SettingsPath { get; set; }
 
         [Option('a', "save-appsettings", HelpText = "Flag to save NLU service instance appsettings.", Required = false)]

@@ -61,7 +61,7 @@ steps:
     arguments: train
       --service $(nlu.service)
       --utterances models/utterances.json
-      --service-settings models/settings.$(nlu.service).json
+      --model-settings models/settings.$(nlu.service).json
       --save-appsettings
 
 - task: DotNetCoreCLI@2
@@ -73,7 +73,7 @@ steps:
     arguments: test
       --service $(nlu.service)
       --utterances models/tests.json
-      --service-settings models/settings.$(nlu.service).json
+      --model-settings models/settings.$(nlu.service).json
       --output $(Agent.TempDirectory)/text/results.json
 
 - task: DotNetCoreCLI@2
@@ -87,7 +87,7 @@ steps:
       --speech 
       --utterances models/tests.speech.json
       --speech-directory $(recordingsDirectory)
-      --service-settings models/settings.$(nlu.service).json
+      --model-settings models/settings.$(nlu.service).json
       --output $(Agent.TempDirectory)/speech/results.json
 
 - task: DotNetCoreCLI@2

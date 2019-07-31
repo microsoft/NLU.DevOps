@@ -36,7 +36,7 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         {
             this.WhenParserIsRun();
             Action a = () => this.commandUnderTest.Main();
-            a.Should().Throw<InvalidOperationException>().WithMessage("Must specify either --utterances or --service-settings when using train.");
+            a.Should().Throw<InvalidOperationException>().WithMessage("Must specify either --utterances or --model-settings when using train.");
         }
 
         [Test]
