@@ -14,11 +14,12 @@ steps:
   inputs:
     service: luis
     utterances: models/utterances.json
-    serviceSettings: models/settings.luis.json
+    modelSettings: models/settings.luis.json
 - task: NLUTest@0
   inputs:
     service: luis
     utterances: models/tests.json
+    modelSettings: models/settings.luis.json
     publishTestResults: true
 - task: PublishBuildArtifacts@1
   inputs:
