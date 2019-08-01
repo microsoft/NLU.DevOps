@@ -40,6 +40,6 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Gets the entities referenced in the utterance.
         /// </summary>
-        public new IReadOnlyList<ScoredEntity> Entities => base.Entities.OfType<ScoredEntity>().ToList();
+        public new IReadOnlyList<ScoredEntity> Entities => base.Entities?.OfType<ScoredEntity>().ToList();
     }
 }
