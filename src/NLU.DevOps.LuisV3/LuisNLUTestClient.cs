@@ -18,6 +18,8 @@ namespace NLU.DevOps.Luis
     /// </summary>
     public sealed class LuisNLUTestClient : INLUTestClient
     {
+        private const double Epsilon = 1e-6;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
@@ -46,7 +48,7 @@ namespace NLU.DevOps.Luis
             var predictionRequest = query.ToObject<PredictionRequest>();
             predictionRequest.Query = predictionRequest.Query ?? query.Value<string>("text");
             var luisResult = await this.LuisClient.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(luisResult);
+            return this.LuisResultToLabeledUtterance(new SpeechPredictionResponse(luisResult, 0));
         }
 
         /// <inheritdoc />
@@ -157,9 +159,9 @@ namespace NLU.DevOps.Luis
             return json;
         }
 
-        private LabeledUtterance LuisResultToLabeledUtterance(PredictionResponse predictionResponse)
+        private LabeledUtterance LuisResultToLabeledUtterance(SpeechPredictionResponse speechPredictionResponse)
         {
-            if (predictionResponse == null)
+            if (speechPredictionResponse == null)
             {
                 return new LabeledUtterance(null, null, null);
             }
@@ -167,13 +169,18 @@ namespace NLU.DevOps.Luis
             var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
                 .ToDictionary(pair => $"builtin.{pair.Value}", pair => pair.Key);
 
-            var intent = predictionResponse.Prediction.TopIntent;
-            var entities = GetEntities(predictionResponse.Query, predictionResponse.Prediction.Entities, mappedTypes)?.ToList();
+            var intent = speechPredictionResponse.PredictionResponse.Prediction.TopIntent;
+            var entities = GetEntities(
+                    speechPredictionResponse.PredictionResponse.Query,
+                    speechPredictionResponse.PredictionResponse.Prediction.Entities,
+                    mappedTypes)?
+                .ToList();
+
             var intentData = default(Intent);
-            predictionResponse.Prediction.Intents?.TryGetValue(intent, out intentData);
-            return intentData != null && intentData.Score.HasValue
-                ? new ScoredLabeledUtterance(predictionResponse.Query, intent, intentData.Score.Value, entities)
-                : new LabeledUtterance(predictionResponse.Query, intent, entities);
+            speechPredictionResponse.PredictionResponse.Prediction.Intents?.TryGetValue(intent, out intentData);
+            return (intentData != null && intentData.Score.HasValue) || Math.Abs(speechPredictionResponse.TextScore) > Epsilon
+                ? new ScoredLabeledUtterance(speechPredictionResponse.PredictionResponse.Query, intent, intentData?.Score ?? 0, speechPredictionResponse.TextScore, entities)
+                : new LabeledUtterance(speechPredictionResponse.PredictionResponse.Query, intent, entities);
         }
     }
 }

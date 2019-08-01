@@ -507,6 +507,74 @@ namespace NLU.DevOps.ModelPerformance.Tests
             compareResults.Statistics.ByEntityType[actualEntityType].FalseNegative.Should().Be(0);
         }
 
+        [Test]
+        public static void GetNLUCompareResultsDefaultScores()
+        {
+            var entityType = Guid.NewGuid().ToString();
+            var matchText = Guid.NewGuid().ToString();
+            var expectedEntity = new[] { new Entity(entityType, null, null, matchText, 0) };
+            var actualEntity = new[] { new Entity(entityType, null, null, matchText, 0) };
+            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.TestCases.Count.Should().Be(3);
+            compareResults.TestCases.Select(t => t.Score).Should().AllBeEquivalentTo(0);
+        }
+
+        [Test]
+        public static void GetNLUCompareResultsExtractsIntentScore()
+        {
+            var expectedUtterance = new LabeledUtterance(null, null, null);
+            var actualUtterance = new ScoredLabeledUtterance(null, null, 0.5, 0.1, null);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.TestCases.Count.Should().Be(3);
+            var intentTestCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Intent);
+            intentTestCase.Should().NotBeNull();
+            intentTestCase.Score.Should().Be(0.5);
+            var textTestCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Text);
+            textTestCase.Should().NotBeNull();
+            textTestCase.Score.Should().Be(0.1);
+        }
+
+        [Test]
+        public static void GetNLUCompareResultsExtractsEntityScore()
+        {
+            var entityType = Guid.NewGuid().ToString();
+            var matchText = Guid.NewGuid().ToString();
+            var expectedEntity = new[] { new Entity(entityType, null, null, matchText, 0) };
+            var actualEntity = new[] { new ScoredEntity(entityType, null, null, matchText, 0, 0.5) };
+            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.TestCases.Count.Should().Be(3);
+            var testCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Entity);
+            testCase.Should().NotBeNull();
+            testCase.Score.Should().Be(0.5);
+        }
+
+        [Test]
+        public static void GetNLUCompareResultsExtractsFalsePositiveEntityScore()
+        {
+            var entityType = Guid.NewGuid().ToString();
+            var matchText = Guid.NewGuid().ToString();
+            var actualEntity = new[] { new ScoredEntity(entityType, null, null, matchText, 0, 0.5) };
+            var expectedUtterance = new LabeledUtterance(null, null, null);
+            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance });
+            compareResults.TestCases.Count.Should().Be(3);
+            var testCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Entity);
+            testCase.Should().NotBeNull();
+            testCase.Score.Should().Be(0.5);
+        }
+
         private static List<Entity> CreateEntityList(string type)
         {
             return new List<Entity> { new Entity(type, "EntityValue", null, "matchedText", 1) };

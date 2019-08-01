@@ -66,7 +66,7 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public Task<LuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        public Task<SpeechLuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             return this.LuisConfiguration.UseSpeechEndpoint
                 ? this.RecognizeSpeechWithEndpointAsync(speechFile, cancellationToken)
@@ -78,7 +78,7 @@ namespace NLU.DevOps.Luis
             this.RuntimeClient.Dispose();
         }
 
-        private async Task<LuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
+        private async Task<SpeechLuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
         {
             var speechConfig = SpeechConfig.FromSubscription(this.LuisConfiguration.SpeechKey, this.LuisConfiguration.SpeechRegion);
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
@@ -96,7 +96,11 @@ namespace NLU.DevOps.Luis
                 if (result.Reason == ResultReason.RecognizedSpeech || result.Reason == ResultReason.RecognizedIntent)
                 {
                     var content = result.Properties.GetProperty(PropertyId.LanguageUnderstandingServiceResponse_JsonResult);
-                    return JsonConvert.DeserializeObject<LuisResult>(content);
+                    var luisResult = JsonConvert.DeserializeObject<LuisResult>(content);
+                    var speechContent = result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
+                    var speechContentJson = JObject.Parse(speechContent);
+                    var textScore = speechContentJson.Value<double>("Confidence");
+                    return new SpeechLuisResult(luisResult, textScore);
                 }
                 else if (result.Reason == ResultReason.NoMatch)
                 {
@@ -110,7 +114,7 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        private async Task<LuisResult> RecognizeSpeechWithEndpointAsync(string speechFile, CancellationToken cancellationToken)
+        private async Task<SpeechLuisResult> RecognizeSpeechWithEndpointAsync(string speechFile, CancellationToken cancellationToken)
         {
             var request = (HttpWebRequest)WebRequest.Create(this.LuisConfiguration.SpeechEndpoint);
             request.Method = "POST";
@@ -138,7 +142,9 @@ namespace NLU.DevOps.Luis
                 throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");
             }
 
-            return await this.QueryAsync(responseJson.Value<string>("DisplayText"), cancellationToken).ConfigureAwait(false);
+            var luisResult = await this.QueryAsync(responseJson.Value<string>("DisplayText"), cancellationToken).ConfigureAwait(false);
+            var textScore = responseJson.Value<double>("Confidence");
+            return new SpeechLuisResult(luisResult, textScore);
         }
     }
 }

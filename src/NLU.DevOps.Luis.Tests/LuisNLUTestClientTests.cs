@@ -153,21 +153,23 @@ namespace NLU.DevOps.Luis.Tests
                 .Setup(luis => luis.RecognizeSpeechAsync(
                     It.Is<string>(speechFile => speechFile == testFile),
                     It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult(new LuisResult
-                {
-                    Query = test,
-                    TopScoringIntent = new IntentModel { Intent = "intent" },
-                    Entities = new[]
+                .Returns(() => Task.FromResult(new SpeechLuisResult(
+                    new LuisResult
                     {
-                        new EntityModel
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                        Entities = new[]
                         {
-                            Entity = "entity",
-                            Type = "type",
-                            StartIndex = 45,
-                            EndIndex = 50,
+                            new EntityModel
+                            {
+                                Entity = "entity",
+                                Type = "type",
+                                StartIndex = 45,
+                                EndIndex = 50,
+                            },
                         },
                     },
-                }));
+                    0)));
 
             using (var luis = builder.Build())
             {
@@ -179,6 +181,35 @@ namespace NLU.DevOps.Luis.Tests
 
                 result.Entities[0].MatchText.Should().Be("entity");
                 result.Entities[0].MatchIndex.Should().Be(0);
+            }
+        }
+
+        [Test]
+        public static async Task TestSpeechWithTextScore()
+        {
+            var testFile = "somefile";
+            var test = "the quick brown fox jumped over the lazy dog entity";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.RecognizeSpeechAsync(
+                    It.Is<string>(speechFile => speechFile == testFile),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new SpeechLuisResult(
+                    new LuisResult
+                    {
+                        Query = test,
+                        TopScoringIntent = new IntentModel { Intent = "intent" },
+                    },
+                    0.5)));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestSpeechAsync(testFile).ConfigureAwait(false);
+                result.Text.Should().Be(test);
+                result.Intent.Should().Be("intent");
+                result.As<ScoredLabeledUtterance>().TextScore.Should().Be(0.5);
+                result.As<ScoredLabeledUtterance>().Score.Should().Be(0);
             }
         }
 
