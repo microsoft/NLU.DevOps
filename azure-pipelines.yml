@@ -22,6 +22,7 @@ steps:
     modelSettings: models/settings.luis.json
     compareOutput: $(Build.ArtifactStagingDirectory)
     publishTestResults: true
+    publishNLUResults: true
 - task: PublishBuildArtifacts@1
   inputs:
     pathToPublish: $(Build.ArtifactStagingDirectory)
