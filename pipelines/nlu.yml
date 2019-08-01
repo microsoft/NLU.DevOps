@@ -119,6 +119,7 @@ steps:
       --expected models/tests.speech.json
       --actual $(Agent.TempDirectory)/speech/results.json
       --output-folder $(Build.ArtifactStagingDirectory)/speech
+      --text
 
 - task: DotNetCoreCLI@2
   displayName: Uninstall dotnet-nlu

@@ -55,9 +55,11 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>The test cases.</returns>
         /// <param name="expectedUtterances">Expected utterances.</param>
         /// <param name="actualUtterances">Actual utterances.</param>
+        /// <param name="compareText">Signals whether to generate text comparison test cases.</param>
         public static NLUCompareResults GetNLUCompareResults(
             IReadOnlyList<LabeledUtterance> expectedUtterances,
-            IReadOnlyList<LabeledUtterance> actualUtterances)
+            IReadOnlyList<LabeledUtterance> actualUtterances,
+            bool compareText)
         {
             if (expectedUtterances.Count != actualUtterances.Count)
             {
@@ -68,12 +70,15 @@ namespace NLU.DevOps.ModelPerformance
                 .Zip(actualUtterances, (expected, actual) => new[] { expected, actual })
                 .ToList();
 
-            var testCases = zippedUtterances.Select(ToTextTestCase)
-                .Concat(zippedUtterances.Select(ToIntentTestCase))
-                .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
-                .ToList();
+            var testCases = zippedUtterances.Select(ToIntentTestCase)
+                .Concat(zippedUtterances.SelectMany(ToEntityTestCases));
 
-            return new NLUCompareResults(testCases);
+            if (compareText)
+            {
+                testCases = testCases.Concat(zippedUtterances.Select(ToTextTestCase));
+            }
+
+            return new NLUCompareResults(testCases.ToList());
         }
 
         internal static TestCase ToTextTestCase(LabeledUtterance[] utterances)
@@ -390,9 +395,16 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
+            var compareTextString = TestContext.Parameters.Get(ConfigurationConstants.CompareTextKey);
+            var compareText = false;
+            if (compareTextString != null && bool.TryParse(compareTextString, out var parsedValue))
+            {
+                compareText = parsedValue;
+            }
+
             var expected = Read(expectedPath);
             var actual = Read(actualPath);
-            return GetNLUCompareResults(expected, actual).TestCases;
+            return GetNLUCompareResults(expected, actual, compareText).TestCases;
         }
 
         private static List<LabeledUtterance> Read(string path)
