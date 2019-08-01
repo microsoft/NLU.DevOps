@@ -28,6 +28,6 @@ namespace NLU.DevOps.Luis
         /// <param name="speechFile">Path to file.</param>
         /// <param name="predictionRequest">Prediction request.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<PredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken);
+        Task<SpeechPredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken);
     }
 }

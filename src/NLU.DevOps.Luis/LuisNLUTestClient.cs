@@ -20,6 +20,8 @@ namespace NLU.DevOps.Luis
     /// </summary>
     public sealed class LuisNLUTestClient : DefaultNLUTestClient
     {
+        private const double Epsilon = 10e-6;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
@@ -41,7 +43,7 @@ namespace NLU.DevOps.Luis
             CancellationToken cancellationToken)
         {
             var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(luisResult);
+            return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
         }
 
         /// <inheritdoc />
@@ -79,9 +81,9 @@ namespace NLU.DevOps.Luis
                 : resolvedValue;
         }
 
-        private LabeledUtterance LuisResultToLabeledUtterance(LuisResult luisResult)
+        private LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
         {
-            if (luisResult == null)
+            if (speechLuisResult == null)
             {
                 return new LabeledUtterance(null, null, null);
             }
@@ -108,7 +110,7 @@ namespace NLU.DevOps.Luis
                 }
 
                 var matchText = entity.Entity;
-                var matches = Regex.Matches(luisResult.Query, matchText, RegexOptions.IgnoreCase);
+                var matches = Regex.Matches(speechLuisResult.LuisResult.Query, matchText, RegexOptions.IgnoreCase);
                 var matchIndex = -1;
                 for (var i = 0; i < matches.Count; ++i)
                 {
@@ -134,12 +136,12 @@ namespace NLU.DevOps.Luis
                     : new Entity(entityType, entityValue, entityResolution, matchText, matchIndex);
             }
 
-            var intent = luisResult.TopScoringIntent?.Intent;
-            var score = luisResult.TopScoringIntent?.Score;
-            var entities = luisResult.Entities?.Select(getEntity).ToList();
-            return !score.HasValue
-                ? new LabeledUtterance(luisResult.Query, intent, entities)
-                : new ScoredLabeledUtterance(luisResult.Query, intent, score.Value, entities);
+            var intent = speechLuisResult.LuisResult.TopScoringIntent?.Intent;
+            var score = speechLuisResult.LuisResult.TopScoringIntent?.Score;
+            var entities = speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList();
+            return !score.HasValue && Math.Abs(speechLuisResult.TextScore) < Epsilon
+                ? new LabeledUtterance(speechLuisResult.LuisResult.Query, intent, entities)
+                : new ScoredLabeledUtterance(speechLuisResult.LuisResult.Query, intent, score ?? 0, speechLuisResult.TextScore, entities);
         }
     }
 }

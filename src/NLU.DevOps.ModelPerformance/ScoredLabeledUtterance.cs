@@ -1,9 +1,10 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.Luis
+namespace NLU.DevOps.ModelPerformance
 {
     using System.Collections.Generic;
+    using System.Linq;
     using Models;
 
     /// <summary>
@@ -19,7 +20,7 @@ namespace NLU.DevOps.Luis
         /// <param name="score">Confidence score for the intent label.</param>
         /// <param name="textScore">Confidence score for speech-to-text.</param>
         /// <param name="entities">Entities referenced in the utterance.</param>
-        public ScoredLabeledUtterance(string text, string intent, double score, double textScore, IReadOnlyList<Entity> entities)
+        public ScoredLabeledUtterance(string text, string intent, double score, double textScore, IReadOnlyList<ScoredEntity> entities)
             : base(text, intent, entities)
         {
             this.Score = score;
@@ -35,5 +36,10 @@ namespace NLU.DevOps.Luis
         /// Gets the confidence score for speech-to-text.
         /// </summary>
         public double TextScore { get; }
+
+        /// <summary>
+        /// Gets the entities referenced in the utterance.
+        /// </summary>
+        public new IReadOnlyList<ScoredEntity> Entities => base.Entities.OfType<ScoredEntity>().ToList();
     }
 }

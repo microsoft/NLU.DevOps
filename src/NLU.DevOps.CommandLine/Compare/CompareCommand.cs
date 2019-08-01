@@ -32,7 +32,7 @@ namespace NLU.DevOps.CommandLine.Compare
             if (options.Metadata)
             {
                 var expectedUtterances = Read<List<LabeledUtterance>>(options.ExpectedUtterancesPath);
-                var actualUtterances = Read<List<LabeledUtterance>>(options.ExpectedUtterancesPath);
+                var actualUtterances = Read<List<ScoredLabeledUtterance>>(options.ExpectedUtterancesPath);
                 var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;

@@ -76,7 +76,7 @@ namespace NLU.DevOps.Luis
             }
         }
 
-        public async Task<PredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
+        public async Task<SpeechPredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
             if (this.LuisConfiguration.SpeechKey == null)
             {
@@ -117,7 +117,9 @@ namespace NLU.DevOps.Luis
                 Options = predictionRequest?.Options,
             };
 
-            return await this.QueryAsync(speechPredictionRequest, cancellationToken).ConfigureAwait(false);
+            var predictionResponse = await this.QueryAsync(speechPredictionRequest, cancellationToken).ConfigureAwait(false);
+            var textScore = responseJson.Value<double>("Confidence");
+            return new SpeechPredictionResponse(predictionResponse, textScore);
         }
 
         public void Dispose()

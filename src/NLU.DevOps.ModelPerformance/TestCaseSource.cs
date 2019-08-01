@@ -82,6 +82,9 @@ namespace NLU.DevOps.ModelPerformance
             var actualUtterance = utterances[1];
             var expected = expectedUtterance.Text;
             var actual = actualUtterance.Text;
+            var score = actualUtterance is ScoredLabeledUtterance scoredUtterance
+                ? scoredUtterance.TextScore
+                : 0;
 
             if (expected == null && actual == null)
             {
@@ -89,6 +92,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
+                    score,
                     null,
                     Array.Empty<string>(),
                     "Both utterances are 'null'.",
@@ -101,6 +105,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
+                    score,
                     null,
                     new[] { expected },
                     $"Actual text is 'null', expected '{expected}'",
@@ -113,6 +118,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
+                    score,
                     null,
                     new[] { expected },
                     "Utterances have matching text.",
@@ -123,6 +129,7 @@ namespace NLU.DevOps.ModelPerformance
                 ComparisonTargetKind.Text,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 null,
                 new[] { expected, actual },
                 $"Expected text '{expected}', actual text '{actual}'.",
@@ -133,6 +140,10 @@ namespace NLU.DevOps.ModelPerformance
         {
             var expectedUtterance = utterances[0];
             var actualUtterance = utterances[1];
+            var score = actualUtterance is ScoredLabeledUtterance scoredUtterance
+                ? scoredUtterance.Score
+                : 0;
+
             var text = expectedUtterance.Text;
             var expected = expectedUtterance.Intent;
             var actual = actualUtterance.Intent;
@@ -149,6 +160,7 @@ namespace NLU.DevOps.ModelPerformance
                         ComparisonTargetKind.Intent,
                         expectedUtterance,
                         actualUtterance,
+                        score,
                         null,
                         new[] { text },
                         "Both intents are 'None'.",
@@ -157,6 +169,7 @@ namespace NLU.DevOps.ModelPerformance
                         ComparisonTargetKind.Intent,
                         expectedUtterance,
                         actualUtterance,
+                        score,
                         expected,
                         new[] { expected, text },
                         $"Actual intent is 'None', expected '{expected}'",
@@ -169,6 +182,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
                     actualUtterance,
+                    score,
                     expected,
                     new[] { expected, text },
                     "Utterances have matching intent.",
@@ -179,6 +193,7 @@ namespace NLU.DevOps.ModelPerformance
                 ComparisonTargetKind.Intent,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 isNoneIntent(expected) ? actual : expected,
                 new[] { expected, actual, text },
                 $"Expected intent '{expected}', actual intent '{actual}'.",
@@ -199,6 +214,7 @@ namespace NLU.DevOps.ModelPerformance
                     ComparisonTargetKind.Entity,
                     expectedUtterance,
                     actualUtterance,
+                    0,
                     null,
                     new[] { text },
                     "Neither utterances have entities.",
@@ -225,15 +241,24 @@ namespace NLU.DevOps.ModelPerformance
                 {
                     // "Soft" entity match test cases
                     var entityValue = entity.MatchText ?? entity.EntityValue;
-                    var formattedEntityValue = entityValue.ToString(Formatting.None);
-                    if (actual == null || !actual.Any(actualEntity => isEntityMatch(entity, actualEntity)))
+                    var formattedEntity = entityValue.ToString(Formatting.None);
+                    var matchedEntity = actual != null
+                        ? actual.FirstOrDefault(actualEntity => isEntityMatch(entity, actualEntity))
+                        : null;
+
+                    var score = matchedEntity is ScoredEntity scoredEntity
+                        ? scoredEntity.Score
+                        : 0;
+
+                    if (matchedEntity == null)
                     {
                         yield return FalseNegative(
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
+                            score,
                             entity.EntityType,
-                            new[] { entity.EntityType, formattedEntityValue, text },
+                            new[] { entity.EntityType, formattedEntity, text },
                             $"Actual utterance does not have entity matching '{entityValue}'.",
                             "Entity");
                     }
@@ -243,27 +268,23 @@ namespace NLU.DevOps.ModelPerformance
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
+                            score,
                             entity.EntityType,
-                            new[] { entity.EntityType, formattedEntityValue, text },
+                            new[] { entity.EntityType, formattedEntity, text },
                             $"Both utterances have entity '{entityValue}'.",
                             "Entity");
                     }
 
                     if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
                     {
-                        // "Semantic" entity value match test cases
-                        bool isEntityValueMatch(Entity actualEntity)
-                        {
-                            return entity.EntityType == actualEntity.EntityType
-                                && ContainsSubtree(entity.EntityValue, actualEntity.EntityValue);
-                        }
-
-                        if (actual == null || !actual.Any(isEntityValueMatch))
+                        var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
+                        if (matchedEntity == null || !ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
                         {
                             yield return FalseNegative(
                                 ComparisonTargetKind.EntityValue,
                                 expectedUtterance,
                                 actualUtterance,
+                                score,
                                 entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityValue, text },
                                 $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
@@ -275,6 +296,7 @@ namespace NLU.DevOps.ModelPerformance
                                 ComparisonTargetKind.EntityValue,
                                 expectedUtterance,
                                 actualUtterance,
+                                score,
                                 entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityValue, text },
                                 $"Both utterances have entity value '{formattedEntityValue}'.",
@@ -284,18 +306,14 @@ namespace NLU.DevOps.ModelPerformance
 
                     if (entity.EntityResolution != null && entity.EntityResolution.Type != JTokenType.Null)
                     {
-                        bool isEntityResolutionMatch(Entity actualEntity)
-                        {
-                            return ContainsSubtree(entity.EntityResolution, actualEntity.EntityResolution);
-                        }
-
                         var formattedEntityResolution = entity.EntityResolution.ToString(Formatting.None);
-                        if (actual == null || !actual.Any(isEntityResolutionMatch))
+                        if (matchedEntity == null || !ContainsSubtree(entity.EntityResolution, matchedEntity.EntityResolution))
                         {
                             yield return FalseNegative(
                                 ComparisonTargetKind.EntityResolution,
                                 expectedUtterance,
                                 actualUtterance,
+                                score,
                                 entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityResolution, text },
                                 $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
@@ -307,6 +325,7 @@ namespace NLU.DevOps.ModelPerformance
                                 ComparisonTargetKind.EntityResolution,
                                 expectedUtterance,
                                 actualUtterance,
+                                score,
                                 entity.EntityType,
                                 new[] { entity.EntityType, formattedEntityResolution, text },
                                 $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
@@ -320,6 +339,7 @@ namespace NLU.DevOps.ModelPerformance
             {
                 foreach (var entity in actual)
                 {
+                    var score = entity is ScoredEntity scoredEntity ? scoredEntity.Score : 0;
                     var entityValue = entity.MatchText ?? entity.EntityValue;
                     if (expected == null || !expected.Any(expectedEntity => isEntityMatch(entity, expectedEntity)))
                     {
@@ -327,6 +347,7 @@ namespace NLU.DevOps.ModelPerformance
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
+                            score,
                             entity.EntityType,
                             new[] { entity.EntityType, entityValue.ToString(Formatting.None), text },
                             $"Expected utterance does not have entity matching '{entityValue}'.",
@@ -483,6 +504,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            double score,
             string group,
             string[] args,
             string because,
@@ -493,6 +515,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 group,
                 args,
                 because,
@@ -503,6 +526,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            double score,
             string group,
             string[] args,
             string because,
@@ -513,6 +537,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 group,
                 args,
                 because,
@@ -523,6 +548,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            double score,
             string group,
             string[] args,
             string because,
@@ -533,6 +559,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 group,
                 args,
                 because,
@@ -543,6 +570,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            double score,
             string group,
             string[] args,
             string because,
@@ -553,6 +581,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 group,
                 args,
                 because,
@@ -564,6 +593,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            double score,
             string group,
             string[] args,
             string because,
@@ -581,6 +611,7 @@ namespace NLU.DevOps.ModelPerformance
                 targetKind,
                 expectedUtterance,
                 actualUtterance,
+                score,
                 group,
                 $"{testLabel}{resultKind}{targetKind}('{string.Join("', '", args)}')",
                 because,

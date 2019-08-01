@@ -19,6 +19,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="targetKind">Comparison target kind.</param>
         /// <param name="expectedUtterance">Expected utterance.</param>
         /// <param name="actualUtterance">Actual utterance.</param>
+        /// <param name="score">Confidence score for test case result.</param>
         /// <param name="group">Test case group name.</param>
         /// <param name="testName">Test name.</param>
         /// <param name="because">Because.</param>
@@ -28,6 +29,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
+            double score,
             string group,
             string testName,
             string because,
@@ -37,6 +39,7 @@ namespace NLU.DevOps.ModelPerformance
             this.TargetKind = targetKind;
             this.ExpectedUtterance = expectedUtterance;
             this.ActualUtterance = actualUtterance;
+            this.Score = score;
             this.Group = group;
             this.TestName = testName;
             this.Because = because;
@@ -72,6 +75,11 @@ namespace NLU.DevOps.ModelPerformance
         /// Gets the actual utterance.
         /// </summary>
         public LabeledUtterance ActualUtterance { get; }
+
+        /// <summary>
+        /// Gets the confidence score.
+        /// </summary>
+        public double Score { get; }
 
         /// <summary>
         /// Gets the justification.
