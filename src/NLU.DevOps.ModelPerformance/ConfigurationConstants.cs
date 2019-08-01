@@ -19,6 +19,11 @@ namespace NLU.DevOps.ModelPerformance
         public const string ActualUtterancesPathKey = "actual";
 
         /// <summary>
+        /// A Boolean value that signals whether to generate text comparison tests.
+        /// </summary>
+        public const string CompareTextKey = "compareText";
+
+        /// <summary>
         /// The test label key.
         /// </summary>
         public const string TestLabelKey = "testLabel";

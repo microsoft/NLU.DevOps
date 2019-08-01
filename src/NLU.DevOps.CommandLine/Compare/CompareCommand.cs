@@ -4,6 +4,7 @@
 namespace NLU.DevOps.CommandLine.Compare
 {
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using ModelPerformance;
@@ -21,6 +22,7 @@ namespace NLU.DevOps.CommandLine.Compare
             var parameters = CreateParameters(
                 (ConfigurationConstants.ExpectedUtterancesPathKey, options.ExpectedUtterancesPath),
                 (ConfigurationConstants.ActualUtterancesPathKey, options.ActualUtterancesPath),
+                (ConfigurationConstants.CompareTextKey, options.CompareText.ToString(CultureInfo.InvariantCulture)),
                 (ConfigurationConstants.TestLabelKey, options.TestLabel));
 
             var arguments = new List<string> { $"-p:{parameters}" };
@@ -33,7 +35,7 @@ namespace NLU.DevOps.CommandLine.Compare
             {
                 var expectedUtterances = Read<List<LabeledUtterance>>(options.ExpectedUtterancesPath);
                 var actualUtterances = Read<List<ScoredLabeledUtterance>>(options.ExpectedUtterancesPath);
-                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances);
+                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, options.CompareText);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
                 Write(metadataPath, compareResults.TestCases);
