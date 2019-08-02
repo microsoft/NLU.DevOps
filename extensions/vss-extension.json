@@ -5,7 +5,7 @@
     "name": "NLU.DevOps",
     "description": "A collection of tasks and results tabs for NLU.DevOps",
     "publisher": "NLUDevOps",
-    "public": true,
+    "public": false,
     "tags": [
         "Build"
     ],
@@ -62,5 +62,10 @@
                 "name": "tasks/NLUCleanV0"
             }
         }
-    ]
+    ],
+    "content": {
+        "details": {
+            "path": "overview.md"
+        }
+    }
 }
