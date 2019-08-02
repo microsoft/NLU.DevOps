@@ -1,0 +1,46 @@
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /pipelines/nlu-extension.yml
+    - /models
+    - /src
+  
+steps:
+- task: DotNetCoreCLI@2
+  displayName: Build NLU.DevOps solution
+  inputs:
+    projects: src/NLU.DevOps.sln
+    arguments: --configuration Release /warnaserror
+
+- task: DotNetCoreCLI@2
+  displayName: Create NuGet package for NLU.DevOps.CommandLine
+  inputs:
+    command: pack
+    packagesToPack: src/NLU.DevOps.CommandLine
+    configuration: Release
+
+- task: NLUTrain@0
+  displayName: Train NLU model
+  inputs:
+    service: $(nlu.service)
+    utterances: models/utterances.json
+    modelSettings: models/settings.$(nlu.service).json
+    nupkgPath: $(Build.ArtifactStagingDirectory)
+
+- task: NLUTest@0
+  displayName: Test NLU model
+  inputs:
+    service: $(nlu.service)
+    utterances: models/tests.json
+    nupkgPath: $(Build.ArtifactStagingDirectory)
+    publishTestResults: true
+
+- task: NLUClean@0
+  displayName: Cleanup the NLU service
+  condition: and(always(), ne(variables['nlu.ci'], 'false'))
+  inputs:
+    service: $(nlu.service)
+    nupkgPath: $(Build.ArtifactStagingDirectory)
