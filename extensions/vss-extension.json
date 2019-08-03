@@ -5,7 +5,7 @@
     "name": "NLU.DevOps",
     "description": "A collection of tasks and results tabs for NLU.DevOps",
     "publisher": "NLUDevOps",
-    "public": false,
+    "public": true,
     "icons": {
         "default": "images/icon.png"
     },
