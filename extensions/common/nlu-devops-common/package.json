@@ -1,6 +1,6 @@
 {
     "name": "nlu-devops-common",
-    "version": "0.0.1",
+    "version": "0.1.3",
     "dependencies": {
         "azure-pipelines-task-lib": "^2.8.0"
     }
