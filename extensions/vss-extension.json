@@ -6,6 +6,9 @@
     "description": "A collection of tasks and results tabs for NLU.DevOps",
     "publisher": "NLUDevOps",
     "public": false,
+    "icons": {
+        "default": "images/icon.png"
+    },
     "tags": [
         "Build"
     ],
