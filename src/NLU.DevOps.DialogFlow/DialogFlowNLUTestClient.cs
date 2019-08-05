@@ -22,6 +22,7 @@ namespace NLU.DevOps.DialogFlow
     internal sealed class DialogFlowNLUTestClient : DefaultNLUTestClient
     {
         private const string DialogFlowClientKeyJsonConfigurationKey = "dialogflowClientKeyJson";
+        private const string DialogFlowClientKeyPathConfigurationKey = "dialogflowClientKeyPath";
         private const string DialogFlowProjectIdConfigurationKey = "dialogflowProjectId";
         private const string DialogFlowSessionIdConfigurationKey = "dialogflowSessionId";
 
@@ -143,8 +144,12 @@ namespace NLU.DevOps.DialogFlow
                 return this.sessionsClient;
             }
 
-            var keyJson = this.GetConfigurationValue(DialogFlowClientKeyJsonConfigurationKey);
-            var googleCredential = GoogleCredential.FromJson(keyJson);
+            var keyPath = this.GetConfigurationValue(DialogFlowClientKeyPathConfigurationKey, true);
+            var googleCredential = keyPath != null
+                ? GoogleCredential.FromFile(keyPath)
+                : GoogleCredential.FromJson(
+                    this.GetConfigurationValue(DialogFlowClientKeyJsonConfigurationKey));
+
             var builder = new SessionsClientBuilder
             {
                 ChannelCredentials = googleCredential.ToChannelCredentials(),
