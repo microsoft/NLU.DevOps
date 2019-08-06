@@ -1,14 +1,14 @@
 # Lex bot configuration
 
-The `train` and `test` sub-commands in the NLU.DevOps CLI tool both accept an `--service-settings` parameter, which allows the user to configure entity types, as well as other NLU service specific features such as builtin intents.
+The `train` and `test` sub-commands in the NLU.DevOps CLI tool both accept an `--model-settings` parameter, which allows the user to configure entity types, as well as other NLU provider-specific features such as builtin intents.
 
-The `--service-settings` for Lex is a JSON object with two properties,  `importBotTemplate` and `slots`. The former allows you to specify a partial Lex import JSON with identical schema to the [Lex import JSON schema](https://docs.aws.amazon.com/lex/latest/dg/import-export-format.html). The latter refers entity type configurations for any slots that show up in training utterances.
+The `--model-settings` for Lex is a JSON object with two properties,  `importBotTemplate` and `slots`. The former allows you to specify a partial Lex import JSON with identical schema to the [Lex import JSON schema](https://docs.aws.amazon.com/lex/latest/dg/import-export-format.html). The latter refers entity type configurations for any slots that show up in training utterances.
 
 ## Configuring Lex slots
 
 ### Custom slots
 
-To configure an entity type with a custom slot on Lex, add the following to the `importBotTemplate` property of your Lex settings JSON (i.e., the [`--service-settings`](Train.md#-e---service-settings) file supplied to the `train` command):
+To configure an entity type with a custom slot on Lex, add the following to the `importBotTemplate` property of your Lex settings JSON (i.e., the [`--model-settings`](Train.md#-m---model-settings) file supplied to the `train` command):
 ```json
 {
   "slots": [
@@ -47,7 +47,7 @@ Note that in the case of `Genre`, we needed to remap the slot type to a name tha
 
 ### Built-in slots
 
-To configure an entity type as a built-in slot type from Lex, add the following to the `slots` property of your Lex settings JSON (i.e., the [`--service-settings`](Train.md#-e---service-settings) file supplied to the `train` command):
+To configure an entity type as a built-in slot type from Lex, add the following to the `slots` property of your Lex settings JSON (i.e., the [`--model-settings`](Train.md#-m---model-settings) file supplied to the `train` command):
 ```json
 {
   "slots": [
@@ -63,7 +63,7 @@ Any intents that include utterances with the `Genre` entity will include a slot 
 
 ## Configuring builtin intents
 
-To configure a built-in intent for Lex, add the following to the `importBotTemplate` property of your Lex settings JSON (i.e., the [`--service-settings`](Train.md#-e---service-settings) file supplied to the `train` command):
+To configure a built-in intent for Lex, add the following to the `importBotTemplate` property of your Lex settings JSON (i.e., the [`--model-settings`](Train.md#-m---model-settings) file supplied to the `train` command):
 ```json
 {
   "importBotTemplate": {

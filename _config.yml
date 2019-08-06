@@ -11,9 +11,14 @@ include:
   - docs/Test.md
   - docs/Clean.md
   - docs/Compare.md
-  - docs/LuisSettings.md
-  - docs/LuisSecrets.md
-  - docs/LexSettings.md
-  - docs/LexSecrets.md
+  - docs/LuisModelConfiguration.md
+  - docs/LuisEndpointConfiguration.md
+  - docs/LexModelConfiguration.md
+  - docs/LexEndpointConfiguration.md
+  - docs/DialogflowEndpointConfiguration.md
   - docs/AzurePipelines.md
   - docs/CliExtensions.md
+  - docs/NLUTrainTask.md
+  - docs/NLUTestTask.md
+  - docs/NLUCleanTask.md
+  - extensions/overview.md

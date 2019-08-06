@@ -22,7 +22,7 @@ namespace NLU.DevOps.CommandLine.Clean
 
         private async Task RunAsync()
         {
-            this.Log("Cleaning NLU service...");
+            this.Log("Cleaning NLU model...");
             await this.NLUTrainClient.CleanupAsync().ConfigureAwait(false);
 
             if (this.Options.DeleteAppSettings)

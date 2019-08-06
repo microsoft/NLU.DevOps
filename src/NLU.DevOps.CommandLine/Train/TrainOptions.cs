@@ -5,7 +5,7 @@ namespace NLU.DevOps.CommandLine.Train
 {
     using global::CommandLine;
 
-    [Verb("train", HelpText = "Trains the NLU service.")]
+    [Verb("train", HelpText = "Trains the NLU model.")]
     internal class TrainOptions : BaseOptions
     {
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = false)]
@@ -14,7 +14,7 @@ namespace NLU.DevOps.CommandLine.Train
         [Option('m', "model-settings", HelpText = "Path to NLU model settings.", Required = false)]
         public string SettingsPath { get; set; }
 
-        [Option('a', "save-appsettings", HelpText = "Flag to save NLU service instance appsettings.", Required = false)]
+        [Option('a', "save-appsettings", HelpText = "Flag to save NLU model instance appsettings.", Required = false)]
         public bool SaveAppSettings { get; set; }
     }
 }

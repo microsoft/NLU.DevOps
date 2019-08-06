@@ -52,7 +52,7 @@ namespace NLU.DevOps.Core
         }
 
         /// <summary>
-        /// Tests the NLU service.
+        /// Tests the NLU model.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="query">Query to test.</param>
@@ -60,7 +60,7 @@ namespace NLU.DevOps.Core
         protected abstract Task<LabeledUtterance> TestAsync(TQuery query, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Tests the NLU service using speech.
+        /// Tests the NLU model using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="speechFile">Speech file to test on.</param>
@@ -69,7 +69,7 @@ namespace NLU.DevOps.Core
         protected abstract Task<LabeledUtterance> TestSpeechAsync(string speechFile, TQuery query, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Disposes the NLU service.
+        /// Disposes the NLU client.
         /// </summary>
         /// <param name="disposing">
         /// <code>true</code> if disposing, otherwise <code>false</code>.

@@ -65,7 +65,7 @@ steps:
       --save-appsettings
 
 - task: DotNetCoreCLI@2
-  displayName: Test the NLU service with text
+  displayName: Test the NLU model with text
   condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
   inputs:
     command: custom
@@ -77,7 +77,7 @@ steps:
       --output $(Agent.TempDirectory)/text/results.json
 
 - task: DotNetCoreCLI@2
-  displayName: Test the NLU service with speech
+  displayName: Test the NLU model with speech
   condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
   inputs:
     command: custom
@@ -91,7 +91,7 @@ steps:
       --output $(Agent.TempDirectory)/speech/results.json
 
 - task: DotNetCoreCLI@2
-  displayName: Cleanup the NLU service
+  displayName: Cleanup the NLU model
   condition: and(always(), ne(variables['nlu.ci'], 'false'))
   inputs:
     command: custom

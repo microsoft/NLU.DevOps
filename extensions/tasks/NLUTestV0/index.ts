@@ -25,10 +25,10 @@ async function runNLUTest(output): Promise<any> {
         .arg(output)
         .arg("-v");
 
-    const serviceSettings = tl.getInput("modelSettings");
-    if (serviceSettings) {
+    const modelSettings = tl.getInput("modelSettings");
+    if (modelSettings) {
         tool.arg("-m")
-            .arg(serviceSettings);
+            .arg(modelSettings);
     }
 
     if (tl.getBoolInput("speech")) {

@@ -14,7 +14,7 @@ namespace NLU.DevOps.Models
     public interface INLUTestClient : IDisposable
     {
         /// <summary>
-        /// Tests the NLU service.
+        /// Tests the NLU model.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="query">Query to test.</param>
@@ -24,7 +24,7 @@ namespace NLU.DevOps.Models
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// Tests the NLU service using speech.
+        /// Tests the NLU model using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="speechFile">Speech file to test on.</param>

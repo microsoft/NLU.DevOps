@@ -26,7 +26,7 @@
         {
             "name": "service",
             "type": "string",
-            "label": "NLU.DevOps service moniker.",
+            "label": "NLU.DevOps provider moniker.",
             "required": true,
             "helpMarkDown": "Usually one of: 'luis', 'luisV3', or 'lex'."
         },

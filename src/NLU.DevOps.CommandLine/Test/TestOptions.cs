@@ -5,13 +5,13 @@ namespace NLU.DevOps.CommandLine.Test
 {
     using global::CommandLine;
 
-    [Verb("test", HelpText = "Runs test cases against the NLU service.")]
+    [Verb("test", HelpText = "Runs test cases against the NLU model.")]
     internal class TestOptions : BaseOptions
     {
         [Option('u', "utterances", HelpText = "Path to utterances.", Required = true)]
         public string UtterancesPath { get; set; }
 
-        [Option('m', "model-settings", HelpText = "Path to NLU service settings.", Required = false)]
+        [Option('m', "model-settings", HelpText = "Path to NLU model settings.", Required = false)]
         public string SettingsPath { get; set; }
 
         [Option("speech", HelpText = "Test using speech files.", Required = false)]

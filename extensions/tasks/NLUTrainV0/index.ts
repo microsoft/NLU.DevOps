@@ -13,10 +13,10 @@ async function run() {
             .arg("-a")
             .arg("-v");
 
-        const serviceSettings = tl.getInput("modelSettings");
-        if (serviceSettings) {
+        const modelSettings = tl.getInput("modelSettings");
+        if (modelSettings) {
             tool.arg("-m")
-                .arg(serviceSettings);
+                .arg(modelSettings);
         }
 
         const result = await tool.exec({

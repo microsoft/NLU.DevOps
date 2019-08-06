@@ -1,6 +1,6 @@
 # Generic utterances model
 
-The NLU.DevOps CLI tool uses a generic utterances format that can work with multiple NLU services, and also contains enough information for sensitivity and specificity testing across intents and entities.
+The NLU.DevOps CLI tool uses a generic utterances format that can work with multiple NLU providers, and also contains enough information for sensitivity and specificity testing across intents and entities.
 
 ## Example
 

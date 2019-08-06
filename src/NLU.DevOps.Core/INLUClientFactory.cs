@@ -6,7 +6,7 @@ namespace NLU.DevOps.Models
     using Microsoft.Extensions.Configuration;
 
     /// <summary>
-    /// NLU service factory.
+    /// NLU client factory.
     /// </summary>
     public interface INLUClientFactory
     {
