@@ -7,6 +7,19 @@ Continuous integration and deployment of NLU models.
 
 ## Getting Started
 
+### Getting Started with the NLU.DevOps Azure DevOps extension
+
+We have published an Azure DevOps extension that wraps the steps below into three pipeline tasks for training, testing and deleting your NLU model. To get started, install the [NLU.DevOps extension](https://marketplace.visualstudio.com/items?itemName=NLUDevOps.nlu-devops) to your Azure DevOps organization.
+
+See the Azure DevOps extension [overview](../extensions/overview.md) for more details.
+
+Detailed information for each Azure Pipelines task can be found in the `docs` folder:
+- [NLUTrain](docs/NLUTrainTask.md)
+- [NLUTest](docs/NLUTestTask.md)
+- [NLUClean](docs/NLUCleanTask.md)
+
+### Getting Started with the NLU.DevOps CLI
+
 To install the NLU.DevOps CLI tool, run:
 
 ```bash
@@ -17,18 +30,19 @@ This will install the CLI tool to your default .NET Core tools path. See the [do
 
 The CLI tool by default supports training and testing NLU models against [LUIS](https://www.luis.ai) and [Lex](https://aws.amazon.com/lex/).
 
-Detailed information on the CLI tool sub-commands and arguments can be found in the [docs](docs) folder:
-- [Training an NLU service](docs/Train.md)
-- [Testing an NLU service](docs/Test.md)
-- [Tearing down an NLU service](docs/Clean.md)
-- [Analyzing NLU service results](docs/Compare.md)
+Detailed information on the CLI tool sub-commands and arguments can be found in the `docs` folder:
+- [Training an NLU model](docs/Train.md)
+- [Testing an NLU model](docs/Test.md)
+- [Tearing down an NLU model](docs/Clean.md)
+- [Analyzing NLU model results](docs/Compare.md)
 - [Generic utterances model](docs/GenericUtterances.md)
-- [LUIS app configuration](docs/LuisSettings.md)
-- [Configuring LUIS secrets](docs/LuisSecrets.md)
-- [Lex bot configuration](docs/LexSettings.md)
-- [Configuring Lex secrets](docs/LexSecrets.md)
-- [Configuring NLU CI/CD with Azure Pipelines](docs/AzurePipelines.md)
-- [Extending the CLI to new NLU services](docs/CliExtensions.md)
+- [LUIS model configuration](docs/LuisModelConfiguration.md)
+- [LUIS endpoint configuration](docs/LuisEndpointConfiguration.md)
+- [Lex bot configuration](docs/LexModelConfiguration.md)
+- [Lex endpoint configuration](docs/LexEndpointConfiguration.md)
+- [Dialogflow endpoint configuration](docs/DialogflowEndpointConfiguration.md)
+- [Configuring LUIS CI/CD with Azure Pipelines](docs/AzurePipelines.md)
+- [Extending the CLI to new NLU providers](docs/CliExtensions.md)
 
 ## Contributing
 

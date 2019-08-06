@@ -1,6 +1,6 @@
-# Extending the CLI to new NLU services
+# Extending the CLI to new NLU providers
 
-By default, the NLU.DevOps CLI tool supports [LUIS](https://www.luis.ai) and [Lex](https://aws.amazon.com/lex/). You can extend CLI support to additional NLU services by implementing the `INLUService` and `INLUServiceFactory` interfaces. In this guide, we'll walk through the creation of a very simple NLU service that stores training utterances and returns them when there is an exact match on the utterance text.
+By default, the NLU.DevOps CLI tool supports [LUIS](https://www.luis.ai), [Lex](https://aws.amazon.com/lex/), and [Dialogflow](https://dialogflow.com). You can extend CLI support to additional NLU services by implementing the `INLUClientFactory` interface. In this guide, we'll walk through the creation of a very simple NLU service that stores training utterances and returns them when there is an exact match on the utterance text.
 
 ## Building the extension
 
@@ -24,7 +24,7 @@ dotnet add package System.Composition.AttributedModel
 ### 3. Implement `INLUService`
 Open the project in [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/).
 
-Add `DemoNLUService.cs` to your project:
+Add `DemoNLUClient.cs` to your project:
 ```cs
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -36,12 +36,13 @@ namespace NLU.DevOps.Demo
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using Models;
     using Newtonsoft.Json;
 
-    internal class DemoNLUService : INLUService
+    internal class DemoNLUClient : DefaultNLUTestClient, INLUTrainClient
     {
-        public DemoNLUService(string trainedUtterances)
+        public DemoNLUClient(string trainedUtterances)
         {
             this.Utterances = new List<LabeledUtterance>();
             if (trainedUtterances != null)
@@ -61,31 +62,31 @@ namespace NLU.DevOps.Demo
             return Task.CompletedTask;
         }
 
-        public Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
-        {
-            var matchedUtterance = Utterances.FirstOrDefault(u => u.Text == utterance);
-            return Task.FromResult(matchedUtterance ?? new LabeledUtterance(null, null, null));
-        }
-
-        public Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task CleanupAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
 
-        public void Dispose()
+        protected override Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
+        {
+            var matchedUtterance = Utterances.FirstOrDefault(u => u.Text == utterance);
+            return Task.FromResult(matchedUtterance ?? new LabeledUtterance(null, null, null));
+        }
+
+        protected override Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void Dispose(bool disposing)
         {
         }
     }
 }
 ```
 
-### 4. Implement `INLUServiceFactory`
-Add `DemoNLUServiceFactory.cs` to you project:
+### 4. Implement `INLUClientFactory`
+Add `DemoNLUClientFactory.cs` to your project:
 ```cs
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -96,12 +97,17 @@ namespace NLU.DevOps.Demo
     using Microsoft.Extensions.Configuration;
     using Models;
 
-    [Export("demo", typeof(INLUServiceFactory))]
-    public class DemoNLUServiceFactory : INLUServiceFactory
+    [Export("demo", typeof(INLUClientFactory))]
+    public class DemoNLUClientFactory : INLUClientFactory
     {
-        public INLUService CreateInstance(IConfiguration configuration, string settingsPath)
+        public INLUTrainClient CreateTrainInstance(IConfiguration configuration, string settingsPath)
         {
-            return new DemoNLUService(configuration["trainedUtterances"]);
+            return new DemoNLUClient(configuration["trainedUtterances"]);
+        }
+
+        public INLUTestClient CreateTestInstance(IConfiguration configuration, string settingsPath)
+        {
+            return new DemoNLUClient(configuration["trainedUtterances"]);
         }
     }
 }

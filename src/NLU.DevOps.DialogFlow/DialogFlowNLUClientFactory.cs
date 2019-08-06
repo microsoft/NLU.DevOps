@@ -9,7 +9,7 @@ namespace NLU.DevOps.DialogFlow
     using Models;
 
     /// <summary>
-    /// DialogFlow NLU client factory.
+    /// Dialogflow NLU client factory.
     /// </summary>
     [Export("dialogflow", typeof(INLUClientFactory))]
     public class DialogFlowNLUClientFactory : INLUClientFactory
@@ -23,7 +23,7 @@ namespace NLU.DevOps.DialogFlow
         /// <inheritdoc />
         public INLUTrainClient CreateTrainInstance(IConfiguration configuration, string settingsPath)
         {
-            throw new NotSupportedException("The DialogFlow NLU.DevOps package does not currently support training.");
+            throw new NotSupportedException("The Dialogflow NLU.DevOps package does not currently support training.");
         }
     }
 }

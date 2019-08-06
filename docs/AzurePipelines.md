@@ -1,6 +1,12 @@
-# Configuring NLU CI/CD with Azure Pipelines
+# Configuring LUIS CI/CD with Azure Pipelines
 
-The motivating scenario for the NLU.DevOps CLI tool was to make it simple to compose continuous integration and deployment (CI/CD) scripts for NLU scenarios. This document focuses on how to set up CI/CD for your NLU model on Azure Pipelines. We'll focus on a CI/CD pipeline for LUIS, as it is should be easy to generalize this approach for other NLU services. We've also included a section on [Generalizing the pipeline](#generalizing-the-pipeline), to demonstrate how you can structure your files so a single Azure Pipelines definition can be used for multiple NLU services.
+The motivating scenario for the NLU.DevOps CLI tool was to make it simple to compose continuous integration and deployment (CI/CD) scripts for NLU scenarios. This document focuses on how to set up CI/CD for your NLU model on Azure Pipelines. We'll focus on a CI/CD pipeline for LUIS, as it is should be easy to generalize this approach for other NLU providers. We've also included a section on [Generalizing the pipeline](#generalizing-the-pipeline), to demonstrate how you can structure your files so a single Azure Pipelines definition can be used for multiple NLU providers.
+
+## Azure DevOps Extension
+
+We have published an Azure DevOps extension that wraps the steps below into three pipeline tasks for training, testing and deleting your NLU model. To get started, install the [NLU.DevOps extension](https://marketplace.visualstudio.com/items?itemName=NLUDevOps.nlu-devops) to your Azure DevOps organization.
+
+See the Azure DevOps extension [overview](../extensions/overview.md) for more details.
 
 ## Continuous integration
 
@@ -21,7 +27,7 @@ This user story can be broken down into the following tasks:
 - [Compare the current test results with the results from master](#compare-the-current-test-results-with-the-results-from-master)
 
 ### Source Control Files
-We're going to be using the same music player scenario used in the [Training an NLU service](Train.md#getting-started) and [Testing an NLU service](Test.md#getting-started) getting started sections. We assume our source control already has the following files:
+We're going to be using the same music player scenario used in the [Training an NLU model](Train.md#getting-started) and [Testing an NLU model](Test.md#getting-started) getting started sections. We assume our source control already has the following files:
 
 ```bash
 > ls -1R .
@@ -34,7 +40,7 @@ utterances.json
 compare.py
 ```
 
-Where `utterances.json` contains training utterances, `tests.json` contains test utterances, `settings.json` contains the LUIS service configuration, and `compare.py` contains the Python script used to determine whether NLU model performance has improved in changes from a pull request.
+Where `utterances.json` contains training utterances, `tests.json` contains test utterances, `settings.json` contains the LUIS model configuration, and `compare.py` contains the Python script used to determine whether NLU model performance has improved in changes from a pull request.
 
 ### Install the CLI tool on the host
 
@@ -54,7 +60,7 @@ Add the following task to your Azure Pipeline:
 The `--tool-path` flag will install the CLI tool to `$(Agent.TempDirectory)/bin`. To allow the .NET Core CLI to discover the extension in future calls, we added the `task.prependpath` task to add the tool folder to the path. We'll uninstall the tool when we are finished using it in [Uninstall the CLI tool on the host](#uninstall-the-cli-tool-on-the-host).
 
 ### Retrieve an ARM Token
-One optional feature you may want to consider is the ability to assign an Azure LUIS resource to the LUIS app you create with the CLI tool. The primary reason for assigning an Azure resource to the LUIS app is to avoid the quota encountered when testing with the [`luisAuthoringKey`](LuisSecrets.md#luisauthoringkey).
+One optional feature you may want to consider is the ability to assign an Azure LUIS resource to the LUIS app you create with the CLI tool. The primary reason for assigning an Azure resource to the LUIS app is to avoid the quota encountered when testing with the [`luisAuthoringKey`](LuisEnd.md#luisauthoringkey).
 
 To add an Azure resource to the LUIS app you create, a valid ARM token is required. ARM tokens are generally valid for a short period of time, so you will need to configure your pipeline to retrieve a fresh ARM token for each build.
 
@@ -72,21 +78,21 @@ Add the following task to your Azure Pipeline:
 
 You'll need to configure an Azure service principal as a [service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=vsts) and set the name of the service connection to the `azureSubscription` variable.
 
-Also be sure to set the [`azureSubscriptionId`](LuisSecrets.md#azuresubscriptionid), [`azureResourceGroup`](LuisSecrets.md#azureresourcegroup), [`azureLuisResourceName`](LuisSecrets.md#azureluisresourcename), [`luisEndpointKey`](LuisSecrets.md#luisendpointkey) and [`luisEndpointRegion`](LuisSecrets.md#luisendpointregion) variables.
+Also be sure to set the [`azureSubscriptionId`](LuisEndpointConfiguration.md#azuresubscriptionid), [`azureResourceGroup`](LuisEndpointConfiguration.md#azureresourcegroup), [`azureLuisResourceName`](LuisEndpointConfiguration.md#azureluisresourcename), [`luisEndpointKey`](LuisEndpointConfiguration.md#luisendpointkey) and [`luisEndpointRegion`](LuisEndpointConfiguration.md#luisendpointregion) variables.
 
 ### Train the LUIS model
 
 Add the following task to your Azure Pipeline:
 ```yaml
 - task: DotNetCoreCLI@2
-  displayName: Train the NLU service
+  displayName: Train the NLU model
   inputs:
     command: custom
     custom: nlu
     arguments: train
       --service luis
       --utterances models/utterances.json
-      --service-settings models/settings.json
+      --model-settings models/settings.json
       --save-appsettings
 ```
 
@@ -111,14 +117,14 @@ The NLU.DevOps CLI tool will load configuration variables from `$"appsettings.{s
 Add the following task to your Azure Pipeline:
 ```yaml
 - task: DotNetCoreCLI@2
-  displayName: Test the NLU service with text
+  displayName: Test the NLU model with text
   inputs:
     command: custom
     custom: nlu
     arguments: test
       --service luis
       --utterances mdoels/tests.json
-      --service-settings models/settings.json
+      --model-settings models/settings.json
       --output $(Agent.TempDirectory)/results.json
 ```
 
@@ -133,7 +139,7 @@ results.json
 Add the following task to your Azure Pipeline:
 ```yaml
 - task: DotNetCoreCLI@2
-  displayName: Cleanup the NLU service
+  displayName: Cleanup the NLU model
   condition: always()
   inputs:
     command: custom
@@ -180,7 +186,7 @@ We write the test results to the `$(Build.ArtifactStagingDirectory)` for a futur
 TestResult.xml
 ```
 
-The `TestResult.xml` file that is created contains the sensitivity and specifity results in NUnit format, where true positives and true negatives are passing tests and false positives and false negatives are failing tests. See [Analyzing NLU service results](Compare.md) for more details.
+The `TestResult.xml` file that is created contains the sensitivity and specifity results in NUnit format, where true positives and true negatives are passing tests and false positives and false negatives are failing tests. See [Analyzing NLU model results](Compare.md) for more details.
 
 ### Uninstall the CLI tool on the host
 
@@ -299,21 +305,21 @@ Then set the variable `$(nlu.ci)` to `true` any time you wish to run a continuou
 
 ## Generalizing the pipeline
 
-If you plan to compare or evaluate multiple NLU services from your repository, you may use a single YAML build definition by parameterizing the Azure Pipeline on the NLU service name. E.g., rather than calling the `--service-settings` CLI parameter `settings.json`, you can suffix it with the NLU service identifier, e.g., `settings.luis.json`. The YAML for `train` and other tasks could then be configured as follows:
+If you plan to compare or evaluate multiple NLU providers from your repository, you may use a single YAML build definition by parameterizing the Azure Pipeline on the NLU provider name. E.g., rather than calling the `--model-settings` CLI parameter `settings.json`, you can suffix it with the NLU provider identifier, e.g., `settings.luis.json`. The YAML for `train` and other tasks could then be configured as follows:
 ```yaml
 - task: DotNetCoreCLI@2
-  displayName: Train the NLU service
+  displayName: Train the NLU model
   inputs:
     command: custom
     custom: nlu
     arguments: train
       --service $(nlu.service)
       --utterances utterances.json
-      --service-settings settings.$(nlu.service).json
+      --model-settings settings.$(nlu.service).json
       --save-appsettings
 ```
 
-You will need to set the variable `$(nlu.service)` to `luis` or whatever NLU service identifier you wish to use for the CI/CD builds.
+You will need to set the variable `$(nlu.service)` to `luis` or whatever NLU provider identifier you wish to use for the CI/CD builds.
 
 For example, if you wish to train and test on both LUIS and Lex, the file system would look as follows:
 ```bash

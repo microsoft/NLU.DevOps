@@ -5,10 +5,10 @@ namespace NLU.DevOps.CommandLine.Clean
 {
     using global::CommandLine;
 
-    [Verb("clean", HelpText = "Cleans up the NLU service.")]
+    [Verb("clean", HelpText = "Cleans up the NLU model.")]
     internal class CleanOptions : BaseOptions
     {
-        [Option('a', "delete-appsettings", HelpText = "Flag to delete NLU service instance appsettings.", Required = false)]
+        [Option('a', "delete-appsettings", HelpText = "Flag to delete NLU model instance appsettings.", Required = false)]
         public bool DeleteAppSettings { get; set; }
     }
 }

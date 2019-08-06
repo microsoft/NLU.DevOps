@@ -31,7 +31,7 @@ namespace NLU.DevOps.CommandLine.Train
         {
             try
             {
-                this.Log("Training NLU service...");
+                this.Log("Training NLU model...");
 
                 if (this.Options.UtterancesPath == null && this.Options.SettingsPath == null)
                 {

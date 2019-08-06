@@ -20,7 +20,7 @@ namespace NLU.DevOps.Core
         }
 
         /// <summary>
-        /// Tests the NLU service.
+        /// Tests the NLU model.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="utterance">Unlabeled utterance to test on.</param>
@@ -34,7 +34,7 @@ namespace NLU.DevOps.Core
         }
 
         /// <summary>
-        /// Tests the NLU service using speech.
+        /// Tests the NLU model using speech.
         /// </summary>
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="speechFile">Speech files to test on.</param>

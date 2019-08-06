@@ -46,7 +46,7 @@ namespace NLU.DevOps.CommandLine.Test
 
         private async Task RunAsync()
         {
-            this.Log("Running tests against NLU service...");
+            this.Log("Running tests against NLU model...");
 
             var testUtterances = this.LoadUtterances();
             if (this.Options.Speech && testUtterances.Any(utterance => utterance.SpeechFile == null))

@@ -1,6 +1,6 @@
-# Training an NLU service
+# Training an NLU model
 
-The NLU.DevOps CLI tool includes a sub-command that allows you to train an NLU service from generic utterances.
+The NLU.DevOps CLI tool includes a sub-command that allows you to train an NLU model from generic utterances.
 
 ## Getting Started
 
@@ -41,22 +41,22 @@ The `utterances.json` argument is the path to the generic utterances file, which
 
 See [Generic Utterances Model](GenericUtterances.md) for more information on the JSON schema for utterances.
 
-See [Configuring LUIS secrets](LuisSecrets.md) and [Configuring Lex secrets](LexSecrets.md) for more information on how to supply secrets, e.g., the authoring key, to the CLI tool.
+See the documentation on endpoint configuration for [LUIS](LuisEndpointConfiguration.md) and [Lex](LexEndpointConfiguration.md) for more information on how to supply endpoint settings and secrets, e.g., endpoint authentication keys, to the CLI tool.
 
 ## Detailed Usage
 
 ### `-s, --service`
-Identifier of the NLU service to run against. Try `luis` for [LUIS](https://www.luis.ai) or `lex` for [Lex](https://aws.amazon.com/lex/).
+Identifier of the NLU provider to run against. Try `luis` for [LUIS](https://www.luis.ai) or `lex` for [Lex](https://aws.amazon.com/lex/).
 
 ### `-u, --utterances`
 (Optional) Path to labeled utterances to include in the model.
 
-### `-e, --service-settings`
-(Optional) Path to NLU service-specific settings.
+### `-m, --model-settings`
+(Optional) Path to NLU provider-specific settings.
 
 E.g., run the following command:
 ```bash
-dotnet nlu train -s luis -u utterances.json -e settings.luis.json
+dotnet nlu train -s luis -u utterances.json -m settings.luis.json
 ```
 
 Your `utterances.json` file may contain entity labels in addition to intent labels, e.g.:
@@ -126,7 +126,7 @@ In this case, you must supply the `settings.luis.json` file that configures the 
 
 The `settings.luis.json` file in this case will be merged into the generated LUIS app JSON that will be imported into the version created by the train command, so the entity type for genre will use the builtin domain entity type, `Music.Genre`.
 
-See [LUIS App Configuration](LuisSettings.md) and [Lex App Configuration](LexSettings.md) for additional information on the kinds of settings, including entity types, that are supplied through this file.
+See [LUIS App Configuration](LuisModelConfiguration.md) and [Lex App Configuration](LexModelConfiguration.md) for additional information on the kinds of settings, including entity types, that are supplied through this file.
 
 ### `-a, --save-appsettings`
 
@@ -146,4 +146,12 @@ The train command may create a new LUIS application, and the subsequent call to 
 }
 ```
 
-See [Testing NLU Services](Test.md) for more information about the test command.
+See [Testing an NLU model](Test.md) for more information about the test command.
+
+### `-v, --verbose`
+
+(Optional) Use verbose logging when running the command.
+
+### `-q, --quiet`
+
+(Optional) Suppress logging when running the command.

@@ -6,14 +6,14 @@ namespace NLU.DevOps.Logging
     using Microsoft.Extensions.Logging;
 
     /// <summary>
-    /// Application logger for NLU services.
+    /// Application logger for NLU providers.
     /// </summary>
     public static class ApplicationLogger
     {
         private static ILoggerFactory loggingFactory;
 
         /// <summary>
-        /// Gets or sets the logger factory used by NLU services to create logger.
+        /// Gets or sets the logger factory used by NLU providers to create logger.
         /// </summary>
         public static ILoggerFactory LoggerFactory
         {

@@ -13,7 +13,7 @@ namespace NLU.DevOps.CommandLine
         {
             if (!ServiceResolver.TryResolve<INLUClientFactory>(options, out var serviceFactory))
             {
-                throw new InvalidOperationException($"Invalid service type '{options.Service}'.");
+                throw new InvalidOperationException($"Invalid NLU provider type '{options.Service}'.");
             }
 
             return serviceFactory.CreateTrainInstance(configuration, settingsPath);
@@ -23,7 +23,7 @@ namespace NLU.DevOps.CommandLine
         {
             if (!ServiceResolver.TryResolve<INLUClientFactory>(options, out var serviceFactory))
             {
-                throw new InvalidOperationException($"Invalid service type '{options.Service}'.");
+                throw new InvalidOperationException($"Invalid NLU provider type '{options.Service}'.");
             }
 
             return serviceFactory.CreateTestInstance(configuration, settingsPath);

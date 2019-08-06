@@ -1,6 +1,6 @@
-# Testing an NLU service
+# Testing an NLU model
 
-The NLU.DevOps CLI tool includes a sub-command that allows you to test an NLU service from generic utterances.
+The NLU.DevOps CLI tool includes a sub-command that allows you to test an NLU model from generic utterances.
 
 ## Getting started
 
@@ -39,7 +39,7 @@ The `utterances.json` argument is the path to the generic utterances file, which
 ]
 ```
 
-The resulting output will be a JSON array in the generic utterances format, with the intents and entities labeled by the NLU service. E.g., after training a LUIS service from [Getting Started section in Training NLU Services](Train.md#getting-started), testing with the example utterances above will output the following results:
+The resulting output will be a JSON array in the generic utterances format, with the intents and entities labeled by the NLU model. E.g., after training a LUIS model from [Getting Started section in Training an NLU model](Train.md#getting-started), testing with the example utterances above will output the following results:
 
 ```json
 [
@@ -72,7 +72,7 @@ The resulting output will be a JSON array in the generic utterances format, with
 
 See [Generic Utterances Model](GenericUtterances.md) for more information on the JSON schema for utterances.
 
-See [Configuring LUIS secrets](LuisSecrets.md) and [Configuring Lex secrets](LexSecrets.md) for more information on how to supply secrets, e.g., the endpoint key, to the CLI tool.
+See the documentation on endpoint configuration for [LUIS](LuisEndpointConfiguration.md), [Lex](LexEndpointConfiguration.md), and [Dialogflow](DialogflowEndpointConfiguration.md) for more information on how to supply endpoint settings and secrets, e.g., endpoint authentication keys, to the CLI tool.
 
 ## Getting started with speech
 
@@ -86,7 +86,7 @@ The NLU.DevOps CLI tool also supports testing from speech. You still must supply
 }
 ```
 
-The `speechFile` corresponds to the file name of an audio file in the current working directory. You may also specify the `--speech-directory` option to set the base path for the speech files. Please note, the LUIS and Lex service options currently only support the 16KHz WAV format.
+The `speechFile` corresponds to the file name of an audio file in the current working directory. You may also specify the `--speech-directory` option to set the base path for the speech files. Please note, the LUIS and Lex provider options currently only support the 16KHz WAV format.
 
 To kick off testing from speech with the CLI tool, run the following command:
 
@@ -94,15 +94,15 @@ To kick off testing from speech with the CLI tool, run the following command:
 dotnet nlu test -s luis --speech -u utterances.json
 ```
 
-## Testing an existing NLU service
+## Testing an existing NLU model
 
-You do not need to train your NLU service with the NLU.DevOps CLI tool in order to test it with the tool. You can just as easily point the tool at existing trained models, e.g., on LUIS or Lex without training from the CLI tool.
+You do not need to train your NLU model with the NLU.DevOps CLI tool in order to test it with the tool. You can just as easily point the tool at existing trained models, e.g., on LUIS or Lex without training from the CLI tool.
 
-See [Configuring LUIS secrets](LuisSecrets.md) and [Configuring Lex secrets](LexSecrets.md) for more information on how to point to an existing service, e.g., with a LUIS app ID.
+See the documentation on endpoint configuration for [LUIS](LuisEndpointConfiguration.md), [Lex](LexEndpointConfiguration.md), and [Dialogflow](DialogflowEndpointConfiguration.md) for more information on how to point to an existing model, e.g., with a LUIS app ID.
 
 ## Caching speech-to-text transcriptions
 
-Running speech-to-text can be expensive both in terms of costs for the NLU service and in terms of compute time for how long it takes to transcribe the speech before extracting intents and entities. The NLU.DevOps CLI tool allows you to specify a transcriptions file path, which is a JSON object containing a mapping of speech file names to transcribed text, e.g.:
+Running speech-to-text can be expensive both in terms of costs for the NLU model and in terms of compute time for how long it takes to transcribe the speech before extracting intents and entities. The NLU.DevOps CLI tool allows you to specify a transcriptions file path, which is a JSON object containing a mapping of speech file names to transcribed text, e.g.:
 
 ```json
 {
@@ -110,7 +110,7 @@ Running speech-to-text can be expensive both in terms of costs for the NLU servi
 }
 ```
 
-When the `--transcriptions` option is used, the CLI tool will check to see if a transcription is already cached, and if so, call the test API for text. The tool will also save any new transcriptions that are computed by the NLU service to that same file.
+When the `--transcriptions` option is used, the CLI tool will check to see if a transcription is already cached, and if so, call the test API for text. The tool will also save any new transcriptions that are computed by the NLU model to that same file.
 
 To kick off testing from speech with cached transcriptions, run the following command:
 
@@ -121,10 +121,10 @@ dotnet nlu test -s luis --speech -u utterances.json -t transcriptions.json
 ## Detailed Usage
 
 ### `-s, --service`
-Identifier of the NLU service to run against. Try `luis` for [LUIS](https://www.luis.ai) or `lex` for [Lex](https://aws.amazon.com/lex/).
+Identifier of the NLU provider to run against. Try `luis` for [LUIS](https://www.luis.ai), `lex` for [Lex](https://aws.amazon.com/lex/), or `dialogflow` for [Dialogflow](https://dialogflow.com).
 
 ### `-u, --utterances`
-Path to labeled utterances to test with. Only the text field from each utterance will be sent to the NLU service (or the audio in the case of the `--speech` file).
+Path to labeled utterances to test with. Only the text field from each utterance will be sent to the NLU provider (or the audio in the case of the `--speech` file).
 
 ### `-o, --output`
 (Optional) Path to labeled results output.
@@ -134,7 +134,7 @@ If the `--output` option is not provided, the results will be written to stdout.
 ### `--speech`
 (Optional) Test using speech files from utterances.
 
-Please note, the LUIS and Lex service options currently only support the 16KHz WAV format.
+Please note, the LUIS and Lex provider options currently only support the 16KHz WAV format.
 
 See [Getting started with speech](#getting-started-with-speech).
 
@@ -148,8 +148,15 @@ See [Getting started with speech](#getting-started-with-speech).
 
 See [Caching speech-to-text transcriptions](#caching-speech-to-text-transcriptions).
 
-### `-e, --service-settings`
-(Optional) Path to NLU service-specific settings.
+### `-m, --model-settings`
+(Optional) Path to NLU provider-specific model settings.
 
-This is currently only used for LUIS, see the section on LUIS prebuilt entities in [Configuring prebuilt entities](LuisSettings.md#configuring-prebuilt-entities).
+This is currently only used for LUIS, see the section on LUIS prebuilt entities in [Configuring prebuilt entities](LuisModelConfiguration.md#configuring-prebuilt-entities).
 
+### `-v, --verbose`
+
+(Optional) Use verbose logging when running the command.
+
+### `-q, --quiet`
+
+(Optional) Suppress logging when running the command.

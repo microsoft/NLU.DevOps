@@ -1,8 +1,8 @@
-# Configuring Lex secrets
+# Lex endpoint configuration
 
-Before using the NLU.DevOps tool, you need to supply AWS secrets to be able to train or test Lex. To split up the keys settings that are "safe" for check-in to source control and those that should remain secure, the NLU.DevOps tool splits the settings into the [`--service-settings`](Train.md#-e---service-settings) command line option, which points to a file that can be checked in to source control, and settings configured through [`Microsoft.Extensions.Configuration`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.configuration?view=aspnetcore-2.1) (i.e., an `appsettings.json` file or environment variables). This document focuses on the latter. See [Lex bot configuration](LexSettings.md) for details about the former.
+Before using the NLU.DevOps tool, you need to supply configuration values and secrets to be able to train or test Lex. To split up the keys settings that are "safe" for check-in to source control and those that should remain secure, or remain variable for different environments, the NLU.DevOps tool splits the settings into the [`--model-settings`](Train.md#-m---model-settings) command line option, which points to a file that can be checked in to source control, and settings configured through [`Microsoft.Extensions.Configuration`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.configuration?view=aspnetcore-2.1) (i.e., an `appsettings.local.json` file or environment variables). This document focuses on the latter. See [Lex bot configuration](LexModelConfiguration.md) for details about the former.
 
-## Configuring secrets for training
+## Configuration for training
 
 At a minimum to get started, you must supply the AWS access key and secret key with [relevant permissions](https://docs.aws.amazon.com/lex/latest/dg/access-control-managing-permissions.html) for Lex authoring, as well as the AWS region to train a model with the NLU.DevOps CLI tools.
 ```json
@@ -13,7 +13,7 @@ At a minimum to get started, you must supply the AWS access key and secret key w
 }
 ```
 
-This will allow you to call the `train` sub-command for Lex (see [Training an NLU Service](Train.md) for more details).
+This will allow you to call the `train` sub-command for Lex (see [Training an NLU model](Train.md) for more details).
 
 Options to consider for training a Lex bot include:
 - [`awsAccessKey`](#awsaccesskey)
@@ -23,7 +23,7 @@ Options to consider for training a Lex bot include:
 - [`lexBotAlias`](#lexbotalias)
 - [`lexBotNamePrefix`](#lexbotnameprefix)
 
-## Configuring secrets for testing
+## Configuration for testing
 
 At a minimum to get started, you must supply the AWS access key and secret key with [relevant permissions](https://docs.aws.amazon.com/lex/latest/dg/access-control-managing-permissions.html) for Lex queries, as well as the AWS region, Lex bot name, and Lex bot alias to test a model with the NLU.DevOps CLI tools.
 ```json
@@ -36,7 +36,7 @@ At a minimum to get started, you must supply the AWS access key and secret key w
 }
 ```
 
-This will allow you to call the `test` sub-command for Lex (see [Testing an NLU Service](Test.md) for more details).
+This will allow you to call the `test` sub-command for Lex (see [Testing an NLU model](Test.md) for more details).
 
 To simplify the configuration process in continuous integration scenarios, you can use the [`--save-appsettings`](Train.md#-a---save-appsettings) option to save the Lex bot name and bot alias used to `train` in a `appsettings.lex.json` file.
 
@@ -47,7 +47,7 @@ Options to consider for testing a Lex bot include:
 - [`lexBotName`](#lexbotname)
 - [`lexBotAlias`](#lexbotalias)
 
-## Configuring secrets for clean
+## Configuration for clean
 
 At a minimum to get started, you must supply the AWS access key and secret key with [relevant permissions](https://docs.aws.amazon.com/lex/latest/dg/access-control-managing-permissions.html) for Lex authoring, as well as the AWS region, Lex bot name, and Lex bot alias to delete a Lex bot with the NLU.DevOps CLI tools.
 ```json
@@ -60,7 +60,7 @@ At a minimum to get started, you must supply the AWS access key and secret key w
 }
 ```
 
-This will allow you to call the `clean` sub-command for Lex (see [Tearing down an NLU Service](Clean.md) for more details).
+This will allow you to call the `clean` sub-command for Lex (see [Tearing down an NLU model](Clean.md) for more details).
 
 To simplify the configuration process in continuous integration scenarios, you can use the [`--save-appsettings`](Train.md#-a---save-appsettings) option to save the Lex bot name and bot alias used to `train` in a `appsettings.lex.json` file.
 

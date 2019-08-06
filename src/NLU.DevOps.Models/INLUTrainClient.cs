@@ -14,7 +14,7 @@ namespace NLU.DevOps.Models
     public interface INLUTrainClient : IDisposable
     {
         /// <summary>
-        /// Trains the NLU service.
+        /// Trains the NLU model.
         /// </summary>
         /// <returns>Task to await the training operation.</returns>
         /// <param name="utterances">Labeled utterances to train on.</param>
@@ -24,7 +24,7 @@ namespace NLU.DevOps.Models
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// Cleans up the NLU service.
+        /// Cleans up the NLU model.
         /// </summary>
         /// <returns>Task to await the cleanup operation.</returns>
         /// <param name="cancellationToken">Cancellation token.</param>
