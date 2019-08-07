@@ -11,7 +11,7 @@ Continuous integration and deployment of NLU models.
 
 We have published an Azure DevOps extension that wraps the steps below into three pipeline tasks for training, testing and deleting your NLU model. To get started, install the [NLU.DevOps extension](https://marketplace.visualstudio.com/items?itemName=NLUDevOps.nlu-devops) to your Azure DevOps organization.
 
-See the Azure DevOps extension [overview](../extensions/overview.md) for more details.
+See the Azure DevOps extension [overview](extensions/overview.md) for more details.
 
 Detailed information for each Azure Pipelines task can be found in the `docs` folder:
 - [NLUTrain](docs/NLUTrainTask.md)
