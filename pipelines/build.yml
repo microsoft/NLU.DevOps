@@ -1,6 +1,3 @@
-resources:
-- repo: self
-  fetchDepth: 15
 queue:
   name: Hosted VS2017
 
@@ -12,7 +9,15 @@ trigger:
     include:
     - /pipelines/build.yml
     - /src
-    
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /pipelines/build.yml
+    - /src
+
 steps:
 - task: DotNetCoreCLI@2
   displayName: Build solution

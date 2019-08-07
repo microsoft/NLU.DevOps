@@ -7,6 +7,15 @@ trigger:
     - /pipelines/nlu.yml
     - /models
     - /src
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /pipelines/nlu.yml
+    - /models
+    - /src
 
 variables:
 - name: recordingsDirectory
