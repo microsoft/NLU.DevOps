@@ -5,9 +5,16 @@ trigger:
   paths:
     include:
     - /pipelines/nlu-provider.yml
-    - /models
     - /src
-  
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /pipelines/nlu-provider.yml
+    - /src
+
 steps:
 - task: DotNetCoreCLI@2
   displayName: Build NLU.DevOps solution
