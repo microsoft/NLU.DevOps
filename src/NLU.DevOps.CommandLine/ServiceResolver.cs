@@ -23,10 +23,9 @@ namespace NLU.DevOps.CommandLine
                     return defaultSearchPath;
                 }
 
-                var paths = new string[9];
+                var paths = new string[8];
                 paths[0] = AppDomain.CurrentDomain.BaseDirectory;
-                Array.Fill(paths, "..", 1, paths.Length - 2);
-                paths[paths.Length - 1] = assemblyName;
+                Array.Fill(paths, "..", 1, paths.Length - 1);
                 var searchRoot = Path.GetFullPath(Path.Combine(paths));
                 if (!Directory.Exists(searchRoot))
                 {
