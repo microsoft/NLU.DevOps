@@ -8,6 +8,7 @@ namespace NLU.DevOps.ModelPerformance
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using Core;
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;
@@ -410,6 +411,7 @@ namespace NLU.DevOps.ModelPerformance
         private static List<LabeledUtterance> Read(string path)
         {
             var serializer = JsonSerializer.CreateDefault();
+            serializer.Converters.Add(new LabeledUtteranceConverter());
             using (var jsonReader = new JsonTextReader(File.OpenText(path)))
             {
                 return serializer.Deserialize<List<LabeledUtterance>>(jsonReader);

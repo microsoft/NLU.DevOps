@@ -20,5 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NLU.DevOps.Models\NLU.DevOps.Models.csproj" />
+    <ProjectReference Include="..\NLU.DevOps.Core\NLU.DevOps.Core.csproj" />
   </ItemGroup>
 </Project>
