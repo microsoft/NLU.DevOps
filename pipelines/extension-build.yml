@@ -1,0 +1,43 @@
+pool:
+  vmImage: 'ubuntu-latest'
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /extensions/
+    - /pipelines/
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- task: PowerShell@2
+  displayName: Update version in the tasks patch using BuildId 
+  inputs:
+    filePath: 'pipelines/scripts/bump_version.ps1'
+    arguments: '$(Build.BuildId)'
+    pwsh: true
+
+- script: |
+    npm install
+    npm run lint
+    npm run build
+  workingDirectory: extensions
+  displayName: 'npm install, lint and build'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: extensions
+    Contents: |
+      **/*.vsix
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: 'extensionvsix'
+    targetPath: '$(Build.ArtifactStagingDirectory)'
