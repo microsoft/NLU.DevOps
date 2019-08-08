@@ -8,15 +8,23 @@ async function run() {
         tool.arg("train")
             .arg("-s")
             .arg(tl.getInput("service"))
-            .arg("-u")
-            .arg(tl.getInput("utterances"))
             .arg("-a")
             .arg("-v");
+
+        const utterances = tl.getInput("utterances");
+        if (utterances) {
+            tool.arg("-u")
+                .arg(utterances)
+        }
 
         const modelSettings = tl.getInput("modelSettings");
         if (modelSettings) {
             tool.arg("-m")
                 .arg(modelSettings);
+        }
+
+        if (!utterances && !modelSettings) {
+            throw new Error("Must provide either 'utterances' or 'modelSetting' task input.");
         }
 
         const result = await tool.exec({
