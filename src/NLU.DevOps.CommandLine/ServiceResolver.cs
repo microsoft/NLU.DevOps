@@ -32,7 +32,14 @@ namespace NLU.DevOps.CommandLine
                     return null;
                 }
 
-                return Directory.GetFiles(searchRoot, assemblyName, SearchOption.AllDirectories).FirstOrDefault();
+                try
+                {
+                    return Directory.GetFiles(searchRoot, assemblyName, SearchOption.AllDirectories).FirstOrDefault();
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return null;
+                }
             }
 
             var assemblyPath = options.IncludePath ?? getAssemblyPath();
