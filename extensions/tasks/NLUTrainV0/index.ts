@@ -14,7 +14,7 @@ async function run() {
         const utterances = tl.getInput("utterances");
         if (utterances) {
             tool.arg("-u")
-            .arg(utterances)
+                .arg(utterances)
         }
 
         const modelSettings = tl.getInput("modelSettings");
@@ -24,7 +24,7 @@ async function run() {
         }
 
         if (!utterances && !modelSettings) {
-            throw new Error("Please provide 'utterances' or 'modelSetting'.");
+            throw new Error("Must provide either 'utterances' or 'modelSetting' task input.");
         }
 
         const result = await tool.exec({
