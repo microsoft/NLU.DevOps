@@ -8,6 +8,6 @@
     <PackageProjectUrl>https://github.com/Microsoft/NLU.DevOps</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Microsoft/NLU.DevOps.git</RepositoryUrl>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
-    <Version>0.3.4</Version>
+    <Version>0.3.5</Version>
   </PropertyGroup>
 </Project>
