@@ -1,7 +1,6 @@
 import * as tl from "azure-pipelines-task-lib/task";
 import * as tr from "azure-pipelines-task-lib/toolrunner";
 import * as path from "path";
-import * as os from "os";
 
 export async function getNLUToolRunner(): Promise<tr.ToolRunner> {
     const dotnetPath = tl.which("dotnet", false);
@@ -81,8 +80,7 @@ export async function getNLUToolRunner(): Promise<tr.ToolRunner> {
             throw new Error("Failed to install NLU.DevOps.");
         }
 
-        const pathDelimiter = os.platform() === "win32" ? ";" : ":";
-        process.env.PATH = `${toolPath}${pathDelimiter}a${process.env.PATH}`;
+        process.env.PATH = `${toolPath}${path.delimiter}${process.env.PATH}`;
         tl.prependPath(toolPath);
     }
 
