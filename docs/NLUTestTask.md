@@ -9,7 +9,7 @@ To test an NLU model, add the following configuration to your pipeline:
     publishTestResults: true
 ```
 
-The [`utterances`](#utterances) input should be a path to a JSON file with labeled [generic utterances](GenericUtterances.md), relative to the [`workingDirectory`](#workingdirectory). This format is similar to the [LUIS batch test](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-concept-batch-test#batch-file-format) format, except that entities are configured with `matchText` and `matchIndex` instead of `startPos` and `endPos`.
+The [`utterances`](#utterances) input should be a path to a JSON file with labeled [generic utterances](GenericUtterances.md), relative to the [`workingDirectory`](#workingdirectory). You may also use the [LUIS batch test](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-concept-batch-test#batch-file-format) format, as we also recognize `startPos` and `endPos` for resolving the `matchText` and `matchIndex` from the generic utterances model.
 
 To test with speech WAV files, set the [`speech`](#speech) input to `true` and, optionally, set the base directory for the speech files with the [`speechDirectory`](#speechdirectory) input, if the `speechFile` property for each generic utterance is not relative to the [`workingDirectory`](#workingdirectory). For more information about running NLU tests from speech, take a look at the [docs](Test.md#getting-started-with-speech) on NLU.DevOps.
 
