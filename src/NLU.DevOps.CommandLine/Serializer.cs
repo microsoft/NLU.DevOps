@@ -14,6 +14,7 @@ namespace NLU.DevOps.CommandLine
         public static T Read<T>(string path)
         {
             var serializer = JsonSerializer.CreateDefault();
+            serializer.Converters.Add(new LabeledUtteranceConverter());
             using (var jsonReader = new JsonTextReader(File.OpenText(path)))
             {
                 return serializer.Deserialize<T>(jsonReader);
@@ -34,7 +35,6 @@ namespace NLU.DevOps.CommandLine
             serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
             serializer.DefaultValueHandling = DefaultValueHandling.Ignore;
             serializer.Converters.Add(new StringEnumConverter());
-            serializer.Converters.Add(new LabeledUtteranceConverter());
             serializer.Formatting = Formatting.Indented;
             using (var textWriter = new StreamWriter(stream, Encoding.UTF8, 4096, true))
             {
