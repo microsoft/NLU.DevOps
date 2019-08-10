@@ -1,6 +1,6 @@
 pool:
   vmImage: 'ubuntu-latest'
-
+  
 trigger:
   branches:
     include:
@@ -8,36 +8,38 @@ trigger:
   paths:
     include:
     - /extensions/
-    - /pipelines/
+    - /pipelines/build-extension.yml
 
 steps:
-- task: NodeTool@0
+- task: NPM@1
+  displayName: npm install
   inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
+    command: install
+    workingDir: extensions
 
-- task: PowerShell@2
-  displayName: Update version in the tasks patch using BuildId 
+- task: NPM@1
+  displayName: npm run lint
   inputs:
-    filePath: 'pipelines/scripts/bump_version.ps1'
-    arguments: '$(Build.BuildId)'
-    pwsh: true
+    command: custom
+    customCommand: run lint
+    workingDir: extensions
 
-- script: |
-    npm install
-    npm run lint
-    npm run build
-  workingDirectory: extensions
-  displayName: 'npm install, lint and build'
+- task: NPM@1
+  displayName: npm run build
+  inputs:
+    command: custom
+    customCommand: run build
+    workingDir: extensions
 
 - task: CopyFiles@2
+  displayName: Stage extension artifact for publish
   inputs:
-    SourceFolder: extensions
-    Contents: |
-      **/*.vsix
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    sourceFolder: extensions
+    contents: '**/*.vsix'
+    targetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: PublishPipelineArtifact@0
+  displayName: Publish extension artifact
   inputs:
-    artifactName: 'extensionvsix'
-    targetPath: '$(Build.ArtifactStagingDirectory)'
+    artifactName: drop
+    targetPath: $(Build.ArtifactStagingDirectory)
