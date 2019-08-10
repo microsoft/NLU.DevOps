@@ -14,7 +14,7 @@ async function run() {
         const utterances = tl.getInput("utterances");
         if (utterances) {
             tool.arg("-u")
-                .arg(utterances)
+                .arg(utterances);
         }
 
         const modelSettings = tl.getInput("modelSettings");
