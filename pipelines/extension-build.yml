@@ -1,0 +1,45 @@
+pool:
+  vmImage: 'ubuntu-latest'
+  
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /extensions/
+    - /pipelines/build-extension.yml
+
+steps:
+- task: NPM@1
+  displayName: npm install
+  inputs:
+    command: install
+    workingDir: extensions
+
+- task: NPM@1
+  displayName: npm run lint
+  inputs:
+    command: custom
+    customCommand: run lint
+    workingDir: extensions
+
+- task: NPM@1
+  displayName: npm run build
+  inputs:
+    command: custom
+    customCommand: run build
+    workingDir: extensions
+
+- task: CopyFiles@2
+  displayName: Stage extension artifact for publish
+  inputs:
+    sourceFolder: extensions
+    contents: '**/*.vsix'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: PublishPipelineArtifact@0
+  displayName: Publish extension artifact
+  inputs:
+    artifactName: drop
+    targetPath: $(Build.ArtifactStagingDirectory)
