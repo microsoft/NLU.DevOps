@@ -232,13 +232,23 @@ namespace NLU.DevOps.ModelPerformance
             bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
             {
                 return expectedEntity.EntityType == actualEntity.EntityType
-                    && ((EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
-                    && expectedEntity.MatchIndex == actualEntity.MatchIndex)
-                    /* Required case to support NLU providers that do not specify matched text */
-                    || EqualsNormalizedJson(expectedEntity.MatchText, actualEntity.EntityValue)
-                    || EqualsNormalizedJson(expectedEntity.EntityValue, actualEntity.EntityValue)
-                    /* Required case to support FalsePositiveEntity scenarios */
-                    || EqualsNormalizedJson(expectedEntity.EntityValue, actualEntity.MatchText));
+                    && (isEntityTextMatch(expectedEntity, actualEntity)
+                    || isEntityValueMatch(expectedEntity, actualEntity));
+            }
+
+            bool isEntityTextMatch(Entity expectedEntity, Entity actualEntity)
+            {
+                return expectedEntity.MatchText != null
+                    && EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
+                    && expectedEntity.MatchIndex == actualEntity.MatchIndex;
+            }
+
+            bool isEntityValueMatch(Entity expectedEntity, Entity actualEntity)
+            {
+                /* Required case to support NLU providers that do not specify matched text */
+                return actualEntity.MatchText == null
+                    && (EqualsNormalizedJson(expectedEntity.EntityValue, actualEntity.EntityValue)
+                    || EqualsNormalizedJson(expectedEntity.MatchText, actualEntity.EntityValue));
             }
 
             if (expected != null)
@@ -281,61 +291,64 @@ namespace NLU.DevOps.ModelPerformance
                             "Entity");
                     }
 
-                    if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
+                    if (matchedEntity != null)
                     {
-                        var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
-                        if (matchedEntity == null || !ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
+                        if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
                         {
-                            yield return FalseNegative(
-                                ComparisonTargetKind.EntityValue,
-                                expectedUtterance,
-                                actualUtterance,
-                                score,
-                                entity.EntityType,
-                                new[] { entity.EntityType, formattedEntityValue, text },
-                                $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
-                                "Entity");
+                            var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
+                            if (!ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
+                            {
+                                yield return FalseNegative(
+                                    ComparisonTargetKind.EntityValue,
+                                    expectedUtterance,
+                                    actualUtterance,
+                                    score,
+                                    entity.EntityType,
+                                    new[] { entity.EntityType, formattedEntityValue, text },
+                                    $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
+                                    "Entity");
+                            }
+                            else
+                            {
+                                yield return TruePositive(
+                                    ComparisonTargetKind.EntityValue,
+                                    expectedUtterance,
+                                    actualUtterance,
+                                    score,
+                                    entity.EntityType,
+                                    new[] { entity.EntityType, formattedEntityValue, text },
+                                    $"Both utterances have entity value '{formattedEntityValue}'.",
+                                    "Entity");
+                            }
                         }
-                        else
-                        {
-                            yield return TruePositive(
-                                ComparisonTargetKind.EntityValue,
-                                expectedUtterance,
-                                actualUtterance,
-                                score,
-                                entity.EntityType,
-                                new[] { entity.EntityType, formattedEntityValue, text },
-                                $"Both utterances have entity value '{formattedEntityValue}'.",
-                                "Entity");
-                        }
-                    }
 
-                    if (entity.EntityResolution != null && entity.EntityResolution.Type != JTokenType.Null)
-                    {
-                        var formattedEntityResolution = entity.EntityResolution.ToString(Formatting.None);
-                        if (matchedEntity == null || !ContainsSubtree(entity.EntityResolution, matchedEntity.EntityResolution))
+                        if (entity.EntityResolution != null && entity.EntityResolution.Type != JTokenType.Null)
                         {
-                            yield return FalseNegative(
-                                ComparisonTargetKind.EntityResolution,
-                                expectedUtterance,
-                                actualUtterance,
-                                score,
-                                entity.EntityType,
-                                new[] { entity.EntityType, formattedEntityResolution, text },
-                                $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
-                                "Entity");
-                        }
-                        else
-                        {
-                            yield return TruePositive(
-                                ComparisonTargetKind.EntityResolution,
-                                expectedUtterance,
-                                actualUtterance,
-                                score,
-                                entity.EntityType,
-                                new[] { entity.EntityType, formattedEntityResolution, text },
-                                $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
-                                "Entity");
+                            var formattedEntityResolution = entity.EntityResolution.ToString(Formatting.None);
+                            if (!ContainsSubtree(entity.EntityResolution, matchedEntity.EntityResolution))
+                            {
+                                yield return FalseNegative(
+                                    ComparisonTargetKind.EntityResolution,
+                                    expectedUtterance,
+                                    actualUtterance,
+                                    score,
+                                    entity.EntityType,
+                                    new[] { entity.EntityType, formattedEntityResolution, text },
+                                    $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
+                                    "Entity");
+                            }
+                            else
+                            {
+                                yield return TruePositive(
+                                    ComparisonTargetKind.EntityResolution,
+                                    expectedUtterance,
+                                    actualUtterance,
+                                    score,
+                                    entity.EntityType,
+                                    new[] { entity.EntityType, formattedEntityResolution, text },
+                                    $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
+                                    "Entity");
+                            }
                         }
                     }
                 }
@@ -347,7 +360,7 @@ namespace NLU.DevOps.ModelPerformance
                 {
                     var score = entity is ScoredEntity scoredEntity ? scoredEntity.Score : 0;
                     var entityValue = entity.MatchText ?? entity.EntityValue;
-                    if (expected == null || !expected.Any(expectedEntity => isEntityMatch(entity, expectedEntity)))
+                    if (expected == null || !expected.Any(expectedEntity => isEntityMatch(expectedEntity, entity)))
                     {
                         yield return FalsePositive(
                             ComparisonTargetKind.Entity,
