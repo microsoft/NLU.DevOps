@@ -46,7 +46,7 @@ namespace NLU.DevOps.Core.Tests
             var entityType = Guid.NewGuid().ToString();
             var matchText = Guid.NewGuid().ToString();
             var matchIndex = 42;
-            var expected = new Entity(entityType, null, null, matchText, matchIndex);
+            var expected = new Entity(entityType, null, matchText, matchIndex);
             var expectedUtterance = new LabeledUtterance(null, null, new[] { expected });
             var serializer = CreateSerializer();
             var json = JObject.FromObject(expectedUtterance, serializer);
@@ -59,7 +59,6 @@ namespace NLU.DevOps.Core.Tests
             actual.MatchText.Should().Be(expected.MatchText);
             actual.MatchIndex.Should().Be(expected.MatchIndex);
             actual.EntityValue.Should().BeNull();
-            actual.EntityResolution.Should().BeNull();
         }
 
         [Test]
@@ -208,7 +207,7 @@ namespace NLU.DevOps.Core.Tests
         private class DerivedEntity : Entity
         {
             public DerivedEntity(string entityType, string matchText, int matchIndex, double score)
-                : base(entityType, null, null, matchText, matchIndex)
+                : base(entityType, null, matchText, matchIndex)
             {
                 this.Score = score;
             }
