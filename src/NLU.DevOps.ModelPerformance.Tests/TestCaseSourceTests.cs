@@ -15,8 +15,6 @@ namespace NLU.DevOps.ModelPerformance.Tests
     [TestFixture]
     internal static class TestCaseSourceTests
     {
-        private const string TruePositiveEntityResolutionRegex = @"TruePositiveEntityResolution\(.*?\)";
-        private const string FalseNegativeEntityResolutionRegex = @"FalseNegativeEntityResolution\(.*?\)";
         private const string FalseNegativeEntityValueRegex = @"FalseNegativeEntityValue\(.*?\)";
         private const string TruePositiveEntityValueRegex = @"TruePositiveEntityValue\(.*?\)";
         private const string FalseNegativeEntityRegex = @"FalseNegativeEntity\(.*?\)";
@@ -98,7 +96,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         public static void TestToEntityTestCasesMissingEntityInExpectedFile()
         {
             var actualEntity = CreateEntityList("EntityType");
-            actualEntity.Add(new Entity("RecognizedEntity", "value", null, "text", 2));
+            actualEntity.Add(new Entity("RecognizedEntity", "value", "text", 2));
             var expectedEntity = CreateEntityList("EntityType");
             var utterances = new[]
             {
@@ -142,7 +140,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void TestToEntityTestCasesWithDifferentEntityValueInActualVersusExpected()
         {
-            var actualEntity = new[] { new Entity("EntityType", "differentEntityValue", null, "differentMatchedText", 1) };
+            var actualEntity = new[] { new Entity("EntityType", "differentEntityValue", "differentMatchedText", 1) };
             var expectedEntity = CreateEntityList("EntityType");
             var utterances = new[]
             {
@@ -219,37 +217,20 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
-        [TestCase("{}", null, FalseNegativeEntityResolutionRegex)]
-        [TestCase("{}", "null", FalseNegativeEntityResolutionRegex)]
-        [TestCase("[]", "null", FalseNegativeEntityResolutionRegex)]
-        [TestCase("42", "null", FalseNegativeEntityResolutionRegex)]
-        [TestCase("{\"foo\":42}", "{}", FalseNegativeEntityResolutionRegex)]
-        [TestCase("[\"foo\"]", "[]", FalseNegativeEntityResolutionRegex)]
-        [TestCase("{\"foo\":42, \"bar\":42}", "{\"bar\":42, \"foo\":42}", TruePositiveEntityResolutionRegex)]
-        [TestCase("[1,2]", "[2,1]", TruePositiveEntityResolutionRegex)]
-        public static void ToEntityTestCasesWithEntityResolution(string expectedJson, string actualJson, string testMessageRegex)
+        [TestCase("{}", null, FalseNegativeEntityValueRegex)]
+        [TestCase("{}", "null", FalseNegativeEntityValueRegex)]
+        [TestCase("[]", "null", FalseNegativeEntityValueRegex)]
+        [TestCase("42", "null", FalseNegativeEntityValueRegex)]
+        [TestCase("{\"foo\":42}", "{}", FalseNegativeEntityValueRegex)]
+        [TestCase("[\"foo\"]", "[]", FalseNegativeEntityValueRegex)]
+        [TestCase("{\"foo\":42, \"bar\":42}", "{\"bar\":42, \"foo\":42}", TruePositiveEntityValueRegex)]
+        [TestCase("{\"foo\":42}", "{\"bar\":42, \"foo\":42}", TruePositiveEntityValueRegex)]
+        [TestCase("[1,2]", "[2,1]", TruePositiveEntityValueRegex)]
+        [TestCase("[2]", "[2,1]", TruePositiveEntityValueRegex)]
+        public static void ToEntityTestCasesWithEntityValue(string expectedJson, string actualJson, string testMessageRegex)
         {
-            var actualEntity = new[] { new Entity("EntityType", "EntityValue", ParseResolutionJson(actualJson), "differentMatchedText", 1) };
-            var expectedEntity = new[] { new Entity("EntityType", "EntityValue", ParseResolutionJson(expectedJson), "differentMatchedText", 1) };
-            var utterances = new[]
-            {
-                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
-                 new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
-
-            var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
-
-            var testResult = actualTestResult.ToList();
-            testResult.Count().Should().Be(3);
-            var actual = testResult.FirstOrDefault(t => Matches(t.TestName, testMessageRegex));
-            actual.Should().NotBeNull();
-        }
-
-        [Test]
-        public static void ToEntityTestCasesWithNullExpectedEntityResolution()
-        {
-            var actualEntity = new[] { new Entity("EntityType", "EntityValue", "foo", "differentMatchedText", 1) };
-            var expectedEntity = new[] { new Entity("EntityType", "EntityValue", JValue.CreateNull(), "differentMatchedText", 1) };
+            var actualEntity = new List<Entity> { new Entity("EntityType", ParseEntityValueJson(actualJson), "foo", 1) };
+            var expectedEntity = new List<Entity> { new Entity("EntityType", ParseEntityValueJson(expectedJson), "foo", 1) };
             var utterances = new[]
             {
                  new LabeledUtterance("FOO", "DayTime", expectedEntity),
@@ -260,32 +241,36 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var testResult = actualTestResult.ToList();
             testResult.Count().Should().Be(2);
-            testResult.Should().NotContain(t => Matches(t.TestName, TruePositiveEntityResolutionRegex));
+            var actual = testResult.FirstOrDefault(t => Matches(t.TestName, testMessageRegex));
+            actual.Should().NotBeNull();
         }
 
         [Test]
         public static void ToEntityTestCasesWithNullExpectedEntityValue()
         {
-            var actualEntity = new[] { new Entity("EntityType", "EntityValue", null, "differentMatchedText", 1) };
-            var expectedEntity = new[] { new Entity("EntityType", JValue.CreateNull(), null, "differentMatchedText", 1) };
-            var utterances = new[]
+            foreach (var expectedEntityValue in new[] { JValue.CreateNull(), null })
             {
-                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
-                 new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
+                var actualEntity = new[] { new Entity("EntityType", 42, "differentMatchedText", 1) };
+                var expectedEntity = new[] { new Entity("EntityType", expectedEntityValue, "differentMatchedText", 1) };
+                var utterances = new[]
+                {
+                     new LabeledUtterance("FOO", "DayTime", expectedEntity),
+                     new LabeledUtterance("FOO", "DayTime", actualEntity)
+                };
 
-            var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
+                var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
-            var testResult = actualTestResult.ToList();
-            testResult.Count().Should().Be(1);
-            testResult.Should().NotContain(t => Matches(t.TestName, TruePositiveEntityValueRegex));
+                var testResult = actualTestResult.ToList();
+                testResult.Count().Should().Be(1);
+                testResult.Should().NotContain(t => Matches(t.TestName, TruePositiveEntityValueRegex));
+            }
         }
 
         [Test]
         public static void ToEntityTestCasesWithIncorrectMatchIndex()
         {
-            var actualEntity = new[] { new Entity("EntityType", "EntityValue", null, "differentMatchedText", 1) };
-            var expectedEntity = new[] { new Entity("EntityType", null, null, "differentMatchedText", 2) };
+            var actualEntity = new[] { new Entity("EntityType", "EntityValue", "differentMatchedText", 1) };
+            var expectedEntity = new[] { new Entity("EntityType", null, "differentMatchedText", 2) };
             var utterances = new[]
             {
                  new LabeledUtterance("FOO", "DayTime", expectedEntity),
@@ -303,8 +288,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToEntityTestCasesWithNullActualMatchText()
         {
-            var actualEntity = new[] { new Entity("EntityType", "foo", null, null, 0) };
-            var expectedEntity = new[] { new Entity("EntityType", null, null, "foo", 0) };
+            var actualEntity = new[] { new Entity("EntityType", "foo", null, 0) };
+            var expectedEntity = new[] { new Entity("EntityType", null, "foo", 0) };
             var utterances = new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
@@ -321,8 +306,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToEntityTestCasesWithNullActualMatchTextByValue()
         {
-            var actualEntity = new[] { new Entity("EntityType", "bar", null, null, 0) };
-            var expectedEntity = new[] { new Entity("EntityType", "bar", null, "foo", 0) };
+            var actualEntity = new[] { new Entity("EntityType", "bar", null, 0) };
+            var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
             var utterances = new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
@@ -340,8 +325,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToEntityTestCasesWithMatchingValueButMismatchedMatchText()
         {
-            var actualEntity = new[] { new Entity("EntityType", "bar", null, "bar", 0) };
-            var expectedEntity = new[] { new Entity("EntityType", "bar", null, "foo", 0) };
+            var actualEntity = new[] { new Entity("EntityType", "bar", "bar", 0) };
+            var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
             var utterances = new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
@@ -359,8 +344,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToEntityTestCasesWithFalseNegativeEntityValueNull()
         {
-            var actualEntity = new[] { new Entity("EntityType", null, null, "foo", 0) };
-            var expectedEntity = new[] { new Entity("EntityType", "bar", null, "foo", 0) };
+            var actualEntity = new[] { new Entity("EntityType", null, "foo", 0) };
+            var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
             var utterances = new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
@@ -378,8 +363,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToEntityTestCasesWithFalseNegativeEntityValueMismatch()
         {
-            var actualEntity = new[] { new Entity("EntityType", "qux", null, "foo", 0) };
-            var expectedEntity = new[] { new Entity("EntityType", "bar", null, "foo", 0) };
+            var actualEntity = new[] { new Entity("EntityType", "qux", "foo", 0) };
+            var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
             var utterances = new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
@@ -474,8 +459,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
             int falseNegative)
         {
             var entityType = Guid.NewGuid().ToString();
-            var expectedEntity = expected != null ? new[] { new Entity(entityType, null, null, expected, 0) } : null;
-            var actualEntity = actual != null ? new[] { new Entity(entityType, null, null, actual, 0) } : null;
+            var expectedEntity = expected != null ? new[] { new Entity(entityType, null, expected, 0) } : null;
+            var actualEntity = actual != null ? new[] { new Entity(entityType, null, actual, 0) } : null;
             var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -513,8 +498,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var matchText = Guid.NewGuid().ToString();
             var expectedJson = expected == null ? JValue.CreateNull() : (JValue)expected;
             var actualJson = actual == null ? JValue.CreateNull() : (JValue)actual;
-            var expectedEntity = new[] { new Entity(entityType, expectedJson, null, matchText, 0) };
-            var actualEntity = new[] { new Entity(entityType, actualJson, null, matchText, 0) };
+            var expectedEntity = new[] { new Entity(entityType, expectedJson, matchText, 0) };
+            var actualEntity = new[] { new Entity(entityType, actualJson, matchText, 0) };
             var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -535,52 +520,13 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
-        [TestCase("foo", "foo", 1, 0, 0, 0)]
-        [TestCase(null, null, 0, 0, 0, 0)]
-        [TestCase(null, "foo", 0, 0, 0, 0)]
-        [TestCase("foo", "bar", 0, 0, 0, 1)]
-        [TestCase("foo", null, 0, 0, 0, 1)]
-        public static void GetNLUCompareResultsEntityResolutionStatistics(
-            string expected,
-            string actual,
-            int truePositive,
-            int trueNegative,
-            int falsePositive,
-            int falseNegative)
-        {
-            var entityType = Guid.NewGuid().ToString();
-            var matchText = Guid.NewGuid().ToString();
-            var expectedJson = expected == null ? JValue.CreateNull() : (JValue)expected;
-            var actualJson = actual == null ? JValue.CreateNull() : (JValue)actual;
-            var expectedEntity = new[] { new Entity(entityType, null, expectedJson, matchText, 0) };
-            var actualEntity = new[] { new Entity(entityType, null, actualJson, matchText, 0) };
-            var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
-            var actualUtterance = new LabeledUtterance(null, null, actualEntity);
-            var compareResults = TestCaseSource.GetNLUCompareResults(
-                new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
-            compareResults.Statistics.EntityResolution.TruePositive.Should().Be(truePositive);
-            compareResults.Statistics.EntityResolution.TrueNegative.Should().Be(trueNegative);
-            compareResults.Statistics.EntityResolution.FalsePositive.Should().Be(falsePositive);
-            compareResults.Statistics.EntityResolution.FalseNegative.Should().Be(falseNegative);
-            if (expected != null)
-            {
-                compareResults.Statistics.ByEntityResolutionType[entityType].TruePositive.Should().Be(truePositive);
-                compareResults.Statistics.ByEntityResolutionType[entityType].TrueNegative.Should().Be(trueNegative);
-                compareResults.Statistics.ByEntityResolutionType[entityType].FalsePositive.Should().Be(falsePositive);
-                compareResults.Statistics.ByEntityResolutionType[entityType].FalseNegative.Should().Be(falseNegative);
-            }
-        }
-
-        [Test]
         public static void GetNLUCompareResultsFalsePositiveEntityDifferentType()
         {
             var expectedEntityType = Guid.NewGuid().ToString();
             var actualEntityType = Guid.NewGuid().ToString();
             var matchText = Guid.NewGuid().ToString();
-            var expectedEntity = new[] { new Entity(expectedEntityType, null, null, matchText, 0) };
-            var actualEntity = new[] { new Entity(actualEntityType, null, null, matchText, 0) };
+            var expectedEntity = new[] { new Entity(expectedEntityType, null, matchText, 0) };
+            var actualEntity = new[] { new Entity(actualEntityType, null, matchText, 0) };
             var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -606,8 +552,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var entityType = Guid.NewGuid().ToString();
             var matchText = Guid.NewGuid().ToString();
-            var expectedEntity = new[] { new Entity(entityType, null, null, matchText, 0) };
-            var actualEntity = new[] { new Entity(entityType, null, null, matchText, 0) };
+            var expectedEntity = new[] { new Entity(entityType, null, matchText, 0) };
+            var actualEntity = new[] { new Entity(entityType, null, matchText, 0) };
             var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -639,8 +585,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var entityType = Guid.NewGuid().ToString();
             var matchText = Guid.NewGuid().ToString();
-            var expectedEntity = new[] { new Entity(entityType, null, null, matchText, 0) };
-            var actualEntity = new[] { new ScoredEntity(entityType, null, null, matchText, 0, 0.5) };
+            var expectedEntity = new[] { new Entity(entityType, null, matchText, 0) };
+            var actualEntity = new[] { new ScoredEntity(entityType, null, matchText, 0, 0.5) };
             var expectedUtterance = new LabeledUtterance(null, null, expectedEntity);
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -657,7 +603,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var entityType = Guid.NewGuid().ToString();
             var matchText = Guid.NewGuid().ToString();
-            var actualEntity = new[] { new ScoredEntity(entityType, null, null, matchText, 0, 0.5) };
+            var actualEntity = new[] { new ScoredEntity(entityType, null, matchText, 0, 0.5) };
             var expectedUtterance = new LabeledUtterance(null, null, null);
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -671,7 +617,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
         private static List<Entity> CreateEntityList(string type)
         {
-            return new List<Entity> { new Entity(type, "EntityValue", null, "matchedText", 1) };
+            return new List<Entity> { new Entity(type, "EntityValue", "matchedText", 1) };
         }
 
         private static bool Matches(string input, string regEx)
@@ -679,7 +625,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             return Regex.IsMatch(input, regEx);
         }
 
-        private static JToken ParseResolutionJson(string json)
+        private static JToken ParseEntityValueJson(string json)
         {
             return json != null ? JToken.Parse(json) : null;
         }

@@ -26,10 +26,7 @@
         "entityType": "City",
         "entityValue": "New York City",
         "matchText": "the big apple",
-        "matchIndex": 0,
-        "entityResolution": {
-          "location": "NYC"
-        }
+        "matchIndex": 0
       }
     ],
     "intent": "BookFlight",

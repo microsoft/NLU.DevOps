@@ -73,98 +73,8 @@ namespace NLU.DevOps.Luis.Tests
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
                 result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("the"));
-                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
-            }
-        }
-
-        [Test]
-        public static async Task TestModelWithEntityResolution()
-        {
-            var test = "the quick brown fox jumped over the lazy dog";
-            var resolution = new JObject
-            {
-                { "value", "Fox" },
-            };
-
-            var entityValues = new JToken[]
-            {
-                "2018-11-16",
-                new JArray { new JArray { "Fox" } },
-                new JArray { new JArray { "foo", "bar" } },
-                new JArray { new JObject() },
-            };
-
-            var builder = new LuisNLUTestClientBuilder();
-            builder.LuisTestClientMock
-                .Setup(luis => luis.QueryAsync(
-                    It.Is<PredictionRequest>(query => query.Query == test),
-                    It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult(new PredictionResponse
-                {
-                    Query = "the quick brown fox jumped over the lazy dog today",
-                    Prediction = new Prediction
-                    {
-                        Entities = new Dictionary<string, object>
-                        {
-                            {
-                                "type",
-                                new JArray(entityValues)
-                            },
-                            {
-                                "$instance",
-                                new JObject
-                                {
-                                    {
-                                        "type",
-                                        new JArray
-                                        {
-                                            new JObject
-                                            {
-                                                { "startIndex", 45 },
-                                                { "length", 5 },
-                                                { "resolution", resolution.DeepClone() },
-                                            },
-                                            new JObject
-                                            {
-                                                { "startIndex", 10 },
-                                                { "length", 9 },
-                                            },
-                                            new JObject
-                                            {
-                                                { "startIndex", 0 },
-                                                { "length", 3 },
-                                            },
-                                            new JObject
-                                            {
-                                                { "startIndex", 4 },
-                                                { "length", 5 },
-                                            },
-                                        }
-                                    },
-                                }
-                            },
-                        }
-                    },
-                }));
-
-            using (var luis = builder.Build())
-            {
-                var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Entities.Count.Should().Be(4);
-                result.Entities[0].MatchText.Should().Be("today");
-                result.Entities[0].EntityValue.Should().BeEquivalentTo(entityValues[0]);
-                result.Entities[0].EntityResolution.Should().BeEquivalentTo(resolution);
-                result.Entities[1].MatchText.Should().Be("brown fox");
-                result.Entities[1].EntityValue.Should().BeEquivalentTo(entityValues[1]);
-                result.Entities[1].EntityResolution.Should().BeNull();
-                result.Entities[2].MatchText.Should().Be("the");
-                result.Entities[2].EntityValue.Should().BeEquivalentTo(entityValues[2]);
-                result.Entities[2].EntityResolution.Should().BeNull();
-                result.Entities[3].MatchText.Should().Be("quick");
-                result.Entities[3].EntityValue.Should().BeEquivalentTo(entityValues[3]);
-                result.Entities[3].EntityResolution.Should().BeNull();
             }
         }
 
@@ -291,7 +201,6 @@ namespace NLU.DevOps.Luis.Tests
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
                 result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("the"));
-                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }

@@ -63,7 +63,6 @@ namespace NLU.DevOps.ModelPerformance
                 CalculateConfusionMatrix(this.TestCases.Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent)),
                 CalculateConfusionMatrix(this.TestCases.Where(testCase => testCase.TargetKind == ComparisonTargetKind.Entity)),
                 CalculateConfusionMatrix(this.TestCases.Where(testCase => testCase.TargetKind == ComparisonTargetKind.EntityValue)),
-                CalculateConfusionMatrix(this.TestCases.Where(testCase => testCase.TargetKind == ComparisonTargetKind.EntityResolution)),
                 this.TestCases
                     .Where(testCase => testCase.Group != null)
                     .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent)
@@ -77,11 +76,6 @@ namespace NLU.DevOps.ModelPerformance
                 this.TestCases
                     .Where(testCase => testCase.Group != null)
                     .Where(testCase => testCase.TargetKind == ComparisonTargetKind.EntityValue)
-                    .GroupBy(testCase => testCase.Group)
-                    .ToDictionary(group => group.Key, group => CalculateConfusionMatrix(group)),
-                this.TestCases
-                    .Where(testCase => testCase.Group != null)
-                    .Where(testCase => testCase.TargetKind == ComparisonTargetKind.EntityResolution)
                     .GroupBy(testCase => testCase.Group)
                     .ToDictionary(group => group.Key, group => CalculateConfusionMatrix(group)));
         }

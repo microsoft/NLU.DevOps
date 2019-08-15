@@ -26,12 +26,7 @@
         "entityType": "City",
         "entityValue": "New York City",
         "matchText": null,
-        "matchIndex": 0,
-        "entityResolution": {
-          "location": "NYC",
-          "latitude": 40.7128,
-          "longitude": -74.0060
-        }
+        "matchIndex": 0
       }
     ],
     "intent": "BookFlight",

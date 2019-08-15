@@ -31,11 +31,6 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Entity value.
         /// </summary>
-        EntityValue,
-
-        /// <summary>
-        /// Entity resolution.
-        /// </summary>
-        EntityResolution
+        EntityValue
     }
 }

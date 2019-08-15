@@ -74,11 +74,13 @@ namespace NLU.DevOps.Luis
                 return value;
             }
 
-            // TODO: should we return multiple values?
-            var resolvedValue = resolution["values"][0];
-            return resolvedValue is JObject resolvedObject
-                ? resolvedObject["value"]
-                : resolvedValue;
+            var values = resolution["values"];
+            if (values != null)
+            {
+                return values;
+            }
+
+            return resolution;
         }
 
         private LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
@@ -100,13 +102,11 @@ namespace NLU.DevOps.Luis
                 }
 
                 var entityValue = default(JToken);
-                var entityResolution = default(JToken);
                 if (entity.AdditionalProperties != null &&
                     entity.AdditionalProperties.TryGetValue("resolution", out var resolution) &&
                     resolution is JToken resolutionJson)
                 {
                     entityValue = GetEntityValue(resolutionJson);
-                    entityResolution = resolutionJson;
                 }
 
                 var matchText = entity.Entity;
@@ -132,8 +132,8 @@ namespace NLU.DevOps.Luis
                 }
 
                 return entityScore.HasValue
-                    ? new ScoredEntity(entityType, entityValue, entityResolution, matchText, matchIndex, entityScore.Value)
-                    : new Entity(entityType, entityValue, entityResolution, matchText, matchIndex);
+                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
+                    : new Entity(entityType, entityValue, matchText, matchIndex);
             }
 
             var intent = speechLuisResult.LuisResult.TopScoringIntent?.Intent;

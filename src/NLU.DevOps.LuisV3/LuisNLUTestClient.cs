@@ -108,10 +108,9 @@ namespace NLU.DevOps.Luis
                     modifiedEntityType = mappedEntityType;
                 }
 
-                var entityResolution = entityMetadata["resolution"];
                 return score.HasValue
-                    ? new ScoredEntity(modifiedEntityType, entityValue, entityResolution, matchText, matchIndex, score.Value)
-                    : new Entity(modifiedEntityType, entityValue, entityResolution, matchText, matchIndex);
+                    ? new ScoredEntity(modifiedEntityType, entityValue, matchText, matchIndex, score.Value)
+                    : new Entity(modifiedEntityType, entityValue, matchText, matchIndex);
             }
 
             var instanceMetadata = default(JObject);
