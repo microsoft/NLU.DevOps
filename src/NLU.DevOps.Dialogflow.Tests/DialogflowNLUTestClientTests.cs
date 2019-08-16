@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.DialogFlow.Tests
+namespace NLU.DevOps.Dialogflow.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -19,12 +19,12 @@ namespace NLU.DevOps.DialogFlow.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal static class DialogFlowNLUTestClientTests
+    internal static class DialogflowNLUTestClientTests
     {
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullConfiguration = () => new DialogFlowNLUTestClient(null);
+            Action nullConfiguration = () => new DialogflowNLUTestClient(null);
             nullConfiguration.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("configuration");
         }
 
@@ -45,8 +45,8 @@ namespace NLU.DevOps.DialogFlow.Tests
                 })
                 .Build();
 
-            var missingKeyJsonClient = new DialogFlowNLUTestClient(missingKeyJsonConfiguration);
-            var missingProjectIdClient = new DialogFlowNLUTestClient(missingProjectIdConfiguration);
+            var missingKeyJsonClient = new DialogflowNLUTestClient(missingKeyJsonConfiguration);
+            var missingProjectIdClient = new DialogflowNLUTestClient(missingProjectIdConfiguration);
             Func<Task> missingKeyJson = () => missingKeyJsonClient.TestAsync(new JObject { { "text", string.Empty } });
             Func<Task> missingProjectId = () => missingProjectIdClient.TestAsync(new JObject { { "text", string.Empty } });
             missingKeyJson.Should().Throw<InvalidOperationException>().And.Message.Should().Contain("dialogflowClientKeyJson");
@@ -187,7 +187,7 @@ namespace NLU.DevOps.DialogFlow.Tests
             request.InputAudio.ToStringUtf8().Should().EndWith("hello");
         }
 
-        private static DialogFlowNLUTestClient CreateTestClient(DetectIntentResponse response, Action<DetectIntentRequest> callback = null)
+        private static DialogflowNLUTestClient CreateTestClient(DetectIntentResponse response, Action<DetectIntentRequest> callback = null)
         {
             var mockCallInvoker = new Mock<CallInvoker>();
             mockCallInvoker
@@ -222,7 +222,7 @@ namespace NLU.DevOps.DialogFlow.Tests
                 })
                 .Build();
 
-            return new DialogFlowNLUTestClient(sessionsClient, configuration);
+            return new DialogflowNLUTestClient(sessionsClient, configuration);
         }
     }
 }

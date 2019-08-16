@@ -29,9 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.LuisV3", "NLU.De
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.LuisV3.Tests", "NLU.DevOps.LuisV3.Tests\NLU.DevOps.LuisV3.Tests.csproj", "{F5CE52E9-C95F-4601-9575-C654C619A767}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.DialogFlow", "NLU.DevOps.DialogFlow\NLU.DevOps.DialogFlow.csproj", "{60914363-B404-4B41-86CE-2563409D7280}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.Dialogflow", "NLU.DevOps.Dialogflow\NLU.DevOps.Dialogflow.csproj", "{60914363-B404-4B41-86CE-2563409D7280}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.DialogFlow.Tests", "NLU.DevOps.DialogFlow.Tests\NLU.DevOps.DialogFlow.Tests.csproj", "{54227476-C6BE-4EE2-ADD7-798B0F9103AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.Dialogflow.Tests", "NLU.DevOps.Dialogflow.Tests\NLU.DevOps.Dialogflow.Tests.csproj", "{54227476-C6BE-4EE2-ADD7-798B0F9103AA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.CommandLine", "NLU.DevOps.CommandLine\NLU.DevOps.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
 	ProjectSection(ProjectDependencies) = postProject

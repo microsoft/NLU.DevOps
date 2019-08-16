@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.DialogFlow
+namespace NLU.DevOps.Dialogflow
 {
     using System;
     using System.Composition;
@@ -12,12 +12,12 @@ namespace NLU.DevOps.DialogFlow
     /// Dialogflow NLU client factory.
     /// </summary>
     [Export("dialogflow", typeof(INLUClientFactory))]
-    public class DialogFlowNLUClientFactory : INLUClientFactory
+    public class DialogflowNLUClientFactory : INLUClientFactory
     {
         /// <inheritdoc />
         public INLUTestClient CreateTestInstance(IConfiguration configuration, string settingsPath)
         {
-            return new DialogFlowNLUTestClient(configuration ?? throw new ArgumentNullException(nameof(configuration)));
+            return new DialogflowNLUTestClient(configuration ?? throw new ArgumentNullException(nameof(configuration)));
         }
 
         /// <inheritdoc />

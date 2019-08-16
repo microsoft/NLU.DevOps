@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.DialogFlow
+namespace NLU.DevOps.Dialogflow
 {
     using System;
     using System.Collections.Generic;
@@ -19,31 +19,31 @@ namespace NLU.DevOps.DialogFlow
     using Models;
     using Newtonsoft.Json.Linq;
 
-    internal sealed class DialogFlowNLUTestClient : DefaultNLUTestClient
+    internal sealed class DialogflowNLUTestClient : DefaultNLUTestClient
     {
-        private const string DialogFlowClientKeyJsonConfigurationKey = "dialogflowClientKeyJson";
-        private const string DialogFlowClientKeyPathConfigurationKey = "dialogflowClientKeyPath";
-        private const string DialogFlowProjectIdConfigurationKey = "dialogflowProjectId";
-        private const string DialogFlowSessionIdConfigurationKey = "dialogflowSessionId";
+        private const string DialogflowClientKeyJsonConfigurationKey = "dialogflowClientKeyJson";
+        private const string DialogflowClientKeyPathConfigurationKey = "dialogflowClientKeyPath";
+        private const string DialogflowProjectIdConfigurationKey = "dialogflowProjectId";
+        private const string DialogflowSessionIdConfigurationKey = "dialogflowSessionId";
 
         private SessionsClient sessionsClient;
 
-        public DialogFlowNLUTestClient(SessionsClient sessionsClient, IConfiguration configuration)
+        public DialogflowNLUTestClient(SessionsClient sessionsClient, IConfiguration configuration)
             : this(configuration)
         {
             this.sessionsClient = sessionsClient;
         }
 
-        public DialogFlowNLUTestClient(IConfiguration configuration)
+        public DialogflowNLUTestClient(IConfiguration configuration)
         {
             this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         private IConfiguration Configuration { get; }
 
-        private string ProjectId => this.GetConfigurationValue(DialogFlowProjectIdConfigurationKey);
+        private string ProjectId => this.GetConfigurationValue(DialogflowProjectIdConfigurationKey);
 
-        private string SessionId => this.GetConfigurationValue(DialogFlowSessionIdConfigurationKey, true);
+        private string SessionId => this.GetConfigurationValue(DialogflowSessionIdConfigurationKey, true);
 
         protected override async Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
@@ -144,11 +144,11 @@ namespace NLU.DevOps.DialogFlow
                 return this.sessionsClient;
             }
 
-            var keyPath = this.GetConfigurationValue(DialogFlowClientKeyPathConfigurationKey, true);
+            var keyPath = this.GetConfigurationValue(DialogflowClientKeyPathConfigurationKey, true);
             var googleCredential = keyPath != null
                 ? GoogleCredential.FromFile(keyPath)
                 : GoogleCredential.FromJson(
-                    this.GetConfigurationValue(DialogFlowClientKeyJsonConfigurationKey));
+                    this.GetConfigurationValue(DialogflowClientKeyJsonConfigurationKey));
 
             var builder = new SessionsClientBuilder
             {

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.DialogFlow.Tests
+namespace NLU.DevOps.Dialogflow.Tests
 {
     using System;
     using FluentAssertions;
@@ -9,12 +9,12 @@ namespace NLU.DevOps.DialogFlow.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal static class DialogFlowNLUTestClientFactoryTests
+    internal static class DialogflowNLUTestClientFactoryTests
     {
         [Test]
         public static void ThrowsArgumentNull()
         {
-            var factory = new DialogFlowNLUClientFactory();
+            var factory = new DialogflowNLUClientFactory();
             Action nullConfiguration = () => factory.CreateTestInstance(null, null);
             nullConfiguration.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("configuration");
         }
@@ -22,7 +22,7 @@ namespace NLU.DevOps.DialogFlow.Tests
         [Test]
         public static void CreateTrainInstanceShouldThrowNotSupported()
         {
-            var factory = new DialogFlowNLUClientFactory();
+            var factory = new DialogflowNLUClientFactory();
             Action createTrainInstance = () => factory.CreateTrainInstance(null, null);
             createTrainInstance.Should().Throw<NotSupportedException>();
         }
@@ -30,7 +30,7 @@ namespace NLU.DevOps.DialogFlow.Tests
         [Test]
         public static void CreatesTestInstance()
         {
-            var factory = new DialogFlowNLUClientFactory();
+            var factory = new DialogflowNLUClientFactory();
             var configuration = new ConfigurationBuilder().Build();
             using (var client = factory.CreateTestInstance(configuration, null))
             {
