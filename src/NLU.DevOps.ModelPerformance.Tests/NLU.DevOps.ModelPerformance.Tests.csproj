@@ -41,4 +41,19 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="PublishProviders"
+          BeforeTargets="Build">
+
+    <ItemGroup>
+      <PluginProject Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
+      <PluginProject Include="..\NLU.DevOps.LuisV3\NLU.DevOps.LuisV3.csproj" />
+      <PluginProject Include="..\NLU.DevOps.Lex\NLU.DevOps.Lex.csproj" />
+      <PluginProject Include="..\NLU.DevOps.DialogFlow\NLU.DevOps.DialogFlow.csproj" />
+    </ItemGroup>
+
+    <MSBuild Projects="@(PluginProject)"
+             Targets="Publish"
+             Properties="PublishDir=$(TargetDir)providers\%(FileName)\" />
+  </Target>
 </Project>
