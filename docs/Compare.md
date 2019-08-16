@@ -47,11 +47,11 @@ Currently, we do not have any way of overriding the string comparison logic used
 
 ## How entities are compared
 
-Currently, we do not have any way of overriding the string comparison logic used when comparing expected entity text versus actual entity text in the utterances. For now, the entity text is compared using `StringComparison.OrdinalIngoreCase` after all whitespace is normalized and punctuation is removed.
+Currently, we do not have any way of overriding the string comparison logic used when comparing expected entity text versus actual entity text in the utterances. For now, the entity text is compared using `StringComparison.OrdinalIngoreCase` after all whitespace is normalized and punctuation is removed. If the NLU provider does not specify the [`matchText`](GenericUtterances.md#matchText) in the actual entity, as is the case for Lex and Dialogflow, the [`entityValue`](GenericUtterances.md#entityvalue) is used to find a matching entity with the same value in either the [`matchText`](GenericUtterances.md#matchText) or [`entityValue`](GenericUtterances.md#entityvalue) in the expected entity.
 
 ## Why have separate test cases for entity values?
 
-The generic utterances model includes an ["entityValue"](GenericUtterances.md#entityvalue) property, which is the semantic or canonical form of the entity. Often times, it's useful enough to know that the NLU model identifies a match for the entity text in the utterance, so we created a separate test case type that strictly compares the expected entity value with the actual entity value, in cases where this property is expected.
+The generic utterances model includes an [`entityValue`](GenericUtterances.md#entityvalue) property, which is the semantic or canonical form of the entity. Often times, it's useful enough to know that the NLU model identifies a match for the entity text in the utterance, so we created a separate test case type that compares the expected entity value with the actual entity value, in cases where this property is expected. We assert that the actual entity value contains the JSON subtree specified in the expected entity value.
 
 ## Detailed Usage
 
