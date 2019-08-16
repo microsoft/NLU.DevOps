@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NLU.DevOps.DialogFlow\NLU.DevOps.DialogFlow.csproj" />
+    <ProjectReference Include="..\NLU.DevOps.Dialogflow\NLU.DevOps.Dialogflow.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Assets\test.txt">

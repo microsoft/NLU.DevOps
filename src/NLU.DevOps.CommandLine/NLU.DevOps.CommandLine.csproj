@@ -29,7 +29,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Visible>False</Visible>
     </Content>
-    <Content Include="..\NLU.DevOps.DialogFlow\bin\$(Configuration)\$(DependencyTargetFramework)\*">
+    <Content Include="..\NLU.DevOps.Dialogflow\bin\$(Configuration)\$(DependencyTargetFramework)\*">
       <Link>providers\dialogflow\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Visible>False</Visible>
