@@ -8,7 +8,15 @@ trigger:
   paths:
     include:
     - /extensions/
-    - /pipelines/build-extension.yml
+    - /pipelines/extension-build.yml
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /extensions/
+    - /pipelines/extension-build.yml
 
 steps:
 - task: NPM@1
