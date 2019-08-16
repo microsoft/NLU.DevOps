@@ -7,6 +7,19 @@
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NLU.DevOps.CommandLine.Tests.xml</DocumentationFile>
   </PropertyGroup>
+  <Target Name="PublishProviders"
+          BeforeTargets="CoreBuild">
+    <ItemGroup>
+      <PluginProject Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
+      <PluginProject Include="..\NLU.DevOps.LuisV3\NLU.DevOps.LuisV3.csproj" />
+      <PluginProject Include="..\NLU.DevOps.Lex\NLU.DevOps.Lex.csproj" />
+      <PluginProject Include="..\NLU.DevOps.Dialogflow\NLU.DevOps.Dialogflow.csproj" />
+    </ItemGroup>
+
+    <MSBuild Projects="@(PluginProject)"
+             Targets="Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$(TargetDir)providers\%(FileName)\" />
+  </Target>
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.5.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />

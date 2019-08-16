@@ -9,6 +9,7 @@ namespace NLU.DevOps.CommandLine
     using System.Linq;
     using System.Reflection;
     using System.Runtime.Loader;
+    using McMaster.NETCore.Plugins;
 
     internal static class ServiceResolver
     {
@@ -17,10 +18,11 @@ namespace NLU.DevOps.CommandLine
             string getAssemblyPath()
             {
                 var assemblyName = $"dotnet-nlu-{options.Service}.dll";
-                var defaultSearchPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "providers", options.Service, assemblyName);
-                if (File.Exists(defaultSearchPath))
+                var defaultSearchPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "providers");
+                var defaultAssemblyPath = Directory.GetFiles(defaultSearchPath, assemblyName, SearchOption.AllDirectories).FirstOrDefault();
+                if (defaultAssemblyPath != null)
                 {
-                    return defaultSearchPath;
+                    return defaultAssemblyPath;
                 }
 
                 var paths = new string[8];
@@ -49,52 +51,14 @@ namespace NLU.DevOps.CommandLine
                 return false;
             }
 
-            var providerDirectory = Path.GetDirectoryName(assemblyPath);
-            var assemblyLoadContext = new ProviderAssemblyLoadContext(providerDirectory);
+            var assembly = PluginLoader.CreateFromAssemblyFile(
+                    assemblyPath,
+                    PluginLoaderOptions.PreferSharedTypes)
+                .LoadDefaultAssembly();
             return new ContainerConfiguration()
-               .WithAssembly(assemblyLoadContext.LoadFromAssemblyPath(assemblyPath))
+               .WithAssembly(assembly)
                .CreateContainer()
                .TryGetExport(options.Service, out instance);
-        }
-
-        private class ProviderAssemblyLoadContext : AssemblyLoadContext
-        {
-            public ProviderAssemblyLoadContext(string providerDirectory)
-            {
-                this.ProviderDirectory = providerDirectory;
-            }
-
-            private string ProviderDirectory { get; }
-
-            protected override Assembly Load(AssemblyName assemblyName)
-            {
-                if (HasDefaultAssembly(assemblyName))
-                {
-                    return null;
-                }
-
-                var assemblyPath = Path.Combine(this.ProviderDirectory, $"{assemblyName.Name}.dll");
-                if (!File.Exists(assemblyPath))
-                {
-                    return null;
-                }
-
-                return this.LoadFromAssemblyPath(assemblyPath);
-            }
-
-            private static bool HasDefaultAssembly(AssemblyName assemblyName)
-            {
-                try
-                {
-                    return Default.LoadFromAssemblyName(assemblyName) != null;
-                }
-                catch (Exception)
-                {
-                    // Swallow exceptions from default context
-                }
-
-                return false;
-            }
         }
     }
 }

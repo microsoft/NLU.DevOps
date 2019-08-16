@@ -23,10 +23,10 @@ variables:
   
 steps:
 - task: DotNetCoreCLI@2
-  displayName: Build NLU.DevOps solution
+  displayName: Restore NuGet packages for NLU.DevOps
   inputs:
+    command: restore
     projects: src/NLU.DevOps.sln
-    arguments: --configuration Release /warnaserror
 
 - task: DotNetCoreCLI@2
   displayName: Create NuGet package for NLU.DevOps.CommandLine

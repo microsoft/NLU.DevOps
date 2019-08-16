@@ -6,35 +6,36 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <AssemblyName>dotnet-nlu</AssemblyName>
     <PackAsTool>true</PackAsTool>
-    <DependencyTargetFramework>netstandard2.0</DependencyTargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NLU.DevOps.CommandLine.xml</DocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="..\NLU.DevOps.Lex\bin\$(Configuration)\$(DependencyTargetFramework)\*">
-      <Link>providers\lex\%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="..\NLU.DevOps.Luis\bin\$(Configuration)\$(DependencyTargetFramework)\*">
-      <Link>providers\luis\%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="..\NLU.DevOps.LuisV3\bin\$(Configuration)\$(DependencyTargetFramework)\*">
-      <Link>providers\luisV3\%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="..\NLU.DevOps.Dialogflow\bin\$(Configuration)\$(DependencyTargetFramework)\*">
-      <Link>providers\dialogflow\%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Visible>False</Visible>
-    </Content>
-  </ItemGroup>
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>PublishProviders;$(TargetsForTfmSpecificContentInPackage)</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <Target Name="PublishProviders"
+          BeforeTargets="CoreBuild">
+
+    <ItemGroup>
+      <PluginProject Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
+      <PluginProject Include="..\NLU.DevOps.LuisV3\NLU.DevOps.LuisV3.csproj" />
+      <PluginProject Include="..\NLU.DevOps.Lex\NLU.DevOps.Lex.csproj" />
+      <PluginProject Include="..\NLU.DevOps.Dialogflow\NLU.DevOps.Dialogflow.csproj" />
+    </ItemGroup>
+
+    <MSBuild Projects="@(PluginProject)"
+             Targets="Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$(TargetDir)providers\%(FileName)\" />
+
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(TargetDir)providers\**\*">
+        <PackagePath>tools/$(TargetFramework)/any/providers/</PackagePath>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\NLU.DevOps.Core\NLU.DevOps.Core.csproj" />
@@ -42,14 +43,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.5.0" />
+    <PackageReference Include="McMaster.NETCore.Plugins" Version="0.2.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
     <PackageReference Include="NUnitLite" Version="3.11.0" />
     <PackageReference Include="System.Composition" Version="1.2.0" />
-    <!-- temporary hack until we can resolve the native dependencies -->
-    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.6.0" />
-    <PackageReference Include="Google.Cloud.Dialogflow.V2" Version="1.0.0" />
   </ItemGroup>
 </Project>
