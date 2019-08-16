@@ -1,4 +1,4 @@
-# Tearing down an NLU model
+ # Tearing down an NLU model
 
 The NLU.DevOps CLI tool includes a sub-command that allows you to tear down an NLU model. This command is useful in continuous integration scenarios where you may stand up a resource only to validate model performance.
 
