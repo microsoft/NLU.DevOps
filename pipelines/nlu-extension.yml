@@ -46,6 +46,7 @@ steps:
     utterances: models/tests.json
     nupkgPath: $(Build.ArtifactStagingDirectory)
     publishTestResults: true
+    publishNLUResults: true
 
 - task: NLUClean@0
   displayName: Cleanup the NLU service
