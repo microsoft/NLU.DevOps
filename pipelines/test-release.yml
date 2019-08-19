@@ -1,26 +1,33 @@
 trigger:
   branches:
-    include:
-    - master
-  paths:
-    include:
-    - /extensions/
-    - /pipelines/extension-build.yml
-pr:
-  branches:
-    include:
-    - master
-  paths:
-    include:
-    - /extensions/
-    - /pipelines/extension-build.yml
+    exclude:
+    - '*'
 
 stages:
-- stage: Build
+- stage: Test
   jobs:
-  - job: buildvsix
+  - job: testextension 
+    steps:
+    - task: NLUTrain@0
+      inputs: 
+        service: luis
+        modelSettings: models/luismodel.json
+    - task: NLUTest@0
+      inputs:
+        service: luis
+        utterances: models/test.json
+        publishTestResults: true
+    - task: NLUClean@0
+      inputs:
+        service: luis  
+
+- stage: Release
+  dependsOn: Test
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - job: releaseextension
     pool:
-      vmImage: 'ubuntu-latest' 
+      vmImage: 'ubuntu-latest'
     steps:
     - task: NPM@1
       displayName: npm install
@@ -65,33 +72,6 @@ stages:
         fileType: vsix
         vsixFile: '**/*.vsix'
         publisherId: NLUDevOps
-        extensionId: NLUDevOpsCI
-        extensionName: NLU.DevOps.CI
         extensionVersion: '0.1.$(Build.BuildId)'
         updateTasksVersion: true
-        extensionVisibility: private
-        shareWith: NLUDevOps
-
-- stage: Wait
-  dependsOn: Build
-  jobs:
-  - job: waitforvsix
-    pool: server
-    steps:
-    - task: Delay@1
-      inputs: 
-        delayForMinutes: 1
-
-- stage: Trigger
-  dependsOn: Wait
-  jobs:
-  - job: triggertest  
-    steps: 
-    - task: maikvandergaag.maikvandergaag-trigger-pipeline.TriggerPipeline.TriggerPipeline@1
-      displayName: 'Trigger Azure DevOps Pipeline: test and release'
-      inputs:
-        serviceConnection: TriggerConnectionFull
-        project: 'NLU.DevOps'
-        Pipeline: Build
-        buildDefinition: 'Azure DevOps Extension - test and release'
-        Branch: mostap/testextension
+        extensionVisibility: public
