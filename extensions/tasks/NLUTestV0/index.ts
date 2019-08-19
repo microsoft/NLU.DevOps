@@ -1,7 +1,12 @@
+import { IBuildApi } from "azure-devops-node-api/BuildApi";
+import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
+import { getHandlerFromToken, WebApi } from "azure-devops-node-api/WebApi";
 import * as tl from "azure-pipelines-task-lib/task";
 import * as tr from "azure-pipelines-task-lib/toolrunner";
+import * as fs from "fs";
 import { getNLUToolRunner } from "nlu-devops-common/utilities";
 import * as path from "path";
+import * as unzip from "unzip-stream";
 
 async function run() {
     try {
@@ -9,6 +14,7 @@ async function run() {
         await runNLUTest(output);
         await runNLUCompare(output);
         publishTestResults();
+        await publishNLUResults();
     } catch (error) {
         tl.setResult(tl.TaskResult.Failed, (error as Error).message);
     }
@@ -80,8 +86,8 @@ async function runNLUCompare(output): Promise<any> {
         tool.arg("-t");
     }
 
-    const publishNLUResults = tl.getBoolInput("publishNLUResults");
-    if (publishNLUResults) {
+    const publishNLUResultsInput = tl.getBoolInput("publishNLUResults");
+    if (publishNLUResultsInput) {
         tool.arg("-m");
     }
 
@@ -132,6 +138,104 @@ function publishTestResults() {
 
         tl.command("results.publish", properties, "");
     }
+}
+
+async function publishNLUResults() {
+    if (!tl.getBoolInput("publishNLUResults")) {
+        return;
+    }
+
+    const compareOutput = getCompareOutputPath() as string;
+
+    console.log("Publishing metadata attachment for NLU results.");
+    tl.addAttachment("nlu.devops", "metadata", path.join(compareOutput, `metadata.json`));
+
+    console.log("Publishing statistics attachment for NLU results.");
+    const statisticsPath = path.join(compareOutput, "statistics.json");
+    const allStatisticsPath = path.join(compareOutput, "allStatistics.json");
+    const buildStatistics = await getBuildStatistics(statisticsPath);
+    fs.writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics));
+    tl.addAttachment("nlu.devops", "statistics", allStatisticsPath);
+
+    if (tl.getVariable("Build.SourceBranch") === "refs/heads/master") {
+        const publishData = {
+            artifactname: "statistics",
+            artifacttype: "container",
+            containerfolder: "statistics",
+            localpath: statisticsPath,
+        };
+
+        tl.command("artifact.upload", publishData, statisticsPath);
+        tl.addBuildTag("nlu.devops.statistics");
+    }
+}
+
+async function getBuildStatistics(statisticsPath: string): Promise<Array<{ id: string, statistics: any }>> {
+    const buildStatistics = await getPreviousBuildStatistics();
+    const statisticsData = fs.readFileSync(statisticsPath).toString().trim();
+    const statistics = JSON.parse(statisticsData);
+    buildStatistics.push({
+        id: tl.getVariable("Build.BuildId"),
+        statistics,
+    });
+
+    return buildStatistics;
+}
+
+async function getPreviousBuildStatistics(): Promise<Array<{ id: string, statistics: any }>> {
+    const compareBuildCountInput = tl.getInput("compareBuildCount");
+    const compareBuildCount = parseInt(compareBuildCountInput, 10);
+    if (Number.isNaN(compareBuildCount)) {
+        throw new Error("Input value for 'compareBuildCount' must be a valid integer.");
+    }
+
+    if (!compareBuildCount) {
+        return [];
+    }
+
+    const endpointUrl = tl.getVariable("System.TeamFoundationCollectionUri");
+    const accessToken = tl.getEndpointAuthorizationParameter("SYSTEMVSSCONNECTION", "AccessToken", false);
+    const credentialHandler = getHandlerFromToken(accessToken);
+    const webApi = new WebApi(endpointUrl, credentialHandler);
+    const buildApi = await webApi.getBuildApi();
+
+    const projectId = tl.getVariable("System.TeamProjectId");
+    const definitionId = tl.getVariable("System.DefinitionId");
+    const builds = await buildApi.getBuilds(
+        projectId, /* project */
+        [parseInt(definitionId, 10)], /* definitions */
+        undefined, /* queues */
+        undefined, /* buildNumber */
+        undefined, /* minTime */
+        undefined, /* maxTime */
+        undefined, /* requestedFor */
+        undefined, /* reasonFilter */
+        BuildStatus.Completed, /* statusFilter */
+        BuildResult.Succeeded, /* resultFilter */
+        ["nlu.devops.statistics"], /* tagFilters */
+        undefined, /* properties */
+        compareBuildCount, /* top */
+        undefined, /* continuationToken */
+        undefined, /* maxBUildsPerDefinition */
+        undefined, /* deletedFilter */
+        undefined, /* queryOrder */
+        "refs/heads/master" /* branchName */);
+
+    console.log(`Found previous builds: ${builds.map((build) => build.id).join(", ")}`);
+    const artifactPromises = builds.map((build) =>
+        downloadStatisticsArtifact(projectId, buildApi, build.id as number));
+    return await Promise.all(artifactPromises);
+}
+
+async function downloadStatisticsArtifact(projectId: string, client: IBuildApi, buildId: number):
+    Promise<{ id: string, statistics: any }> {
+        const artifactStream = await client.getArtifactContentZip(projectId, buildId, "statistics");
+        const id = `${buildId}`;
+        const unzipPath = path.join(tl.getVariable("Agent.TempDirectory"), "artifacts", id);
+        await new Promise((resolve, _) => artifactStream.pipe(unzip.Extract({ path: unzipPath })).on("close", resolve));
+        const statisticsData = fs.readFileSync(path.join(unzipPath, "statistics", "statistics.json")).toString().trim();
+        const statistics = JSON.parse(statisticsData);
+        return { id, statistics };
 }
 
 function getOutputPath() {

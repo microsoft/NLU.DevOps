@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "azure-devops-node-api": "^9.0.1",
     "azure-pipelines-task-lib": "^2.8.0",
-    "nlu-devops-common": "file:../../nlu-devops-common-0.1.4.tgz"
+    "nlu-devops-common": "file:../../nlu-devops-common-0.1.4.tgz",
+    "unzip-stream": "^0.3.0"
   }
 }
