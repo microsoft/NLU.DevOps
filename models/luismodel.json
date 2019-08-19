@@ -1,0 +1,73 @@
+{
+    "luis_schema_version": "3.2.0",
+    "versionId": "0.1",
+    "name": "nludevopsmodel",
+    "desc": "",
+    "culture": "en-us",
+    "tokenizerVersion": "1.0.0",
+    "intents": [
+      {
+        "name": "None"
+      },
+      {
+        "name": "PlayMusic"
+      }
+    ],
+    "entities": [],
+    "composites": [],
+    "closedLists": [],
+    "patternAnyEntities": [],
+    "regex_entities": [],
+    "prebuiltEntities": [],
+    "model_features": [],
+    "regex_features": [],
+    "patterns": [],
+    "utterances": [
+      {
+        "text": "barking dogs are annoying",
+        "intent": "None",
+        "entities": []
+      },
+      {
+        "text": "book a flight to ukraine",
+        "intent": "None",
+        "entities": []
+      },
+      {
+        "text": "call the pizza place",
+        "intent": "None",
+        "entities": []
+      },
+      {
+        "text": "music please",
+        "intent": "PlayMusic",
+        "entities": []
+      },
+      {
+        "text": "penguins in the ocean",
+        "intent": "None",
+        "entities": []
+      },
+      {
+        "text": "play me some good music",
+        "intent": "PlayMusic",
+        "entities": []
+      },
+      {
+        "text": "play music",
+        "intent": "PlayMusic",
+        "entities": []
+      },
+      {
+        "text": "start playing music",
+        "intent": "PlayMusic",
+        "entities": []
+      },
+      {
+        "text": "when does your store open",
+        "intent": "None",
+        "entities": []
+      }
+    ],
+    "settings": []
+  }
