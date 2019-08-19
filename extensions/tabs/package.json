@@ -1,0 +1,5 @@
+{
+    "dependencies": {
+        "vss-web-extension-sdk": "^5.141.0"
+    }
+}
