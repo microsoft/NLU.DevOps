@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<head>
+    <script src="../lib/VSS.SDK.min.js"></script>
+    <script type="text/javascript">
+        VSS.init({ 
+            usePlatformScripts: true, 
+            moduleLoaderConfig: { 
+                paths: { 
+                    "enhancer": "scripts" 
+                } 
+            }
+        });
+
+        VSS.ready(() => {
+            const context = VSS.getWebContext();
+            VSS.getConfiguration().onBuildChanged(build =>
+            {
+                VSS.require(["TFS/DistributedTask/TaskRestClient"], module => {
+                    module.getClient().getPlanAttachments(context.project.id, "build", build.orchestrationPlan.planId, "nlu.devops").then(attachments =>
+                    {
+                        let foundMetadata = false;
+                        let foundStatistics = false;
+                        attachments.forEach(attachment => {
+                            if ((attachment.name === "metadata" || attachment.name === "statistics") && attachment._links && attachment._links.self && attachment._links.self.href) {
+                                found = true;
+                                foundMetadata = foundMetadata || attachment.name === "metadata";
+                                foundStatistics = foundStatistics || attachment.name === "statistics";
+                                console.log(attachment._links.self.href);
+                            }
+                        });
+
+                        if (!foundMetadata) {
+                            console.warn("Could not find attachment for NLU metadata.");
+                        }
+
+                        if (!foundMetadata) {
+                            console.warn("Could not find attachment for NLU statistics.");
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</head>
+    <body>
+        <div class="task-contribution">
+            Hello World!
+        </div>
+    </body>
+</html>
