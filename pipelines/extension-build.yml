@@ -94,4 +94,4 @@ stages:
         project: 'NLU.DevOps'
         Pipeline: Build
         buildDefinition: 'Azure DevOps Extension - test and release'
-        Branch: mostap/testextension
+        Branch: $(Build.SourceBranch)

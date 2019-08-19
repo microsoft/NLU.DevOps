@@ -15,7 +15,7 @@ stages:
     - task: NLUTest@0
       inputs:
         service: luis
-        utterances: models/test.json
+        utterances: models/tests.json
         publishTestResults: true
     - task: NLUClean@0
       inputs:
