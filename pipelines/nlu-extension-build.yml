@@ -16,7 +16,7 @@ pr:
     - /pipelines/extension-build.yml
 
 stages:
-- stage: Build
+- stage: Build_private
   jobs:
   - job: build_vsix
     pool:

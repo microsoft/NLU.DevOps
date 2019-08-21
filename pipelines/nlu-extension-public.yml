@@ -4,35 +4,10 @@ trigger:
     - '*'
 
 stages:
-- stage: Test
-  jobs:
-  - job: testextension 
-    steps:
-    - task: NLUTrain@0
-      inputs: 
-        service: luis
-        modelSettings: models/luismodel.json
-    - task: NLUTest@0
-      inputs:
-        service: luis
-        utterances: models/tests.json
-        publishTestResults: true
-    - task: NLUClean@0
-      inputs:
-        service: luis  
 
-- stage: Release
-  dependsOn: Test
-  #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+- stage: Build_public
   jobs:
-  - job: approval
-    pool: server
-    steps:
-    - task: ManualIntervention@8
-      inputs:
-        instructions: 'reject or resume'
-
-  - job: releaseextension
+  - job: release_extension
     dependsOn: approval
     pool:
       vmImage: 'ubuntu-latest'
