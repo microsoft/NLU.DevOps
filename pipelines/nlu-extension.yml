@@ -31,33 +31,31 @@ steps:
     packagesToPack: src/NLU.DevOps.CommandLine
     configuration: Release
 
-- task: AzurePowerShell@4
-  displayName: Get ARM token for Azure
-  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
+- task: DotNetCoreCLI@2
+  displayName: Create NuGet package for NLU.DevOps.MockProvider
   inputs:
-    azureSubscription: $(azureSubscription)
-    azurePowerShellVersion: latestVersion
-    scriptType: inlineScript
-    inline: |
-      $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
-      $currentAzureContext = Get-AzContext
-      $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
-      $token = $profileClient.AcquireAccessToken($currentAzureContext.Tenant.TenantId)
-      $setVariableMessage = "##vso[task.setvariable variable=arm_token]{0}" -f $token.AccessToken 
-      echo $setVariableMessage
+    command: pack
+    packagesToPack: src/NLU.DevOps.MockProvider
+    configuration: Release
+
+- task: DotNetCoreCLI@2
+  displayName: Install dotnet-nlu-mock
+  inputs:
+    command: custom
+    custom: tool
+    arguments: install dotnet-nlu-mock --add-source $(Build.ArtifactStagingDirectory) --tool-path $(Agent.TempDirectory)/.dotnet
 
 - task: NLUTrain@0
   displayName: Train NLU model
   inputs:
-    service: $(nlu.service)
+    service: mock
     utterances: models/utterances.json
-    modelSettings: models/settings.$(nlu.service).json
     nupkgPath: $(Build.ArtifactStagingDirectory)
 
 - task: NLUTest@0
   displayName: Test NLU model
   inputs:
-    service: $(nlu.service)
+    service: mock
     utterances: models/tests.json
     nupkgPath: $(Build.ArtifactStagingDirectory)
     publishTestResults: true
@@ -65,7 +63,6 @@ steps:
 
 - task: NLUClean@0
   displayName: Cleanup the NLU service
-  condition: and(always(), ne(variables['nlu.ci'], 'false'))
   inputs:
-    service: $(nlu.service)
+    service: mock
     nupkgPath: $(Build.ArtifactStagingDirectory)
