@@ -18,7 +18,7 @@ pr:
 stages:
 - stage: Build
   jobs:
-  - job: buildvsix
+  - job: build_vsix
     pool:
       vmImage: 'ubuntu-latest' 
     steps:
@@ -72,16 +72,3 @@ stages:
         extensionVisibility: private
         shareWith: NLUDevOps
 
-- stage: Trigger
-  dependsOn: Build
-  jobs:
-  - job: triggertest  
-    steps: 
-    - task: TriggerPipeline@1
-      displayName: 'Trigger Azure DevOps Pipeline: test'
-      inputs:
-        serviceConnection: TriggerConnectionFull
-        project: 'NLU.DevOps'
-        Pipeline: Build
-        buildDefinition: 'Azure DevOps Extension - test and release'
-        Branch: $(Build.SourceBranch)

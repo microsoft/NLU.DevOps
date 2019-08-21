@@ -6,7 +6,7 @@ trigger:
 stages:
 - stage: Test
   jobs:
-  - job: testextension 
+  - job: test_extension 
     steps:
     - task: NLUTrain@0
       inputs: 
@@ -25,7 +25,7 @@ stages:
   dependsOn: Test
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
-  - job: releaseextension
+  - job: release_extension
     pool:
       vmImage: 'ubuntu-latest'
     steps:
