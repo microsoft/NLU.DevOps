@@ -1,0 +1,53 @@
+{
+    "id": "99e8afe6-f96a-40f5-92d1-c7d960cd42df",
+    "name": "NLUInstall",
+    "friendlyName": "Install NLU.DevOps extension",
+    "description": "Install NLU.DevOps extension to the correct location.",
+    "helpUrl": "https://github.com/microsoft/NLU.DevOps",
+    "helpMarkDown": "[Learn more about NLU.DevOps extensions](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md)",
+    "category": "Test",
+    "visibility": [
+        "Build"
+    ],
+    "runsOn": [
+        "Agent",
+        "DeploymentGroup"
+    ],
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0
+    },
+    "demands": [],
+    "minimumAgentVersion": "2.102.0",
+    "instanceNameFormat": "NLU.DevOps Install Extension",
+    "inputs": [
+        {
+            "name": "packageName",
+            "type": "string",
+            "label": "Name of NuGet package for NLU.DevOps extension",
+            "helpMarkDown": "Name of NuGet package for NLU.DevOps extension",
+            "required": true
+        },
+        {
+            "name": "nupkgPath",
+            "type": "string",
+            "label": "Path containing .nupkg to use for installing dotnet-nlu",
+            "helpMarkDown": "Path containing .nupkg to use for installing dotnet-nlu.",
+            "required": false
+        },
+        {
+            "name": "toolVersion",
+            "type": "string",
+            "label": "Version of dotnet-nlu to install.",
+            "helpMarkDown": "Version of dotnet-nlu to install.",
+            "required": false
+        }
+    ],
+    "execution": {
+        "Node": {
+            "target": "index.js"
+        }
+    }
+}
