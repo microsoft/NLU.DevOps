@@ -6,7 +6,7 @@ trigger:
 stages:
 - stage: Test
   jobs:
-  - job: test_extension 
+  - job: testextension 
     steps:
     - task: NLUTrain@0
       inputs: 
@@ -21,11 +21,17 @@ stages:
       inputs:
         service: luis  
 
-- stage: Build
+- stage: Release
   dependsOn: Test
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
-  - job: release_extension
+  - job: approval
+    pool: server
+    steps:
+    - task: ManualIntervention@8
+      inputs:
+        instructions: 'reject or resume'
+  - job: releaseextension
     pool:
       vmImage: 'ubuntu-latest'
     steps:
