@@ -21,7 +21,7 @@ stages:
       inputs:
         service: luis  
 
-- stage: Release
+- stage: Build
   dependsOn: Test
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
@@ -62,16 +62,3 @@ stages:
         artifactName: drop
         targetPath: $(Build.ArtifactStagingDirectory)
 
-    - task: ms-devlabs.vsts-developer-tools-build-tasks.tfx-installer-build-task.TfxInstaller@2
-      displayName: 'Use Node CLI for Azure DevOps (tfx-cli): v0.6.x'
-
-    - task: ms-devlabs.vsts-developer-tools-build-tasks.publish-extension-build-task.PublishAzureDevOpsExtension@2
-      displayName: 'Publish Extension'
-      inputs:
-        connectedServiceName: marketplaceConnection
-        fileType: vsix
-        vsixFile: '**/*.vsix'
-        publisherId: NLUDevOps
-        extensionVersion: '0.1.$(Build.BuildId)'
-        updateTasksVersion: true
-        extensionVisibility: public
