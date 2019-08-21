@@ -19,10 +19,10 @@ pr:
 
 steps:
 - task: DotNetCoreCLI@2
-  displayName: Build NLU.DevOps solution
+  displayName: Restore NuGet packages for NLU.DevOps
   inputs:
+    command: restore
     projects: src/NLU.DevOps.sln
-    arguments: --configuration Release /warnaserror
 
 - task: DotNetCoreCLI@2
   displayName: Create NuGet package for NLU.DevOps.CommandLine
@@ -31,18 +31,31 @@ steps:
     packagesToPack: src/NLU.DevOps.CommandLine
     configuration: Release
 
+- task: DotNetCoreCLI@2
+  displayName: Create NuGet package for NLU.DevOps.MockProvider
+  inputs:
+    command: pack
+    packagesToPack: src/NLU.DevOps.MockProvider
+    configuration: Release
+
+- task: DotNetCoreCLI@2
+  displayName: Install dotnet-nlu-mock
+  inputs:
+    command: custom
+    custom: tool
+    arguments: install dotnet-nlu-mock --add-source $(Build.ArtifactStagingDirectory) --tool-path $(Agent.TempDirectory)/.dotnet
+
 - task: NLUTrain@0
   displayName: Train NLU model
   inputs:
-    service: $(nlu.service)
+    service: mock
     utterances: models/utterances.json
-    modelSettings: models/settings.$(nlu.service).json
     nupkgPath: $(Build.ArtifactStagingDirectory)
 
 - task: NLUTest@0
   displayName: Test NLU model
   inputs:
-    service: $(nlu.service)
+    service: mock
     utterances: models/tests.json
     nupkgPath: $(Build.ArtifactStagingDirectory)
     publishTestResults: true
@@ -50,7 +63,6 @@ steps:
 
 - task: NLUClean@0
   displayName: Cleanup the NLU service
-  condition: and(always(), ne(variables['nlu.ci'], 'false'))
   inputs:
-    service: $(nlu.service)
+    service: mock
     nupkgPath: $(Build.ArtifactStagingDirectory)

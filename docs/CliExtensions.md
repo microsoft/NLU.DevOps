@@ -4,18 +4,18 @@ By default, the NLU.DevOps CLI tool supports [LUIS](https://www.luis.ai), [Lex](
 
 ## Building the extension
 
-Before starting, decide what the service identifier will be for you NLU service implementation, as that will be used in a number of places. E.g., the service identifier for LUIS is `luis`. In this example, we'll use `demo`.
+Before starting, decide what the service identifier will be for you NLU service implementation, as that will be used in a number of places. E.g., the service identifier for LUIS is `luis`. In this example, we'll use `mock`.
 
 ### 1. Create a new .NET Core class library:
 ```bash
-dotnet new console dotnet-nlu-demo
+dotnet new console dotnet-nlu-mock
 ```
 
-Be sure to replace `demo` with the service identifier you plan to use for your NLU service implementation.
+Be sure to replace `mock` with the service identifier you plan to use for your NLU service implementation.
 
 ### 2. Add required dependencies:
 ```bash
-cd dotnet-nlu-demo
+cd dotnet-nlu-mock
 dotnet add package Newtonsoft.Json
 dotnet add package NLU.DevOps.Core
 dotnet add package System.Composition.AttributedModel
@@ -24,12 +24,12 @@ dotnet add package System.Composition.AttributedModel
 ### 3. Implement `INLUService`
 Open the project in [Visual Studio](https://visualstudio.microsoft.com/downloads/) or [Visual Studio Code](https://code.visualstudio.com/).
 
-Add `DemoNLUClient.cs` to your project:
+Add `MockNLUClient.cs` to your project:
 ```cs
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.Demo
+namespace NLU.DevOps.MockProvider
 {
     using System;
     using System.Collections.Generic;
@@ -40,9 +40,9 @@ namespace NLU.DevOps.Demo
     using Models;
     using Newtonsoft.Json;
 
-    internal class DemoNLUClient : DefaultNLUTestClient, INLUTrainClient
+    internal class MockNLUClient : DefaultNLUTestClient, INLUTrainClient
     {
-        public DemoNLUClient(string trainedUtterances)
+        public MockNLUClient(string trainedUtterances)
         {
             this.Utterances = new List<LabeledUtterance>();
             if (trainedUtterances != null)
@@ -86,28 +86,28 @@ namespace NLU.DevOps.Demo
 ```
 
 ### 4. Implement `INLUClientFactory`
-Add `DemoNLUClientFactory.cs` to your project:
+Add `MockNLUClientFactory.cs` to your project:
 ```cs
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.Demo
+namespace NLU.DevOps.MockProvider
 {
     using System.Composition;
     using Microsoft.Extensions.Configuration;
     using Models;
 
-    [Export("demo", typeof(INLUClientFactory))]
-    public class DemoNLUClientFactory : INLUClientFactory
+    [Export("mock", typeof(INLUClientFactory))]
+    public class MockNLUClientFactory : INLUClientFactory
     {
         public INLUTrainClient CreateTrainInstance(IConfiguration configuration, string settingsPath)
         {
-            return new DemoNLUClient(configuration["trainedUtterances"]);
+            return new MockNLUClient(configuration["trainedUtterances"]);
         }
 
         public INLUTestClient CreateTestInstance(IConfiguration configuration, string settingsPath)
         {
-            return new DemoNLUClient(configuration["trainedUtterances"]);
+            return new MockNLUClient(configuration["trainedUtterances"]);
         }
     }
 }
@@ -128,21 +128,21 @@ dotnet build
 
 When you want to run an NLU.DevOps CLI command, add the `--include` option with the path to your assembly:
 ```bash
-dotnet nlu train --service demo --utterances utterances --include ./bin/Debug/netcoreapp2.1/dotnet-nlu-demo.dll
+dotnet nlu train --service mock --utterances utterances --include ./bin/Debug/netcoreapp2.1/dotnet-nlu-mock.dll
 ```
 
-These commands assume you are currently in the `dotnet-nlu-demo` project folder.
+These commands assume you are currently in the `dotnet-nlu-mock` project folder.
 
 ### Installing via .NET Core tools
 
 In order to install your NLU service implementation so it's always accessible to the NLU.DevOps CLI tool, you'll have to pack and install your project as a .NET Core tool extension.
 
-To start, add configuration to your `dotnet-nlu-demo.csproj` file to instruct .NET Core to build your project as a .NET Core tool:
+To start, add configuration to your `dotnet-nlu-mock.csproj` file to instruct .NET Core to build your project as a .NET Core tool:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <AssemblyName>dotnet-nlu-demo</AssemblyName>
+    <AssemblyName>dotnet-nlu-mock</AssemblyName>
     <PackAsTool>true</PackAsTool> <!-- Add this line -->
   </PropertyGroup>
   ...
@@ -156,18 +156,18 @@ dotnet pack
 
 Install the NuGet package as a .NET Core tool:
 ```bash
-dotnet tool install dotnet-nlu-demo --add-source ./bin/Debug [-g|--tool-path <path>]
+dotnet tool install dotnet-nlu-mock --add-source ./bin/Debug [-g|--tool-path <path>]
 ```
 
 With this option, you won't have to specify the `--include` option each time you call the NLU.DevOps CLI tool.
 
 ### Example
 
-Try running the following commands to install and test the `demo` service we've created above:
+Try running the following commands to install and test the `mock` service we've created above:
 ```
 dotnet tool install -g dotnet-nlu
-dotnet tool install -g dotnet-nlu-demo
-dotnet nlu train -s demo -u models/utterances.json -a
-dotnet nlu test -s demo -u models/tests.json
-dotnet nlu clean -s demo -a
+dotnet tool install -g dotnet-nlu-mock
+dotnet nlu train -s mock -u models/utterances.json -a
+dotnet nlu test -s mock -u models/tests.json
+dotnet nlu clean -s mock -a
 ```

@@ -101,7 +101,6 @@ namespace NLU.DevOps.Lex.Tests
                     result.Entities.Count.Should().Be(1);
                     result.Entities[0].EntityType.Should().Be(entityType);
                     result.Entities[0].EntityValue.Value<string>().Should().BeEquivalentTo(entityValue);
-                    result.Entities[0].EntityResolution.Should().BeNull();
                 }
             }
         }
@@ -149,7 +148,6 @@ namespace NLU.DevOps.Lex.Tests
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Entities[0].EntityType.Should().Be(entityType);
                 response.Entities[0].EntityValue.Value<string>().Should().BeEquivalentTo(entityValue);
-                response.Entities[0].EntityResolution.Should().BeNull();
             }
         }
 

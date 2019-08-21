@@ -134,7 +134,7 @@ namespace NLU.DevOps.Dialogflow
                 return null;
             }
 
-            return new Entity(pair.Key, jsonValue, null, null, 0);
+            return new Entity(pair.Key, jsonValue, null, 0);
         }
 
         private async Task<SessionsClient> GetSessionClientAsync(CancellationToken cancellationToken)

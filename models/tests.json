@@ -19,6 +19,17 @@
     ]
   },
   {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
     "text": "skip this one",
     "intent": "Skip"
   },

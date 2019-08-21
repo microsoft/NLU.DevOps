@@ -69,7 +69,6 @@ namespace NLU.DevOps.Luis.Tests
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
                 result.Entities[0].EntityValue.Should().BeNull();
-                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }
@@ -133,12 +132,9 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(3);
-                result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("THE"));
-                result.Entities[0].EntityResolution.Should().BeEquivalentTo(valueResolution);
-                result.Entities[1].EntityValue.Should().BeEquivalentTo(new JValue("Fox"));
-                result.Entities[1].EntityResolution.Should().BeEquivalentTo(valuesStringResolution);
-                result.Entities[2].EntityValue.Should().BeEquivalentTo(new JValue("2018-11-16"));
-                result.Entities[2].EntityResolution.Should().BeEquivalentTo(valuesValueResolution);
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(valueResolution["value"]);
+                result.Entities[1].EntityValue.Should().BeEquivalentTo(valuesStringResolution["values"]);
+                result.Entities[2].EntityValue.Should().BeEquivalentTo(valuesValueResolution["values"]);
             }
         }
 
@@ -255,7 +251,6 @@ namespace NLU.DevOps.Luis.Tests
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("type");
                 result.Entities[0].EntityValue.Should().BeNull();
-                result.Entities[0].EntityResolution.Should().BeNull();
                 result.Entities[0].MatchText.Should().Be("the");
                 result.Entities[0].MatchIndex.Should().Be(1);
             }

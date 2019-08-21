@@ -321,35 +321,6 @@ namespace NLU.DevOps.ModelPerformance
                                     "Entity");
                             }
                         }
-
-                        if (entity.EntityResolution != null && entity.EntityResolution.Type != JTokenType.Null)
-                        {
-                            var formattedEntityResolution = entity.EntityResolution.ToString(Formatting.None);
-                            if (!ContainsSubtree(entity.EntityResolution, matchedEntity.EntityResolution))
-                            {
-                                yield return FalseNegative(
-                                    ComparisonTargetKind.EntityResolution,
-                                    expectedUtterance,
-                                    actualUtterance,
-                                    score,
-                                    entity.EntityType,
-                                    new[] { entity.EntityType, formattedEntityResolution, text },
-                                    $"Actual utterance does not have entity resolution matching '{formattedEntityResolution}'.",
-                                    "Entity");
-                            }
-                            else
-                            {
-                                yield return TruePositive(
-                                    ComparisonTargetKind.EntityResolution,
-                                    expectedUtterance,
-                                    actualUtterance,
-                                    score,
-                                    entity.EntityType,
-                                    new[] { entity.EntityType, formattedEntityResolution, text },
-                                    $"Both utterances contain expected resolution '{formattedEntityResolution}'.",
-                                    "Entity");
-                            }
-                        }
                     }
                 }
             }
