@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\CommonNuget.props" />
+  <Import Project="..\CodeAnalysis.props" />
+
+  <PropertyGroup>
+    <AssemblyName>dotnet-nlu-mock</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="System.Composition.AttributedModel" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NLU.DevOps.Models\NLU.DevOps.Models.csproj" />
+    <ProjectReference Include="..\NLU.DevOps.Core\NLU.DevOps.Core.csproj" />
+  </ItemGroup>
+
+</Project>
