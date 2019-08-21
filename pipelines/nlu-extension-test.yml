@@ -31,7 +31,9 @@ stages:
     - task: ManualIntervention@8
       inputs:
         instructions: 'reject or resume'
+
   - job: releaseextension
+    dependsOn: approval
     pool:
       vmImage: 'ubuntu-latest'
     steps:
