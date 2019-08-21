@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.Dialogflow", "NL
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.Dialogflow.Tests", "NLU.DevOps.Dialogflow.Tests\NLU.DevOps.Dialogflow.Tests.csproj", "{54227476-C6BE-4EE2-ADD7-798B0F9103AA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.MockProvider", "NLU.DevOps.MockProvider\NLU.DevOps.MockProvider.csproj", "{9B14AEE8-8BC5-455D-BD84-FA32698BCFBA}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.CommandLine", "NLU.DevOps.CommandLine\NLU.DevOps.CommandLine.csproj", "{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.CommandLine.Tests", "NLU.DevOps.CommandLine.Tests\NLU.DevOps.CommandLine.Tests.csproj", "{1F5ADDE0-4414-4B49-9810-69B58EED51AF}"
@@ -99,6 +101,10 @@ Global
 		{54227476-C6BE-4EE2-ADD7-798B0F9103AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54227476-C6BE-4EE2-ADD7-798B0F9103AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54227476-C6BE-4EE2-ADD7-798B0F9103AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B14AEE8-8BC5-455D-BD84-FA32698BCFBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B14AEE8-8BC5-455D-BD84-FA32698BCFBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B14AEE8-8BC5-455D-BD84-FA32698BCFBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B14AEE8-8BC5-455D-BD84-FA32698BCFBA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED09E7CE-E721-415A-A0CA-1B928EC4E7A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
