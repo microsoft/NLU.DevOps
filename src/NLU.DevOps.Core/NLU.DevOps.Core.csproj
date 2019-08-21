@@ -3,7 +3,7 @@
   <Import Project="..\CodeAnalysis.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyVersion>0.2.0</AssemblyVersion>
+    <AssemblyVersion>0.4.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
