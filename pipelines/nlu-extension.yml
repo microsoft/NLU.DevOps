@@ -31,6 +31,21 @@ steps:
     packagesToPack: src/NLU.DevOps.CommandLine
     configuration: Release
 
+- task: AzurePowerShell@4
+  displayName: Get ARM token for Azure
+  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
+  inputs:
+    azureSubscription: $(azureSubscription)
+    azurePowerShellVersion: latestVersion
+    scriptType: inlineScript
+    inline: |
+      $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+      $currentAzureContext = Get-AzContext
+      $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
+      $token = $profileClient.AcquireAccessToken($currentAzureContext.Tenant.TenantId)
+      $setVariableMessage = "##vso[task.setvariable variable=arm_token]{0}" -f $token.AccessToken 
+      echo $setVariableMessage
+
 - task: NLUTrain@0
   displayName: Train NLU model
   inputs:
