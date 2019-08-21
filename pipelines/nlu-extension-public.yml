@@ -8,7 +8,6 @@ stages:
 - stage: Build_public
   jobs:
   - job: release_extension
-    dependsOn: approval
     pool:
       vmImage: 'ubuntu-latest'
     steps:
