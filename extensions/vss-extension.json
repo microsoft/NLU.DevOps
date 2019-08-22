@@ -39,6 +39,10 @@
             "addressable": true
         },
         {
+            "path": "tabs/matrix.css",
+            "addressable": true
+        },
+        {
             "path": "tabs/node_modules/vss-web-extension-sdk/lib",
             "addressable": true,
             "packagePath": "lib"
