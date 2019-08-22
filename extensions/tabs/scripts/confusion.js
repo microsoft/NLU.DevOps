@@ -40,7 +40,7 @@ function getData (filename) {
     sliceActualIntent = d3.nest()
       .key(function (d) { return d.actualUtterance.intent })
       .entries(data)
-    for (let key = 0; key < 4; key++) {
+    for (let key = 0; key < nestData.length; key++) {
       console.log(nestData[key])
       quadrantCountMax = Math.max(quadrantCountMax, nestData[key].values.length)
     }
