@@ -57,10 +57,10 @@ jobs:
 
   - task: TfxInstaller@2
     condition: eq(variables['isPrivateBuild'], true)
-    displayName: 'Install Node CLI'
+    displayName: Install Node CLI
 
   - task: PublishAzureDevOpsExtension@2
-    displayName: 'Publish Extension'
+    displayName: Publish Extension
     condition: eq(variables['isPrivateBuild'], true)
     inputs:
       connectedServiceName: marketplaceConnection
