@@ -39,14 +39,14 @@ Licensed under the MIT License.
                                 foundMetadata = foundMetadata || attachment.name === "metadata";
                                 foundStatistics = foundStatistics || attachment.name === "statistics";
                                 console.log(attachment._links.self.href);
-                                if (foundMetadata) {
-                                    getData("metadata");
-                                }
                             }
                         });
 
                         if (!foundMetadata) {
                             console.warn("Could not find attachment for NLU metadata.");
+                        }
+                        else {
+                            getData("metadata");
                         }
 
                         if (!foundMetadata) {
