@@ -2,6 +2,9 @@
 *.js
 node_modules
 
+#include these script until TypeScript conversion
+!/tabs/scripts/*.js
+
 # Yarn / NPM
 yarn.lock
 package-lock.json
