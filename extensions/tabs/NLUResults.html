@@ -1,23 +1,36 @@
 <!DOCTYPE html>
+<!-- 
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the MIT License.
+ -->
 <head>
+    <title>Confusion Matrix</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./scripts/d3.min.js"></script>
+    <script src="./scripts/json2html.min.js"></script>
+    <script src="./scripts/confusion.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="matrix.css">
     <script src="../lib/VSS.SDK.min.js"></script>
     <script type="text/javascript">
-        VSS.init({ 
-            usePlatformScripts: true, 
-            moduleLoaderConfig: { 
-                paths: { 
-                    "enhancer": "scripts" 
-                } 
+        VSS.init({
+            usePlatformScripts: true,
+            moduleLoaderConfig: {
+                paths: {
+                    "enhancer": "scripts"
+                }
             }
         });
 
         VSS.ready(() => {
             const context = VSS.getWebContext();
-            VSS.getConfiguration().onBuildChanged(build =>
-            {
+            VSS.getConfiguration().onBuildChanged(build => {
                 VSS.require(["TFS/DistributedTask/TaskRestClient"], module => {
-                    module.getClient().getPlanAttachments(context.project.id, "build", build.orchestrationPlan.planId, "nlu.devops").then(attachments =>
-                    {
+                    module.getClient().getPlanAttachments(context.project.id, "build", build.orchestrationPlan.planId, "nlu.devops").then(attachments => {
                         let foundMetadata = false;
                         let foundStatistics = false;
                         attachments.forEach(attachment => {
@@ -26,6 +39,9 @@
                                 foundMetadata = foundMetadata || attachment.name === "metadata";
                                 foundStatistics = foundStatistics || attachment.name === "statistics";
                                 console.log(attachment._links.self.href);
+                                if (foundMetadata) {
+                                    getData(attachment._links.self.href);
+                                }
                             }
                         });
 
@@ -42,9 +58,25 @@
         });
     </script>
 </head>
-    <body>
-        <div class="task-contribution">
-            Hello World!
+
+<body>
+    <div class="task-contribution">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-8" id="confusionMatrix">
+                </div>
+                <div class="col-4">
+                    <div id="slicers">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div id="testData" class="col-12">
+                </div>
+            </div>
+            </br>
         </div>
-    </body>
+    </div>
+</body>
+
 </html>
