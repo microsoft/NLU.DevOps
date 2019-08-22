@@ -87,7 +87,7 @@ function addSlicers (section, data) {
 }
 
 function addDataPoints (data) {
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < data.length; index++) {
     var tooltip = d3.select('body').append('div')
       .attr('class', 'tooltip')
       .style('opacity', 0)
