@@ -19,7 +19,7 @@ Licensed under the MIT License.
     <script type="text/javascript">
         VSS.init({
             usePlatformScripts: true,
-            moduleLoaderConfig: {
+            taskRestClientLoaderConfig: {
                 paths: {
                     "enhancer": "scripts"
                 }
@@ -29,27 +29,29 @@ Licensed under the MIT License.
         VSS.ready(() => {
             const context = VSS.getWebContext();
             VSS.getConfiguration().onBuildChanged(build => {
-                VSS.require(["TFS/DistributedTask/TaskRestClient"], module => {
-                    module.getClient().getPlanAttachments(context.project.id, "build", build.orchestrationPlan.planId, "nlu.devops").then(attachments => {
-                        let foundMetadata = false;
-                        let foundStatistics = false;
+                VSS.require(["TFS/DistributedTask/TaskRestClient", "VSS/Authentication/Services"], (taskRestClient, authServices) => {
+                    taskRestClient.getClient().getPlanAttachments(context.project.id, "build", build.orchestrationPlan.planId, "nlu.devops").then(attachments => {
+                        let metadata;
+                        let statistics;
                         attachments.forEach(attachment => {
                             if ((attachment.name === "metadata" || attachment.name === "statistics") && attachment._links && attachment._links.self && attachment._links.self.href) {
-                                found = true;
-                                foundMetadata = foundMetadata || attachment.name === "metadata";
-                                foundStatistics = foundStatistics || attachment.name === "statistics";
+                                metadata = attachment.name === "metadata" ? attachment._links.self.href : metadata;
+                                statistics = attachment.name === "statistics" ? attachment._links.self.href : statistics;
                                 console.log(attachment._links.self.href);
                             }
                         });
 
-                        if (!foundMetadata) {
+                        if (!metadata) {
                             console.warn("Could not find attachment for NLU metadata.");
                         }
                         else {
-                            getData("metadata");
+                            VSS.getAccessToken().then(token => {
+                                var authToken = authServices.authTokenManager.getAuthorizationHeader(token);
+                                getData(metadata, { "Authorization": authToken })
+                            });
                         }
 
-                        if (!foundMetadata) {
+                        if (!statistics) {
                             console.warn("Could not find attachment for NLU statistics.");
                         }
                     });

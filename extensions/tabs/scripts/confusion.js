@@ -29,8 +29,8 @@ var precision
 var recall
 
 // eslint-disable-next-line no-unused-vars
-function getData (filename) {
-  d3.json(filename).then(function (data) {
+function getData (filename, headers) {
+  d3.json(filename, { headers }).then(function (data) {
     nestData = d3.nest()
       .key(function (d) { return d.resultKind })
       .entries(data)
