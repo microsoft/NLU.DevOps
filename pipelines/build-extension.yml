@@ -1,6 +1,3 @@
-pool:
-  vmImage: 'ubuntu-latest'
-
 trigger:
   branches:
     include:
@@ -72,7 +69,7 @@ steps:
     updateTasksVersion: true
     extensionVisibility: private
     shareWith: NLUDevOps
-    
+
 - task: TriggerPipeline@1
   displayName: Trigger test Azure DevOps Pipeline 
   inputs:
