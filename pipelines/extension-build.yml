@@ -8,7 +8,7 @@ trigger:
   paths:
     include:
     - /extensions/
-    - /pipelines/extension-build.yml
+    - /pipelines/nlu-extension-build.yml
 pr:
   branches:
     include:
@@ -16,7 +16,7 @@ pr:
   paths:
     include:
     - /extensions/
-    - /pipelines/extension-build.yml
+    - /pipelines/nlu-extension-build.yml
 
 steps:
 - task: NPM@1
@@ -40,7 +40,7 @@ steps:
     workingDir: extensions
 
 - task: CopyFiles@2
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Stage extension artifact for publish
   inputs:
     sourceFolder: extensions
