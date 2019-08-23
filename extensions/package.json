@@ -11,7 +11,8 @@
         "lintFix": "npm run lintCommon -- --fix && npm run lintTasks -- --fix && npm run eclintFix",
         "buildCommon": "npm-recursive-install --rootDir=common && tsc -p common && npm pack common/nlu-devops-common/",
         "buildTasks": "npm-recursive-install --rootDir=tasks && tsc -p tasks",
-        "build": "npm run buildCommon && npm run buildTasks",
+        "buildTabs": "npm-recursive-install --rootDir=tabs",
+        "build": "npm run buildCommon && npm run buildTasks && npm run buildTabs",
         "postbuild": "npm run package",
         "package": "tfx extension create --rev-version --manifest-globs",
         "clean": "rimraf ./*.vsix && rimraf ./*.tgz"

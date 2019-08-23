@@ -6,6 +6,7 @@
     "description": "A collection of tasks and results tabs for NLU.DevOps",
     "publisher": "NLUDevOps",
     "public": true,
+    "scopes": [ "vso.build" ],
     "icons": {
         "default": "images/icon.png"
     },
@@ -32,6 +33,24 @@
         {
             "path": "tasks/NLUCleanV0",
             "addressable": true
+        },
+        {
+            "path": "tabs/NLUResults.html",
+            "addressable": true
+        },
+        {
+            "path": "tabs/matrix.css",
+            "addressable": true
+        },
+        {
+            "path": "tabs/node_modules/vss-web-extension-sdk/lib",
+            "addressable": true,
+            "packagePath": "lib"
+        },
+        {
+            "path": "tabs/scripts",
+            "addressable": true,
+            "packagePath": "scripts"
         }
     ],
     "contributions": [
@@ -63,6 +82,19 @@
             ],
             "properties": {
                 "name": "tasks/NLUCleanV0"
+            }
+        },
+        {
+            "id": "nlu-results-tab",
+            "type": "ms.vss-build-web.build-results-tab",
+            "description": "A tab for displaying NLU results dependent on the NLUClean task",
+            "targets": [
+                "ms.vss-build-web.build-results-view"
+            ],
+            "properties": {
+                "name": "NLU Results",
+                 "uri": "tabs/NLUResults.html",
+                 "supportsTasks": ["b05f23dd-168e-475a-a6f9-6297f8fd21bc"]
             }
         }
     ],
