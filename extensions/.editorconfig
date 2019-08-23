@@ -1,5 +1,5 @@
 # Default 
-[{.,common,tasks}/**.{ts,json}]
+[{.,common,tasks,tabs}/**.{ts,json,html,css}]
 end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = true
@@ -8,7 +8,7 @@ indent_style = space
 indent_size = 4
 
 # package.json typically uses 2 space indents
-[{.,common,tasks}/**/package.json]
+[{.,common,tasks,tabs}/**/package.json]
 end_of_line = lf
 charset = utf-8
 trim_trailing_whitespace = true
@@ -17,7 +17,7 @@ indent_style = space
 indent_size = 2
 
 # Ignore pattern
-[{.,common,tasks}/**/{node_modules/**,package-lock.json,yarn-lock.json}]
+[{.,common,tasks,tabs}/**/{node_modules/**,package-lock.json,yarn-lock.json}]
 end_of_line = none
 charset = utf-8
 trim_trailing_whitespace = none
