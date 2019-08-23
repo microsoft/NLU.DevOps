@@ -15,66 +15,73 @@ pr:
     - /extensions/
     - /pipelines/build-extension.yml
 
-steps:
-- task: NPM@1
-  displayName: npm install
-  inputs:
-    command: install
-    workingDir: extensions
+jobs:
+- job: build
+  pool:
+    vmImage: 'ubuntu-latest' 
+  steps:
+  - task: NPM@1
+    displayName: npm install
+    inputs:
+      command: install
+      workingDir: extensions
 
-- task: NPM@1
-  displayName: npm run lint
-  inputs:
-    command: custom
-    customCommand: run lint
-    workingDir: extensions
+  - task: NPM@1
+    displayName: npm run lint
+    inputs:
+      command: custom
+      customCommand: run lint
+      workingDir: extensions
 
-- task: NPM@1
-  displayName: npm run build
-  inputs:
-    command: custom
-    customCommand: run build
-    workingDir: extensions
+  - task: NPM@1
+    displayName: npm run build
+    inputs:
+      command: custom
+      customCommand: run build
+      workingDir: extensions
 
-- task: CopyFiles@2
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: Stage extension artifact for publish
-  inputs:
-    sourceFolder: extensions
-    contents: '**/*.vsix'
-    targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: CopyFiles@2
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    displayName: Stage extension artifact for publish
+    inputs:
+      sourceFolder: extensions
+      contents: '**/*.vsix'
+      targetFolder: $(Build.ArtifactStagingDirectory)
 
-- task: PublishPipelineArtifact@0
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  displayName: Publish extension artifact
-  inputs:
-    artifactName: drop
-    targetPath: $(Build.ArtifactStagingDirectory)
+  - task: PublishPipelineArtifact@0
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    displayName: Publish extension artifact
+    inputs:
+      artifactName: drop
+      targetPath: $(Build.ArtifactStagingDirectory)
 
-- task: TfxInstaller@2
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-  displayName: Install Node CLI
+  - task: TfxInstaller@2
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    displayName: Install Node CLI
 
-- task: PublishAzureDevOpsExtension@2
-  displayName: Publish Extension
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-  inputs:
-    connectedServiceName: marketplaceConnection
-    fileType: vsix
-    vsixFile: '**/*.vsix'
-    publisherId: NLUDevOps
-    extensionId: NLUDevOpsCI
-    extensionName: NLU.DevOps.CI
-    extensionVersion: '0.1.$(Build.BuildId)'
-    updateTasksVersion: true
-    extensionVisibility: private
-    shareWith: NLUDevOps
+  - task: PublishAzureDevOpsExtension@2
+    displayName: Publish Extension
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    inputs:
+      connectedServiceName: marketplaceConnection
+      fileType: vsix
+      vsixFile: '**/*.vsix'
+      publisherId: NLUDevOps
+      extensionId: NLUDevOpsCI
+      extensionName: NLU.DevOps.CI
+      extensionVersion: '0.1.$(Build.BuildId)'
+      updateTasksVersion: true
+      extensionVisibility: private
+      shareWith: NLUDevOps
 
-- task: TriggerPipeline@1
-  displayName: Trigger test Azure DevOps Pipeline 
-  inputs:
-    serviceConnection: TriggerConnectionFull
-    project: 'NLU.DevOps'
-    Pipeline: Build
-    buildDefinition: 'AzDO Extension Task Test'
-    Branch: $(Build.SourceBranch)
+- job: triggertest 
+  dependsOn: build
+  steps: 
+  - task: TriggerPipeline@1
+    displayName: Trigger test Azure DevOps Pipeline 
+    inputs:
+      serviceConnection: TriggerConnectionFull
+      project: 'NLU.DevOps'
+      Pipeline: Build
+      buildDefinition: 'AzDO Extension Task Test'
+      Branch: $(Build.SourceBranch)
