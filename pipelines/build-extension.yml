@@ -16,7 +16,7 @@ pr:
     - /pipelines/build-extension.yml
 
 jobs:
-- job: build
+- job: Build
   pool:
     vmImage: 'ubuntu-latest' 
   steps:
@@ -74,8 +74,9 @@ jobs:
       extensionVisibility: private
       shareWith: NLUDevOps
 
-- job: triggertest 
-  dependsOn: build
+- job: Trigger 
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
   steps: 
   - task: TriggerPipeline@1
     displayName: Trigger test Azure DevOps Pipeline 
