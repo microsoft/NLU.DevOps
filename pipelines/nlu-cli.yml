@@ -4,7 +4,7 @@ trigger:
     - master
   paths:
     include:
-    - /pipelines/nlu.yml
+    - /pipelines/nlu-cli.yml
     - /models
     - /src
 pr:
@@ -13,7 +13,7 @@ pr:
     - master
   paths:
     include:
-    - /pipelines/nlu.yml
+    - /pipelines/nlu-cli.yml
     - /models
     - /src
 
