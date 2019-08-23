@@ -1,6 +1,6 @@
 pool:
   vmImage: 'ubuntu-latest'
-  
+
 trigger:
   branches:
     include:
@@ -40,6 +40,7 @@ steps:
     workingDir: extensions
 
 - task: CopyFiles@2
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Stage extension artifact for publish
   inputs:
     sourceFolder: extensions
@@ -47,7 +48,27 @@ steps:
     targetFolder: $(Build.ArtifactStagingDirectory)
 
 - task: PublishPipelineArtifact@0
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish extension artifact
   inputs:
     artifactName: drop
     targetPath: $(Build.ArtifactStagingDirectory)
+
+- task: TfxInstaller@2
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  displayName: Install Node CLI
+
+- task: PublishAzureDevOpsExtension@2
+  displayName: Publish Extension
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  inputs:
+    connectedServiceName: marketplaceConnection
+    fileType: vsix
+    vsixFile: '**/*.vsix'
+    publisherId: NLUDevOps
+    extensionId: NLUDevOpsCI
+    extensionName: NLU.DevOps.CI
+    extensionVersion: '0.1.$(Build.BuildId)'
+    updateTasksVersion: true
+    extensionVisibility: private
+    shareWith: NLUDevOps
