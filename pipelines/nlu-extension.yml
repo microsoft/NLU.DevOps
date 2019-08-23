@@ -1,21 +1,4 @@
-trigger:
-  branches:
-    include:
-    - master
-  paths:
-    include:
-    - /pipelines/nlu-extension.yml
-    - /models
-    - /src
-pr:
-  branches:
-    include:
-    - master
-  paths:
-    include:
-    - /pipelines/nlu-extension.yml
-    - /models
-    - /src
+
 
 steps:
 - task: DotNetCoreCLI@2
