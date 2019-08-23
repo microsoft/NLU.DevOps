@@ -17,7 +17,7 @@ pr:
     include:
     - /extensions/
     - /pipelines/build-extension.yml
-
+###
 steps:
 - task: NPM@1
   displayName: npm install
