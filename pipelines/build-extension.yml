@@ -72,3 +72,12 @@ steps:
     updateTasksVersion: true
     extensionVisibility: private
     shareWith: NLUDevOps
+    
+- task: TriggerPipeline@1
+  displayName: Trigger test Azure DevOps Pipeline 
+  inputs:
+    serviceConnection: TriggerConnectionFull
+    project: 'NLU.DevOps'
+    Pipeline: Build
+    buildDefinition: 'AzDO Extension Task Test'
+    Branch: $(Build.SourceBranch)
