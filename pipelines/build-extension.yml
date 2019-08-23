@@ -79,10 +79,10 @@ jobs:
   condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
   steps: 
   - task: TriggerPipeline@1
-    displayName: Trigger test Azure DevOps Pipeline 
+    displayName: Trigger AzDO Extension Task Test 
     inputs:
       serviceConnection: TriggerConnectionFull
-      project: 'NLU.DevOps'
+      project: $(System.TeamProject)
       Pipeline: Build
       buildDefinition: 'AzDO Extension Task Test'
       Branch: $(Build.SourceBranch)
