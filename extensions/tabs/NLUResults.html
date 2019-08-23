@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- 
+<!--
 Copyright (c) Microsoft Corporation. All rights reserved.
 Licensed under the MIT License.
  -->
- <html>
+<html>
 <head>
     <title>Confusion Matrix</title>
     <meta charset="utf-8" />
@@ -11,65 +11,25 @@ Licensed under the MIT License.
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/json2html/1.2.0/json2html.min.js"></script>
+    <script src="../scripts/graph.js"></script>
+    <script src="../scripts/matrix.js"></script>
     <script src="../scripts/confusion.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="matrix.css">
     <script src="../lib/VSS.SDK.min.js"></script>
-    <script type="text/javascript">
-        VSS.init({
-            usePlatformScripts: true,
-            taskRestClientLoaderConfig: {
-                paths: {
-                    "enhancer": "scripts"
-                }
-            }
-        });
-
-        VSS.ready(() => {
-            const context = VSS.getWebContext();
-            VSS.getConfiguration().onBuildChanged(build => {
-                VSS.require(["TFS/DistributedTask/TaskRestClient", "VSS/Authentication/Services"], (taskRestClient, authServices) => {
-                    taskRestClient.getClient().getPlanAttachments(context.project.id, "build", build.orchestrationPlan.planId, "nlu.devops").then(attachments => {
-                        let metadata;
-                        let statistics;
-                        attachments.forEach(attachment => {
-                            if ((attachment.name === "metadata" || attachment.name === "statistics") && attachment._links && attachment._links.self && attachment._links.self.href) {
-                                metadata = attachment.name === "metadata" ? attachment._links.self.href : metadata;
-                                statistics = attachment.name === "statistics" ? attachment._links.self.href : statistics;
-                                console.log(attachment._links.self.href);
-                            }
-                        });
-
-                        if (!metadata) {
-                            console.warn("Could not find attachment for NLU metadata.");
-                        }
-                        else {
-                            VSS.getAccessToken().then(token => {
-                                var authToken = authServices.authTokenManager.getAuthorizationHeader(token);
-                                getData(metadata, { "Authorization": authToken })
-                            });
-                        }
-
-                        if (!statistics) {
-                            console.warn("Could not find attachment for NLU statistics.");
-                        }
-                    });
-                });
-            });
-        });
-    </script>
+    <script src="../scripts/init.js"></script>
 </head>
 
-<body>
+<body style="overflow: auto">
     <div class="task-contribution">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-8" id="confusionMatrix">
                 </div>
                 <div class="col-4">
-                    <div id="slicers">
+                    <div id="facets">
                     </div>
                 </div>
             </div>

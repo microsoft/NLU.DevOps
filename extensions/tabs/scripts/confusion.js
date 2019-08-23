@@ -2,42 +2,24 @@
 // Licensed under the MIT License.
 
 // d3 and json2html included in HTML script reference
-/* global d3, json2html */
+/* global d3, json2html, Matrix, Graph */
 
 // json2html uses curly brace syntax for templating
 /* eslint no-template-curly-in-string: "warn" */
 
-const margin = { top: 20, right: 20, bottom: 20, left: 20 }
-const padding = { top: 60, right: 60, bottom: 60, left: 60 }
-const outerWidth = 960
-const outerHeight = 500
-const innerWidth = outerWidth - margin.left - margin.right
-const innerHeight = outerHeight - margin.top - margin.bottom
-const width = innerWidth - padding.left - padding.right
-const height = innerHeight - padding.top - padding.bottom
-var nestData, sliceActualIntent, sliceExpectedIntent, xScale, yScale
-let quadrantCountMax = 0
-let p = 0
-let n = 0
-let tp = 0
-let fn = 0
-let fp = 0
-let tn = 0
-var accuracy
-var f1
-var precision
-var recall
-
 // eslint-disable-next-line no-unused-vars
-function getData (filename, headers) {
+function renderConfusionMatrix (filename, headers) {
+  let quadrantCountMax = 0
+  let nestData, facetActualIntents, facetExpectedIntents
+
   d3.json(filename, { headers }).then(function (data) {
     nestData = d3.nest()
       .key(function (d) { return d.resultKind })
       .entries(data)
-    sliceExpectedIntent = d3.nest()
+    facetExpectedIntents = d3.nest()
       .key(function (d) { return d.expectedUtterance.intent })
       .entries(data)
-    sliceActualIntent = d3.nest()
+    facetActualIntents = d3.nest()
       .key(function (d) { return d.actualUtterance.intent })
       .entries(data)
     for (let key = 0; key < nestData.length; key++) {
@@ -45,35 +27,19 @@ function getData (filename, headers) {
       quadrantCountMax = Math.max(quadrantCountMax, nestData[key].values.length)
     }
 
-    yScale = d3.scaleLinear()
-      .domain([1.2, -1.2])
-      .range([0, height])
-    xScale = d3.scaleLinear()
-      .domain([0, quadrantCountMax * 2])
-      .range([0, width - 10])
+    const matrix = new Matrix()
+    const graph = new Graph()
+    graph.quadrantCountMax = quadrantCountMax
 
-    addGraph()
-    addDataPoints(nestData)
-    addSlicers('Actual Intents', sliceActualIntent)
-    addSlicers('Expected Intents', sliceExpectedIntent)
-
-    p = tp + fn
-    n = fp + tn
-    accuracy = (tp + tn) / (p + n)
-    f1 = 2 * tp / (2 * tp + fp + fn)
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-
-    // make values displayable
-    accuracy = Math.round(accuracy * 100) / 100
-    f1 = Math.round(f1 * 100) / 100
-    precision = Math.round(precision * 100) / 100
-    recall = Math.round(recall * 100) / 100
+    addGraph(graph)
+    addDataPoints(nestData, matrix, graph)
+    addFacets('Actual Intents', facetActualIntents)
+    addFacets('Expected Intents', facetExpectedIntents)
   })
 }
 
-function addSlicers (section, data) {
-  var slicerDiv = d3.select('#slicers').append('div')
+function addFacets (section, data) {
+  var slicerDiv = d3.select('#facets').append('div')
 
   slicerDiv.append('div')
     .attr('class', 'heading')
@@ -86,7 +52,7 @@ function addSlicers (section, data) {
     .text(function (d) { return d.key })
 }
 
-function addDataPoints (data) {
+function addDataPoints (data, matrix, graph) {
   for (let index = 0; index < data.length; index++) {
     var tooltip = d3.select('body').append('div')
       .attr('class', 'tooltip')
@@ -97,8 +63,8 @@ function addDataPoints (data) {
       .enter()
       .append('circle')
       .attr('r', 5)
-      .attr('cx', function (d, i) { return getXConfusionQuadrant(d, i) })
-      .attr('cy', function (d, i) { return getYConfusionQuadrant(d, i) })
+      .attr('cx', function (d, i) { return getXConfusionQuadrant(graph, d, i, matrix) })
+      .attr('cy', function (d, i) { return getYConfusionQuadrant(graph, d, i) })
       .attr('stroke', function (d, i) { return getDotColor(d, i) })
       .attr('fill', function (d, i) { return getDotColor(d, i) })
       .attr('opacity', 0.5)
@@ -106,8 +72,8 @@ function addDataPoints (data) {
         d3.selectAll('.active').classed('active', false)
         d3.select('svg')
           .append('circle')
-          .attr('cx', getXConfusionQuadrant(d, i))
-          .attr('cy', getYConfusionQuadrant(d, i))
+          .attr('cx', getXConfusionQuadrant(graph, d, i, matrix))
+          .attr('cy', getYConfusionQuadrant(graph, d, i))
           .attr('stroke', getDotColor(d, i))
           .attr('fill', getDotColor(d, i))
           .attr('opacity', 0.5)
@@ -115,7 +81,7 @@ function addDataPoints (data) {
           .on('click', function () {
             d3.selectAll('.clicked').classed('clicked', false)
             var div = d3.select('#testData')
-            div.html(getTestResultHtml(d))
+            div.html(getTestResultHtml(d, matrix))
             d3.selectAll('.active').classed('clicked', true)
           })
           .on('mouseover', function () {
@@ -136,21 +102,23 @@ function addDataPoints (data) {
   }
 }
 
-function addGraph () {
+function addGraph (graph) {
+  const yScale = graph.yScale()
+
   var yAxis = d3.axisLeft().scale(yScale)
 
   var svg = d3.select('#confusionMatrix').append('svg')
-    .attr('viewBox', '0, 0,' + outerWidth + ',' + outerHeight)
+    .attr('viewBox', '0, 0,' + graph.outerWidth + ',' + graph.outerHeight)
     .append('g')
-    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+    .attr('transform', 'translate(' + graph.margin.left + ',' + graph.margin.top + ')')
 
   svg.append('rect')
     .attr('class', 'outer')
-    .attr('width', innerWidth)
-    .attr('height', innerHeight)
+    .attr('width', graph.innerWidth)
+    .attr('height', graph.innerHeight)
 
   var g = svg.append('g')
-    .attr('transform', 'translate(' + padding.left + ',' + padding.top + ')')
+    .attr('transform', 'translate(' + graph.padding.left + ',' + graph.padding.top + ')')
 
   g.append('g')
     .attr('class', 'y axis')
@@ -162,7 +130,7 @@ function addGraph () {
     .append('line')
     .attr('class', 'horizontalGrid')
     .attr('x1', 0)
-    .attr('x2', width)
+    .attr('x2', graph.width)
     .attr('y1', function (d) { return yScale(d) })
     .attr('y2', function (d) { return yScale(d) })
     .attr('fill', 'none')
@@ -176,32 +144,32 @@ function addGraph () {
     .attr('y', 15)
     .text('True Positive')
   g.append('text')
-    .attr('x', width - 100)
+    .attr('x', graph.width - 100)
     .attr('y', 15)
     .text('False Positive')
   g.append('text')
     .attr('x', 10)
-    .attr('y', height - 5)
+    .attr('y', graph.height - 5)
     .text('False Negative')
   g.append('text')
-    .attr('x', width - 100)
-    .attr('y', height - 5)
+    .attr('x', graph.width - 100)
+    .attr('y', graph.height - 5)
     .text('True Negative')
   g.append('line')
     .attr('x1', 0)
-    .attr('y1', height / 2)
-    .attr('x2', width)
-    .attr('y2', height / 2)
+    .attr('y1', graph.height / 2)
+    .attr('x2', graph.width)
+    .attr('y2', graph.height / 2)
     .attr('stroke', 'steelblue')
   g.append('line')
-    .attr('x1', width / 2)
+    .attr('x1', graph.width / 2)
     .attr('y1', 0)
-    .attr('x2', width / 2)
-    .attr('y2', height)
+    .attr('x2', graph.width / 2)
+    .attr('y2', graph.height)
     .attr('stroke', 'steelblue')
 }
 
-function getTestResultHtml (test) {
+function getTestResultHtml (test, matrix) {
   console.log('getTestResults')
   var t = {
     test: {
@@ -213,10 +181,10 @@ function getTestResultHtml (test) {
           '<>': 'div',
           class: 'row',
           html: [
-            { '<>': 'div', class: 'col-3', html: 'Precision: ' + precision },
-            { '<>': 'div', class: 'col-3', html: 'Recall: ' + recall },
-            { '<>': 'div', class: 'col-3', html: 'F1: ' + f1 },
-            { '<>': 'div', class: 'col-3', html: 'Accuracy: ' + accuracy }
+            { '<>': 'div', class: 'col-3', html: 'Precision: ' + matrix.getPrecision() },
+            { '<>': 'div', class: 'col-3', html: 'Recall: ' + matrix.getRecall() },
+            { '<>': 'div', class: 'col-3', html: 'F1: ' + matrix.getF1() },
+            { '<>': 'div', class: 'col-3', html: 'Accuracy: ' + matrix.getAccuracy() }
           ]
         },
         { '<>': 'br' },
@@ -307,27 +275,29 @@ function getDotColor (d, i) {
   return 'red'
 }
 
-function getXConfusionQuadrant (d, i) {
+function getXConfusionQuadrant (graph, d, i, matrix) {
+  const xScale = graph.xScale()
   switch (d.resultKind) {
-    case 'TruePositive': tp += 1
+    case 'TruePositive': matrix.tp += 1
       break
-    case 'FalsePositive': fp += 1
+    case 'FalsePositive': matrix.fp += 1
       break
-    case 'TrueNegative': tn += 1
+    case 'TrueNegative': matrix.tn += 1
       break
-    case 'FalseNegative': fn += 1
+    case 'FalseNegative': matrix.fn += 1
       break
   }
   var x = 0
   if ((d.resultKind === 'TruePositive') || (d.resultKind === 'FalseNegative')) {
-    x = xScale(i) + (margin.left + padding.left + 5)
+    x = xScale(i) + (graph.margin.left + graph.padding.left + 5)
   } else {
-    x = xScale(i + quadrantCountMax) + (margin.left + padding.left + 10)
+    x = xScale(i + graph.quadrantCountMax) + (graph.margin.left + graph.padding.left + 10)
   }
   return x
 }
 
-function getYConfusionQuadrant (d, i) {
+function getYConfusionQuadrant (graph, d, i) {
+  const yScale = graph.yScale()
   var value = d.score || 1
   var retVal = 0
   if ((d.resultKind === 'TrueNegative') || (d.resultKind === 'FalseNegative')) {
@@ -336,5 +306,5 @@ function getYConfusionQuadrant (d, i) {
   } else {
     retVal = yScale(value)
   }
-  return retVal + (margin.top + padding.top)
+  return retVal + (graph.margin.top + graph.padding.top)
 }
