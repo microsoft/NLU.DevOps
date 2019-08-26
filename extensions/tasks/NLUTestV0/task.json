@@ -101,6 +101,14 @@
             "helpMarkDown": "Uses generated JSON metadata output from NLU.DevOps `compare` command to populate the NLU results tab. [Learn more about the `compare` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Compare.md)."
         },
         {
+            "name": "compareBuildCount",
+            "type": "string",
+            "label": "Number of previous builds to compare against in NLU results.",
+            "helpMarkDown": "Number of previous builds to compare against in NLU results.",
+            "required": false,
+            "defaultValue": "1"
+        },
+        {
             "name": "workingDirectory",
             "type": "filePath",
             "label": "Working Directory",
