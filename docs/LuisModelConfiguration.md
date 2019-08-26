@@ -123,7 +123,7 @@ E.g., for the following training utterances:
 To configure the `Recipient` entity type as a LUIS prebuilt entity, the [`--model-settings`](Train.md#-m---model-settings) file supplied to the `train` command should look like:
 ```json
 {
-  "builtinEntityTypes": {
+  "prebuiltEntityTypes": {
     "Recipient": "personName"
   },
   "appTemplate": {
