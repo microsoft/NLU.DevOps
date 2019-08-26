@@ -41,6 +41,12 @@ async function runNLUTest(output): Promise<any> {
             .arg(speechDirectory);
     }
 
+    const includePath = tl.getInput("includePath");
+    if (includePath) {
+        tool.arg("-i")
+            .arg(includePath);
+    }
+
     let isError = false;
     tool.on("stderr", () => {
         isError = true;

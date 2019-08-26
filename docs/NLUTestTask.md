@@ -26,6 +26,7 @@ Inputs to consider when using the `NLUTest` task:
 - [`speech`](#speech)
 - [`speechDirectory`](#speechdirectory)
 - [`output`](#output)
+- [`includePath`](#includepath)
 - [`compareOutput`](#compareoutput)
 - [`publishTestResults`](#publishtestresults)
 - [`publishNLUResults`](#publishnluresults)
@@ -37,48 +38,51 @@ Inputs to consider when using the `NLUTest` task:
 
 ### `service`
 
-Required. Specifies the NLU provider to use when deleting the model. Works for `luis`, `luisV3`, `dialogflow` and `lex`.
+Specifies the NLU provider to use when deleting the model. Works for `luis`, `luisV3`, `dialogflow` and `lex`.
 
 ### `utterances`
 
-Required. Specifies the path to the labeled test utterances relative to the [`workingDirectory`](#workingdirectory).
+Specifies the path to the labeled test utterances relative to the [`workingDirectory`](#workingdirectory).
 
 ### `modelSettings`
 
-Optional. Specifies the path to the model settings, relative to the [`workingDirectory`](#workingdirectory). Currently only used for [LUIS prebuilt entity mappings](LuisModelConfiguration.md#configuring-prebuilt-entities).
+(Optional) Specifies the path to the model settings, relative to the [`workingDirectory`](#workingdirectory). Currently only used for [LUIS prebuilt entity mappings](LuisModelConfiguration.md#configuring-prebuilt-entities).
 
 ### `speech`
 
-Optional. Specifies whether the tests should be run from speech utterances instead of text utterances. Default value is `false`.
+(Optional) Specifies whether the tests should be run from speech utterances instead of text utterances. Default value is `false`.
 
 ### `speechDirectory`
 
-Optional. Specifies the base path for speech files referenced in the [`utterances`](#utterances) input, relative to the [`workingDirectory`](#workingdirectory).
+(Optional) Specifies the base path for speech files referenced in the [`utterances`](#utterances) input, relative to the [`workingDirectory`](#workingdirectory).
 
 ### `output`
 
-Optional. Specifies the output path for the results from testing the NLU model, relative to the [`workingDirectory`](#workingdirectory). Defaults to `$(Agent.TempDirectory)/.nlu/results.json`.
+(Optional) Specifies the output path for the results from testing the NLU model, relative to the [`workingDirectory`](#workingdirectory). Defaults to `$(Agent.TempDirectory)/.nlu/results.json`.
+
+### `includePath`
+(Optional) Path to custom NLU provider DLL. See documentation about [Specifying the include path](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md#specifying-the-include-path) for more details.
 
 ### `compareOutput`
 
-Optional. Specifies the output path for the results from comparing the NLU model test results to the expected output in the [`utterances`](#utterances) input, relative to the [`workingDirectory`](#workingdirectory). Defaults to `$(Agent.TempDirectory)/.nlu`.
+(Optional) Specifies the output path for the results from comparing the NLU model test results to the expected output in the [`utterances`](#utterances) input, relative to the [`workingDirectory`](#workingdirectory). Defaults to `$(Agent.TempDirectory)/.nlu`.
 
 ### `publishTestResults`
 
-Optional. Boolean value that specifies whether the comparison results between the NLU model output and the [`utterances`](#utterances) input should be published to the Tests tab for the Azure Pipeline. Defaults to `false`.
+(Optional) Boolean value that specifies whether the comparison results between the NLU model output and the [`utterances`](#utterances) input should be published to the Tests tab for the Azure Pipeline. Defaults to `false`.
 
 ### `publishNLUResults`
 
-Optional. Boolean value that specifies whether the comparison results should output metadata for the confusion matrix for intents, entities and text. Defaults to `false`.
+(Optional) Boolean value that specifies whether the comparison results should output metadata for the confusion matrix for intents, entities and text. Defaults to `false`.
 
 ### `workingDirectory`
 
-Optional. Specifies the working directory to use when running the `test` command. Defaults to the Azure DevOps default working directory (i.e., the root directory of the repository).
+(Optional) Specifies the working directory to use when running the `test` command. Defaults to the Azure DevOps default working directory (i.e., the root directory of the repository).
 
 ### `nupkgPath`
 
-Optional. Specifies the folder containing a `.nupkg` for `dotnet-nlu` to install from. When not specified, `dotnet-nlu` is installed from the default NuGet repository.
+(Optional) Specifies the folder containing a `.nupkg` for `dotnet-nlu` to install from. When not specified, `dotnet-nlu` is installed from the default NuGet repository.
 
 ### `toolVersion`
 
-Optional. Specifies the version of `dotnet-nlu` to install from the default NuGet repository. You cannot specify both the [`nupkgPath`](#nupkgpath) input and `toolVersion`.
+(Optional) Specifies the version of `dotnet-nlu` to install from the default NuGet repository. You cannot specify both the [`nupkgPath`](#nupkgpath) input and `toolVersion`.

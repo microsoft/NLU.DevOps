@@ -70,6 +70,13 @@
             "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-d---speech-directory)."
         },
         {
+            "name": "includePath",
+            "type": "string",
+            "label": "NLU.DevOps custom NLU provider include path.",
+            "required": false,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#include)."
+        },
+        {
             "name": "compareOutput",
             "type": "string",
             "label": "Base directory where compare output will be stored.",

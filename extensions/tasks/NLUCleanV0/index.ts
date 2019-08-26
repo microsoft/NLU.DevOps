@@ -11,6 +11,12 @@ async function run() {
             .arg("-a")
             .arg("-v");
 
+        const includePath = tl.getInput("includePath");
+        if (includePath) {
+            tool.arg("-i")
+                .arg(includePath);
+        }
+
         let isError = false;
         tool.on("stderr", () => {
             isError = true;

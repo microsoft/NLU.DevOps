@@ -11,6 +11,7 @@ See the endpoint configuration documentation for [LUIS](LuisEndpointConfiguratio
 
 Inputs to consider when using the `NLUClean` task:
 - [`service`](#service)
+- [`includePath`](#includepath)
 - [`workingDirectory`](#workingdirectory)
 - [`nupkgPath`](#nupkgpath)
 - [`toolVersion`](#toolversion)
@@ -19,16 +20,19 @@ Inputs to consider when using the `NLUClean` task:
 
 ### `service`
 
-Required. Specifies the NLU provider to use when deleting the model. Works for `luis`, `luisV3` and `lex`.
+Specifies the NLU provider to use when deleting the model. Works for `luis`, `luisV3` and `lex`.
+
+### `includePath`
+(Optional) Path to custom NLU provider DLL. See documentation about [Specifying the include path](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md#specifying-the-include-path) for more details.
 
 ### `workingDirectory`
 
-Optional. Specifies the working directory to use when running the `clean` command. This task only works if you have previously used the [`NLUTrain` task](NLUTrainTask.md) from the same working directory. Defaults to the Azure DevOps default working directory (i.e., the root directory of the repository).
+(Optional) Specifies the working directory to use when running the `clean` command. This task only works if you have previously used the [`NLUTrain` task](NLUTrainTask.md) from the same working directory. Defaults to the Azure DevOps default working directory (i.e., the root directory of the repository).
 
 ### `nupkgPath`
 
-Optional. Specifies the folder containing a `.nupkg` for `dotnet-nlu` to install from. When not specified, `dotnet-nlu` is installed from the default NuGet repository.
+(Optional) Specifies the folder containing a `.nupkg` for `dotnet-nlu` to install from. When not specified, `dotnet-nlu` is installed from the default NuGet repository.
 
 ### `toolVersion`
 
-Optional. Specifies the version of `dotnet-nlu` to install from the default NuGet repository. You cannot specify both the [`nupkgPath`](#nupkgpath) input and `toolVersion`.
+(Optional) Specifies the version of `dotnet-nlu` to install from the default NuGet repository. You cannot specify both the [`nupkgPath`](#nupkgpath) input and `toolVersion`.
