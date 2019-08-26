@@ -44,7 +44,8 @@ namespace NLU.DevOps.CommandLine
                 }
             }
 
-            var assemblyPath = options.IncludePath ?? getAssemblyPath();
+            var includePath = options.IncludePath != null ? Path.GetFullPath(options.IncludePath) : null;
+            var assemblyPath = includePath ?? getAssemblyPath();
             if (assemblyPath == null)
             {
                 instance = default(T);
