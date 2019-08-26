@@ -23,6 +23,12 @@ async function run() {
                 .arg(modelSettings);
         }
 
+        const includePath = tl.getInput("includePath");
+        if (includePath) {
+            tool.arg("-i")
+                .arg(includePath);
+        }
+
         if (!utterances && !modelSettings) {
             throw new Error("Must provide either 'utterances' or 'modelSetting' task input.");
         }

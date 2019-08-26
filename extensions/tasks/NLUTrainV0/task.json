@@ -45,6 +45,13 @@
             "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Train.md#-m---model-settings)."
         },
         {
+            "name": "includePath",
+            "type": "string",
+            "label": "NLU.DevOps custom NLU provider include path.",
+            "required": false,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Train.md#include)."
+        },
+        {
             "name": "workingDirectory",
             "type": "filePath",
             "label": "Working Directory",
