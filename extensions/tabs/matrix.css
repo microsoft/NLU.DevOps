@@ -1,0 +1,81 @@
+@keyframes buttonTransition {
+    from {
+        r: 5;
+    }
+
+    to {
+        r: 8;
+    }
+}
+
+circle.active,
+circle.clicked {
+    animation-duration: .5s;
+    animation-iteration-count: 1;
+    animation-name: buttonTransition;
+    animation-fill-mode: forwards;
+}
+
+circle.clicked {
+    opacity: 1;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+#testData,
+#slicers {
+    padding: 5px;
+}
+
+#slicers {
+    background-color: lightgrey;
+    height: 100%;
+}
+
+body {
+    padding: 10px;
+    font: 10px sans-serif;
+}
+
+.axis line,
+.axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.arrow {
+    stroke: #000;
+    stroke-width: 1.5px;
+}
+
+.outer,
+.inner {
+    shape-rendering: crispEdges;
+}
+
+.outer {
+    fill: none;
+    stroke: #000;
+}
+
+.inner {
+    fill: #ccc;
+    stroke: #000;
+    stroke-dasharray: 3, 4;
+}
+
+.heading {
+    padding: 10px 0px 5px 0px;
+    font: 16px sans-serif;
+    font-weight: bold
+}
