@@ -14,7 +14,10 @@
         "build": "npm run buildCommon && npm run buildTasks",
         "postbuild": "npm run package",
         "package": "tfx extension create --rev-version --manifest-globs",
-        "clean": "rimraf ./*.vsix && rimraf ./*.tgz"
+        "clean": "rimraf ./*.vsix && rimraf ./*.tgz",
+        "testCommon": "npm-recursive-install --rootDir=common && ts-mocha \"common/**/__tests__/**/*.ts\" -p common/tsconfig.json",
+        "testTasks": "npm-recursive-install --rootDir=tasks && ts-mocha \"tasks/**/__tests__/**/*.ts\" -p tasks/tsconfig.json", 
+        "test": "npm run testCommon"
     },
     "repository": {
         "type": "git",
@@ -22,12 +25,22 @@
     },
     "author": "Microsoft",
     "devDependencies": {
+        "@types/chai": "^4.2.0",
+        "@types/mocha": "^5.2.7",
         "@types/node": "^12.6.8",
+        "@types/sinon": "^7.0.13",
+        "chai": "^4.2.0",
         "eclint": "^2.8.1",
+        "mocha": "^6.2.0",
+        "mock-require": "^3.0.3",
         "recursive-install": "^1.4.0",
         "rimraf": "^2.6.3",
+        "sinon": "^7.4.1",
         "tfx-cli": "^0.7.8",
+        "ts-mocha": "^6.0.0",
         "tslint": "^5.18.0",
+        "tslint-no-unused-expression-chai": "^0.1.4",
+        "ts-mock-imports": "^1.2.6",
         "typescript": "^3.5.3"
     }
 }

@@ -33,6 +33,13 @@ steps:
     workingDir: extensions
 
 - task: NPM@1
+  displayName: npm run test
+  inputs:
+    command: custom
+    customCommand: run test
+    workingDir: extensions
+
+- task: NPM@1
   displayName: npm run build
   inputs:
     command: custom
