@@ -6,6 +6,7 @@ namespace NLU.DevOps.ModelPerformance
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.All)]
     internal static class ConfusionMatrixTests
     {
         [Test]
