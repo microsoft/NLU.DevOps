@@ -1,6 +1,10 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 // Set magic flag to avoid init on azure-pipelines-task-lib, see:
-//    https://github.com/microsoft/azure-pipelines-task-lib/blob/dd18c6a10c444885c117ea29bb1ca2f15e5637f5/node/task.ts#L2078
-global["_vsts_task_lib_loaded"] = true;
+//    https://github.com/microsoft/azure-pipelines-task-lib/blob/dd18c6a/node/task.ts#L2078
+const taskLoadedKey = "_vsts_task_lib_loaded";
+global[taskLoadedKey] = true;
 
 import * as tl from "azure-pipelines-task-lib/task";
 import * as tr from "azure-pipelines-task-lib/toolrunner";

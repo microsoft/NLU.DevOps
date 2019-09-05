@@ -17,7 +17,7 @@
         "clean": "rimraf ./*.vsix && rimraf ./*.tgz",
         "testCommon": "npm-recursive-install --rootDir=common && ts-mocha \"common/**/__tests__/**/*.ts\" -p common/tsconfig.json",
         "testTasks": "npm-recursive-install --rootDir=tasks && ts-mocha \"tasks/**/__tests__/**/*.ts\" -p tasks/tsconfig.json", 
-        "test": "npm run testCommon"
+        "test": "npm run testCommon && npm run buildCommon && npm run testTasks"
     },
     "repository": {
         "type": "git",
@@ -32,7 +32,6 @@
         "chai": "^4.2.0",
         "eclint": "^2.8.1",
         "mocha": "^6.2.0",
-        "mock-require": "^3.0.3",
         "recursive-install": "^1.4.0",
         "rimraf": "^2.6.3",
         "sinon": "^7.4.1",
