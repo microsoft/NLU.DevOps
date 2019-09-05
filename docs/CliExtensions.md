@@ -26,7 +26,7 @@ Open the project in [Visual Studio](https://visualstudio.microsoft.com/downloads
 
 Add `MockNLUClient.cs` to your project:
 ```cs
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.MockProvider
@@ -88,7 +88,7 @@ namespace NLU.DevOps.MockProvider
 ### 4. Implement `INLUClientFactory`
 Add `MockNLUClientFactory.cs` to your project:
 ```cs
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.MockProvider

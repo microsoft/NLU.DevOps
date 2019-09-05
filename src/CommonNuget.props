@@ -7,7 +7,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/Microsoft/NLU.DevOps</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Microsoft/NLU.DevOps.git</RepositoryUrl>
-    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <Copyright>© Microsoft Corporation.</Copyright>
     <Version>0.4.1</Version>
   </PropertyGroup>
 </Project>
