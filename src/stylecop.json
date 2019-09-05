@@ -9,7 +9,7 @@
   "settings": {
     "documentationRules": {
       "companyName": "Microsoft Corporation",
-      "copyrightText": "Copyright (c) {companyName}. All rights reserved.\nLicensed under the MIT License.",
+      "copyrightText": "Copyright (c) {companyName}.\nLicensed under the MIT License.",
       "documentInternalElements": false,
       "xmlHeader": false
     }
