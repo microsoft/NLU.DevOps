@@ -33,6 +33,7 @@ Inputs to consider when using the `NLUTest` task:
 - [`workingDirectory`](#workingdirectory)
 - [`nupkgPath`](#nupkgpath)
 - [`toolVersion`](#toolversion)
+- [`toolPath`](#toolPath)
 
 ## Inputs
 
@@ -86,3 +87,7 @@ Specifies the path to the labeled test utterances relative to the [`workingDirec
 ### `toolVersion`
 
 (Optional) Specifies the version of `dotnet-nlu` to install from the default NuGet repository. You cannot specify both the [`nupkgPath`](#nupkgpath) input and `toolVersion`.
+
+### `toolPath`
+
+(Optional) Specifies the `--tool-path` option to use when installing `dotnet-nlu`. If not provided, the default tool path will be `$(Agent.TempDirectory)/.dotnet`.

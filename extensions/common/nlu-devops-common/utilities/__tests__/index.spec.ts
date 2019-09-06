@@ -30,6 +30,7 @@ describe("getNLUToolRunner", () => {
     let getInputStub: sinon.SinonStub<any[], any>;
     let getBoolInputStub: sinon.SinonStub<any[], any>;
     let prependPathStub: sinon.SinonStub<any[], any>;
+    let warningStub: sinon.SinonStub<any[], any>;
     let getVariableStub: sinon.SinonStub<any[], any>;
     let whichStub: sinon.SinonStub<any[], any>;
 
@@ -38,6 +39,7 @@ describe("getNLUToolRunner", () => {
         getInputStub = ImportMock.mockFunction(tl, "getInput");
         getBoolInputStub = ImportMock.mockFunction(tl, "getBoolInput");
         prependPathStub = ImportMock.mockFunction(tl, "prependPath");
+        warningStub = ImportMock.mockFunction(tl, "warning");
 
         // stub task library with default behaviors
         getVariableStub = ImportMock.mockFunction(tl, "getVariable");
@@ -52,6 +54,7 @@ describe("getNLUToolRunner", () => {
         whichStub.restore();
         getVariableStub.restore();
         prependPathStub.restore();
+        warningStub.restore();
     });
 
     let toolStub: sinon.SinonStub<any[], any>;
@@ -76,6 +79,8 @@ describe("getNLUToolRunner", () => {
         // reset non-default task stubs
         getInputStub.reset();
         getBoolInputStub.reset();
+        prependPathStub.reset();
+        warningStub.reset();
 
         // restore tl.tool method
         toolStub.restore();
@@ -115,11 +120,10 @@ describe("getNLUToolRunner", () => {
         execStub.onCall(1).returns(0);
 
         // run test
-        const tool = await getNLUToolRunner();
+        await getNLUToolRunner();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(tool).to.equal(mockTool);
         expect(calls.length).to.equal(8);
 
         // exec version check
@@ -138,7 +142,51 @@ describe("getNLUToolRunner", () => {
         expect(process.env.PATH!.startsWith(`.dotnet${path.delimiter}`)).to.be.ok;
     });
 
-    it("re-installs dotnet-nlu for nupkgPath", async () => {
+    it("installs using tool path input", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(1);
+        execStub.onCall(1).returns(0);
+
+        // stub inputs
+        const toolPath = "foo";
+        getInputStub.withArgs("toolPath").returns(toolPath);
+
+        // run test
+        await getNLUToolRunner();
+
+        // assert path
+        expect(prependPathStub.calledWith(toolPath)).to.be.ok;
+        expect(process.env.PATH!.startsWith(`${toolPath}${path.delimiter}`)).to.be.ok;
+    });
+
+    it("installs dotnet-nlu for nupkgPath and toolVersion", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(1);
+        execStub.onCall(1).returns(0);
+
+        // stub inputs
+        const nupkgPath = "foo";
+        const toolVersion = "bar";
+        getInputStub.withArgs("nupkgPath").returns(nupkgPath);
+        getInputStub.withArgs("toolVersion").returns(toolVersion);
+
+        // run test
+        await getNLUToolRunner();
+
+        // assert calls
+        const calls = argMock.getCalls();
+        expect(calls.length).to.equal(12);
+
+        // exec dotnet-nlu install
+        expect(calls[7].calledWith("--add-source")).to.be.ok;
+        expect(calls[8].calledWith(nupkgPath)).to.be.ok;
+        expect(calls[9].calledWith("--version")).to.be.ok;
+        expect(calls[10].calledWith(toolVersion)).to.be.ok;
+    });
+
+    it("uninstalls dotnet-nlu for nupkgPath", async () => {
         // stub exec
         const execStub = toolMock.mock("exec");
         execStub.onCall(0).returns(0);
@@ -150,11 +198,10 @@ describe("getNLUToolRunner", () => {
         getInputStub.withArgs("nupkgPath").returns(nupkgPath);
 
         // run test
-        const tool = await getNLUToolRunner();
+        await getNLUToolRunner();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(tool).to.equal(mockTool);
         expect(calls.length).to.equal(15);
 
         // exec dotnet-nlu uninstall
@@ -164,12 +211,11 @@ describe("getNLUToolRunner", () => {
         expect(calls[5].calledWith("--tool-path")).to.be.ok;
         expect(calls[6].calledWith(".dotnet")).to.be.ok;
 
-        // exec dotnet-nlu install
-        expect(calls[12].calledWith("--add-source")).to.be.ok;
-        expect(calls[13].calledWith(nupkgPath)).to.be.ok;
+        // assert warning not called
+        expect(warningStub.notCalled).to.be.ok;
     });
 
-    it("re-installs dotnet-nlu for toolVersion", async () => {
+    it("uninstalls dotnet-nlu for toolVersion", async () => {
         // stub exec
         const execStub = toolMock.mock("exec");
         execStub.onCall(0).returns(0);
@@ -181,46 +227,61 @@ describe("getNLUToolRunner", () => {
         getInputStub.withArgs("toolVersion").returns(toolVersion);
 
         // run test
-        const tool = await getNLUToolRunner();
+        await getNLUToolRunner();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(tool).to.equal(mockTool);
         expect(calls.length).to.equal(15);
 
         // exec dotnet-nlu uninstall
-        expect(calls[2].calledWith("tool")).to.be.ok;
         expect(calls[3].calledWith("uninstall")).to.be.ok;
-        expect(calls[4].calledWith("dotnet-nlu")).to.be.ok;
-        expect(calls[5].calledWith("--tool-path")).to.be.ok;
-        expect(calls[6].calledWith(".dotnet")).to.be.ok;
+    });
 
-        // exec dotnet-nlu install
-        expect(calls[12].calledWith("--version")).to.be.ok;
-        expect(calls[13].calledWith(toolVersion)).to.be.ok;
+    it("uninstalls dotnet-nlu for toolPath", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(0);
+        execStub.onCall(1).returns(0);
+        execStub.onCall(2).returns(0);
+
+        // stub inputs
+        const toolPath = "foo";
+        getInputStub.withArgs("toolPath").returns(toolPath);
+
+        // run test
+        await getNLUToolRunner();
+
+        // assert calls
+        const calls = argMock.getCalls();
+        expect(calls.length).to.equal(13);
+
+        // exec dotnet-nlu uninstall
+        expect(calls[3].calledWith("uninstall")).to.be.ok;
+    });
+
+    it("warns if uninstall fails", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(0);
+        execStub.onCall(1).returns(1);
+        execStub.onCall(2).returns(0);
+
+        // stub inputs
+        const toolVersion = "foo";
+        getInputStub.withArgs("toolVersion").returns(toolVersion);
+
+        await getNLUToolRunner();
+
+        // assert warning
+        expect(warningStub.calledOnce).to.be.ok;
     });
 
     it("throws if install fails", (done) => {
         // stub exec
         const execStub = toolMock.mock("exec");
         execStub.onCall(0).returns(0);
-        execStub.onCall(1).returns(1);
-
-        // stub inputs
-        const toolVersion = "foo";
-        getInputStub.withArgs("toolVersion").returns(toolVersion);
-
-        getNLUToolRunner()
-            .then(() => done(new Error("Expected method to reject.")))
-            .catch(() => done());
-    });
-
-    it("throws if uninstall fails", (done) => {
-        // stub exec
-        const execStub = toolMock.mock("exec");
-        execStub.onCall(0).returns(0);
         execStub.onCall(1).returns(0);
-        execStub.onCall(1).returns(1);
+        execStub.onCall(2).returns(1);
 
         // stub inputs
         const toolVersion = "foo";
