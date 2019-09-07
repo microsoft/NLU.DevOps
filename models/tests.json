@@ -30,6 +30,18 @@
     ]
   },
   {
+    "text": "play two songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "number",
+        "matchText": "two",
+        "matchIndex": 0,
+        "entityValue": "2"
+      }
+    ]
+  },
+  {
     "text": "skip this one",
     "intent": "Skip"
   },
