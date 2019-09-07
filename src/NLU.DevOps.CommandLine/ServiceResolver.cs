@@ -7,8 +7,6 @@ namespace NLU.DevOps.CommandLine
     using System.Composition.Hosting;
     using System.IO;
     using System.Linq;
-    using System.Reflection;
-    using System.Runtime.Loader;
     using McMaster.NETCore.Plugins;
 
     internal static class ServiceResolver
