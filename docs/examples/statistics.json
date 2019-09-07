@@ -1,0 +1,41 @@
+﻿{
+  "text": {},
+  "intent": {
+    "truePositive": 6,
+    "trueNegative": 3,
+    "falseNegative": 2
+  },
+  "entity": {
+    "truePositive": 2,
+    "trueNegative": 8,
+    "falsePositive": 1,
+    "falseNegative": 1
+  },
+  "entityValue": {
+    "truePositive": 1
+  },
+  "byIntent": {
+    "playMusic": {
+      "truePositive": 5
+    },
+    "skip": {
+      "truePositive": 1,
+      "falseNegative": 2
+    }
+  },
+  "byEntityType": {
+    "genre": {
+      "truePositive": 1,
+      "falsePositive": 1,
+      "falseNegative": 1
+    },
+    "number": {
+      "truePositive": 1
+    }
+  },
+  "byEntityValueType": {
+    "number": {
+      "truePositive": 1
+    }
+  }
+}

@@ -53,6 +53,10 @@ Currently, we do not have any way of overriding the string comparison logic used
 
 The generic utterances model includes an [`entityValue`](GenericUtterances.md#entityvalue) property, which is the semantic or canonical form of the entity. Often times, it's useful enough to know that the NLU model identifies a match for the entity text in the utterance, so we created a separate test case type that compares the expected entity value with the actual entity value, in cases where this property is expected. We assert that the actual entity value contains the JSON subtree specified in the expected entity value.
 
+## Generating JSON test metadata
+
+The compare command by default generates NUnit test output. You can also specify the [`--metadata`](#-m---metadata) flag to generate JSON output, which is currently used by the [`publishNLUResults`](NLUTestTask.md#publishnluresults) input for the [NLUTest](NLUTestTask.md) Azure DevOps task. If the option is used, the CLI command will write a `metadata.json` file containing a JSON array of confusion matrix results and a `statistics.json` file containing a JSON object with counts for confusion matrix results, including results sliced by intent and entity type. The files will be written to the folder provided in the [`--output`](#-o---output) option, or the current working directory if not provided. See the example output for [metadata.json](examples/metadata.json) and [statistics.json](examples/statistics.json) for more details about the schema.
+
 ## Detailed Usage
 
 ### `-e, --expected`
@@ -66,7 +70,13 @@ The path to the result utterances from the `test` command.
 Be sure to use the [`--output`](Test.md#-o---output) option when running the `test` command.
 
 ### `-o, --output-folder`
-(Optional) The path to write the NUnit test results.
+(Optional) The path to write the NUnit test results. If not provided, the current working directory is used.
 
 ### `-l, --label`
 (Optional) A prefix for the test case names, in cases where you may want to publish multiple test runs for different options (e.g., simultaneously test text utterances and speech).
+
+### `-t, --text`
+(Optional) Specifies whether or not confusion matrix results should be generated for text. This is only useful when running end-to-end tests from speech using the [`--speech`](Test.md#--speech) option with the [`test`](Test.md) command.
+
+### `-m, --metadata`
+(Optional) Specified whether confusion matrix metadata should be generated in addition to NUnit test output. See [Generating JSON test metadata](#generating-json-test-metadata) for more details.
