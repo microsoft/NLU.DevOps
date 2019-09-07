@@ -5,13 +5,13 @@ import { IBuildApi } from "azure-devops-node-api/BuildApi";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import { getHandlerFromToken, WebApi } from "azure-devops-node-api/WebApi";
 import * as tl from "azure-pipelines-task-lib/task";
-import * as fs from "fs";
+import { readFileSync } from "fs";
 import * as path from "path";
 import * as unzip from "unzip-stream";
 
 export async function getBuildStatistics(statisticsPath: string): Promise<Array<{ id: string, statistics: any }>> {
     const buildStatistics = await getPreviousBuildStatistics();
-    const statisticsData = fs.readFileSync(statisticsPath).toString().trim();
+    const statisticsData = readFileSync(statisticsPath).toString().trim();
     const statistics = JSON.parse(statisticsData);
     buildStatistics.push({
         id: tl.getVariable("Build.BuildId"),
@@ -72,7 +72,7 @@ async function downloadStatisticsArtifact(projectId: string, client: IBuildApi, 
         const id = `${buildId}`;
         const unzipPath = path.join(tl.getVariable("Agent.TempDirectory"), "artifacts", id);
         await new Promise((resolve, _) => artifactStream.pipe(unzip.Extract({ path: unzipPath })).on("close", resolve));
-        const statisticsData = fs.readFileSync(path.join(unzipPath, "statistics", "statistics.json")).toString().trim();
+        const statisticsData = readFileSync(path.join(unzipPath, "statistics", "statistics.json")).toString().trim();
         const statistics = JSON.parse(statisticsData);
         return { id, statistics };
 }
