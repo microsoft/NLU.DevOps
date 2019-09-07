@@ -3,13 +3,10 @@
 
 import * as tl from "azure-pipelines-task-lib/task";
 import * as tr from "azure-pipelines-task-lib/toolrunner";
+import { writeFileSync } from "fs";
 import { getNLUToolRunner } from "nlu-devops-common/utilities";
 import * as path from "path";
 import { getBuildStatistics } from "./artifacts";
-
-// Import rule disabled to enable mocking
-// tslint:disable-next-line:no-var-requires
-const fs = require("fs");
 
 export async function run() {
     try {
@@ -163,7 +160,7 @@ async function publishNLUResults() {
     const statisticsPath = path.join(compareOutput, "statistics.json");
     const allStatisticsPath = path.join(compareOutput, "allStatistics.json");
     const buildStatistics = await getBuildStatistics(statisticsPath);
-    fs.writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics, null, 2));
+    writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics, null, 2));
     tl.addAttachment("nlu.devops", "statistics.json", allStatisticsPath);
 
     if (tl.getVariable("Build.SourceBranch") === "refs/heads/master") {

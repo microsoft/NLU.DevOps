@@ -9,16 +9,13 @@ global[taskLoadedKey] = true;
 import * as tl from "azure-pipelines-task-lib/task";
 import * as tr from "azure-pipelines-task-lib/toolrunner";
 import { expect } from "chai";
+import * as fs from "fs";
 import * as utilities from "nlu-devops-common/utilities";
 import * as path from "path";
 import * as sinon from "sinon";
 import { ImportMock, MockManager } from "ts-mock-imports";
 import * as artifacts from "../artifacts";
 import { run } from "../runTask";
-
-// Import rule disabled to enable mocking
-// tslint:disable-next-line:no-var-requires
-const fs = require("fs");
 
 describe("NLUTest", () => {
     let getInputStub: sinon.SinonStub<any[], any>;

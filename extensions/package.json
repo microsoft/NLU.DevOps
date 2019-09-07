@@ -15,8 +15,8 @@
         "postbuild": "npm run package",
         "package": "tfx extension create --rev-version --manifest-globs",
         "clean": "rimraf ./*.vsix && rimraf ./*.tgz",
-        "testCommon": "npm-recursive-install --rootDir=common && ts-mocha \"common/**/__tests__/**/*.ts\" -p common/tsconfig.json",
-        "testTasks": "npm-recursive-install --rootDir=tasks && ts-mocha \"tasks/**/__tests__/**/*.ts\" -p tasks/tsconfig.json", 
+        "testCommon": "npm-recursive-install --rootDir=common && mocha -r ts-node/register common/**/__tests__/**/*.ts",
+        "testTasks": "npm-recursive-install --rootDir=tasks && mocha -r ts-node/register tasks/**/__tests__/**/*.ts",
         "test": "npm run testCommon && npm run buildCommon && npm run testTasks"
     },
     "repository": {
@@ -37,9 +37,10 @@
         "sinon": "^7.4.1",
         "tfx-cli": "^0.7.8",
         "ts-mocha": "^6.0.0",
+        "ts-mock-imports": "^1.2.6",
+        "ts-node": "^8.3.0",
         "tslint": "^5.18.0",
         "tslint-no-unused-expression-chai": "^0.1.4",
-        "ts-mock-imports": "^1.2.6",
         "typescript": "^3.5.3"
     }
 }
