@@ -163,7 +163,7 @@ async function publishNLUResults() {
     const statisticsPath = path.join(compareOutput, "statistics.json");
     const allStatisticsPath = path.join(compareOutput, "allStatistics.json");
     const buildStatistics = await getBuildStatistics(statisticsPath);
-    fs.writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics));
+    fs.writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics, null, 2));
     tl.addAttachment("nlu.devops", "statistics", allStatisticsPath);
 
     if (tl.getVariable("Build.SourceBranch") === "refs/heads/master") {
