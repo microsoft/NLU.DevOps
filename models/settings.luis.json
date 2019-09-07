@@ -1,5 +1,13 @@
 {
+  "prebuiltEntityTypes": {
+    "number": "number"
+  },
   "appTemplate": {
+    "prebuiltEntities": [
+      {
+        "name": "number"
+      }
+    ],
     "intents": [
       {
         "name": "Skip",
