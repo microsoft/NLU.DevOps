@@ -294,7 +294,9 @@ describe("NLUTest", () => {
         expect(writeFileSyncStub.calledWith(allStatisticsPath, "[]")).to.be.ok;
 
         // assert adds attachment
-        expect(addAttachmentStub.calledWith("nlu.devops", "statistics", allStatisticsPath)).to.be.ok;
+        const metadataPath = path.join(".nlu", "text", "metadata.json");
+        expect(addAttachmentStub.calledWith("nlu.devops", "metadata.json", metadataPath)).to.be.ok;
+        expect(addAttachmentStub.calledWith("nlu.devops", "statistics.json", allStatisticsPath)).to.be.ok;
     });
 
     it("publishes statistics if master build", async () => {

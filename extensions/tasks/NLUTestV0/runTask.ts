@@ -157,14 +157,14 @@ async function publishNLUResults() {
     const compareOutput = getCompareOutputPath() as string;
 
     console.log("Publishing metadata attachment for NLU results.");
-    tl.addAttachment("nlu.devops", "metadata", path.join(compareOutput, `metadata.json`));
+    tl.addAttachment("nlu.devops", "metadata.json", path.join(compareOutput, `metadata.json`));
 
     console.log("Publishing statistics attachment for NLU results.");
     const statisticsPath = path.join(compareOutput, "statistics.json");
     const allStatisticsPath = path.join(compareOutput, "allStatistics.json");
     const buildStatistics = await getBuildStatistics(statisticsPath);
     fs.writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics, null, 2));
-    tl.addAttachment("nlu.devops", "statistics", allStatisticsPath);
+    tl.addAttachment("nlu.devops", "statistics.json", allStatisticsPath);
 
     if (tl.getVariable("Build.SourceBranch") === "refs/heads/master") {
         const publishData = {
