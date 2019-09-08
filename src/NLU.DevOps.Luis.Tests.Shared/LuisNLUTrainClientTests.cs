@@ -326,8 +326,40 @@ namespace NLU.DevOps.Luis.Tests
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
                 luisApp.Utterances.Should().Contain(u => u.Text == text);
                 luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(2);
-                luisApp.Utterances.First(u => u.Text == text).Entities.Should().Contain(e => e.Entity == entityTypeName2);
-                luisApp.Utterances.First(u => u.Text == text).Entities.Should().Contain(e => e.Entity == entityTypeName2);
+                luisApp.Utterances.First(u => u.Text == text).Entities[0].Entity.Should().Be(entityTypeName2);
+                luisApp.Utterances.First(u => u.Text == text).Entities[1].Entity.Should().Be(entityTypeName2);
+            }
+        }
+
+        [Test]
+        public static async Task AddsRoleToEntities()
+        {
+            var text = Guid.NewGuid().ToString();
+            var entityTypeName1 = Guid.NewGuid().ToString();
+            var entityTypeName2 = Guid.NewGuid().ToString();
+            var roles = new Dictionary<string, string>
+            {
+                { entityTypeName1, entityTypeName2 },
+            };
+
+            var builder = new LuisNLUTrainClientBuilder();
+            builder.LuisSettings = new LuisSettings(null, null, roles);
+            using (var luis = builder.Build())
+            {
+                var entity1 = new Entity(entityTypeName1, null, text, 0);
+                var entity2 = new Entity(entityTypeName2, null, text, 0);
+                var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
+                await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
+
+                // Ensure LUIS app intent still has role
+                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
+                importRequest.Should().NotBeNull();
+                var luisApp = importRequest.Arguments[2].As<LuisApp>();
+                luisApp.Utterances.Should().Contain(u => u.Text == text);
+                luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(2);
+                luisApp.Utterances.First(u => u.Text == text).Entities[0].Entity.Should().Be(entityTypeName2);
+                luisApp.Utterances.First(u => u.Text == text).Entities[1].Entity.Should().Be(entityTypeName2);
+                luisApp.Utterances.First(u => u.Text == text).Entities.OfType<JSONEntityWithRole>().Single().Role.Should().Be(entityTypeName1);
             }
         }
 

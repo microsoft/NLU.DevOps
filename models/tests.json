@@ -30,14 +30,14 @@
     ]
   },
   {
-    "text": "play two songs from my playlist",
+    "text": "play five songs from my playlist",
     "intent": "PlayMusic",
     "entities": [
       {
-        "entityType": "number",
-        "matchText": "two",
+        "entityType": "songCount",
+        "matchText": "five",
         "matchIndex": 0,
-        "entityValue": "2"
+        "entityValue": "5"
       }
     ]
   },

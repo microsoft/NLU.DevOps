@@ -26,6 +26,17 @@
     ]
   },
   {
+    "text": "play two songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "two",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
     "text": "start playing music",
     "intent": "PlayMusic"
   },
@@ -39,6 +50,10 @@
   },
   {
     "text": "call the pizza place",
+    "intent": "None"
+  },
+  {
+    "text": "how long until thanksgiving",
     "intent": "None"
   }
 ]

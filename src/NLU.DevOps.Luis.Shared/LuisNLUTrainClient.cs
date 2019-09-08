@@ -9,6 +9,7 @@ namespace NLU.DevOps.Luis
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Logging;
     using Models;
@@ -129,7 +130,7 @@ namespace NLU.DevOps.Luis
             // Add utterances to model
             luisApp.Utterances = luisApp.Utterances ?? new List<JSONUtterance>();
             utterances
-                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings.PrebuiltEntityTypes))
+                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings))
                 .ToList()
                 .ForEach(luisApp.Utterances.Add);
 
