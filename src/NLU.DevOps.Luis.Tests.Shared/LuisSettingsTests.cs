@@ -32,6 +32,18 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
+        public static void ParsesRoles()
+        {
+            var settings = LuisSettings.FromJson(new JObject
+            {
+                { "roles", new JObject { { "foo", "bar" } } },
+            });
+
+            settings.AppTemplate.Name.Should().BeNull();
+            settings.Roles.Should().Contain(new KeyValuePair<string, string>("foo", "bar"));
+        }
+
+        [Test]
         public static void ParsesAppTemplate()
         {
             var settings = LuisSettings.FromJson(new JObject

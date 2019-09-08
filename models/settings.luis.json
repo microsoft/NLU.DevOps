@@ -1,11 +1,14 @@
 {
-  "prebuiltEntityTypes": {
-    "number": "number"
+  "roles": {
+    "songCount": "number"
   },
   "appTemplate": {
     "prebuiltEntities": [
       {
-        "name": "number"
+        "name": "number",
+        "roles": [
+          "songCount"
+        ]
       }
     ],
     "intents": [

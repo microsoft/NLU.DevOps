@@ -20,5 +20,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)LuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfiguration.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JSONEntityWithRole.cs" />
   </ItemGroup>
 </Project>
