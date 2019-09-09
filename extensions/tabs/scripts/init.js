@@ -17,9 +17,9 @@ VSS.ready(() => {
         let metadata
         let statistics
         attachments.forEach(attachment => {
-          if ((attachment.name === 'metadata' || attachment.name === 'statistics') && attachment._links && attachment._links.self && attachment._links.self.href) {
-            metadata = attachment.name === 'metadata' ? attachment._links.self.href : metadata
-            statistics = attachment.name === 'statistics' ? attachment._links.self.href : statistics
+          if ((attachment.name === 'metadata.json' || attachment.name === 'statistics.json') && attachment._links && attachment._links.self && attachment._links.self.href) {
+            metadata = attachment.name === 'metadata.json' ? attachment._links.self.href : metadata
+            statistics = attachment.name === 'statistics.json' ? attachment._links.self.href : statistics
           }
         })
 
