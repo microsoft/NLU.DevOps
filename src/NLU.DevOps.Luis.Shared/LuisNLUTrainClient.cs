@@ -162,23 +162,32 @@ namespace NLU.DevOps.Luis
         {
             while (true)
             {
-                var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
-                var inProgress = trainingStatus
-                    .Select(modelInfo => modelInfo.Details.Status)
-                    .Any(status => status == "InProgress" || status == "Queued");
-
-                if (!inProgress)
+                try
                 {
-                    if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
+                    var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
+                    var inProgress = trainingStatus
+                        .Select(modelInfo => modelInfo.Details.Status)
+                        .Any(status => status == "InProgress" || status == "Queued");
+
+                    if (!inProgress)
                     {
-                        throw new InvalidOperationException("Failure occurred while training LUIS model.");
+                        if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
+                        {
+                            throw new InvalidOperationException("Failure occurred while training LUIS model.");
+                        }
+
+                        break;
                     }
 
-                    break;
+                    Logger.LogTrace($"Training jobs not complete. Polling again.");
+                    await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
                 }
-
-                Logger.LogTrace($"Training jobs not complete. Polling again.");
-                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+                catch (ErrorResponseException ex)
+                when ((int)ex.Response.StatusCode == 429)
+                {
+                    Logger.LogWarning("Received HTTP 429 result from LUIS. Retrying.");
+                    await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
     }
