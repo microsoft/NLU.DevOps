@@ -618,8 +618,6 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void UsesIndexAsUtteranceId()
         {
-            var entityType = Guid.NewGuid().ToString();
-            var matchText = Guid.NewGuid().ToString();
             var expectedUtterance = new LabeledUtterance(null, "Greeting", null);
             var actualUtterance = new LabeledUtterance(null, "Greeting", null);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -629,6 +627,20 @@ namespace NLU.DevOps.ModelPerformance.Tests
             compareResults.TestCases.Count.Should().Be(4);
             compareResults.TestCases.Where(t => t.UtteranceId == "0").Count().Should().Be(2);
             compareResults.TestCases.Where(t => t.UtteranceId == "1").Count().Should().Be(2);
+        }
+
+        [Test]
+        public static void UsesInputUtteranceId()
+        {
+            var utteranceId = Guid.NewGuid().ToString();
+            var expectedUtterance = new CompareLabeledUtterance(utteranceId, null, "Greeting", null);
+            var actualUtterance = new LabeledUtterance(null, "Greeting", null);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance },
+                false);
+            compareResults.TestCases.Count.Should().Be(2);
+            compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(2);
         }
 
         private static List<Entity> CreateEntityList(string type)

@@ -68,8 +68,14 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
             }
 
+            string getUtteranceId(LabeledUtterance utterance, int index)
+            {
+                var compareUtterance = utterance as CompareLabeledUtterance;
+                return compareUtterance?.UtteranceId ?? index.ToString(CultureInfo.InvariantCulture);
+            }
+
             var zippedUtterances = expectedUtterances
-                .Select((utterance, i) => new { Utterance = utterance, UtteranceId = i.ToString(CultureInfo.InvariantCulture) })
+                .Select((utterance, i) => new { Utterance = utterance, UtteranceId = getUtteranceId(utterance, i) })
                 .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
                 .ToList();
 
