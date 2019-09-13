@@ -1,0 +1,2606 @@
+﻿[
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'start playing music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.92854017,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'play music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.907853544,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'listen to hip hop')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.539262056,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'skip this one')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "score": 0.449134439,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('Skip', 'next please')",
+    "group": "Skip",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "score": 0.469399869,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'go forward')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "score": 0.463593155,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "score": 0.873349249,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "score": 0.42890653,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "score": 0.5407783,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('start playing music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('play music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "FalseNegativeEntity('Genre', '\"hip hop\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalseNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "because": "Actual utterance does not have entity matching 'hip hop'.",
+    "categories": [
+      "Entity",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "FalsePositiveEntity('Genre', '\"hip\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalsePositive",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.662749946,
+    "because": "Expected utterance does not have entity matching 'hip'.",
+    "categories": [
+      "Entity",
+      "FalsePositive"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('skip this one')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('next please')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('go forward')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'start playing music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.92854017,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'play music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.907853544,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'listen to hip hop')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.539262056,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'skip this one')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "score": 0.449134439,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('Skip', 'next please')",
+    "group": "Skip",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "score": 0.469399869,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'go forward')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "score": 0.463593155,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "score": 0.873349249,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "score": 0.42890653,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "score": 0.5407783,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('start playing music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('play music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "FalseNegativeEntity('Genre', '\"hip hop\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalseNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "because": "Actual utterance does not have entity matching 'hip hop'.",
+    "categories": [
+      "Entity",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "FalsePositiveEntity('Genre', '\"hip\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalsePositive",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.662749946,
+    "because": "Expected utterance does not have entity matching 'hip'.",
+    "categories": [
+      "Entity",
+      "FalsePositive"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('skip this one')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('next please')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('go forward')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'start playing music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.92854017,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'play music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.907853544,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'listen to hip hop')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.539262056,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'skip this one')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "score": 0.449134439,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('Skip', 'next please')",
+    "group": "Skip",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "score": 0.469399869,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'go forward')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "score": 0.463593155,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "score": 0.873349249,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "score": 0.42890653,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "score": 0.5407783,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('start playing music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('play music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "FalseNegativeEntity('Genre', '\"hip hop\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalseNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "because": "Actual utterance does not have entity matching 'hip hop'.",
+    "categories": [
+      "Entity",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "FalsePositiveEntity('Genre', '\"hip\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalsePositive",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.662749946,
+    "because": "Expected utterance does not have entity matching 'hip'.",
+    "categories": [
+      "Entity",
+      "FalsePositive"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('skip this one')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('next please')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('go forward')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'start playing music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.92854017,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'play music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.907853544,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'listen to hip hop')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.539262056,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'skip this one')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "score": 0.449134439,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('Skip', 'next please')",
+    "group": "Skip",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "score": 0.469399869,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'go forward')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "score": 0.463593155,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "score": 0.873349249,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "score": 0.42890653,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "score": 0.5407783,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('start playing music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('play music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "FalseNegativeEntity('Genre', '\"hip hop\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalseNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "because": "Actual utterance does not have entity matching 'hip hop'.",
+    "categories": [
+      "Entity",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "FalsePositiveEntity('Genre', '\"hip\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalsePositive",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.662749946,
+    "because": "Expected utterance does not have entity matching 'hip'.",
+    "categories": [
+      "Entity",
+      "FalsePositive"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('skip this one')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('next please')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('go forward')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'start playing music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.92854017,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'play music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.907853544,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'listen to hip hop')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.539262056,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'skip this one')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "score": 0.449134439,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('Skip', 'next please')",
+    "group": "Skip",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "score": 0.469399869,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'go forward')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "score": 0.463593155,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "score": 0.873349249,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "score": 0.42890653,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "score": 0.5407783,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('start playing music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('play music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "FalseNegativeEntity('Genre', '\"hip hop\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalseNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "because": "Actual utterance does not have entity matching 'hip hop'.",
+    "categories": [
+      "Entity",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "FalsePositiveEntity('Genre', '\"hip\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalsePositive",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.662749946,
+    "because": "Expected utterance does not have entity matching 'hip'.",
+    "categories": [
+      "Entity",
+      "FalsePositive"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('skip this one')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('next please')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('go forward')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'start playing music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.92854017,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'play music')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "score": 0.907853544,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('PlayMusic', 'listen to hip hop')",
+    "group": "PlayMusic",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.539262056,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'skip this one')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "score": 0.449134439,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TruePositiveIntent('Skip', 'next please')",
+    "group": "Skip",
+    "resultKind": "TruePositive",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "score": 0.469399869,
+    "because": "Utterances have matching intent.",
+    "categories": [
+      "Intent",
+      "TruePositive"
+    ]
+  },
+  {
+    "testName": "FalseNegativeIntent('Skip', 'go forward')",
+    "group": "Skip",
+    "resultKind": "FalseNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "score": 0.463593155,
+    "because": "Actual intent is 'None', expected 'Skip'",
+    "categories": [
+      "Intent",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "score": 0.873349249,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "score": 0.42890653,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeIntent('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Intent",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "score": 0.5407783,
+    "because": "Both intents are 'None'.",
+    "categories": [
+      "Intent",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('start playing music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.92854017,
+      "entities": [],
+      "text": "start playing music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('play music')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "actualUtterance": {
+      "score": 0.907853544,
+      "entities": [],
+      "text": "play music",
+      "intent": "PlayMusic"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "FalseNegativeEntity('Genre', '\"hip hop\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalseNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "because": "Actual utterance does not have entity matching 'hip hop'.",
+    "categories": [
+      "Entity",
+      "FalseNegative"
+    ]
+  },
+  {
+    "testName": "FalsePositiveEntity('Genre', '\"hip\"', 'listen to hip hop')",
+    "group": "Genre",
+    "resultKind": "FalsePositive",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "listen to hip hop",
+      "intent": "PlayMusic",
+      "entities": [
+        {
+          "entityType": "Genre",
+          "matchText": "hip hop"
+        }
+      ]
+    },
+    "actualUtterance": {
+      "score": 0.539262056,
+      "entities": [
+        {
+          "score": 0.662749946,
+          "entityType": "Genre",
+          "matchText": "hip"
+        }
+      ],
+      "text": "listen to hip hop",
+      "intent": "PlayMusic"
+    },
+    "score": 0.662749946,
+    "because": "Expected utterance does not have entity matching 'hip'.",
+    "categories": [
+      "Entity",
+      "FalsePositive"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('skip this one')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "skip this one",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.449134439,
+      "entities": [],
+      "text": "skip this one",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('next please')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.469399869,
+      "entities": [],
+      "text": "next please",
+      "intent": "Skip"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('go forward')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "go forward",
+      "intent": "Skip"
+    },
+    "actualUtterance": {
+      "score": 0.463593155,
+      "entities": [],
+      "text": "go forward",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('is it cold out')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.873349249,
+      "entities": [],
+      "text": "is it cold out",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('how many days until Christmas')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.42890653,
+      "entities": [],
+      "text": "how many days until Christmas",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  },
+  {
+    "testName": "TrueNegativeEntity('what's the weather like')",
+    "resultKind": "TrueNegative",
+    "targetKind": "Entity",
+    "expectedUtterance": {
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "actualUtterance": {
+      "score": 0.5407783,
+      "entities": [],
+      "text": "what's the weather like",
+      "intent": "None"
+    },
+    "because": "Neither utterances have entities.",
+    "categories": [
+      "Entity",
+      "TrueNegative"
+    ]
+  }
+]

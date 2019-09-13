@@ -1,5 +1,8 @@
 {
     "dependencies": {
+        "awesome-typescript-loader": "^5.2.1",
+        "live-server": "^1.2.1",
+        "source-map-loader": "^0.2.4",
         "vss-web-extension-sdk": "^5.141.0"
     }
 }
