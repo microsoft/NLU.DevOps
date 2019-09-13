@@ -1,5 +1,6 @@
 {
     "dependencies": {
+        "@types/d3": "^5.7.2",
         "awesome-typescript-loader": "^5.2.1",
         "live-server": "^1.2.1",
         "source-map-loader": "^0.2.4",
