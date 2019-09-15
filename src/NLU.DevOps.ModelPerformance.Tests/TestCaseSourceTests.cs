@@ -26,11 +26,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void TestToIntentTestCaseExpectingNoneActualDayTime()
         {
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", "None", null),
                 new LabeledUtterance("FOO", "DayTime", null)
-            };
+            });
 
             var test = TestCaseSource.ToIntentTestCase(utterances);
 
@@ -41,11 +41,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void TestToIntentTestCaseActualNoneExpectingDayTime()
         {
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", "DayTime", null),
                 new LabeledUtterance("FOO", "None", null)
-            };
+            });
 
             var test = TestCaseSource.ToIntentTestCase(utterances);
 
@@ -57,11 +57,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         public static void TestToEntityTestCasesMissingAnActualEntity()
         {
             var entity = CreateEntityList("EntityType");
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", "DayTime", entity),
                 new LabeledUtterance("FOO", "DayTime", null)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -74,11 +74,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = CreateEntityList("EntityType");
             var expectedEntity = CreateEntityList("WrongType");
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance("FOO", "DayTime", expectedEntity),
                  new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -98,11 +98,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualEntity = CreateEntityList("EntityType");
             actualEntity.Add(new Entity("RecognizedEntity", "value", "text", 2));
             var expectedEntity = CreateEntityList("EntityType");
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
                 new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -122,11 +122,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         public static void TestToEntityTestCasesMissingEntityInActualResult()
         {
             var expectedEntity = CreateEntityList("EntityType");
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", "DayTime", expectedEntity),
                 new LabeledUtterance("FOO", "DayTime", null)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -142,11 +142,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", "differentEntityValue", "differentMatchedText", 1) };
             var expectedEntity = CreateEntityList("EntityType");
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance("FOO", "DayTime", expectedEntity),
                  new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -163,11 +163,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToTextTestCaseTrueNegative()
         {
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance(null, "DayTime", null),
                 new LabeledUtterance(null, "DayTime", null)
-            };
+            });
 
             var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
@@ -177,11 +177,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToTextTestCaseFalseNegative()
          {
-             var utterances = new[]
+             var utterances = CreatePair(new[]
              {
                  new LabeledUtterance("foo", "DayTime", null),
                  new LabeledUtterance(null, "DayTime", null)
-             };
+             });
 
              var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
@@ -191,11 +191,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToTextTestCaseTruePositive()
         {
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("foo", "DayTime", null),
                 new LabeledUtterance("FOO", "DayTime", null)
-            };
+            });
 
             var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
@@ -205,11 +205,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ToTextTestCaseFalsePositive()
         {
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("foo", "DayTime", null),
                 new LabeledUtterance("baz", "DayTime", null)
-            };
+            });
 
             var actualResult = TestCaseSource.ToTextTestCase(utterances);
 
@@ -231,11 +231,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new List<Entity> { new Entity("EntityType", ParseEntityValueJson(actualJson), "foo", 1) };
             var expectedEntity = new List<Entity> { new Entity("EntityType", ParseEntityValueJson(expectedJson), "foo", 1) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance("FOO", "DayTime", expectedEntity),
                  new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -252,11 +252,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             {
                 var actualEntity = new[] { new Entity("EntityType", 42, "differentMatchedText", 1) };
                 var expectedEntity = new[] { new Entity("EntityType", expectedEntityValue, "differentMatchedText", 1) };
-                var utterances = new[]
+                var utterances = CreatePair(new[]
                 {
                      new LabeledUtterance("FOO", "DayTime", expectedEntity),
                      new LabeledUtterance("FOO", "DayTime", actualEntity)
-                };
+                });
 
                 var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -271,11 +271,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", "EntityValue", "differentMatchedText", 1) };
             var expectedEntity = new[] { new Entity("EntityType", null, "differentMatchedText", 2) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance("FOO", "DayTime", expectedEntity),
                  new LabeledUtterance("FOO", "DayTime", actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -290,11 +290,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", "foo", null, 0) };
             var expectedEntity = new[] { new Entity("EntityType", null, "foo", 0) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
                  new LabeledUtterance(null, null, actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -308,11 +308,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", "bar", null, 0) };
             var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
                  new LabeledUtterance(null, null, actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -327,11 +327,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", "bar", "bar", 0) };
             var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
                  new LabeledUtterance(null, null, actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -346,11 +346,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", null, "foo", 0) };
             var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
                  new LabeledUtterance(null, null, actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -365,11 +365,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actualEntity = new[] { new Entity("EntityType", "qux", "foo", 0) };
             var expectedEntity = new[] { new Entity("EntityType", "bar", "foo", 0) };
-            var utterances = new[]
+            var utterances = CreatePair(new[]
             {
                  new LabeledUtterance(null, null, expectedEntity),
                  new LabeledUtterance(null, null, actualEntity)
-            };
+            });
 
             var actualTestResult = TestCaseSource.ToEntityTestCases(utterances);
 
@@ -615,6 +615,34 @@ namespace NLU.DevOps.ModelPerformance.Tests
             testCase.Score.Should().Be(0.5);
         }
 
+        [Test]
+        public static void UsesIndexAsUtteranceId()
+        {
+            var expectedUtterance = new LabeledUtterance(null, "Greeting", null);
+            var actualUtterance = new LabeledUtterance(null, "Greeting", null);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance, expectedUtterance },
+                new[] { actualUtterance, actualUtterance },
+                false);
+            compareResults.TestCases.Count.Should().Be(4);
+            compareResults.TestCases.Where(t => t.UtteranceId == "0").Count().Should().Be(2);
+            compareResults.TestCases.Where(t => t.UtteranceId == "1").Count().Should().Be(2);
+        }
+
+        [Test]
+        public static void UsesInputUtteranceId()
+        {
+            var utteranceId = Guid.NewGuid().ToString();
+            var expectedUtterance = new CompareLabeledUtterance(utteranceId, null, "Greeting", null);
+            var actualUtterance = new LabeledUtterance(null, "Greeting", null);
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance },
+                false);
+            compareResults.TestCases.Count.Should().Be(2);
+            compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(2);
+        }
+
         private static List<Entity> CreateEntityList(string type)
         {
             return new List<Entity> { new Entity(type, "EntityValue", "matchedText", 1) };
@@ -628,6 +656,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         private static JToken ParseEntityValueJson(string json)
         {
             return json != null ? JToken.Parse(json) : null;
+        }
+
+        private static TestCaseSource.LabeledUtterancePair CreatePair(params LabeledUtterance[] pair)
+        {
+            return new TestCaseSource.LabeledUtterancePair(string.Empty, pair[0], pair[1]);
         }
     }
 }
