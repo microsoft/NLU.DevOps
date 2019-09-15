@@ -138,6 +138,48 @@ To configure the `Recipient` entity type as a LUIS prebuilt entity, the [`--mode
 
 During testing, to ensure that the entity types returned from LUIS are remapped back to the user-supplied entity type name, you must also supply the LUIS settings file above to the `test` command via the [`--model-settings`](Test.md#-m---model-settings) option.
 
+### Training entities with roles
+
+In order to label a [LUIS role](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-concept-roles) on an entity in a generic utterance, you can label the [`entityType`](GenericUtterances.md#entityType) using the role name, but you must also map each role name to the entity type in the [`roles`] object in the LUIS model settings. For example, if you have the following utterance with a role-labeled entity:
+
+```json
+{
+  "text": "play two songs from my play list",
+  "intent": "PlayMusic",
+  "entities": [
+    {
+      "matchText": "two",
+      "entityType": "songCount"
+    }
+  ]
+}
+```
+
+Then you can also map the `songCount` role to the `number` defined entity type (or any other LUIS entity type supporting roles) using the following configuration in the model settings:
+
+```json
+{
+  "roles": {
+    "songCount": "number"
+  }
+}
+```
+
+This will result in the labeled entity being sent to LUIS as follows:
+
+```json
+{
+  "startPos": 5,
+  "endPos": 7,
+  "entity": "number",
+  "role": "songCount"
+}
+```
+
+### Testing entities with roles
+
+In both LUIS v2 and v3, if a role is recognized, the [`entityType`](GenericUtterances.md#entityType) property will use the role name instead of the entity type.
+
 ## Configuring builtin intents
 
 To configure a builtin intent for LUIS, add the following to the `appTemplate` property of your LUIS settings JSON (i.e., the [`--model-settings`](Train.md#-m---model-settings) file supplied to the `train` command):
