@@ -27,8 +27,42 @@ function renderConfusionMatrix(filename, headers) {
     facetExpectedEntity = d3.nest()
       .key(function(d) { return d.expectedUtterance.entities; })
       .entries(data);
-    facetActualEntity = d3.nest()
-      .key(function(d) { return d.actualUtterance.entities; })
+    // facetActualEntity = d3.nest()
+    //   .key(function(d) { return d.actualUtterance.entities; })
+    //   .entries(data);
+
+    // TODO: https://stackoverflow.com/questions/47581324/can-an-array-be-used-as-a-d3-nest-key
+      facetActualEntity = d3.nest()
+      .key(function(d) {
+        let entityType = d.actualUtterance.entities.entityType;
+        let entity     = d.actualUtterance.entities;
+        console.table(d.actualUtterance.entities);
+        if (entity == null || entity == 'undefined'|| entity == undefined) {
+          console.log('entity unknown -- skipping');
+          alert('entity unknown -- skipping');
+          return;
+        }
+        if (entity == []) {
+          console.log('entity == []');
+          return;
+        }
+        if (entityType != []){
+          for (let index = 0; index < entity.length; index++) {
+            const element = entity[index];
+            console.log(element);
+            console.log(element.entityType);
+            console.log(element.entityType.entityType);
+          };
+        }
+        if (entityType == "Genre"){
+          console.log("found genre!");
+          alert('found genre!');
+          return;
+      }
+        else {
+            return d.actualUtterance.entities[0];
+        }
+      })
       .entries(data);
 
     for (let key = 0; key < nestData.length; key++) {
