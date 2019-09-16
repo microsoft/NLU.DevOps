@@ -56,53 +56,69 @@ namespace NLU.DevOps.Luis
             IEnumerable<Models.LabeledUtterance> utterances,
             CancellationToken cancellationToken)
         {
-            // Validate arguments
-            if (utterances == null)
+            try
             {
-                throw new ArgumentNullException(nameof(utterances));
-            }
+                // Validate arguments
+                if (utterances == null)
+                {
+                    throw new ArgumentNullException(nameof(utterances));
+                }
 
-            if (utterances.Any(utterance => utterance == null))
+                if (utterances.Any(utterance => utterance == null))
+                {
+                    throw new ArgumentException("Utterances must not be null.", nameof(utterances));
+                }
+
+                // Create application if not passed in.
+                if (this.LuisAppId == null)
+                {
+                    this.LuisAppId = await this.LuisClient.CreateAppAsync(this.LuisConfiguration.AppName, cancellationToken).ConfigureAwait(false);
+                    Logger.LogTrace($"Created LUIS app '{this.LuisConfiguration.AppName}' with ID '{this.LuisConfiguration}'.");
+                }
+
+                // Create LUIS import JSON
+                var luisApp = this.CreateLuisApp(utterances);
+
+                // Import the LUIS model
+                Logger.LogTrace($"Importing LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
+                await this.LuisClient.ImportVersionAsync(this.LuisAppId, this.LuisConfiguration.VersionId, luisApp, cancellationToken).ConfigureAwait(false);
+
+                // Train the LUIS model
+                Logger.LogTrace($"Training LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
+                await this.LuisClient.TrainAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
+
+                // Wait for training to complete
+                await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
+
+                // Publishes the LUIS app version
+                Logger.LogTrace($"Publishing LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
+                await this.LuisClient.PublishAppAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
+            }
+            catch (ErrorResponseException ex)
             {
-                throw new ArgumentException("Utterances must not be null.", nameof(utterances));
+                Logger.LogError(ex.Body.Message);
+                throw;
             }
-
-            // Create application if not passed in.
-            if (this.LuisAppId == null)
-            {
-                this.LuisAppId = await this.LuisClient.CreateAppAsync(this.LuisConfiguration.AppName, cancellationToken).ConfigureAwait(false);
-                Logger.LogTrace($"Created LUIS app '{this.LuisConfiguration.AppName}' with ID '{this.LuisConfiguration}'.");
-            }
-
-            // Create LUIS import JSON
-            var luisApp = this.CreateLuisApp(utterances);
-
-            // Import the LUIS model
-            Logger.LogTrace($"Importing LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
-            await this.LuisClient.ImportVersionAsync(this.LuisAppId, this.LuisConfiguration.VersionId, luisApp, cancellationToken).ConfigureAwait(false);
-
-            // Train the LUIS model
-            Logger.LogTrace($"Training LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
-            await this.LuisClient.TrainAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
-
-            // Wait for training to complete
-            await this.PollTrainingStatusAsync(cancellationToken).ConfigureAwait(false);
-
-            // Publishes the LUIS app version
-            Logger.LogTrace($"Publishing LUIS app '{this.LuisConfiguration.AppName ?? this.LuisAppId}' version '{this.LuisConfiguration.VersionId}'.");
-            await this.LuisClient.PublishAppAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
         public Task CleanupAsync(CancellationToken cancellationToken)
         {
-            if (this.LuisAppId == null)
+            try
             {
-                throw new InvalidOperationException(
-                    $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUTrainClient.CleanupAsync)}'.");
-            }
+                if (this.LuisAppId == null)
+                {
+                    throw new InvalidOperationException(
+                        $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUTrainClient.CleanupAsync)}'.");
+                }
 
-            return this.LuisClient.DeleteAppAsync(this.LuisAppId, cancellationToken);
+                return this.LuisClient.DeleteAppAsync(this.LuisAppId, cancellationToken);
+            }
+            catch (ErrorResponseException ex)
+            {
+                Logger.LogError(ex.Body.Message);
+                throw;
+            }
         }
 
         /// <inheritdoc />

@@ -9,8 +9,10 @@ namespace NLU.DevOps.Luis
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json.Linq;
+    using NLU.DevOps.Logging;
 
     /// <summary>
     /// Test a LUIS model with text and speech.
@@ -31,6 +33,10 @@ namespace NLU.DevOps.Luis
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
+
         private LuisSettings LuisSettings { get; }
 
         private ILuisTestClient LuisClient { get; }
@@ -40,15 +46,23 @@ namespace NLU.DevOps.Luis
             JToken query,
             CancellationToken cancellationToken)
         {
-            if (query == null)
+            try
             {
-                throw new ArgumentNullException(nameof(query));
-            }
+                if (query == null)
+                {
+                    throw new ArgumentNullException(nameof(query));
+                }
 
-            var predictionRequest = query.ToObject<PredictionRequest>();
-            predictionRequest.Query = predictionRequest.Query ?? query.Value<string>("text");
-            var luisResult = await this.LuisClient.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(new SpeechPredictionResponse(luisResult, 0));
+                var predictionRequest = query.ToObject<PredictionRequest>();
+                predictionRequest.Query = predictionRequest.Query ?? query.Value<string>("text");
+                var luisResult = await this.LuisClient.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
+                return this.LuisResultToLabeledUtterance(new SpeechPredictionResponse(luisResult, 0));
+            }
+            catch (ErrorException ex)
+            {
+                Logger.LogError(ex.Body.ErrorProperty.Message);
+                throw;
+            }
         }
 
         /// <inheritdoc />
