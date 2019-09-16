@@ -37,28 +37,15 @@ function renderConfusionMatrix(filename, headers) {
         let entityType = d.actualUtterance.entities.entityType;
         let entity     = d.actualUtterance.entities;
         console.table(d.actualUtterance.entities);
-        if (entity == null || entity == 'undefined'|| entity == undefined) {
-          console.log('entity unknown -- skipping');
-          alert('entity unknown -- skipping');
-          return;
-        }
-        if (entity == []) {
-          console.log('entity == []');
-          return;
-        }
+
         if (entityType != []){
           for (let index = 0; index < entity.length; index++) {
             const element = entity[index];
+            console.log("entityType != []");
             console.log(element);
-            console.log(element.entityType);
-            console.log(element.entityType.entityType);
+            console.log('entityType: ' + element.entityType);
           };
         }
-        if (entityType == "Genre"){
-          console.log("found genre!");
-          alert('found genre!');
-          return;
-      }
         else {
             return d.actualUtterance.entities[0];
         }
