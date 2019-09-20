@@ -24,33 +24,40 @@ function renderConfusionMatrix(filename, headers) {
       .key(function(d) { return d.actualUtterance.intent })
       .entries(data);
 
+    facetActualEntity = d3.nest()
+        .key(function(d) {
+            let entityType = d.actualUtterance.entities.entityType;
+            let entities   = d.actualUtterance.entities;
+
+            // Loop through entities where an entityType is present
+            if (entityType == undefined) {
+                for (let index = 0; index < entities.length; index++) {
+                const element = entities[index];
+
+                return element.entityType;
+                };
+            } else {
+                return; // TODO: Need to return something stating that there is no entity
+            }
+        })
+        .entries(data);
+
     facetExpectedEntity = d3.nest()
-      .key(function(d) { return d.expectedUtterance.entities; })
-      .entries(data);
-    // facetActualEntity = d3.nest()
-    //   .key(function(d) { return d.actualUtterance.entities; })
-    //   .entries(data);
+        .key(function(d) {
+            let entities = d.expectedUtterance.entities;
 
-    // TODO: https://stackoverflow.com/questions/47581324/can-an-array-be-used-as-a-d3-nest-key
-      facetActualEntity = d3.nest()
-      .key(function(d) {
-        let entityType = d.actualUtterance.entities.entityType;
-        let entity     = d.actualUtterance.entities;
-        console.table(d.actualUtterance.entities);
+            if (entities != undefined) {
+                // Loop through entities where an entityType is present
+                for (let index = 0; index < entities.length; index++) {
+                    const element = entities[index];
 
-        if (entityType != []){
-          for (let index = 0; index < entity.length; index++) {
-            const element = entity[index];
-            console.log("entityType != []");
-            console.log(element);
-            console.log('entityType: ' + element.entityType);
-          };
-        }
-        else {
-            return d.actualUtterance.entities[0];
-        }
-      })
-      .entries(data);
+                    return element.entityType;
+                };
+            } else {
+                return; // TODO: Need to return something stating that there is no entity
+            }
+        })
+        .entries(data);
 
     for (let key = 0; key < nestData.length; key++) {
       console.log(nestData[key]);
@@ -58,12 +65,12 @@ function renderConfusionMatrix(filename, headers) {
     }
 
     const matrix = new Matrix();
-    const graph = new Graph();
+    const graph  = new Graph();
     graph.quadrantCountMax = quadrantCountMax;
 
     addGraph(graph);
     addDataPoints(nestData, matrix, graph);
-    addFacets("Actual Intents", facetActualIntents);
+    addFacets("Actual Intents"  , facetActualIntents);
     addFacets("Expected Intents", facetExpectedIntents);
 
     addFacets("Actual Entity"  , facetActualEntity);
