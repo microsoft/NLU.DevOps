@@ -96,7 +96,7 @@ namespace NLU.DevOps.Luis
             }
             catch (ErrorResponseException ex)
             {
-                Logger.LogError(ex.Body.Message);
+                Logger.LogError($"Received error with status code '{ex.Body.Code}' and message '{ex.Body.Message}'.");
                 throw;
             }
         }
@@ -116,7 +116,7 @@ namespace NLU.DevOps.Luis
             }
             catch (ErrorResponseException ex)
             {
-                Logger.LogError(ex.Body.Message);
+                Logger.LogError($"Received error with status code '{ex.Body.Code}' and message '{ex.Body.Message}'.");
                 throw;
             }
         }

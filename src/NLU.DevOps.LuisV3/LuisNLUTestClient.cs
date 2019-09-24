@@ -60,7 +60,7 @@ namespace NLU.DevOps.Luis
             }
             catch (ErrorException ex)
             {
-                Logger.LogError(ex.Body.ErrorProperty.Message);
+                Logger.LogError($"Received error with status code '{ex.Body.ErrorProperty.Code}' and message '{ex.Body.ErrorProperty.Message}'.");
                 throw;
             }
         }

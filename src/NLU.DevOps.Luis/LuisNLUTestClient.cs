@@ -55,7 +55,7 @@ namespace NLU.DevOps.Luis
             }
             catch (APIErrorException ex)
             {
-                Logger.LogError(ex.Body.Message);
+                Logger.LogError($"Received error with status code '{ex.Body.StatusCode}' and message '{ex.Body.Message}'.");
                 throw;
             }
         }
