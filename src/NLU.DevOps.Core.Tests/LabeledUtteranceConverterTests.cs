@@ -195,6 +195,28 @@ namespace NLU.DevOps.Core.Tests
             toObject.Should().Throw<ArgumentException>();
         }
 
+        [Test]
+        public static void DeserializesEntityType()
+        {
+            var entityJson = new JObject
+            {
+                { "startPos", 0 },
+                { "endPos", 2 },
+                { "entity", "bar" },
+            };
+
+            var json = new JObject
+            {
+                { "text", "foo" },
+                { "entities", new JArray { entityJson } },
+            };
+
+            var serializer = CreateSerializer();
+            var utterance = json.ToObject<LabeledUtterance>(serializer);
+            utterance.Entities.Count.Should().Be(1);
+            utterance.Entities[0].EntityType.Should().Be("bar");
+        }
+
         private static JsonSerializer CreateSerializer()
         {
             var serializer = JsonSerializer.CreateDefault();
