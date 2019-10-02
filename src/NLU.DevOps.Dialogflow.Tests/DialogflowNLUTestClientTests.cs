@@ -187,6 +187,59 @@ namespace NLU.DevOps.Dialogflow.Tests
             request.InputAudio.ToStringUtf8().Should().EndWith("hello");
         }
 
+        [Test]
+        public static async Task TestAsyncRetries()
+        {
+            var intentName = Guid.NewGuid().ToString();
+            var throwCount = 1;
+            var client = CreateTestClient(
+                new DetectIntentResponse
+                {
+                    QueryResult = new QueryResult
+                    {
+                        QueryText = string.Empty,
+                        Intent = new Intent { DisplayName = intentName },
+                    }
+                },
+                _ =>
+                {
+                    if (throwCount-- > 0)
+                    {
+                        throw new RpcException(new Status(StatusCode.ResourceExhausted, string.Empty));
+                    }
+                });
+
+            var result = await client.TestAsync(new JObject { { "text", string.Empty } }).ConfigureAwait(false);
+            result.Intent.Should().Be(intentName);
+        }
+
+        [Test]
+        public static async Task TestSpeechAsyncRetries()
+        {
+            var intentName = Guid.NewGuid().ToString();
+            var throwCount = 1;
+            var client = CreateTestClient(
+                new DetectIntentResponse
+                {
+                    QueryResult = new QueryResult
+                    {
+                        QueryText = string.Empty,
+                        Intent = new Intent { DisplayName = intentName },
+                    }
+                },
+                _ =>
+                {
+                    if (throwCount-- > 0)
+                    {
+                        throw new RpcException(new Status(StatusCode.ResourceExhausted, string.Empty));
+                    }
+                });
+
+            var speechFile = Path.Combine("Assets", "test.txt");
+            var result = await client.TestSpeechAsync(speechFile).ConfigureAwait(false);
+            result.Intent.Should().Be(intentName);
+        }
+
         private static DialogflowNLUTestClient CreateTestClient(DetectIntentResponse response, Action<DetectIntentRequest> callback = null)
         {
             var mockCallInvoker = new Mock<CallInvoker>();
