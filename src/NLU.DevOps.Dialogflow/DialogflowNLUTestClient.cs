@@ -15,9 +15,12 @@ namespace NLU.DevOps.Dialogflow
     using Google.Protobuf;
     using Google.Protobuf.WellKnownTypes;
     using Grpc.Auth;
+    using Grpc.Core;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json.Linq;
+    using NLU.DevOps.Logging;
 
     internal sealed class DialogflowNLUTestClient : DefaultNLUTestClient
     {
@@ -25,6 +28,8 @@ namespace NLU.DevOps.Dialogflow
         private const string DialogflowClientKeyPathConfigurationKey = "dialogflowClientKeyPath";
         private const string DialogflowProjectIdConfigurationKey = "dialogflowProjectId";
         private const string DialogflowSessionIdConfigurationKey = "dialogflowSessionId";
+
+        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
         private SessionsClient sessionsClient;
 
@@ -38,6 +43,10 @@ namespace NLU.DevOps.Dialogflow
         {
             this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
+
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<DialogflowNLUTestClient>());
 
         private IConfiguration Configuration { get; }
 
@@ -58,12 +67,18 @@ namespace NLU.DevOps.Dialogflow
                 }
             };
 
-            var client = await this.GetSessionClientAsync(cancellationToken).ConfigureAwait(false);
-            var result = await client.DetectIntentAsync(sessionName, queryInput, cancellationToken).ConfigureAwait(false);
-            return new LabeledUtterance(
-                result.QueryResult.QueryText,
-                result.QueryResult.Intent.DisplayName,
-                result.QueryResult.Parameters?.Fields.Select(GetEntity).OfType<Entity>().ToList());
+            return await RetryAsync(
+                    async () =>
+                    {
+                        var client = await this.GetSessionClientAsync(cancellationToken).ConfigureAwait(false);
+                        var result = await client.DetectIntentAsync(sessionName, queryInput, cancellationToken).ConfigureAwait(false);
+                        return new LabeledUtterance(
+                            result.QueryResult.QueryText,
+                            result.QueryResult.Intent.DisplayName,
+                            result.QueryResult.Parameters?.Fields.Select(GetEntity).OfType<Entity>().ToList());
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
 
         protected override async Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
@@ -86,17 +101,40 @@ namespace NLU.DevOps.Dialogflow
                 },
             };
 
-            var client = await this.GetSessionClientAsync(cancellationToken).ConfigureAwait(false);
-            var result = await client.DetectIntentAsync(request, cancellationToken).ConfigureAwait(false);
-            return new LabeledUtterance(
-                result.QueryResult.QueryText,
-                result.QueryResult.Intent.DisplayName,
-                result.QueryResult.Parameters?.Fields.Select(GetEntity).OfType<Entity>().ToList());
+            return await RetryAsync(
+                    async () =>
+                    {
+                        var client = await this.GetSessionClientAsync(cancellationToken).ConfigureAwait(false);
+                        var result = await client.DetectIntentAsync(request, cancellationToken).ConfigureAwait(false);
+                        return new LabeledUtterance(
+                            result.QueryResult.QueryText,
+                            result.QueryResult.Intent.DisplayName,
+                            result.QueryResult.Parameters?.Fields.Select(GetEntity).OfType<Entity>().ToList());
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
 
         protected override void Dispose(bool disposing)
         {
             // no-op
+        }
+
+        private static async Task<T> RetryAsync<T>(Func<Task<T>> doAsync, CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                try
+                {
+                    return await doAsync().ConfigureAwait(false);
+                }
+                catch (RpcException ex)
+                when (ex.StatusCode == StatusCode.ResourceExhausted)
+                {
+                    Logger.LogWarning("Received HTTP 429 result from Dialogflow. Retrying.");
+                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
 
         private static Entity GetEntity(KeyValuePair<string, Value> pair)
