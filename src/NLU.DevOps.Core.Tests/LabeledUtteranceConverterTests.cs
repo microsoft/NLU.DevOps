@@ -137,8 +137,9 @@ namespace NLU.DevOps.Core.Tests
             };
 
             var serializer = CreateSerializer();
-            Action toObject = () => json.ToObject<LabeledUtterance>(serializer);
-            toObject.Should().NotThrow<InvalidOperationException>();
+            var actual = json.ToObject<DerivedLabeledUtterance>(serializer);
+            actual.Entities.Count.Should().Be(1);
+            actual.Entities[0].MatchText.Should().Be("8");
         }
 
         [Test]
