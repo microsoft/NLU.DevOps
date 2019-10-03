@@ -6,6 +6,7 @@ namespace NLU.DevOps.CommandLine.Test
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Threading.Tasks;
     using Models;
     using Newtonsoft.Json.Linq;
@@ -47,8 +48,12 @@ namespace NLU.DevOps.CommandLine.Test
         {
             this.Log("Running tests against NLU model...");
 
-            var testUtterances = this.LoadUtterances();
-            var testResults = await testUtterances.SelectAsync(this.TestAsync, this.Options.Parallelism).ConfigureAwait(false);
+            var testUtterances = this.LoadUtterances().ToList();
+            var testResults = await testUtterances.SelectAsync(
+                    this.TestAsync,
+                    this.Options.Parallelism,
+                    this.Options.QueriesPerSecond)
+                .ConfigureAwait(false);
 
             Stream getFileStream(string filePath)
             {

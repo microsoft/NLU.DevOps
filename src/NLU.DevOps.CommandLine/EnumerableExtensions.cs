@@ -10,7 +10,7 @@ namespace NLU.DevOps.CommandLine
 
     internal static class EnumerableExtensions
     {
-        public static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(this IEnumerable<T> items, Func<T, Task<TResult>> selector, int degreeOfParallelism)
+        public static async Task<IList<TResult>> SelectAsync<T, TResult>(this IList<T> items, Func<T, Task<TResult>> selector, int degreeOfParallelism, int queriesPerSecond)
         {
             if (degreeOfParallelism < 1)
             {
@@ -18,7 +18,7 @@ namespace NLU.DevOps.CommandLine
             }
 
             var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
-            var results = new TResult[items.Count()];
+            var results = new TResult[items.Count];
             var tasks = new List<Task<Tuple<int, TResult>>>(degreeOfParallelism);
 
             async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
@@ -27,8 +27,13 @@ namespace NLU.DevOps.CommandLine
                 return Tuple.Create(i, result);
             }
 
+            var period = queriesPerSecond > 0
+                ? TimeSpan.FromSeconds(1.0 / queriesPerSecond)
+                : TimeSpan.Zero;
+
             foreach (var indexedItem in indexedItems)
             {
+                var delayTask = Task.Delay(period);
                 if (tasks.Count == degreeOfParallelism)
                 {
                     var task = await Task.WhenAny(tasks).ConfigureAwait(false);
@@ -38,6 +43,7 @@ namespace NLU.DevOps.CommandLine
                 }
 
                 tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
+                await delayTask.ConfigureAwait(false);
             }
 
             await Task.WhenAll(tasks).ConfigureAwait(false);

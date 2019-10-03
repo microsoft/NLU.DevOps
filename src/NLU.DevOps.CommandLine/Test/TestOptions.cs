@@ -25,5 +25,8 @@ namespace NLU.DevOps.CommandLine.Test
 
         [Option('p', "parallelism", HelpText = "Numeric value to determine the numer of parallel tests.  Default value is 3.", Required = false)]
         public int Parallelism { get; set; } = 3;
+
+        [Option("qps", HelpText = "Queries per second to run.", Required = false)]
+        public int QueriesPerSecond { get; set; }
     }
 }
