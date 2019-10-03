@@ -29,7 +29,8 @@ namespace NLU.DevOps.Dialogflow
         private const string DialogflowProjectIdConfigurationKey = "dialogflowProjectId";
         private const string DialogflowSessionIdConfigurationKey = "dialogflowSessionId";
 
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
+        // Dialogflow typically limits the number of requests per minute, so setting a retry delay to 30 seconds.
+        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromSeconds(30);
 
         private SessionsClient sessionsClient;
 
@@ -131,7 +132,7 @@ namespace NLU.DevOps.Dialogflow
                 catch (RpcException ex)
                 when (ex.StatusCode == StatusCode.ResourceExhausted)
                 {
-                    Logger.LogWarning("Received HTTP 429 result from Dialogflow. Retrying.");
+                    Logger.LogWarning("Received HTTP 429 result from Dialogflow. Retrying in 30 seconds.");
                     await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
