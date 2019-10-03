@@ -8,6 +8,7 @@
         "esModuleInterop": true
     },
     "include": [
-        "**/*.ts"
+        "**/*.ts",
+        "**/node_modules/@types"
     ]
 }

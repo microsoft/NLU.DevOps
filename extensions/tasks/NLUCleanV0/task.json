@@ -31,6 +31,13 @@
             "helpMarkDown": "Usually one of: 'luis', 'luisV3', or 'lex'."
         },
         {
+            "name": "includePath",
+            "type": "string",
+            "label": "NLU.DevOps custom NLU provider include path.",
+            "required": false,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Clean.md#include)."
+        },
+        {
             "name": "workingDirectory",
             "type": "filePath",
             "label": "Working Directory",
@@ -49,6 +56,13 @@
             "type": "string",
             "label": "Version of dotnet-nlu to install.",
             "helpMarkDown": "Version of dotnet-nlu to install.",
+            "required": false
+        },
+        {
+            "name": "toolPath",
+            "type": "string",
+            "label": ".NET Core tool path to install dotnet-nlu.",
+            "helpMarkDown": ".NET Core tool path to install dotnet-nlu.",
             "required": false
         }
     ],

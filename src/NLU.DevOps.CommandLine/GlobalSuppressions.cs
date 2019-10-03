@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA1812:Avoid uninstantiated internal classes", Justification = "The class is passed as a generic type parameter that has a new constraint.", Scope = "type", Target = "~T:NLU.DevOps.CommandLine.Clean.CleanOptions")]

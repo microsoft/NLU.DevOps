@@ -21,4 +21,6 @@ include:
   - docs/NLUTrainTask.md
   - docs/NLUTestTask.md
   - docs/NLUCleanTask.md
+  - docs/examples/metadata.json
+  - docs/examples/statistics.json
   - extensions/overview.md

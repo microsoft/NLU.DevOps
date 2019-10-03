@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Luis
@@ -9,6 +9,7 @@ namespace NLU.DevOps.Luis
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Logging;
     using Models;
@@ -129,7 +130,7 @@ namespace NLU.DevOps.Luis
             // Add utterances to model
             luisApp.Utterances = luisApp.Utterances ?? new List<JSONUtterance>();
             utterances
-                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings.PrebuiltEntityTypes))
+                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings))
                 .ToList()
                 .ForEach(luisApp.Utterances.Add);
 
@@ -162,23 +163,32 @@ namespace NLU.DevOps.Luis
         {
             while (true)
             {
-                var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
-                var inProgress = trainingStatus
-                    .Select(modelInfo => modelInfo.Details.Status)
-                    .Any(status => status == "InProgress" || status == "Queued");
-
-                if (!inProgress)
+                try
                 {
-                    if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
+                    var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
+                    var inProgress = trainingStatus
+                        .Select(modelInfo => modelInfo.Details.Status)
+                        .Any(status => status == "InProgress" || status == "Queued");
+
+                    if (!inProgress)
                     {
-                        throw new InvalidOperationException("Failure occurred while training LUIS model.");
+                        if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
+                        {
+                            throw new InvalidOperationException("Failure occurred while training LUIS model.");
+                        }
+
+                        break;
                     }
 
-                    break;
+                    Logger.LogTrace($"Training jobs not complete. Polling again.");
+                    await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
                 }
-
-                Logger.LogTrace($"Training jobs not complete. Polling again.");
-                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+                catch (ErrorResponseException ex)
+                when ((int)ex.Response.StatusCode == 429)
+                {
+                    Logger.LogWarning("Received HTTP 429 result from LUIS. Retrying.");
+                    await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
     }

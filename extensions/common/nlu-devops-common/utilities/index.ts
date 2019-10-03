@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import * as tl from "azure-pipelines-task-lib/task";
 import * as tr from "azure-pipelines-task-lib/toolrunner";
 import * as path from "path";
@@ -20,8 +23,9 @@ export async function getNLUToolRunner(): Promise<tr.ToolRunner> {
 
     const nupkgPath = tl.getInput("nupkgPath");
     const toolVersion = tl.getInput("toolVersion");
-    if (result !== 0 || nupkgPath || toolVersion) {
-        const toolPath = path.join(tl.getVariable("Agent.TempDirectory"), ".dotnet");
+    const toolPathInput = tl.getInput("toolPath");
+    if (result !== 0 || nupkgPath || toolVersion || toolPathInput) {
+        const toolPath = toolPathInput || path.join(tl.getVariable("Agent.TempDirectory"), ".dotnet");
         if (result === 0) {
             const dotnetUninstall = tl.tool(dotnetPath)
                 .arg("tool")
@@ -44,7 +48,7 @@ export async function getNLUToolRunner(): Promise<tr.ToolRunner> {
             } as unknown as tr.IExecOptions);
 
             if (uninstallResult !== 0 || isUninstallError) {
-                throw new Error("Failed to uninstall NLU.DevOps.");
+                tl.warning("Failed to uninstall NLU.DevOps.");
             }
         }
 
@@ -58,7 +62,9 @@ export async function getNLUToolRunner(): Promise<tr.ToolRunner> {
         if (nupkgPath) {
             dotnetInstall.arg("--add-source")
                 .arg(nupkgPath);
-        } else if (toolVersion) {
+        }
+
+        if (toolVersion) {
             dotnetInstall.arg("--version")
                 .arg(toolVersion);
         }

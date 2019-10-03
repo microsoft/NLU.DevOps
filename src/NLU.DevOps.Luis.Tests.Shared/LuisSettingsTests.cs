@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Luis.Tests
@@ -29,6 +29,18 @@ namespace NLU.DevOps.Luis.Tests
 
             settings.AppTemplate.Name.Should().BeNull();
             settings.PrebuiltEntityTypes.Should().Contain(new KeyValuePair<string, string>("foo", "bar"));
+        }
+
+        [Test]
+        public static void ParsesRoles()
+        {
+            var settings = LuisSettings.FromJson(new JObject
+            {
+                { "roles", new JObject { { "foo", "bar" } } },
+            });
+
+            settings.AppTemplate.Name.Should().BeNull();
+            settings.Roles.Should().Contain(new KeyValuePair<string, string>("foo", "bar"));
         }
 
         [Test]

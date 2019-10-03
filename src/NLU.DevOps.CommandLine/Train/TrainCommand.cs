@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.CommandLine.Train
@@ -7,6 +7,7 @@ namespace NLU.DevOps.CommandLine.Train
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Models;
+    using Newtonsoft.Json;
     using static Serializer;
 
     internal class TrainCommand : BaseCommand<TrainOptions>
@@ -39,8 +40,8 @@ namespace NLU.DevOps.CommandLine.Train
                 }
 
                 var trainingUtterances = this.Options.UtterancesPath != null
-                    ? Read<IList<LabeledUtterance>>(this.Options.UtterancesPath)
-                    : Array.Empty<LabeledUtterance>();
+                    ? Read<IList<TrainLabeledUtterance>>(this.Options.UtterancesPath)
+                    : Array.Empty<TrainLabeledUtterance>();
                 await this.NLUTrainClient.TrainAsync(trainingUtterances).ConfigureAwait(false);
             }
             finally
@@ -50,6 +51,18 @@ namespace NLU.DevOps.CommandLine.Train
                     Write($"appsettings.{this.Options.Service}.json", this.NLUTrainClient);
                 }
             }
+        }
+
+        private class TrainLabeledUtterance : LabeledUtterance
+        {
+            public TrainLabeledUtterance(string text, string intent, IReadOnlyList<Entity> entities)
+                : base(text, intent, entities)
+            {
+                this.AdditionalProperties = new Dictionary<string, object>();
+            }
+
+            [JsonExtensionData]
+            public IDictionary<string, object> AdditionalProperties { get; }
         }
     }
 }

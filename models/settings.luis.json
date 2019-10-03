@@ -1,5 +1,16 @@
 {
+  "roles": {
+    "songCount": "number"
+  },
   "appTemplate": {
+    "prebuiltEntities": [
+      {
+        "name": "number",
+        "roles": [
+          "songCount"
+        ]
+      }
+    ],
     "intents": [
       {
         "name": "Skip",

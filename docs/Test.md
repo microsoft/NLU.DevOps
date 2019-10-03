@@ -153,6 +153,9 @@ See [Caching speech-to-text transcriptions](#caching-speech-to-text-transcriptio
 
 This is currently only used for LUIS, see the section on LUIS prebuilt entities in [Configuring prebuilt entities](LuisModelConfiguration.md#configuring-prebuilt-entities).
 
+### `-i, --include`
+(Optional) Path to custom NLU provider DLL. See documentation about [Specifying the include path](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md#specifying-the-include-path) for more details.
+
 ### `-v, --verbose`
 
 (Optional) Use verbose logging when running the command.

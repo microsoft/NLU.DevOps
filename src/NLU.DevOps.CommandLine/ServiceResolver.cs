@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.CommandLine
@@ -7,8 +7,6 @@ namespace NLU.DevOps.CommandLine
     using System.Composition.Hosting;
     using System.IO;
     using System.Linq;
-    using System.Reflection;
-    using System.Runtime.Loader;
     using McMaster.NETCore.Plugins;
 
     internal static class ServiceResolver
@@ -44,7 +42,8 @@ namespace NLU.DevOps.CommandLine
                 }
             }
 
-            var assemblyPath = options.IncludePath ?? getAssemblyPath();
+            var includePath = options.IncludePath != null ? Path.GetFullPath(options.IncludePath) : null;
+            var assemblyPath = includePath ?? getAssemblyPath();
             if (assemblyPath == null)
             {
                 instance = default(T);

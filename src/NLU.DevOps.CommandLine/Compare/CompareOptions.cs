@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.CommandLine.Compare
@@ -17,7 +17,7 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('l', "label", HelpText = "Label for differentiating comparison runs.", Required = false)]
         public string TestLabel { get; set; }
 
-        [Option('m', "metadata", HelpText = "Return test case metadata as opposed to NUnit test results.", Required = false)]
+        [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results.", Required = false)]
         public bool Metadata { get; set; }
 
         [Option('t', "text", HelpText = "Run text comparison test cases.", Required = false)]

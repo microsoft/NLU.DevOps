@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Luis
@@ -18,7 +18,7 @@ namespace NLU.DevOps.Luis
         /// Initializes a new instance of the <see cref="LuisSettings"/> class.
         /// </summary>
         public LuisSettings()
-            : this(null, null)
+            : this(null, null, null)
         {
         }
 
@@ -27,7 +27,7 @@ namespace NLU.DevOps.Luis
         /// </summary>
         /// <param name="appTemplate">App template.</param>
         public LuisSettings(LuisApp appTemplate)
-            : this(appTemplate, null)
+            : this(appTemplate, null, null)
         {
         }
 
@@ -36,7 +36,7 @@ namespace NLU.DevOps.Luis
         /// </summary>
         /// <param name="prebuiltEntityTypes">Prebuilt entity types.</param>
         public LuisSettings(IReadOnlyDictionary<string, string> prebuiltEntityTypes)
-            : this(null, prebuiltEntityTypes)
+            : this(null, prebuiltEntityTypes, null)
         {
         }
 
@@ -45,11 +45,13 @@ namespace NLU.DevOps.Luis
         /// </summary>
         /// <param name="appTemplate">App template.</param>
         /// <param name="prebuiltEntityTypes">Prebuilt entity types.</param>
+        /// <param name="roles">Role mappings.</param>
         [JsonConstructor]
-        public LuisSettings(LuisApp appTemplate, IReadOnlyDictionary<string, string> prebuiltEntityTypes)
+        public LuisSettings(LuisApp appTemplate, IReadOnlyDictionary<string, string> prebuiltEntityTypes, IReadOnlyDictionary<string, string> roles)
         {
             this.AppTemplate = appTemplate ?? new LuisApp();
             this.PrebuiltEntityTypes = prebuiltEntityTypes ?? new Dictionary<string, string>();
+            this.Roles = roles ?? new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -63,6 +65,11 @@ namespace NLU.DevOps.Luis
         public IReadOnlyDictionary<string, string> PrebuiltEntityTypes { get; }
 
         /// <summary>
+        /// Gets the role mappings.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> Roles { get; }
+
+        /// <summary>
         /// Converts a <see cref="JObject"/> to <see cref="LuisSettings"/>.
         /// </summary>
         /// <param name="settings">Settings JSON.</param>
@@ -74,7 +81,7 @@ namespace NLU.DevOps.Luis
                 throw new ArgumentNullException(nameof(settings));
             }
 
-            if (settings.ContainsKey("appTemplate") || settings.ContainsKey("prebuiltEntityTypes"))
+            if (settings.ContainsKey("appTemplate") || settings.ContainsKey("prebuiltEntityTypes") || settings.ContainsKey("roles"))
             {
                 return settings.ToObject<LuisSettings>();
             }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Luis.Tests
@@ -390,9 +390,47 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
+        [Test]
+        public static async Task WithRole()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
+                {
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
+                    {
+                        new EntityModel
+                        {
+                            Entity = "the",
+                            Type = "type",
+                            StartIndex = 32,
+                            EndIndex = 34,
+                            AdditionalProperties = new Dictionary<string, object>
+                            {
+                                { "role", "role" },
+                            },
+                        },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be("role");
+            }
+        }
+
         private class LuisNLUTestClientBuilder
         {
-            public LuisSettings LuisSettings { get; set; } = new LuisSettings(null, null);
+            public LuisSettings LuisSettings { get; set; } = new LuisSettings(null, null, null);
 
             public Mock<ILuisTestClient> LuisTestClientMock { get; } = new Mock<ILuisTestClient>();
 

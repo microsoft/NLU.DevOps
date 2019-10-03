@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.ModelPerformance
@@ -6,6 +6,7 @@ namespace NLU.DevOps.ModelPerformance
     using NUnit.Framework;
 
     [TestFixture]
+    [Parallelizable(ParallelScope.All)]
     internal static class ConfusionMatrixTests
     {
         [Test]

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Luis
@@ -96,7 +96,16 @@ namespace NLU.DevOps.Luis
             Entity getEntity(EntityModel entity)
             {
                 var entityType = entity.Type;
-                if (entityType != null && mappedTypes.TryGetValue(entityType, out var mappedType))
+                var hasRole = false;
+                if (entity.AdditionalProperties != null &&
+                    entity.AdditionalProperties.TryGetValue("role", out var roleValue) &&
+                    roleValue is string role)
+                {
+                    entityType = role;
+                    hasRole = true;
+                }
+
+                if (!hasRole && entityType != null && mappedTypes.TryGetValue(entityType, out var mappedType))
                 {
                     entityType = mappedType;
                 }

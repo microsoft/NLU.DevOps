@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Core.Tests
@@ -193,6 +193,28 @@ namespace NLU.DevOps.Core.Tests
             var serializer = CreateSerializer();
             Action toObject = () => json.ToObject<LabeledUtterance>(serializer);
             toObject.Should().Throw<ArgumentException>();
+        }
+
+        [Test]
+        public static void DeserializesEntityType()
+        {
+            var entityJson = new JObject
+            {
+                { "startPos", 0 },
+                { "endPos", 2 },
+                { "entity", "bar" },
+            };
+
+            var json = new JObject
+            {
+                { "text", "foo" },
+                { "entities", new JArray { entityJson } },
+            };
+
+            var serializer = CreateSerializer();
+            var utterance = json.ToObject<LabeledUtterance>(serializer);
+            utterance.Entities.Count.Should().Be(1);
+            utterance.Entities[0].EntityType.Should().Be("bar");
         }
 
         private static JsonSerializer CreateSerializer()

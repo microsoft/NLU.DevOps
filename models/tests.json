@@ -30,6 +30,18 @@
     ]
   },
   {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": "5"
+      }
+    ]
+  },
+  {
     "text": "skip this one",
     "intent": "Skip"
   },

@@ -16,6 +16,9 @@ To make things easier, be sure to use the [`--save-appsettings`](Train.md#-a---s
 ### `-s, --service`
 Identifier of the NLU provider to run against. Try `luis` for [LUIS](https://www.luis.ai) or `lex` for [Lex](https://aws.amazon.com/lex/).
 
+### `-i, --include`
+(Optional) Path to custom NLU provider DLL. See documentation about [Specifying the include path](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md#specifying-the-include-path) for more details.
+
 ### `-a, --delete-appsettings`
 
 (Optional) Delete the NLU provider-specific configuration overrides that were generated using the `--save-appsettings` option in a `train` command.

@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NLU.DevOps.CommandLine.Tests.xml</DocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <Target Name="PublishProviders"
           BeforeTargets="CoreBuild">

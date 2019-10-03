@@ -128,6 +128,9 @@ The `settings.luis.json` file in this case will be merged into the generated LUI
 
 See [LUIS App Configuration](LuisModelConfiguration.md) and [Lex App Configuration](LexModelConfiguration.md) for additional information on the kinds of settings, including entity types, that are supplied through this file.
 
+### `-i, --include`
+(Optional) Path to custom NLU provider DLL. See documentation about [Specifying the include path](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md#specifying-the-include-path) for more details.
+
 ### `-a, --save-appsettings`
 
 (Optional) Output additional appsettings for resources that were created by the train command for use in subsequent commands.

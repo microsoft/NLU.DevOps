@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.Core
@@ -9,7 +9,7 @@ namespace NLU.DevOps.Core
     using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// JSON converter for <see cref="LabeledUtterance"/>.
+    /// JSON converter for <see cref="LabeledUtterance"/> to recognize LUIS batch test format.
     /// </summary>
     public class LabeledUtteranceConverter : JsonConverter<LabeledUtterance>
     {
@@ -95,6 +95,14 @@ namespace NLU.DevOps.Core
                     jsonObject.Add("matchIndex", matchIndex);
                     jsonObject.Remove("startPos");
                     jsonObject.Remove("endPos");
+                }
+
+                var entity = jsonObject.Value<string>("entity");
+                var entityType = jsonObject.Value<string>("entityType");
+                if (entityType == null && entity != null)
+                {
+                    jsonObject.Add("entityType", entity);
+                    jsonObject.Remove("entity");
                 }
 
                 serializer.Converters.Remove(this);
