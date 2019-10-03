@@ -76,7 +76,7 @@ namespace NLU.DevOps.Dialogflow
                         return new LabeledUtterance(
                             result.QueryResult.QueryText,
                             result.QueryResult.Intent.DisplayName,
-                            result.QueryResult.Parameters?.Fields.Select(GetEntity).OfType<Entity>().ToList());
+                            result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList());
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -110,7 +110,7 @@ namespace NLU.DevOps.Dialogflow
                         return new LabeledUtterance(
                             result.QueryResult.QueryText,
                             result.QueryResult.Intent.DisplayName,
-                            result.QueryResult.Parameters?.Fields.Select(GetEntity).OfType<Entity>().ToList());
+                            result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList());
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -138,7 +138,7 @@ namespace NLU.DevOps.Dialogflow
             }
         }
 
-        private static Entity GetEntity(KeyValuePair<string, Value> pair)
+        private static IEnumerable<Entity> GetEntities(KeyValuePair<string, Value> pair)
         {
             JToken toJson(Value value)
             {
@@ -168,12 +168,20 @@ namespace NLU.DevOps.Dialogflow
             }
 
             var jsonValue = toJson(pair.Value);
-            if (jsonValue == null)
+            if (jsonValue != null)
             {
-                return null;
+                if (jsonValue.Type == JTokenType.Array)
+                {
+                    foreach (var token in jsonValue)
+                    {
+                        yield return new Entity(pair.Key, token, null, 0);
+                    }
+                }
+                else
+                {
+                    yield return new Entity(pair.Key, jsonValue, null, 0);
+                }
             }
-
-            return new Entity(pair.Key, jsonValue, null, 0);
         }
 
         private async Task<SessionsClient> GetSessionClientAsync(CancellationToken cancellationToken)

@@ -77,7 +77,6 @@ namespace NLU.DevOps.Dialogflow.Tests
         [TestCase("\"foo\"")]
         [TestCase("42.0")]
         [TestCase("true")]
-        [TestCase("[ true ]")]
         [TestCase("{ \"foo\": true }")]
         public static async Task TestAsyncExtractsJsonEntities(string json)
         {
@@ -97,6 +96,33 @@ namespace NLU.DevOps.Dialogflow.Tests
             result.Entities.Count.Should().Be(1);
             result.Entities[0].EntityType.Should().Be(entityType);
             result.Entities[0].EntityValue.Should().BeEquivalentTo(JToken.Parse(json));
+        }
+
+        [Test]
+        [TestCase("[ \"foo\" ]")]
+        [TestCase("[ [ true ], [ false ] ]")]
+        public static async Task TestAsyncExtractsAndFlattensJsonEntities(string json)
+        {
+            var entityType = Guid.NewGuid().ToString();
+
+            var client = CreateTestClient(new DetectIntentResponse
+            {
+                QueryResult = new QueryResult
+                {
+                    QueryText = string.Empty,
+                    Intent = new Intent { DisplayName = string.Empty },
+                    Parameters = Struct.Parser.ParseJson($"{{\"{entityType}\":{json}}}"),
+                }
+            });
+
+            var jsonArray = JToken.Parse(json).As<JArray>();
+            var result = await client.TestAsync(new JObject { { "text", string.Empty } }).ConfigureAwait(false);
+            result.Entities.Count.Should().Be(jsonArray.Count);
+            for (var i = 0; i < jsonArray.Count; ++i)
+            {
+                result.Entities[i].EntityType.Should().Be(entityType);
+                result.Entities[i].EntityValue.Should().BeEquivalentTo(jsonArray[i]);
+            }
         }
 
         [Test]
