@@ -122,6 +122,29 @@ namespace NLU.DevOps.Core.Tests
         }
 
         [Test]
+        public static void ThrowsWithInvalidStartPosEndPos()
+        {
+            var entityJson = new JObject
+            {
+                { "startPos", 4 },
+                { "endPos", 1 },
+            };
+
+            var json = new JObject
+            {
+                { "text", "foo 8 bar" },
+                { "entities", new JArray { entityJson } },
+            };
+
+            var serializer = CreateSerializer();
+            Action toObject = () => json.ToObject<LabeledUtterance>(serializer);
+            toObject.Should().Throw<InvalidOperationException>();
+
+            entityJson["endPos"] = 4;
+            toObject.Should().NotThrow<InvalidOperationException>();
+        }
+
+        [Test]
         public static void ThrowsWithInvalidStartPos()
         {
             var entityJson = new JObject
@@ -168,7 +191,7 @@ namespace NLU.DevOps.Core.Tests
             toObject.Should().Throw<InvalidOperationException>();
 
             entityJson["endPos"] = 4;
-            toObject.Should().Throw<InvalidOperationException>();
+            toObject.Should().NotThrow<InvalidOperationException>();
 
             entityJson["endPos"] = 6;
             toObject.Should().NotThrow<InvalidOperationException>();
