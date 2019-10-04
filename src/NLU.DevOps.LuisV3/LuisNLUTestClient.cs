@@ -8,6 +8,7 @@ namespace NLU.DevOps.Luis
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
     using Newtonsoft.Json.Linq;
@@ -109,7 +110,7 @@ namespace NLU.DevOps.Luis
                 }
 
                 return score.HasValue
-                    ? new ScoredEntity(modifiedEntityType, entityValue, matchText, matchIndex, score.Value)
+                    ? new PredictedEntity(modifiedEntityType, entityValue, matchText, matchIndex, score.Value)
                     : new Entity(modifiedEntityType, entityValue, matchText, matchIndex);
             }
 
@@ -175,11 +176,13 @@ namespace NLU.DevOps.Luis
                     mappedTypes)?
                 .ToList();
 
+            var query = speechPredictionResponse.PredictionResponse.Query;
             var intentData = default(Intent);
             speechPredictionResponse.PredictionResponse.Prediction.Intents?.TryGetValue(intent, out intentData);
+            var context = LabeledUtteranceContext.CreateDefault();
             return (intentData != null && intentData.Score.HasValue) || Math.Abs(speechPredictionResponse.TextScore) > Epsilon
-                ? new ScoredLabeledUtterance(speechPredictionResponse.PredictionResponse.Query, intent, intentData?.Score ?? 0, speechPredictionResponse.TextScore, entities)
-                : new LabeledUtterance(speechPredictionResponse.PredictionResponse.Query, intent, entities);
+                ? new PredictedLabeledUtterance(query, intent, intentData?.Score ?? 0, speechPredictionResponse.TextScore, entities, context)
+                : new LabeledUtterance(query, intent, entities);
         }
     }
 }

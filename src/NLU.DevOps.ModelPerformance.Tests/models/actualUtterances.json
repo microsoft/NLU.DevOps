@@ -73,5 +73,28 @@
     ],
     "intent": "AddAccount",
     "text": "create a new account for Bob with email bob@example.com"
+  },
+  {
+    "entities": [
+      {
+        "matchText": "two",
+        "entityValue": 2
+      }
+    ],
+    "intent": "None",
+    "text": "add two salads to my order"
+  },
+  {
+    "entities": [
+      {
+        "matchText": "tomorrow",
+        "entityValue": "1970-01-02T00:00:00Z"
+      }
+    ],
+    "intent": "None",
+    "text": "what's on my calendar tomorrow",
+    "context": {
+      "timestamp": "1970-01-01T00:00:00Z"
+    }
   }
 ]

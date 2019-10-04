@@ -20,6 +20,9 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results.", Required = false)]
         public bool Metadata { get; set; }
 
+        [Option('x', "evaluate", HelpText = "Evaluate inline scripts.", Required = false)]
+        public bool Evaluate { get; set; }
+
         [Option('t', "text", HelpText = "Run text comparison test cases.", Required = false)]
         public bool CompareText { get; set; }
 

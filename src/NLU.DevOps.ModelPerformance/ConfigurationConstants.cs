@@ -27,5 +27,10 @@ namespace NLU.DevOps.ModelPerformance
         /// The test label key.
         /// </summary>
         public const string TestLabelKey = "testLabel";
+
+        /// <summary>
+        /// A Boolean value that signals whether or not inline evaluation of scripts should be performed.
+        /// </summary>
+        public const string EvaluateKey = "evaluate";
     }
 }

@@ -141,16 +141,18 @@ namespace NLU.DevOps.Luis
                 }
 
                 return entityScore.HasValue
-                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
+                    ? new PredictedEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
                     : new Entity(entityType, entityValue, matchText, matchIndex);
             }
 
+            var query = speechLuisResult.LuisResult.Query;
             var intent = speechLuisResult.LuisResult.TopScoringIntent?.Intent;
             var score = speechLuisResult.LuisResult.TopScoringIntent?.Score;
             var entities = speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList();
+            var context = LabeledUtteranceContext.CreateDefault();
             return !score.HasValue && Math.Abs(speechLuisResult.TextScore) < Epsilon
-                ? new LabeledUtterance(speechLuisResult.LuisResult.Query, intent, entities)
-                : new ScoredLabeledUtterance(speechLuisResult.LuisResult.Query, intent, score ?? 0, speechLuisResult.TextScore, entities);
+                ? new LabeledUtterance(query, intent, entities)
+                : new PredictedLabeledUtterance(query, intent, score ?? 0, speechLuisResult.TextScore, entities, context);
         }
     }
 }

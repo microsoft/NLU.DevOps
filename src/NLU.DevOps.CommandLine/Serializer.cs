@@ -17,6 +17,7 @@ namespace NLU.DevOps.CommandLine
         {
             var serializer = JsonSerializer.CreateDefault();
             serializer.Converters.Add(new LabeledUtteranceConverter());
+            serializer.DateParseHandling = DateParseHandling.None;
             using (var jsonReader = new JsonTextReader(File.OpenText(path)))
             {
                 return serializer.Deserialize<T>(jsonReader);

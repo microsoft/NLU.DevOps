@@ -94,10 +94,14 @@ namespace NLU.DevOps.Lex
                 .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
                 .ToArray();
 
-            return new LabeledUtterance(
+            var context = LabeledUtteranceContext.CreateDefault();
+            return new PredictedLabeledUtterance(
                 utterance,
                 postTextResponse.IntentName,
-                entities);
+                0,
+                0,
+                entities,
+                context);
         }
 
         /// <inheritdoc />
@@ -127,10 +131,14 @@ namespace NLU.DevOps.Lex
                         .ToArray()
                     : null;
 
-                return new LabeledUtterance(
+                var context = LabeledUtteranceContext.CreateDefault();
+                return new PredictedLabeledUtterance(
                     postContentResponse.InputTranscript,
                     postContentResponse.IntentName,
-                    slots);
+                    0,
+                    0,
+                    slots,
+                    context);
             }
         }
 

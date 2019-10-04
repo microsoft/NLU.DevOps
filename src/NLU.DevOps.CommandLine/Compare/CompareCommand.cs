@@ -7,8 +7,8 @@ namespace NLU.DevOps.CommandLine.Compare
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using Core;
     using ModelPerformance;
-    using Models;
     using NUnitLite;
     using static Serializer;
 
@@ -23,6 +23,7 @@ namespace NLU.DevOps.CommandLine.Compare
                 (ConfigurationConstants.ExpectedUtterancesPathKey, options.ExpectedUtterancesPath),
                 (ConfigurationConstants.ActualUtterancesPathKey, options.ActualUtterancesPath),
                 (ConfigurationConstants.CompareTextKey, options.CompareText.ToString(CultureInfo.InvariantCulture)),
+                (ConfigurationConstants.EvaluateKey, options.Evaluate.ToString(CultureInfo.InvariantCulture)),
                 (ConfigurationConstants.TestLabelKey, options.TestLabel));
 
             var arguments = new List<string> { $"-p:{parameters}" };
@@ -34,8 +35,11 @@ namespace NLU.DevOps.CommandLine.Compare
             if (options.Metadata)
             {
                 var expectedUtterances = Read<List<CompareLabeledUtterance>>(options.ExpectedUtterancesPath);
-                var actualUtterances = Read<List<ScoredLabeledUtterance>>(options.ActualUtterancesPath);
-                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, options.CompareText);
+                var actualUtterances = Read<List<PredictedLabeledUtterance>>(options.ActualUtterancesPath);
+                TestCaseSource.ShouldCompareText = options.CompareText;
+                TestCaseSource.ShouldEvaluate = options.Evaluate;
+                TestCaseSource.TestLabel = options.TestLabel;
+                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
                 Write(metadataPath, compareResults.TestCases);

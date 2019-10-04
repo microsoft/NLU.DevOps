@@ -71,5 +71,25 @@
     ],
     "intent": "AddAccount",
     "text": "create a new account for Bob with email bob@example.com"
+  },
+  {
+    "entities": [
+      {
+        "matchText": "two",
+        "entityValue": "csharp(1+1)"
+      }
+    ],
+    "intent": "None",
+    "text": "add two salads to my order",
+  },
+  {
+    "entities": [
+      {
+        "matchText": "tomorrow",
+        "entityValue": "csharp(DateTimeOffset.Parse(Timestamp).AddDays(1).Date.ToString(\"yyyy-MM-ddTHH:mm:ssZ\"))"
+      }
+    ],
+    "intent": "None",
+    "text": "what's on my calendar tomorrow"
   }
 ]

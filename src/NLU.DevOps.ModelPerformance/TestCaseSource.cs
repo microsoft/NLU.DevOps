@@ -25,6 +25,21 @@ namespace NLU.DevOps.ModelPerformance
         private const string AppSettingsLocalPath = "appsettings.local.json";
 
         /// <summary>
+        /// Gets or sets a flag signaling whether text comparison tests should be run.
+        /// </summary>
+        public static bool? ShouldCompareText { get; set; }
+
+        /// <summary>
+        /// Gets or sets a flag signaling whether inline scripts should be evaluated.
+        /// </summary>
+        public static bool? ShouldEvaluate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the test label value.
+        /// </summary>
+        public static string TestLabel { get; set; }
+
+        /// <summary>
         /// Gets the passing tests.
         /// </summary>
         public static IEnumerable<TestCaseData> PassingTests => LazyTestCases
@@ -40,7 +55,14 @@ namespace NLU.DevOps.ModelPerformance
             .Where(IsFalse)
             .Select(ToTestCaseData);
 
-        private static string TestLabel => TestContext.Parameters.Get(ConfigurationConstants.TestLabelKey) ?? Configuration[ConfigurationConstants.TestLabelKey];
+        private static bool ShouldCompareTextSetting =>
+            GetConfigurationBoolean(ConfigurationConstants.CompareTextKey, ShouldCompareText);
+
+        private static bool ShouldEvaluateSetting =>
+            GetConfigurationBoolean(ConfigurationConstants.EvaluateKey, ShouldEvaluate);
+
+        private static string TestLabelSetting =>
+            GetConfiguration(ConfigurationConstants.TestLabelKey, TestLabel);
 
         private static IConfiguration Configuration { get; } = new ConfigurationBuilder()
             .AddJsonFile(AppSettingsPath, true)
@@ -57,11 +79,9 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>The test cases.</returns>
         /// <param name="expectedUtterances">Expected utterances.</param>
         /// <param name="actualUtterances">Actual utterances.</param>
-        /// <param name="compareText">Signals whether to generate text comparison test cases.</param>
         public static NLUCompareResults GetNLUCompareResults(
             IReadOnlyList<LabeledUtterance> expectedUtterances,
-            IReadOnlyList<LabeledUtterance> actualUtterances,
-            bool compareText)
+            IReadOnlyList<LabeledUtterance> actualUtterances)
         {
             if (expectedUtterances.Count != actualUtterances.Count)
             {
@@ -82,7 +102,7 @@ namespace NLU.DevOps.ModelPerformance
             var testCases = zippedUtterances.Select(ToIntentTestCase)
                 .Concat(zippedUtterances.SelectMany(ToEntityTestCases));
 
-            if (compareText)
+            if (ShouldCompareTextSetting)
             {
                 testCases = testCases.Concat(zippedUtterances.Select(ToTextTestCase));
             }
@@ -96,7 +116,7 @@ namespace NLU.DevOps.ModelPerformance
             var actualUtterance = pair.Actual;
             var expected = expectedUtterance.Text;
             var actual = actualUtterance.Text;
-            var score = actualUtterance is ScoredLabeledUtterance scoredUtterance
+            var score = actualUtterance is PredictedLabeledUtterance scoredUtterance
                 ? scoredUtterance.TextScore
                 : 0;
 
@@ -158,7 +178,7 @@ namespace NLU.DevOps.ModelPerformance
         {
             var expectedUtterance = pair.Expected;
             var actualUtterance = pair.Actual;
-            var score = actualUtterance is ScoredLabeledUtterance scoredUtterance
+            var score = actualUtterance is PredictedLabeledUtterance scoredUtterance
                 ? scoredUtterance.Score
                 : 0;
 
@@ -229,6 +249,9 @@ namespace NLU.DevOps.ModelPerformance
             var text = expectedUtterance.Text;
             var expected = expectedUtterance.Entities;
             var actual = actualUtterance.Entities;
+            var globals = actualUtterance is PredictedLabeledUtterance predictedUtterance
+                ? predictedUtterance.Context
+                : null;
 
             if ((expected == null || expected.Count == 0) && (actual == null || actual.Count == 0))
             {
@@ -264,7 +287,7 @@ namespace NLU.DevOps.ModelPerformance
             {
                 /* Required case to support NLU providers that do not specify matched text */
                 return actualEntity.MatchText == null
-                    && (EqualsNormalizedJson(expectedEntity.EntityValue, actualEntity.EntityValue)
+                    && (Evaluate(expectedEntity.EntityValue, globals).ContainsSubtree(actualEntity.EntityValue)
                     || EqualsNormalizedJson(expectedEntity.MatchText, actualEntity.EntityValue));
             }
 
@@ -279,7 +302,7 @@ namespace NLU.DevOps.ModelPerformance
                         ? actual.FirstOrDefault(actualEntity => isEntityMatch(entity, actualEntity))
                         : null;
 
-                    var score = matchedEntity is ScoredEntity scoredEntity
+                    var score = matchedEntity is PredictedEntity scoredEntity
                         ? scoredEntity.Score
                         : 0;
 
@@ -315,7 +338,7 @@ namespace NLU.DevOps.ModelPerformance
                         if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
                         {
                             var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
-                            if (!ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
+                            if (!Evaluate(entity.EntityValue, globals).ContainsSubtree(matchedEntity.EntityValue))
                             {
                                 yield return FalseNegative(
                                     pair.UtteranceId,
@@ -350,7 +373,7 @@ namespace NLU.DevOps.ModelPerformance
             {
                 foreach (var entity in actual)
                 {
-                    var score = entity is ScoredEntity scoredEntity ? scoredEntity.Score : 0;
+                    var score = entity is PredictedEntity scoredEntity ? scoredEntity.Score : 0;
                     var entityValue = entity.MatchText ?? entity.EntityValue;
                     if (expected == null || !expected.Any(expectedEntity => isEntityMatch(expectedEntity, entity)))
                     {
@@ -402,39 +425,20 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
-            var compareTextString = TestContext.Parameters.Get(ConfigurationConstants.CompareTextKey);
-            var compareText = false;
-            if (compareTextString != null && bool.TryParse(compareTextString, out var parsedValue))
-            {
-                compareText = parsedValue;
-            }
-
-            var expected = Read(expectedPath);
-            var actual = Read(actualPath);
-            return GetNLUCompareResults(expected, actual, compareText).TestCases;
+            var expected = Read<CompareLabeledUtterance>(expectedPath);
+            var actual = Read<PredictedLabeledUtterance>(actualPath);
+            return GetNLUCompareResults(expected, actual).TestCases;
         }
 
-        private static List<LabeledUtterance> Read(string path)
+        private static List<T> Read<T>(string path)
         {
             var serializer = JsonSerializer.CreateDefault();
             serializer.Converters.Add(new LabeledUtteranceConverter());
+            serializer.DateParseHandling = DateParseHandling.None;
             using (var jsonReader = new JsonTextReader(File.OpenText(path)))
             {
-                return serializer.Deserialize<List<LabeledUtterance>>(jsonReader);
+                return serializer.Deserialize<List<T>>(jsonReader);
             }
-        }
-
-        private static bool EqualsNormalizedJson(JToken x, JToken y)
-        {
-            // Entity is not a match if both values are null
-            if (x == null && y == null)
-            {
-                return false;
-            }
-
-            return x?.Type == JTokenType.String
-                ? EqualsNormalizedJson(x.Value<string>(), y)
-                : false;
         }
 
         private static bool EqualsNormalizedJson(string x, JToken y)
@@ -467,57 +471,19 @@ namespace NLU.DevOps.ModelPerformance
             return string.Equals(normalize(x), normalize(y), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool ContainsSubtree(JToken expected, JToken actual)
+        private static JToken Evaluate(JToken token, object globals)
         {
-            if (expected == null)
-            {
-                return true;
-            }
+            return ShouldEvaluateSetting ? token.Evaluate(globals) : token;
+        }
 
-            if (actual == null)
-            {
-                return false;
-            }
+        private static bool GetConfigurationBoolean(string key, bool? overrideValue)
+        {
+            return overrideValue ?? (bool.TryParse(GetConfiguration(key, null), out var flag) ? flag : false);
+        }
 
-            switch (expected)
-            {
-                case JObject expectedObject:
-                    var actualObject = actual as JObject;
-                    if (actualObject == null)
-                    {
-                        return false;
-                    }
-
-                    foreach (var expectedProperty in expectedObject.Properties())
-                    {
-                        var actualProperty = actualObject.Property(expectedProperty.Name, StringComparison.Ordinal);
-                        if (!ContainsSubtree(expectedProperty.Value, actualProperty?.Value))
-                        {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                case JArray expectedArray:
-                    var actualArray = actual as JArray;
-                    if (actualArray == null)
-                    {
-                        return false;
-                    }
-
-                    foreach (var expectedItem in expectedArray)
-                    {
-                        // Order is not asserted
-                        if (!actualArray.Any(actualItem => ContainsSubtree(expectedItem, actualItem)))
-                        {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                default:
-                    return JToken.DeepEquals(expected, actual);
-            }
+        private static string GetConfiguration(string key, string overrideValue)
+        {
+            return overrideValue ?? TestContext.Parameters.Get(key) ?? Configuration[key];
         }
 
         private static TestCase TruePositive(
@@ -628,7 +594,7 @@ namespace NLU.DevOps.ModelPerformance
             string because,
             IEnumerable<string> categories)
         {
-            var testLabel = TestLabel != null ? $"[{TestLabel}] " : string.Empty;
+            var testLabel = TestLabelSetting != null ? $"[{TestLabelSetting}] " : string.Empty;
             var categoriesWithGroup = categories;
             if (group != null)
             {

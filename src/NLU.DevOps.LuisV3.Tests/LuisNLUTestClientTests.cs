@@ -7,6 +7,7 @@ namespace NLU.DevOps.Luis.Tests
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using FluentAssertions;
     using FluentAssertions.Json;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
@@ -152,8 +153,8 @@ namespace NLU.DevOps.Luis.Tests
                 var result = await luis.TestSpeechAsync(testFile).ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
-                result.As<ScoredLabeledUtterance>().TextScore.Should().Be(0.5);
-                result.As<ScoredLabeledUtterance>().Score.Should().Be(0);
+                result.As<PredictedLabeledUtterance>().TextScore.Should().Be(0.5);
+                result.As<PredictedLabeledUtterance>().Score.Should().Be(0);
             }
         }
 
@@ -271,8 +272,8 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType(typeof(ScoredLabeledUtterance));
-                result.As<ScoredLabeledUtterance>().Score.Should().Be(0.42);
+                result.Should().BeOfType(typeof(PredictedLabeledUtterance));
+                result.As<PredictedLabeledUtterance>().Score.Should().Be(0.42);
             }
         }
 
@@ -350,8 +351,8 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(1);
-                result.Entities[0].Should().BeOfType(typeof(ScoredEntity));
-                result.Entities[0].As<ScoredEntity>().Score.Should().Be(0.42);
+                result.Entities[0].Should().BeOfType(typeof(PredictedEntity));
+                result.Entities[0].As<PredictedEntity>().Score.Should().Be(0.42);
             }
         }
 
