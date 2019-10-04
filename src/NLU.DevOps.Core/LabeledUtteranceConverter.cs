@@ -123,7 +123,7 @@ namespace NLU.DevOps.Core
 
             private bool IsValid(int startPos, int endPos)
             {
-                return startPos < endPos
+                return startPos <= endPos
                     && startPos < this.Utterance.Length
                     && endPos < this.Utterance.Length;
             }
