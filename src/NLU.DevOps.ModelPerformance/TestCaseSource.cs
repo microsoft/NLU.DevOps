@@ -70,8 +70,7 @@ namespace NLU.DevOps.ModelPerformance
 
             string getUtteranceId(LabeledUtterance utterance, int index)
             {
-                var compareUtterance = utterance as CompareLabeledUtterance;
-                return compareUtterance?.UtteranceId ?? index.ToString(CultureInfo.InvariantCulture);
+                return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
 
             var zippedUtterances = expectedUtterances
@@ -96,9 +95,7 @@ namespace NLU.DevOps.ModelPerformance
             var actualUtterance = pair.Actual;
             var expected = expectedUtterance.Text;
             var actual = actualUtterance.Text;
-            var score = actualUtterance is ScoredLabeledUtterance scoredUtterance
-                ? scoredUtterance.TextScore
-                : 0;
+            var score = actualUtterance.GetTextScore();
 
             if (expected == null && actual == null)
             {
@@ -158,9 +155,7 @@ namespace NLU.DevOps.ModelPerformance
         {
             var expectedUtterance = pair.Expected;
             var actualUtterance = pair.Actual;
-            var score = actualUtterance is ScoredLabeledUtterance scoredUtterance
-                ? scoredUtterance.Score
-                : 0;
+            var score = actualUtterance.GetScore();
 
             var text = expectedUtterance.Text;
             var expected = expectedUtterance.Intent;
@@ -279,9 +274,7 @@ namespace NLU.DevOps.ModelPerformance
                         ? actual.FirstOrDefault(actualEntity => isEntityMatch(entity, actualEntity))
                         : null;
 
-                    var score = matchedEntity is ScoredEntity scoredEntity
-                        ? scoredEntity.Score
-                        : 0;
+                    var score = matchedEntity.GetScore();
 
                     if (matchedEntity == null)
                     {
@@ -350,7 +343,7 @@ namespace NLU.DevOps.ModelPerformance
             {
                 foreach (var entity in actual)
                 {
-                    var score = entity is ScoredEntity scoredEntity ? scoredEntity.Score : 0;
+                    var score = entity.GetScore();
                     var entityValue = entity.MatchText ?? entity.EntityValue;
                     if (expected == null || !expected.Any(expectedEntity => isEntityMatch(expectedEntity, entity)))
                     {
@@ -525,7 +518,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
-            double score,
+            double? score,
             string group,
             string[] args,
             string because,
@@ -549,7 +542,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
-            double score,
+            double? score,
             string group,
             string[] args,
             string because,
@@ -573,7 +566,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
-            double score,
+            double? score,
             string group,
             string[] args,
             string because,
@@ -597,7 +590,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
-            double score,
+            double? score,
             string group,
             string[] args,
             string because,
@@ -622,7 +615,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
-            double score,
+            double? score,
             string group,
             string[] args,
             string because,

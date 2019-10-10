@@ -8,6 +8,7 @@ namespace NLU.DevOps.Luis
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
     using Newtonsoft.Json.Linq;
@@ -18,8 +19,6 @@ namespace NLU.DevOps.Luis
     /// </summary>
     public sealed class LuisNLUTestClient : INLUTestClient
     {
-        private const double Epsilon = 1e-6;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
@@ -48,7 +47,7 @@ namespace NLU.DevOps.Luis
             var predictionRequest = query.ToObject<PredictionRequest>();
             predictionRequest.Query = predictionRequest.Query ?? query.Value<string>("text");
             var luisResult = await this.LuisClient.QueryAsync(predictionRequest, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(new SpeechPredictionResponse(luisResult, 0));
+            return this.LuisResultToLabeledUtterance(new SpeechPredictionResponse(luisResult, null));
         }
 
         /// <inheritdoc />
@@ -108,9 +107,8 @@ namespace NLU.DevOps.Luis
                     modifiedEntityType = mappedEntityType;
                 }
 
-                return score.HasValue
-                    ? new ScoredEntity(modifiedEntityType, entityValue, matchText, matchIndex, score.Value)
-                    : new Entity(modifiedEntityType, entityValue, matchText, matchIndex);
+                return new Entity(modifiedEntityType, entityValue, matchText, matchIndex)
+                    .WithScore(score);
             }
 
             var instanceMetadata = default(JObject);
@@ -168,18 +166,20 @@ namespace NLU.DevOps.Luis
             var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
                 .ToDictionary(pair => $"builtin.{pair.Value}", pair => pair.Key);
 
-            var intent = speechPredictionResponse.PredictionResponse.Prediction.TopIntent;
+            var query = speechPredictionResponse.PredictionResponse.Query;
             var entities = GetEntities(
-                    speechPredictionResponse.PredictionResponse.Query,
+                    query,
                     speechPredictionResponse.PredictionResponse.Prediction.Entities,
                     mappedTypes)?
                 .ToList();
 
+            var intent = speechPredictionResponse.PredictionResponse.Prediction.TopIntent;
             var intentData = default(Intent);
             speechPredictionResponse.PredictionResponse.Prediction.Intents?.TryGetValue(intent, out intentData);
-            return (intentData != null && intentData.Score.HasValue) || Math.Abs(speechPredictionResponse.TextScore) > Epsilon
-                ? new ScoredLabeledUtterance(speechPredictionResponse.PredictionResponse.Query, intent, intentData?.Score ?? 0, speechPredictionResponse.TextScore, entities)
-                : new LabeledUtterance(speechPredictionResponse.PredictionResponse.Query, intent, entities);
+            return new LabeledUtterance(query, intent, entities)
+                .WithScore(intentData?.Score)
+                .WithTextScore(speechPredictionResponse.TextScore)
+                .WithTimestamp(DateTimeOffset.Now);
         }
     }
 }
