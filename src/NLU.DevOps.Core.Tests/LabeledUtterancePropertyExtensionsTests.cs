@@ -22,6 +22,16 @@ namespace NLU.DevOps.Core.Tests
         }
 
         [Test]
+        public static void DoesNotCreateJsonInstance()
+        {
+            var expected = new Entity(string.Empty, null, string.Empty, 0);
+            var actual = expected.WithScore(null);
+            actual.Should().BeSameAs(expected);
+            expected.GetScore().Should().BeNull();
+            actual.GetScore().Should().BeNull();
+        }
+
+        [Test]
         public static void DoesNotCreateNewInstance()
         {
             var expected = new JsonEntity(string.Empty, null, string.Empty, 0);
