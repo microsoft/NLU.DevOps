@@ -20,8 +20,6 @@ namespace NLU.DevOps.Luis
     /// </summary>
     public sealed class LuisNLUTestClient : DefaultNLUTestClient
     {
-        private const double Epsilon = 10e-6;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
@@ -43,7 +41,7 @@ namespace NLU.DevOps.Luis
             CancellationToken cancellationToken)
         {
             var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
+            return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, null));
         }
 
         /// <inheritdoc />
@@ -140,17 +138,17 @@ namespace NLU.DevOps.Luis
                     entityScore = scoreValue;
                 }
 
-                return entityScore.HasValue
-                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
-                    : new Entity(entityType, entityValue, matchText, matchIndex);
+                return new Entity(entityType, entityValue, matchText, matchIndex)
+                    .WithScore(entityScore);
             }
 
-            var intent = speechLuisResult.LuisResult.TopScoringIntent?.Intent;
-            var score = speechLuisResult.LuisResult.TopScoringIntent?.Score;
-            var entities = speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList();
-            return !score.HasValue && Math.Abs(speechLuisResult.TextScore) < Epsilon
-                ? new LabeledUtterance(speechLuisResult.LuisResult.Query, intent, entities)
-                : new ScoredLabeledUtterance(speechLuisResult.LuisResult.Query, intent, score ?? 0, speechLuisResult.TextScore, entities);
+            return new LabeledUtterance(
+                    speechLuisResult.LuisResult.Query,
+                    speechLuisResult.LuisResult.TopScoringIntent?.Intent,
+                    speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList())
+                .WithScore(speechLuisResult.LuisResult.TopScoringIntent?.Score)
+                .WithTextScore(speechLuisResult.TextScore)
+                .WithTimestamp(DateTimeOffset.Now);
         }
     }
 }

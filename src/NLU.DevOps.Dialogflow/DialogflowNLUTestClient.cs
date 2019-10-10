@@ -74,9 +74,12 @@ namespace NLU.DevOps.Dialogflow
                         var client = await this.GetSessionClientAsync(cancellationToken).ConfigureAwait(false);
                         var result = await client.DetectIntentAsync(sessionName, queryInput, cancellationToken).ConfigureAwait(false);
                         return new LabeledUtterance(
-                            result.QueryResult.QueryText,
-                            result.QueryResult.Intent.DisplayName,
-                            result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList());
+                                result.QueryResult.QueryText,
+                                result.QueryResult.Intent.DisplayName,
+                                result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList())
+                            .WithScore(result.QueryResult.IntentDetectionConfidence)
+                            .WithTextScore(result.QueryResult.SpeechRecognitionConfidence)
+                            .WithTimestamp(DateTimeOffset.Now);
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -108,9 +111,12 @@ namespace NLU.DevOps.Dialogflow
                         var client = await this.GetSessionClientAsync(cancellationToken).ConfigureAwait(false);
                         var result = await client.DetectIntentAsync(request, cancellationToken).ConfigureAwait(false);
                         return new LabeledUtterance(
-                            result.QueryResult.QueryText,
-                            result.QueryResult.Intent.DisplayName,
-                            result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList());
+                                result.QueryResult.QueryText,
+                                result.QueryResult.Intent.DisplayName,
+                                result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList())
+                            .WithScore(result.QueryResult.IntentDetectionConfidence)
+                            .WithTextScore(result.QueryResult.SpeechRecognitionConfidence)
+                            .WithTimestamp(DateTimeOffset.Now);
                     },
                     cancellationToken)
                 .ConfigureAwait(false);

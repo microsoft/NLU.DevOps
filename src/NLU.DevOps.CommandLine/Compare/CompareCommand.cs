@@ -7,8 +7,8 @@ namespace NLU.DevOps.CommandLine.Compare
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using Core;
     using ModelPerformance;
-    using Models;
     using NUnitLite;
     using static Serializer;
 
@@ -33,8 +33,8 @@ namespace NLU.DevOps.CommandLine.Compare
 
             if (options.Metadata)
             {
-                var expectedUtterances = Read<List<CompareLabeledUtterance>>(options.ExpectedUtterancesPath);
-                var actualUtterances = Read<List<ScoredLabeledUtterance>>(options.ActualUtterancesPath);
+                var expectedUtterances = Read<List<JsonLabeledUtterance>>(options.ExpectedUtterancesPath);
+                var actualUtterances = Read<List<JsonLabeledUtterance>>(options.ActualUtterancesPath);
                 var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, options.CompareText);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;

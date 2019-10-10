@@ -31,7 +31,7 @@ namespace NLU.DevOps.ModelPerformance
             ComparisonTargetKind targetKind,
             LabeledUtterance expectedUtterance,
             LabeledUtterance actualUtterance,
-            double score,
+            double? score,
             string group,
             string testName,
             string because,
@@ -87,7 +87,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Gets the confidence score.
         /// </summary>
-        public double Score { get; }
+        public double? Score { get; }
 
         /// <summary>
         /// Gets the justification.

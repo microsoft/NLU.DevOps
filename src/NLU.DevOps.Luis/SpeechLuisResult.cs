@@ -15,7 +15,7 @@ namespace NLU.DevOps.Luis
         /// </summary>
         /// <param name="luisResult">Luis result.</param>
         /// <param name="textScore">Text score.</param>
-        public SpeechLuisResult(LuisResult luisResult, double textScore)
+        public SpeechLuisResult(LuisResult luisResult, double? textScore)
         {
             this.LuisResult = luisResult;
             this.TextScore = textScore;
@@ -29,6 +29,6 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Gets the text score.
         /// </summary>
-        public double TextScore { get; }
+        public double? TextScore { get; }
     }
 }
