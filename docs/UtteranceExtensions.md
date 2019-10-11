@@ -22,7 +22,7 @@ When an NLU provider in NLU.DevOps returns a prediction result, the value will b
 ```
 In this case, the intent confidence score was `0.99` and the text transcription confidence score was `0.95`. This is useful context when debugging false predictions, as a low confidence score may indicate that the model could be improved with more training examples. The recognized `genre` entity also includes a confidence score of `0.80`, although it should be noted that only the LUIS provider currently returns confidence score for entity types trained from examples.
 
-## Labeled utterance timestamps
+## Returning timestamps for each query
 
 When analyzing results for a set of NLU predictions, it is often important context to understand when the test was run. For example, for Dialogflow `date` and `time` entities, the service only returns a date time string, and no indication of what token(s) triggered that entity to be recognized. For example, the result from a query like `"Call a taxi in 15 minutes"` may look like the following:
 ```json
@@ -38,7 +38,7 @@ When analyzing results for a set of NLU predictions, it is often important conte
     "timestamp": "2020-01-01T00:00:00-04:00"
 }
 ```
-Without the context provided by the `timestamp` property, we wouldn't be able to make any assertion about the correctness of the `entityValue` property for time. Currently, LUIS, Lex, and Dialogflow return a timestamp for each prediction result.
+Without the context provided by the `timestamp` property, we wouldn't be able to make any assertion about the correctness of the `entityValue` property for time. Currently, you must specify the [`--timestamp`](Test.md#--timestamp) option to ensure a timestamp is assigned to each NLU prediction result.
 
 ## Adjusting entity compare results
 

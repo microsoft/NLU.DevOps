@@ -87,8 +87,7 @@ namespace NLU.DevOps.Lex
                 .Select(slot => new Entity(slot.Key, slot.Value, null, 0))
                 .ToArray();
 
-            return new LabeledUtterance(utterance, postTextResponse.IntentName, entities)
-                .WithTimestamp(DateTimeOffset.Now);
+            return new LabeledUtterance(utterance, postTextResponse.IntentName, entities);
         }
 
         /// <inheritdoc />
@@ -118,8 +117,7 @@ namespace NLU.DevOps.Lex
                         .ToArray()
                     : null;
 
-                return new JsonLabeledUtterance(postContentResponse.InputTranscript, postContentResponse.IntentName, slots)
-                    .WithTimestamp(DateTimeOffset.Now);
+                return new LabeledUtterance(postContentResponse.InputTranscript, postContentResponse.IntentName, slots);
             }
         }
 

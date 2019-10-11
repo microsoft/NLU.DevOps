@@ -78,8 +78,7 @@ namespace NLU.DevOps.Dialogflow
                                 result.QueryResult.Intent.DisplayName,
                                 result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList())
                             .WithScore(result.QueryResult.IntentDetectionConfidence)
-                            .WithTextScore(result.QueryResult.SpeechRecognitionConfidence)
-                            .WithTimestamp(DateTimeOffset.Now);
+                            .WithTextScore(result.QueryResult.SpeechRecognitionConfidence);
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -115,8 +114,7 @@ namespace NLU.DevOps.Dialogflow
                                 result.QueryResult.Intent.DisplayName,
                                 result.QueryResult.Parameters?.Fields.SelectMany(GetEntities).ToList())
                             .WithScore(result.QueryResult.IntentDetectionConfidence)
-                            .WithTextScore(result.QueryResult.SpeechRecognitionConfidence)
-                            .WithTimestamp(DateTimeOffset.Now);
+                            .WithTextScore(result.QueryResult.SpeechRecognitionConfidence);
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
