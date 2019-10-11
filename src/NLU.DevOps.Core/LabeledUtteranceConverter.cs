@@ -125,7 +125,7 @@ namespace NLU.DevOps.Core
             {
                 return startPos <= endPos
                     && startPos < this.Utterance.Length
-                    && endPos < this.Utterance.Length;
+                    && endPos <= this.Utterance.Length;
             }
         }
     }
