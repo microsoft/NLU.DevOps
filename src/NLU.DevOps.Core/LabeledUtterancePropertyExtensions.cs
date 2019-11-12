@@ -51,6 +51,18 @@ namespace NLU.DevOps.Core
         }
 
         /// <summary>
+        /// Adds a property to the labeled utterance.
+        /// </summary>
+        /// <param name="instance">Labeled utterance instance.</param>
+        /// <param name="propertyName">Property name.</param>
+        /// <param name="propertyValue">Property value.</param>
+        /// <returns>Labeled utterance with additional property.</returns>
+        public static LabeledUtterance WithProperty(this LabeledUtterance instance, string propertyName, object propertyValue)
+        {
+            return instance.WithProperty(propertyName, propertyValue, ToJsonLabeledUtterance);
+        }
+
+        /// <summary>
         /// Adds a confidence score to the entity.
         /// </summary>
         /// <param name="instance">Entity instance.</param>
@@ -70,7 +82,7 @@ namespace NLU.DevOps.Core
         /// </returns>
         public static double? GetScore(this LabeledUtterance instance)
         {
-            return instance.GetProperty<double?>(ScorePropertyName);
+            return instance.GetPropertyCore<double?>(ScorePropertyName);
         }
 
         /// <summary>
@@ -82,7 +94,7 @@ namespace NLU.DevOps.Core
         /// </returns>
         public static double? GetTextScore(this LabeledUtterance instance)
         {
-            return instance.GetProperty<double?>(TextScorePropertyName);
+            return instance.GetPropertyCore<double?>(TextScorePropertyName);
         }
 
         /// <summary>
@@ -94,7 +106,21 @@ namespace NLU.DevOps.Core
         /// </returns>
         public static DateTimeOffset? GetTimestamp(this LabeledUtterance instance)
         {
-            return instance.GetProperty<DateTimeOffset?>(TimestampPropertyName);
+            return instance.GetPropertyCore<DateTimeOffset?>(TimestampPropertyName);
+        }
+
+        /// <summary>
+        /// Gets the property for the labeled utterance.
+        /// </summary>
+        /// <typeparam name="T">Property value type.</typeparam>
+        /// <param name="instance">Labeled utterance instance.</param>
+        /// <param name="propertyName">Property name.</param>
+        /// <returns>
+        /// Property value, or default if property is not set.
+        /// </returns>
+        public static T GetProperty<T>(this LabeledUtterance instance, string propertyName)
+        {
+            return instance.GetPropertyCore<T>(propertyName);
         }
 
         /// <summary>
@@ -104,7 +130,7 @@ namespace NLU.DevOps.Core
         /// <returns>Utterance identifier.</returns>
         public static string GetUtteranceId(this LabeledUtterance instance)
         {
-            return instance.GetProperty<string>(UtteranceIdPropertyName);
+            return instance.GetPropertyCore<string>(UtteranceIdPropertyName);
         }
 
         /// <summary>
@@ -116,7 +142,7 @@ namespace NLU.DevOps.Core
         /// </returns>
         public static double? GetScore(this Entity instance)
         {
-            return instance.GetProperty<double?>(ScorePropertyName);
+            return instance.GetPropertyCore<double?>(ScorePropertyName);
         }
 
         private static T WithProperty<T, TResult>(
@@ -156,7 +182,7 @@ namespace NLU.DevOps.Core
                 : new JsonEntity(entity.EntityType, entity.EntityValue, entity.MatchText, entity.MatchIndex);
         }
 
-        private static T GetProperty<T>(this object instance, string propertyName)
+        private static T GetPropertyCore<T>(this object instance, string propertyName)
         {
             if (instance is IJsonExtension jsonExtension && jsonExtension.AdditionalProperties.TryGetValue(propertyName, out var value))
             {

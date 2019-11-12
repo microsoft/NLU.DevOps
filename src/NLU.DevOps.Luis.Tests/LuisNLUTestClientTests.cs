@@ -13,7 +13,9 @@ namespace NLU.DevOps.Luis.Tests
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
     using Moq;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
     using NUnit.Framework;
 
     [TestFixture]
@@ -428,6 +430,42 @@ namespace NLU.DevOps.Luis.Tests
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].EntityType.Should().Be("role");
+            }
+        }
+
+        [Test]
+        public static async Task WithMultipleIntents()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
+                {
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent", Score = 0.42 },
+                    Intents = new[]
+                    {
+                        new IntentModel { Intent = "intent", Score = 0.42 },
+                        new IntentModel { Intent = "foo", Score = 0.07 },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Should().BeOfType(typeof(JsonLabeledUtterance));
+                var serializer = JsonSerializer.CreateDefault();
+                serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                var intents = JArray.FromObject(result.GetProperty<object>("intents"), serializer);
+                intents.Count.Should().Be(2);
+                intents[0].Value<string>("intent").Should().Be("intent");
+                intents[0].Value<double>("score").Should().Be(0.42);
+                intents[1].Value<string>("intent").Should().Be("foo");
+                intents[1].Value<double>("score").Should().Be(0.07);
             }
         }
 
