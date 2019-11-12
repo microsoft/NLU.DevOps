@@ -146,6 +146,7 @@ namespace NLU.DevOps.Luis
                     speechLuisResult.LuisResult.Query,
                     speechLuisResult.LuisResult.TopScoringIntent?.Intent,
                     speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList())
+                .WithProperty("intents", speechLuisResult.LuisResult.Intents)
                 .WithScore(speechLuisResult.LuisResult.TopScoringIntent?.Score)
                 .WithTextScore(speechLuisResult.TextScore)
                 .WithTimestamp(DateTimeOffset.Now);

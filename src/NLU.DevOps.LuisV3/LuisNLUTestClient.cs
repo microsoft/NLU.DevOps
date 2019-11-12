@@ -174,9 +174,11 @@ namespace NLU.DevOps.Luis
                 .ToList();
 
             var intent = speechPredictionResponse.PredictionResponse.Prediction.TopIntent;
+            var intents = speechPredictionResponse.PredictionResponse.Prediction.Intents?.Select(i => new { Intent = i.Key, i.Value.Score });
             var intentData = default(Intent);
             speechPredictionResponse.PredictionResponse.Prediction.Intents?.TryGetValue(intent, out intentData);
             return new LabeledUtterance(query, intent, entities)
+                .WithProperty("intents", intents)
                 .WithScore(intentData?.Score)
                 .WithTextScore(speechPredictionResponse.TextScore)
                 .WithTimestamp(DateTimeOffset.Now);

@@ -47,11 +47,13 @@ namespace NLU.DevOps.Core.Tests
             var utterance = new LabeledUtterance(null, null, null)
                 .WithScore(0.42)
                 .WithTextScore(0.5)
-                .WithTimestamp(DateTimeOffset.Now.Date);
+                .WithTimestamp(DateTimeOffset.Now.Date)
+                .WithProperty("foo", new[] { 42 });
             var roundtrip = JToken.FromObject(utterance).ToObject<JsonLabeledUtterance>();
             roundtrip.GetScore().Should().BeApproximately(utterance.GetScore(), Epsilon);
             roundtrip.GetTextScore().Should().BeApproximately(utterance.GetTextScore(), Epsilon);
             roundtrip.GetTimestamp().Should().Be(utterance.GetTimestamp());
+            roundtrip.GetProperty<JArray>("foo").Should().BeEquivalentTo(new[] { 42 });
         }
 
         [Test]
