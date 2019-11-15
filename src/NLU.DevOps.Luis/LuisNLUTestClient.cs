@@ -116,7 +116,7 @@ namespace NLU.DevOps.Luis
                     entityValue = GetEntityValue(resolutionJson);
                 }
 
-                var matchText = entity.Entity;
+                var matchText = speechLuisResult.LuisResult.Query.Substring(entity.StartIndex, entity.EndIndex - entity.StartIndex + 1);
                 var matches = Regex.Matches(speechLuisResult.LuisResult.Query, matchText, RegexOptions.IgnoreCase);
                 var matchIndex = -1;
                 for (var i = 0; i < matches.Count; ++i)

@@ -435,6 +435,44 @@ namespace NLU.DevOps.Luis.Tests
             return result;
         }
 
+        [Test]
+        public static async Task EntityTextDoesNotMatch()
+        {
+            var test = "show me past - due my past-due tasks";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<PredictionRequest>(query => query.Query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PredictionResponse
+                {
+                    Query = test,
+                    Prediction = new Prediction
+                    {
+                        TopIntent = "intent",
+                        Entities = ToEntityDictionary(new[]
+                        {
+                            new EntityModel
+                            {
+                                Entity = "past - due",
+                                Type = "type",
+                                StartIndex = 22,
+                                EndIndex = 29,
+                            },
+                        }),
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].MatchText.Should().Be("past-due");
+                result.Entities[0].MatchIndex.Should().Be(0);
+            }
+        }
+
         private class LuisNLUTestClientBuilder
         {
             public LuisSettings LuisSettings { get; set; } = new LuisSettings();
