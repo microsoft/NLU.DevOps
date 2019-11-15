@@ -78,7 +78,7 @@ namespace NLU.DevOps.ModelPerformance
                 .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
                 .ToList();
 
-            var testCases = zippedUtterances.Select(ToIntentTestCase)
+            var testCases = zippedUtterances.SelectMany(ToIntentTestCases)
                 .Concat(zippedUtterances.SelectMany(ToEntityTestCases));
 
             if (compareText)
@@ -151,7 +151,7 @@ namespace NLU.DevOps.ModelPerformance
                 "Text");
         }
 
-        internal static TestCase ToIntentTestCase(LabeledUtterancePair pair)
+        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtterancePair pair)
         {
             var expectedUtterance = pair.Expected;
             var actualUtterance = pair.Actual;
@@ -166,34 +166,25 @@ namespace NLU.DevOps.ModelPerformance
                 return intent == null || intent == "None";
             }
 
-            if (isNoneIntent(actual))
+            if (isNoneIntent(expected) && isNoneIntent(actual))
             {
-                return isNoneIntent(expected)
-                    ? TrueNegative(
-                        pair.UtteranceId,
-                        ComparisonTargetKind.Intent,
-                        expectedUtterance,
-                        actualUtterance,
-                        score,
-                        null,
-                        new[] { text },
-                        "Both intents are 'None'.",
-                        "Intent")
-                    : FalseNegative(
-                        pair.UtteranceId,
-                        ComparisonTargetKind.Intent,
-                        expectedUtterance,
-                        actualUtterance,
-                        score,
-                        expected,
-                        new[] { expected, text },
-                        $"Actual intent is 'None', expected '{expected}'",
-                        "Intent");
+                yield return TrueNegative(
+                    pair.UtteranceId,
+                    ComparisonTargetKind.Intent,
+                    expectedUtterance,
+                    actualUtterance,
+                    score,
+                    null,
+                    new[] { text },
+                    "Both intents are 'None'.",
+                    "Intent");
+
+                yield break;
             }
 
             if (expected == actual)
             {
-                return TruePositive(
+                yield return TruePositive(
                     pair.UtteranceId,
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
@@ -203,18 +194,37 @@ namespace NLU.DevOps.ModelPerformance
                     new[] { expected, text },
                     "Utterances have matching intent.",
                     "Intent");
+
+                yield break;
             }
 
-            return FalsePositive(
-                pair.UtteranceId,
-                ComparisonTargetKind.Intent,
-                expectedUtterance,
-                actualUtterance,
-                score,
-                isNoneIntent(expected) ? actual : expected,
-                new[] { expected, actual, text },
-                $"Expected intent '{expected}', actual intent '{actual}'.",
-                "Intent");
+            if (!isNoneIntent(expected))
+            {
+                yield return FalseNegative(
+                    pair.UtteranceId,
+                    ComparisonTargetKind.Intent,
+                    expectedUtterance,
+                    actualUtterance,
+                    score,
+                    expected,
+                    new[] { expected, actual, text },
+                    $"Expected intent '{expected}', actual intent '{actual}'.",
+                    "Intent");
+            }
+
+            if (!isNoneIntent(actual))
+            {
+                yield return FalsePositive(
+                    pair.UtteranceId,
+                    ComparisonTargetKind.Intent,
+                    expectedUtterance,
+                    actualUtterance,
+                    score,
+                    actual,
+                    new[] { expected, actual, text },
+                    $"Expected intent '{expected}', actual intent '{actual}'.",
+                    "Intent");
+            }
         }
 
         internal static IEnumerable<TestCase> ToEntityTestCases(LabeledUtterancePair pair)
