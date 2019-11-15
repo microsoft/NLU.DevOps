@@ -33,10 +33,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 new LabeledUtterance("FOO", "DayTime", null)
             });
 
-            var test = TestCaseSource.ToIntentTestCase(utterances);
-
-            test.TestName.Should().MatchRegex(FalsePositiveIntentRegex);
-            test.ResultKind.Should().Be(ConfusionMatrixResultKind.FalsePositive);
+            var tests = TestCaseSource.ToIntentTestCases(utterances);
+            tests.Count().Should().Be(1);
+            tests.Single().TestName.Should().MatchRegex(FalsePositiveIntentRegex);
+            tests.Single().ResultKind.Should().Be(ConfusionMatrixResultKind.FalsePositive);
         }
 
         [Test]
@@ -48,10 +48,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 new LabeledUtterance("FOO", "None", null)
             });
 
-            var test = TestCaseSource.ToIntentTestCase(utterances);
-
-            test.TestName.Should().MatchRegex(FalseNegativeIntentRegex);
-            test.ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
+            var tests = TestCaseSource.ToIntentTestCases(utterances);
+            tests.Count().Should().Be(1);
+            tests.Single().TestName.Should().MatchRegex(FalseNegativeIntentRegex);
+            tests.Single().ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
         }
 
         [Test]
@@ -413,7 +413,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [TestCase("None", null, 0, 1, 0, 0)]
         [TestCase(null, "foo", 0, 0, 1, 0)]
         [TestCase("None", "foo", 0, 0, 1, 0)]
-        [TestCase("foo", "bar", 0, 0, 1, 0)]
+        [TestCase("foo", "bar", 0, 0, 1, 1)]
         [TestCase("foo", null, 0, 0, 0, 1)]
         [TestCase("foo", "None", 0, 0, 0, 1)]
         public static void GetNLUCompareResultsIntentStatistics(
