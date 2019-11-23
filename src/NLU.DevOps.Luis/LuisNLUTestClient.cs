@@ -59,28 +59,6 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private static JToken GetEntityValue(JToken resolution)
-        {
-            if (resolution == null)
-            {
-                return null;
-            }
-
-            var value = resolution["value"];
-            if (value != null)
-            {
-                return value;
-            }
-
-            var values = resolution["values"];
-            if (values != null)
-            {
-                return values;
-            }
-
-            return resolution;
-        }
-
         private LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
         {
             if (speechLuisResult == null)
@@ -113,7 +91,7 @@ namespace NLU.DevOps.Luis
                     entity.AdditionalProperties.TryGetValue("resolution", out var resolution) &&
                     resolution is JToken resolutionJson)
                 {
-                    entityValue = GetEntityValue(resolutionJson);
+                    entityValue = resolutionJson;
                 }
 
                 var matchText = speechLuisResult.LuisResult.Query.Substring(entity.StartIndex, entity.EndIndex - entity.StartIndex + 1);

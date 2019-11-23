@@ -136,9 +136,9 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(3);
-                result.Entities[0].EntityValue.Should().BeEquivalentTo(valueResolution["value"]);
-                result.Entities[1].EntityValue.Should().BeEquivalentTo(valuesStringResolution["values"]);
-                result.Entities[2].EntityValue.Should().BeEquivalentTo(valuesValueResolution["values"]);
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(valueResolution);
+                result.Entities[1].EntityValue.Should().BeEquivalentTo(valuesStringResolution);
+                result.Entities[2].EntityValue.Should().BeEquivalentTo(valuesValueResolution);
             }
         }
 

@@ -37,7 +37,9 @@
         "entityType": "songCount",
         "matchText": "five",
         "matchIndex": 0,
-        "entityValue": "5"
+        "entityValue": {
+          "value": "5"
+        }
       }
     ]
   },

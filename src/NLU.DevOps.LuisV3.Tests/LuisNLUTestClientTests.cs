@@ -399,42 +399,6 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
-        private static IDictionary<string, object> ToEntityDictionary(IEnumerable<EntityModel> entities)
-        {
-            var result = new Dictionary<string, object>();
-            foreach (var entity in entities)
-            {
-                if (!result.TryGetValue(entity.Type, out var value))
-                {
-                    result.Add(entity.Type, new JArray());
-                    if (!result.TryGetValue("$instance", out var instanceValue))
-                    {
-                        instanceValue = new JObject();
-                        result.Add("$instance", instanceValue);
-                    }
-
-                    var instanceJson = (JObject)instanceValue;
-                    instanceJson.Add(entity.Type, new JArray());
-                }
-
-                var entityMetadata = new JObject
-                {
-                    { "startIndex", entity.StartIndex },
-                    { "length", entity.EndIndex - entity.StartIndex + 1 }
-                };
-
-                if (entity.AdditionalProperties != null && entity.AdditionalProperties.TryGetValue("score", out var score))
-                {
-                    entityMetadata.Add("score", (double)score);
-                }
-
-                ((JArray)result[entity.Type]).Add(entity.Entity);
-                ((JArray)((JObject)result["$instance"])[entity.Type]).Add(entityMetadata);
-            }
-
-            return result;
-        }
-
         [Test]
         public static async Task EntityTextDoesNotMatch()
         {
@@ -471,6 +435,42 @@ namespace NLU.DevOps.Luis.Tests
                 result.Entities[0].MatchText.Should().Be("past-due");
                 result.Entities[0].MatchIndex.Should().Be(0);
             }
+        }
+
+        private static IDictionary<string, object> ToEntityDictionary(IEnumerable<EntityModel> entities)
+        {
+            var result = new Dictionary<string, object>();
+            foreach (var entity in entities)
+            {
+                if (!result.TryGetValue(entity.Type, out var value))
+                {
+                    result.Add(entity.Type, new JArray());
+                    if (!result.TryGetValue("$instance", out var instanceValue))
+                    {
+                        instanceValue = new JObject();
+                        result.Add("$instance", instanceValue);
+                    }
+
+                    var instanceJson = (JObject)instanceValue;
+                    instanceJson.Add(entity.Type, new JArray());
+                }
+
+                var entityMetadata = new JObject
+                {
+                    { "startIndex", entity.StartIndex },
+                    { "length", entity.EndIndex - entity.StartIndex + 1 }
+                };
+
+                if (entity.AdditionalProperties != null && entity.AdditionalProperties.TryGetValue("score", out var score))
+                {
+                    entityMetadata.Add("score", (double)score);
+                }
+
+                ((JArray)result[entity.Type]).Add(entity.Entity);
+                ((JArray)((JObject)result["$instance"])[entity.Type]).Add(entityMetadata);
+            }
+
+            return result;
         }
 
         private class LuisNLUTestClientBuilder
