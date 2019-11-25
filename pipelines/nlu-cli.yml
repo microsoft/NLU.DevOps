@@ -101,7 +101,7 @@ steps:
 
 - task: DotNetCoreCLI@2
   displayName: Cleanup the NLU model
-  condition: and(always(), ne(variables['nlu.ci'], 'false'))
+  condition: and(false, and(always(), ne(variables['nlu.ci'], 'false')))
   inputs:
     command: custom
     custom: nlu
