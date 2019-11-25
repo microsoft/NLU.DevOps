@@ -4,6 +4,7 @@
 namespace NLU.DevOps.ModelPerformance
 {
     using System.Collections.Generic;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// NLU statistics.
@@ -41,36 +42,43 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Gets the text confusion matrix.
         /// </summary>
+        [JsonProperty(PropertyName = "text")]
         public ConfusionMatrix Text { get; }
 
         /// <summary>
         /// Gets the intent confusion matrix.
         /// </summary>
+        [JsonProperty(PropertyName = "intent")]
         public ConfusionMatrix Intent { get; }
 
         /// <summary>
         /// Gets the entity confusion matrix.
         /// </summary>
+        [JsonProperty(PropertyName = "entity")]
         public ConfusionMatrix Entity { get; }
 
         /// <summary>
         /// Gets the entity value confusion matrix.
         /// </summary>
+        [JsonProperty(PropertyName = "entityValue")]
         public ConfusionMatrix EntityValue { get; }
 
         /// <summary>
         /// Gets the intent confusion matrix by intent.
         /// </summary>
+        [JsonProperty(PropertyName = "byIntent")]
         public IReadOnlyDictionary<string, ConfusionMatrix> ByIntent { get; }
 
         /// <summary>
         /// Gets the entity confusion matrix by entity type.
         /// </summary>
+        [JsonProperty(PropertyName = "byEntityType")]
         public IReadOnlyDictionary<string, ConfusionMatrix> ByEntityType { get; }
 
         /// <summary>
         /// Gets the entity value confusion matrix by entity type.
         /// </summary>
+        [JsonProperty(PropertyName = "byEntityValueType")]
         public IReadOnlyDictionary<string, ConfusionMatrix> ByEntityValueType { get; }
     }
 }
