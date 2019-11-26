@@ -54,14 +54,6 @@
             "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-o---output)."
         },
         {
-            "name": "speech",
-            "type": "boolean",
-            "label": "Signals whether to test with speech utterances.",
-            "required": false,
-            "defaultValue": false,
-            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#--speech)."
-        },
-        {
             "name": "speechDirectory",
             "type": "string",
             "label": "Base directory where speech files are located.",

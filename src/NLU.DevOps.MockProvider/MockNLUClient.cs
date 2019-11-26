@@ -47,7 +47,7 @@ namespace NLU.DevOps.MockProvider
 
         protected override Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new LabeledUtterance(null, null, null));
         }
 
         protected override void Dispose(bool disposing)

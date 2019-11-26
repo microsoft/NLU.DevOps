@@ -76,7 +76,7 @@ See the documentation on endpoint configuration for [LUIS](LuisEndpointConfigura
 
 ## Getting started with speech
 
-The NLU.DevOps CLI tool also supports testing from speech. You still must supply the generic utterances file, except that each utterance in the file must also include a `speechFile` property, e.g.:
+The NLU.DevOps CLI tool also supports testing from speech. Speech tests will be run for any utterance in the test input file that includes a `speechFile` property, e.g.:
 
 ```json
 {
@@ -86,13 +86,7 @@ The NLU.DevOps CLI tool also supports testing from speech. You still must supply
 }
 ```
 
-The `speechFile` corresponds to the file name of an audio file in the current working directory. You may also specify the `--speech-directory` option to set the base path for the speech files. Please note, the LUIS and Lex provider options currently only support the 16KHz WAV format.
-
-To kick off testing from speech with the CLI tool, run the following command:
-
-```bash
-dotnet nlu test -s luis --speech -u utterances.json
-```
+The `speechFile` corresponds to the relative path of an audio file from the current working directory. You may also specify the `--speech-directory` option to set the base path for the speech files. Please note, the LUIS and Lex provider options currently only support the 16KHz WAV format.
 
 ## Testing an existing NLU model
 
@@ -115,7 +109,7 @@ When the `--transcriptions` option is used, the CLI tool will check to see if a 
 To kick off testing from speech with cached transcriptions, run the following command:
 
 ```bash
-dotnet nlu test -s luis --speech -u utterances.json -t transcriptions.json
+dotnet nlu test -s luis -u utterances.json -t transcriptions.json
 ```
 
 ## Detailed Usage
@@ -130,13 +124,6 @@ Path to labeled utterances to test with. Only the text field from each utterance
 (Optional) Path to labeled results output.
 
 If the `--output` option is not provided, the results will be written to stdout.
-
-### `--speech`
-(Optional) Test using speech files from utterances.
-
-Please note, the LUIS and Lex provider options currently only support the 16KHz WAV format.
-
-See [Getting started with speech](#getting-started-with-speech).
 
 ### `-d, --speech-directory`
 (Optional) Path to speech files directory.

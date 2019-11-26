@@ -82,22 +82,9 @@ steps:
     arguments: test
       --service $(nlu.service)
       --utterances models/tests.json
-      --model-settings models/settings.$(nlu.service).json
-      --output $(Agent.TempDirectory)/text/results.json
-
-- task: DotNetCoreCLI@2
-  displayName: Test the NLU model with speech
-  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'))
-  inputs:
-    command: custom
-    custom: nlu
-    arguments: test
-      --service $(nlu.service)
-      --speech 
-      --utterances models/tests.speech.json
       --speech-directory $(recordingsDirectory)
       --model-settings models/settings.$(nlu.service).json
-      --output $(Agent.TempDirectory)/speech/results.json
+      --output $(Agent.TempDirectory)/results.json
 
 - task: DotNetCoreCLI@2
   displayName: Cleanup the NLU model
@@ -116,19 +103,8 @@ steps:
     custom: nlu
     arguments: compare
       --expected models/tests.json
-      --actual $(Agent.TempDirectory)/text/results.json
-      --output-folder $(Build.ArtifactStagingDirectory)/text
-
-- task: DotNetCoreCLI@2
-  displayName: Compare the NLU speech results
-  inputs:
-    command: custom
-    custom: nlu
-    arguments: compare
-      --expected models/tests.speech.json
-      --actual $(Agent.TempDirectory)/speech/results.json
-      --output-folder $(Build.ArtifactStagingDirectory)/speech
-      --text
+      --actual $(Agent.TempDirectory)/results.json
+      --output-folder $(Build.ArtifactStagingDirectory)
 
 - task: DotNetCoreCLI@2
   displayName: Uninstall dotnet-nlu
@@ -141,7 +117,7 @@ steps:
   displayName: Publish test results
   inputs:
     testResultsFormat: NUnit
-    testResultsFiles: $(Build.ArtifactStagingDirectory)/*/TestResult.xml
+    testResultsFiles: $(Build.ArtifactStagingDirectory)/**/TestResult.xml
 
 - task: PublishBuildArtifacts@1
   condition: and(succeeded(), ne(variables['nlu.ci'], 'false'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
@@ -175,4 +151,4 @@ steps:
   displayName: Check for performance regression
   inputs:
     scriptPath: scripts/compare.py
-    arguments: $(Agent.TempDirectory)/drop/*/TestResult.xml $(Build.ArtifactStagingDirectory)/*/TestResult.xml
+    arguments: $(Agent.TempDirectory)/drop/**/TestResult.xml $(Build.ArtifactStagingDirectory)/**/TestResult.xml

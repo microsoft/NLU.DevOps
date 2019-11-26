@@ -57,6 +57,7 @@ steps:
   inputs:
     service: mock
     utterances: models/tests.json
+    speechDirectory: models/speech_files
     nupkgPath: $(Build.ArtifactStagingDirectory)
     publishTestResults: true
     publishNLUResults: true

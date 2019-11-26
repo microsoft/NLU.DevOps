@@ -11,7 +11,7 @@ To test an NLU model, add the following configuration to your pipeline:
 
 The [`utterances`](#utterances) input should be a path to a JSON file with labeled [generic utterances](GenericUtterances.md), relative to the [`workingDirectory`](#workingdirectory). You may also use the [LUIS batch test](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-concept-batch-test#batch-file-format) format, as we also recognize `startPos` and `endPos` for resolving the `matchText` and `matchIndex` from the generic utterances model.
 
-To test with speech WAV files, set the [`speech`](#speech) input to `true` and, optionally, set the base directory for the speech files with the [`speechDirectory`](#speechdirectory) input, if the `speechFile` property for each generic utterance is not relative to the [`workingDirectory`](#workingdirectory). For more information about running NLU tests from speech, take a look at the [docs](Test.md#getting-started-with-speech) on NLU.DevOps.
+If the input utterance has the `speechFile` property set, the test command will run the test using an audio file located at relative path specified in that property. You may optionally set the base directory for the speech files with the [`speechDirectory`](#speechdirectory) input, if the `speechFile` property for each generic utterance is not relative to the [`workingDirectory`](#workingdirectory). For more information about running NLU tests from speech, take a look at the [docs](Test.md#getting-started-with-speech) on NLU.DevOps.
 
 Setting `publishTestResults` to `true` will run your test utterances against the NLU provider and compare the results against the details in the [`utterances`](#utterances) input. It outputs failing tests for any false positive or false negative intents or entities. It outputs passing tests for any true positive or true negative intents or entities.
 
@@ -23,7 +23,6 @@ Inputs to consider when using the `NLUTest` task:
 - [`service`](#service)
 - [`utterances`](#utterances)
 - [`modelSettings`](#modelsettings)
-- [`speech`](#speech)
 - [`speechDirectory`](#speechdirectory)
 - [`output`](#output)
 - [`includePath`](#includepath)
@@ -48,10 +47,6 @@ Specifies the path to the labeled test utterances relative to the [`workingDirec
 ### `modelSettings`
 
 (Optional) Specifies the path to the model settings, relative to the [`workingDirectory`](#workingdirectory). Currently only used for [LUIS prebuilt entity mappings](LuisModelConfiguration.md#configuring-prebuilt-entities).
-
-### `speech`
-
-(Optional) Specifies whether the tests should be run from speech utterances instead of text utterances. Default value is `false`.
 
 ### `speechDirectory`
 

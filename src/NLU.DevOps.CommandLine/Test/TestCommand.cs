@@ -6,7 +6,6 @@ namespace NLU.DevOps.CommandLine.Test
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Threading.Tasks;
     using Models;
     using Newtonsoft.Json.Linq;
@@ -49,19 +48,7 @@ namespace NLU.DevOps.CommandLine.Test
             this.Log("Running tests against NLU model...");
 
             var testUtterances = this.LoadUtterances();
-            if (this.Options.Speech && testUtterances.Any(utterance => utterance.SpeechFile == null))
-            {
-                throw new InvalidOperationException("Test utterances must have 'speechFile' when using --speech.");
-            }
-
-            var testResults = await (this.Options.Speech
-                   ? testUtterances.SelectAsync(
-                        utterance => this.TestSpeechAsync(utterance),
-                        this.Options.Parallelism)
-                    : testUtterances.SelectAsync(
-                        utterance => this.NLUTestClient.TestAsync(utterance.Query),
-                        this.Options.Parallelism))
-                .ConfigureAwait(false);
+            var testResults = await testUtterances.SelectAsync(this.TestAsync, this.Options.Parallelism).ConfigureAwait(false);
 
             Stream getFileStream(string filePath)
             {
@@ -79,6 +66,13 @@ namespace NLU.DevOps.CommandLine.Test
             }
 
             this.SaveTranscriptions();
+        }
+
+        private Task<LabeledUtterance> TestAsync((JToken Query, string SpeechFile) utterance)
+        {
+            return utterance.SpeechFile != null
+                ? this.TestSpeechAsync(utterance)
+                : this.NLUTestClient.TestAsync(utterance.Query);
         }
 
         private async Task<LabeledUtterance> TestSpeechAsync((JToken Query, string SpeechFile) utterance)
@@ -106,7 +100,7 @@ namespace NLU.DevOps.CommandLine.Test
         private IDictionary<string, string> LoadTranscriptions()
         {
             var transcriptionsFile = this.Options.TranscriptionsFile;
-            if (this.Options.Speech && transcriptionsFile != null)
+            if (transcriptionsFile != null)
             {
                 return File.Exists(transcriptionsFile)
                     ? Read<Dictionary<string, string>>(transcriptionsFile)
@@ -119,7 +113,7 @@ namespace NLU.DevOps.CommandLine.Test
         private void SaveTranscriptions()
         {
             var transcriptionsFile = this.Options.TranscriptionsFile;
-            if (this.Options.Speech && transcriptionsFile != null)
+            if (transcriptionsFile != null)
             {
                 EnsureDirectory(transcriptionsFile);
                 Write(transcriptionsFile, this.Transcriptions);
@@ -134,17 +128,6 @@ namespace NLU.DevOps.CommandLine.Test
                 var speechFile = query.Value<string>("speechFile");
                 yield return (query, speechFile);
             }
-        }
-
-        private class LabeledUtteranceWithSpeechFile : LabeledUtterance
-        {
-            public LabeledUtteranceWithSpeechFile(string text, string intent, string speechFile, IReadOnlyList<Entity> entities)
-                : base(text, intent, entities)
-            {
-                this.SpeechFile = speechFile;
-            }
-
-            public string SpeechFile { get; }
         }
     }
 }
