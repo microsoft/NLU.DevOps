@@ -3,9 +3,12 @@
 
 namespace NLU.DevOps.ModelPerformance
 {
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Confusion matrix container.
     /// </summary>
+    [JsonConverter(typeof(ConfusionMatrixConverter))]
     public class ConfusionMatrix
     {
         /// <summary>
