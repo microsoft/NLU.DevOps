@@ -44,8 +44,8 @@ namespace NLU.DevOps.Luis
         private const string ArmTokenConfigurationKey = "ARM_TOKEN";
         private const string BuildIdConfigurationKey = "BUILD_BUILDID";
 
-        private const string CustomSpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language={1}&?cid={2}";
-        private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}";
+        private const string CustomSpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language={1}&cid={2}&format=detailed";
+        private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}&format=detailed";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisConfiguration"/> class.
