@@ -166,12 +166,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var utterances = CreatePair(new[]
             {
-                new LabeledUtterance(null, "DayTime", null),
+                new LabeledUtterance(null, "DayTime", null).WithProperty("speechFile", "speechFile"),
                 new LabeledUtterance(null, "DayTime", null)
             });
 
-            var actualResult = TestCaseSource.ToTextTestCase(utterances);
-
+            var actualResult = TestCaseSource.ToTextTestCases(utterances).Single();
             actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.TrueNegative);
         }
 
@@ -180,12 +179,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var utterances = CreatePair(new[]
             {
-                 new LabeledUtterance("foo", "DayTime", null),
+                 new LabeledUtterance("foo", "DayTime", null).WithProperty("speechFile", "speechFile"),
                  new LabeledUtterance(null, "DayTime", null)
              });
 
-            var actualResult = TestCaseSource.ToTextTestCase(utterances);
-
+            var actualResult = TestCaseSource.ToTextTestCases(utterances).Single();
             actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
         }
 
@@ -194,12 +192,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var utterances = CreatePair(new[]
             {
-                new LabeledUtterance("foo", "DayTime", null),
+                new LabeledUtterance("foo", "DayTime", null).WithProperty("speechFile", "speechFile"),
                 new LabeledUtterance("FOO", "DayTime", null)
             });
 
-            var actualResult = TestCaseSource.ToTextTestCase(utterances);
-
+            var actualResult = TestCaseSource.ToTextTestCases(utterances).Single();
             actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.TruePositive);
         }
 
@@ -208,12 +205,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var utterances = CreatePair(new[]
             {
-                new LabeledUtterance("foo", "DayTime", null),
+                new LabeledUtterance("foo", "DayTime", null).WithProperty("speechFile", "speechFile"),
                 new LabeledUtterance("baz", "DayTime", null)
             });
 
-            var actualResult = TestCaseSource.ToTextTestCase(utterances);
-
+            var actualResult = TestCaseSource.ToTextTestCases(utterances).Single();
             actualResult.ResultKind.Should().Be(ConfusionMatrixResultKind.FalsePositive);
         }
 
@@ -394,12 +390,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             int falsePositive,
             int falseNegative)
         {
-            var expectedUtterance = new LabeledUtterance(expected, null, null);
+            var expectedUtterance = new LabeledUtterance(expected, null, null).WithProperty("speechFile", "speechFile");
             var actualUtterance = new LabeledUtterance(actual, null, null);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                true);
+                new[] { actualUtterance });
             compareResults.Statistics.Text.TruePositive.Should().Be(truePositive);
             compareResults.Statistics.Text.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.Text.FalsePositive.Should().Be(falsePositive);
@@ -428,8 +423,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, actual, null);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             compareResults.Statistics.Intent.TruePositive.Should().Be(truePositive);
             compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
@@ -466,8 +460,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             compareResults.Statistics.Entity.TruePositive.Should().Be(truePositive);
             compareResults.Statistics.Entity.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.Entity.FalsePositive.Should().Be(falsePositive);
@@ -505,8 +498,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             compareResults.Statistics.EntityValue.TruePositive.Should().Be(truePositive);
             compareResults.Statistics.EntityValue.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.EntityValue.FalsePositive.Should().Be(falsePositive);
@@ -532,8 +524,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             compareResults.Statistics.Entity.TruePositive.Should().Be(0);
             compareResults.Statistics.Entity.TrueNegative.Should().Be(0);
             compareResults.Statistics.Entity.FalsePositive.Should().Be(1);
@@ -559,20 +550,18 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             compareResults.TestCases.Select(t => t.Score).Any(score => score != null).Should().BeFalse();
         }
 
         [Test]
         public static void GetNLUCompareResultsExtractsIntentAndTextScore()
         {
-            var expectedUtterance = new LabeledUtterance(null, null, null);
+            var expectedUtterance = new LabeledUtterance(null, null, null).WithProperty("speechFile", "speechFile");
             var actualUtterance = new LabeledUtterance(null, null, null).WithScore(0.5).WithTextScore(0.1);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                true);
+                new[] { actualUtterance });
             var intentTestCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Intent);
             intentTestCase.Should().NotBeNull();
             intentTestCase.Score.Should().Be(0.5);
@@ -592,8 +581,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             var testCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Entity);
             testCase.Should().NotBeNull();
             testCase.Score.Should().Be(0.5);
@@ -609,8 +597,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, null, actualEntity);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             var testCase = compareResults.TestCases.FirstOrDefault(t => t.TargetKind == ComparisonTargetKind.Entity);
             testCase.Should().NotBeNull();
             testCase.Score.Should().Be(0.5);
@@ -623,8 +610,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, "Greeting", null);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance, expectedUtterance },
-                new[] { actualUtterance, actualUtterance },
-                false);
+                new[] { actualUtterance, actualUtterance });
             compareResults.TestCases.Count.Should().Be(4);
             compareResults.TestCases.Where(t => t.UtteranceId == "0").Count().Should().Be(2);
             compareResults.TestCases.Where(t => t.UtteranceId == "1").Count().Should().Be(2);
@@ -639,8 +625,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualUtterance = new LabeledUtterance(null, "Greeting", null);
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
-                new[] { actualUtterance },
-                false);
+                new[] { actualUtterance });
             compareResults.TestCases.Count.Should().Be(2);
             compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(2);
         }

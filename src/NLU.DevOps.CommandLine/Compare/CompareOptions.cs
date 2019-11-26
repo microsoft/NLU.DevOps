@@ -20,9 +20,6 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results.", Required = false)]
         public bool Metadata { get; set; }
 
-        [Option('t', "text", HelpText = "Run text comparison test cases.", Required = false)]
-        public bool CompareText { get; set; }
-
         [Option('o', "output-folder", HelpText = "Output path for test results.", Required = false)]
         public string OutputFolder { get; set; }
     }

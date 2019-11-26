@@ -33,7 +33,6 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             this.options.Add("utterances");
             this.options.Add("-m");
             this.options.Add("servicesettings");
-            this.options.Add("--speech");
             this.options.Add("-d");
             this.options.Add("speechdirectory");
             this.options.Add("-t");
@@ -48,7 +47,6 @@ namespace NLU.DevOps.CommandLine.Tests.Test
                 {
                     o.UtterancesPath.Should().Be("utterances");
                     o.SettingsPath.Should().Be("servicesettings");
-                    o.Speech.Should().BeTrue();
                     o.SpeechFilesDirectory.Should().Be("speechdirectory");
                     o.TranscriptionsFile.Should().Be("transcriptionfile");
                     o.OutputPath.Should().Be("outputpath");
@@ -64,7 +62,6 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             this.options.Add("utterances");
             this.options.Add("--model-settings");
             this.options.Add("servicesettings");
-            this.options.Add("--speech");
             this.options.Add("--speech-directory");
             this.options.Add("speechdirectory");
             this.options.Add("--transcriptions");
@@ -78,7 +75,6 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             {
                 o.UtterancesPath.Should().Be("utterances");
                 o.SettingsPath.Should().Be("servicesettings");
-                o.Speech.Should().BeTrue();
                 o.SpeechFilesDirectory.Should().Be("speechdirectory");
                 o.TranscriptionsFile.Should().Be("transcriptionfile");
                 o.OutputPath.Should().Be("outputpath");
@@ -107,7 +103,6 @@ namespace NLU.DevOps.CommandLine.Tests.Test
                 {
                     o.UtterancesPath.Should().Be("utterances");
                     o.SettingsPath.Should().Be(null);
-                    o.Speech.Should().BeFalse();
                     o.SpeechFilesDirectory.Should().Be(null);
                     o.TranscriptionsFile.Should().Be(null);
                     o.OutputPath.Should().Be(null);
