@@ -37,7 +37,6 @@ namespace NLU.DevOps.CommandLine
             serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
             serializer.DefaultValueHandling = DefaultValueHandling.Ignore;
             serializer.Converters.Add(new StringEnumConverter());
-            serializer.Converters.Add(new ConfusionMatrixConverter());
             serializer.Formatting = Formatting.Indented;
             using (var textWriter = new StreamWriter(stream, Encoding.UTF8, 4096, true))
             {
