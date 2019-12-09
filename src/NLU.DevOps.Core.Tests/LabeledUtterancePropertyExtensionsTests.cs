@@ -57,14 +57,6 @@ namespace NLU.DevOps.Core.Tests
         }
 
         [Test]
-        public static void ParsesJsonValues()
-        {
-            var utterance = new JsonLabeledUtterance(null, null, null);
-            utterance.AdditionalProperties.Add("score", new JValue(0.42));
-            utterance.GetScore().Should().BeApproximately(0.42, Epsilon);
-        }
-
-        [Test]
         public static void ReturnsNullPropertyValues()
         {
             var utterance = new LabeledUtterance(null, null, null);
