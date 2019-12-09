@@ -75,7 +75,8 @@ namespace NLU.DevOps.Luis
                 var hasRole = false;
                 if (entity.AdditionalProperties != null &&
                     entity.AdditionalProperties.TryGetValue("role", out var roleValue) &&
-                    roleValue is string role)
+                    roleValue is string role &&
+                    !string.IsNullOrWhiteSpace(role))
                 {
                     entityType = role;
                     hasRole = true;

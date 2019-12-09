@@ -82,7 +82,7 @@ namespace NLU.DevOps.Core
         /// </returns>
         public static double? GetScore(this LabeledUtterance instance)
         {
-            return instance.GetPropertyCore<double?>(ScorePropertyName);
+            return instance.GetNumericProperty(ScorePropertyName);
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace NLU.DevOps.Core
         /// </returns>
         public static double? GetTextScore(this LabeledUtterance instance)
         {
-            return instance.GetPropertyCore<double?>(TextScorePropertyName);
+            return instance.GetNumericProperty(TextScorePropertyName);
         }
 
         /// <summary>
@@ -192,6 +192,18 @@ namespace NLU.DevOps.Core
             }
 
             return default(T);
+        }
+
+        private static double? GetNumericProperty(this object instance, string propertyName)
+        {
+            if (instance is IJsonExtension jsonExtension && jsonExtension.AdditionalProperties.TryGetValue(propertyName, out var value))
+            {
+                return value is long integerValue
+                    ? integerValue
+                    : (double)value;
+            }
+
+            return null;
         }
     }
 }

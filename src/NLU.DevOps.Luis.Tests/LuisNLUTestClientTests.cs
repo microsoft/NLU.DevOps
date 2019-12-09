@@ -434,6 +434,44 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
+        public static async Task WithEmptyRole()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
+                {
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
+                    {
+                        new EntityModel
+                        {
+                            Entity = "the",
+                            Type = "type",
+                            StartIndex = 32,
+                            EndIndex = 34,
+                            AdditionalProperties = new Dictionary<string, object>
+                            {
+                                { "role", string.Empty },
+                            },
+                        },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be("type");
+            }
+        }
+
+        [Test]
         public static async Task WithMultipleIntents()
         {
             var test = "the quick brown fox jumped over the lazy dog";
