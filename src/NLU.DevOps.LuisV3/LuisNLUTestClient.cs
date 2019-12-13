@@ -92,11 +92,10 @@ namespace NLU.DevOps.Luis
                 var matchText = utterance.Substring(startIndex, length);
                 var matchIndex = 0;
                 var currentStart = 0;
-                var nextStart = 0;
-                while ((nextStart = utterance.IndexOf(matchText, currentStart, StringComparison.Ordinal)) != startIndex)
+                while ((currentStart = utterance.IndexOf(matchText, currentStart, StringComparison.Ordinal)) != startIndex)
                 {
                     ++matchIndex;
-                    currentStart = nextStart + 1;
+                    currentStart++;
                 }
 
                 var entityValue = PruneMetadata(entityJson);

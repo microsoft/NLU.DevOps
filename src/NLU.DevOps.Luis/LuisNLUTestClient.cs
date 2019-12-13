@@ -95,16 +95,15 @@ namespace NLU.DevOps.Luis
                     entityValue = resolutionJson;
                 }
 
-                var matchText = speechLuisResult.LuisResult.Query.Substring(entity.StartIndex, entity.EndIndex - entity.StartIndex + 1);
-                var matches = Regex.Matches(speechLuisResult.LuisResult.Query, matchText, RegexOptions.IgnoreCase);
-                var matchIndex = -1;
-                for (var i = 0; i < matches.Count; ++i)
+                var utterance = speechLuisResult.LuisResult.Query;
+                var startIndex = entity.StartIndex;
+                var matchText = utterance.Substring(startIndex, entity.EndIndex - startIndex + 1);
+                var matchIndex = 0;
+                var currentStart = 0;
+                while ((currentStart = utterance.IndexOf(matchText, currentStart, StringComparison.Ordinal)) != startIndex)
                 {
-                    if (matches[i].Index == entity.StartIndex)
-                    {
-                        matchIndex = i;
-                        break;
-                    }
+                    ++matchIndex;
+                    currentStart++;
                 }
 
                 Debug.Assert(matchIndex >= 0, "Invalid LUIS response.");
