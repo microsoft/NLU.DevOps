@@ -542,6 +542,41 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
+        [Test]
+        public static async Task MatchTextContainsRegex()
+        {
+            var test = "foo(bar)";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<string>(query => query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new LuisResult
+                {
+                    Query = test,
+                    TopScoringIntent = new IntentModel { Intent = "intent" },
+                    Entities = new[]
+                    {
+                        new EntityModel
+                        {
+                            Entity = "foo ( bar )",
+                            Type = "type",
+                            StartIndex = 0,
+                            EndIndex = 7,
+                        },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].MatchText.Should().Be("foo(bar)");
+                result.Entities[0].MatchIndex.Should().Be(0);
+            }
+        }
+
         private class LuisNLUTestClientBuilder
         {
             public LuisSettings LuisSettings { get; set; } = new LuisSettings(null, null, null);
