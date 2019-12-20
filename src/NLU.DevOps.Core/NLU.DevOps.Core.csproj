@@ -3,11 +3,11 @@
   <Import Project="..\CodeAnalysis.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyVersion>0.4.0</AssemblyVersion>
+    <AssemblyVersion>0.6.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NLU.DevOps.Core.xml</DocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

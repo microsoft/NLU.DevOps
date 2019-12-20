@@ -9,7 +9,7 @@ namespace NLU.DevOps.Core
     using Newtonsoft.Json.Linq;
 
     /// <summary>
-    /// JSON converter for <see cref="LabeledUtterance"/>.
+    /// JSON converter for <see cref="LabeledUtterance"/> to recognize LUIS batch test format.
     /// </summary>
     public class LabeledUtteranceConverter : JsonConverter<LabeledUtterance>
     {
@@ -97,6 +97,14 @@ namespace NLU.DevOps.Core
                     jsonObject.Remove("endPos");
                 }
 
+                var entity = jsonObject.Value<string>("entity");
+                var entityType = jsonObject.Value<string>("entityType");
+                if (entityType == null && entity != null)
+                {
+                    jsonObject.Add("entityType", entity);
+                    jsonObject.Remove("entity");
+                }
+
                 serializer.Converters.Remove(this);
                 try
                 {
@@ -115,7 +123,7 @@ namespace NLU.DevOps.Core
 
             private bool IsValid(int startPos, int endPos)
             {
-                return startPos < endPos
+                return startPos <= endPos
                     && startPos < this.Utterance.Length
                     && endPos < this.Utterance.Length;
             }

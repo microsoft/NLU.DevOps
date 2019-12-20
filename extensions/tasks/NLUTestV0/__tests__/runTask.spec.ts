@@ -146,21 +146,19 @@ describe("NLUTest", () => {
         getInputStub.withArgs("output").returns(output);
         getInputStub.withArgs("modelSettings").returns(modelSettings);
         getInputStub.withArgs("speechDirectory").returns(speechDirectory);
-        getBoolInputStub.withArgs("speech").returns(true);
 
         // run test
         await run();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(calls.length).to.equal(13);
+        expect(calls.length).to.equal(12);
 
         // exec dotnet-nlu call
         expect(calls[8].calledWith("-m")).to.be.ok;
         expect(calls[9].calledWith(modelSettings)).to.be.ok;
-        expect(calls[10].calledWith("--speech")).to.be.ok;
-        expect(calls[11].calledWith("-d")).to.be.ok;
-        expect(calls[12].calledWith(speechDirectory)).to.be.ok;
+        expect(calls[10].calledWith("-d")).to.be.ok;
+        expect(calls[11].calledWith(speechDirectory)).to.be.ok;
     });
 
     it("sets failed result if test command fails", async () => {
@@ -195,7 +193,6 @@ describe("NLUTest", () => {
         getInputStub.withArgs("service").returns(service);
         getInputStub.withArgs("utterances").returns(utterances);
         getBoolInputStub.withArgs("publishTestResults").returns(true);
-        getBoolInputStub.withArgs("speech").returns(true);
 
         // stub test results match
         const resultFiles = [ "foo" ];
@@ -206,21 +203,20 @@ describe("NLUTest", () => {
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(calls.length).to.equal(9 /* test */ + 8 /* compare */);
+        expect(calls.length).to.equal(8 /* test */ + 7 /* compare */);
 
         // exec dotnet-nlu call
-        const output = path.join(".nlu", "speech");
+        const output = ".nlu";
         const results = path.join(output, "results.json");
         expect(calls[5].calledWith("-o")).to.be.ok;
         expect(calls[6].calledWith(results)).to.be.ok;
-        expect(calls[9].calledWith("compare")).to.be.ok;
-        expect(calls[10].calledWith("-e")).to.be.ok;
-        expect(calls[11].calledWith(utterances)).to.be.ok;
-        expect(calls[12].calledWith("-a")).to.be.ok;
-        expect(calls[13].calledWith(results)).to.be.ok;
-        expect(calls[14].calledWith("-o")).to.be.ok;
-        expect(calls[15].calledWith(output)).to.be.ok;
-        expect(calls[16].calledWith("-t")).to.be.ok;
+        expect(calls[8].calledWith("compare")).to.be.ok;
+        expect(calls[9].calledWith("-e")).to.be.ok;
+        expect(calls[10].calledWith(utterances)).to.be.ok;
+        expect(calls[11].calledWith("-a")).to.be.ok;
+        expect(calls[12].calledWith(results)).to.be.ok;
+        expect(calls[13].calledWith("-o")).to.be.ok;
+        expect(calls[14].calledWith(output)).to.be.ok;
 
         // assert publish tests
         const publishData = {
@@ -244,7 +240,6 @@ describe("NLUTest", () => {
         getInputStub.withArgs("service").returns(service);
         getInputStub.withArgs("utterances").returns(utterances);
         getBoolInputStub.withArgs("publishTestResults").returns(true);
-        getBoolInputStub.withArgs("speech").returns(true);
 
         // stub test results match
         const resultsFiles = [];
@@ -287,11 +282,11 @@ describe("NLUTest", () => {
         expect(calls[15].calledWith("-m")).to.be.ok;
 
         // assert statistics written
-        const allStatisticsPath = path.join(".nlu", "text", "allStatistics.json");
+        const allStatisticsPath = path.join(".nlu", "allStatistics.json");
         expect(writeFileSyncStub.calledWith(allStatisticsPath, "[]")).to.be.ok;
 
         // assert adds attachment
-        const metadataPath = path.join(".nlu", "text", "metadata.json");
+        const metadataPath = path.join(".nlu", "metadata.json");
         expect(addAttachmentStub.calledWith("nlu.devops", "metadata.json", metadataPath)).to.be.ok;
         expect(addAttachmentStub.calledWith("nlu.devops", "statistics.json", allStatisticsPath)).to.be.ok;
     });
@@ -322,7 +317,7 @@ describe("NLUTest", () => {
         getVariableStub.withArgs("Build.SourceBranch").returns(undefined);
 
         // assert publishes artifact
-        const statisticsPath = path.join(".nlu", "text", "statistics.json");
+        const statisticsPath = path.join(".nlu", "statistics.json");
         const publishData = {
             artifactname: "statistics",
             artifacttype: "container",

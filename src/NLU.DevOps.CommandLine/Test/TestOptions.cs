@@ -14,9 +14,6 @@ namespace NLU.DevOps.CommandLine.Test
         [Option('m', "model-settings", HelpText = "Path to NLU model settings.", Required = false)]
         public string SettingsPath { get; set; }
 
-        [Option("speech", HelpText = "Test using speech files.", Required = false)]
-        public bool Speech { get; set; }
-
         [Option('d', "speech-directory", HelpText = "Path to recordings directory.", Required = false)]
         public string SpeechFilesDirectory { get; set; }
 

@@ -37,10 +37,6 @@ async function runNLUTest(output): Promise<any> {
             .arg(modelSettings);
     }
 
-    if (tl.getBoolInput("speech")) {
-        tool.arg("--speech");
-    }
-
     const speechDirectory = tl.getInput("speechDirectory");
     if (speechDirectory) {
         tool.arg("-d")
@@ -87,10 +83,6 @@ async function runNLUCompare(output): Promise<any> {
         .arg(output)
         .arg("-o")
         .arg(compareOutput);
-
-    if (tl.getBoolInput("speech")) {
-        tool.arg("-t");
-    }
 
     const publishNLUResultsInput = tl.getBoolInput("publishNLUResults");
     if (publishNLUResultsInput) {
@@ -196,8 +188,7 @@ function getCompareOutputPath() {
     if (compareOutput) {
         return compareOutput;
     } else if (publishTestResultsInput || publishNLUResultsInput) {
-        const outputSubfolder = tl.getBoolInput("speech") ? "speech" : "text";
-        return path.join(tl.getVariable("Agent.TempDirectory"), ".nlu", outputSubfolder);
+        return path.join(tl.getVariable("Agent.TempDirectory"), ".nlu");
     } else {
         return null;
     }

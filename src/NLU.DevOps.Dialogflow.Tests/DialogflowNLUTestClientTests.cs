@@ -7,6 +7,7 @@ namespace NLU.DevOps.Dialogflow.Tests
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
+    using Core;
     using FluentAssertions;
     using FluentAssertions.Json;
     using Google.Cloud.Dialogflow.V2;
@@ -21,6 +22,8 @@ namespace NLU.DevOps.Dialogflow.Tests
     [TestFixture]
     internal static class DialogflowNLUTestClientTests
     {
+        private const double Epsilon = 1e-6;
+
         [Test]
         public static void ThrowsArgumentNull()
         {
@@ -77,7 +80,6 @@ namespace NLU.DevOps.Dialogflow.Tests
         [TestCase("\"foo\"")]
         [TestCase("42.0")]
         [TestCase("true")]
-        [TestCase("[ true ]")]
         [TestCase("{ \"foo\": true }")]
         public static async Task TestAsyncExtractsJsonEntities(string json)
         {
@@ -97,6 +99,33 @@ namespace NLU.DevOps.Dialogflow.Tests
             result.Entities.Count.Should().Be(1);
             result.Entities[0].EntityType.Should().Be(entityType);
             result.Entities[0].EntityValue.Should().BeEquivalentTo(JToken.Parse(json));
+        }
+
+        [Test]
+        [TestCase("[ \"foo\" ]")]
+        [TestCase("[ [ true ], [ false ] ]")]
+        public static async Task TestAsyncExtractsAndFlattensJsonEntities(string json)
+        {
+            var entityType = Guid.NewGuid().ToString();
+
+            var client = CreateTestClient(new DetectIntentResponse
+            {
+                QueryResult = new QueryResult
+                {
+                    QueryText = string.Empty,
+                    Intent = new Intent { DisplayName = string.Empty },
+                    Parameters = Struct.Parser.ParseJson($"{{\"{entityType}\":{json}}}"),
+                }
+            });
+
+            var jsonArray = JToken.Parse(json).As<JArray>();
+            var result = await client.TestAsync(new JObject { { "text", string.Empty } }).ConfigureAwait(false);
+            result.Entities.Count.Should().Be(jsonArray.Count);
+            for (var i = 0; i < jsonArray.Count; ++i)
+            {
+                result.Entities[i].EntityType.Should().Be(entityType);
+                result.Entities[i].EntityValue.Should().BeEquivalentTo(jsonArray[i]);
+            }
         }
 
         [Test]
@@ -187,6 +216,83 @@ namespace NLU.DevOps.Dialogflow.Tests
             request.InputAudio.ToStringUtf8().Should().EndWith("hello");
         }
 
+        [Test]
+        public static async Task TestAsyncRetries()
+        {
+            var intentName = Guid.NewGuid().ToString();
+            var throwCount = 1;
+            var client = CreateTestClient(
+                new DetectIntentResponse
+                {
+                    QueryResult = new QueryResult
+                    {
+                        QueryText = string.Empty,
+                        Intent = new Intent { DisplayName = intentName },
+                    }
+                },
+                _ =>
+                {
+                    if (throwCount-- > 0)
+                    {
+                        throw new RpcException(new Status(StatusCode.ResourceExhausted, string.Empty));
+                    }
+                });
+
+            var result = await client.TestAsync(new JObject { { "text", string.Empty } }).ConfigureAwait(false);
+            result.Intent.Should().Be(intentName);
+        }
+
+        [Test]
+        public static async Task TestSpeechAsyncRetries()
+        {
+            var intentName = Guid.NewGuid().ToString();
+            var throwCount = 1;
+            var client = CreateTestClient(
+                new DetectIntentResponse
+                {
+                    QueryResult = new QueryResult
+                    {
+                        QueryText = string.Empty,
+                        Intent = new Intent { DisplayName = intentName },
+                    }
+                },
+                _ =>
+                {
+                    if (throwCount-- > 0)
+                    {
+                        throw new RpcException(new Status(StatusCode.ResourceExhausted, string.Empty));
+                    }
+                });
+
+            var speechFile = Path.Combine("Assets", "test.txt");
+            var result = await client.TestSpeechAsync(speechFile).ConfigureAwait(false);
+            result.Intent.Should().Be(intentName);
+        }
+
+        [Test]
+        public static async Task TestSpeechAsyncReturnsScores()
+        {
+            var intentName = Guid.NewGuid().ToString();
+            var client = CreateTestClient(
+                new DetectIntentResponse
+                {
+                    QueryResult = new QueryResult
+                    {
+                        QueryText = string.Empty,
+                        Intent = new Intent { DisplayName = intentName },
+                        SpeechRecognitionConfidence = 0.42f,
+                        IntentDetectionConfidence = 0.5f,
+                    }
+                });
+
+            var speechFile = Path.Combine("Assets", "test.txt");
+            var result = await client.TestSpeechAsync(speechFile).ConfigureAwait(false);
+            result.Intent.Should().Be(intentName);
+            result.Should().BeOfType<JsonLabeledUtterance>();
+            result.GetScore().Should().BeApproximately(0.5, Epsilon);
+            result.GetTextScore().Should().BeApproximately(0.42, Epsilon);
+        }
+
         private static DialogflowNLUTestClient CreateTestClient(DetectIntentResponse response, Action<DetectIntentRequest> callback = null)
         {
             var mockCallInvoker = new Mock<CallInvoker>();
@@ -210,9 +316,9 @@ namespace NLU.DevOps.Dialogflow.Tests
                         callback?.Invoke(request));
 
             var sessionsClient = new SessionsClientBuilder
-                {
-                    CallInvoker = mockCallInvoker.Object
-                }
+            {
+                CallInvoker = mockCallInvoker.Object
+            }
                 .Build();
 
             var configuration = new ConfigurationBuilder()

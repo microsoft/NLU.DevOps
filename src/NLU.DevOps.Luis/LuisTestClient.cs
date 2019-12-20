@@ -5,6 +5,7 @@ namespace NLU.DevOps.Luis
 {
     using System;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -99,7 +100,7 @@ namespace NLU.DevOps.Luis
                     var luisResult = JsonConvert.DeserializeObject<LuisResult>(content);
                     var speechContent = result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
                     var speechContentJson = JObject.Parse(speechContent);
-                    var textScore = speechContentJson.Value<double>("Confidence");
+                    var textScore = speechContentJson["NBest"]?.Max(t => t.Value<double?>("Confidence"));
                     return new SpeechLuisResult(luisResult, textScore);
                 }
                 else if (result.Reason == ResultReason.NoMatch)
@@ -142,8 +143,10 @@ namespace NLU.DevOps.Luis
                 throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");
             }
 
-            var luisResult = await this.QueryAsync(responseJson.Value<string>("DisplayText"), cancellationToken).ConfigureAwait(false);
-            var textScore = responseJson.Value<double>("Confidence");
+            var speechMatch = responseJson["NBest"].OrderByDescending(t => t.Value<double?>("Confidence") ?? 0.0).First();
+            var text = speechMatch.Value<string>("Display");
+            var textScore = speechMatch.Value<double?>("Confidence");
+            var luisResult = await this.QueryAsync(text, cancellationToken).ConfigureAwait(false);
             return new SpeechLuisResult(luisResult, textScore);
         }
     }

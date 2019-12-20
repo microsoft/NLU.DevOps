@@ -122,6 +122,27 @@ namespace NLU.DevOps.Core.Tests
         }
 
         [Test]
+        public static void DeserializesSingleCharacterEntities()
+        {
+            var entityJson = new JObject
+            {
+                { "startPos", 4 },
+                { "endPos", 4 },
+            };
+
+            var json = new JObject
+            {
+                { "text", "foo 8 bar" },
+                { "entities", new JArray { entityJson } },
+            };
+
+            var serializer = CreateSerializer();
+            var actual = json.ToObject<DerivedLabeledUtterance>(serializer);
+            actual.Entities.Count.Should().Be(1);
+            actual.Entities[0].MatchText.Should().Be("8");
+        }
+
+        [Test]
         public static void ThrowsWithInvalidStartPos()
         {
             var entityJson = new JObject
@@ -167,7 +188,7 @@ namespace NLU.DevOps.Core.Tests
             Action toObject = () => json.ToObject<LabeledUtterance>(serializer);
             toObject.Should().Throw<InvalidOperationException>();
 
-            entityJson["endPos"] = 4;
+            entityJson["endPos"] = 3;
             toObject.Should().Throw<InvalidOperationException>();
 
             entityJson["endPos"] = 6;
@@ -193,6 +214,28 @@ namespace NLU.DevOps.Core.Tests
             var serializer = CreateSerializer();
             Action toObject = () => json.ToObject<LabeledUtterance>(serializer);
             toObject.Should().Throw<ArgumentException>();
+        }
+
+        [Test]
+        public static void DeserializesEntityType()
+        {
+            var entityJson = new JObject
+            {
+                { "startPos", 0 },
+                { "endPos", 2 },
+                { "entity", "bar" },
+            };
+
+            var json = new JObject
+            {
+                { "text", "foo" },
+                { "entities", new JArray { entityJson } },
+            };
+
+            var serializer = CreateSerializer();
+            var utterance = json.ToObject<LabeledUtterance>(serializer);
+            utterance.Entities.Count.Should().Be(1);
+            utterance.Entities[0].EntityType.Should().Be("bar");
         }
 
         private static JsonSerializer CreateSerializer()

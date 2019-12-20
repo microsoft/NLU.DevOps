@@ -5,6 +5,7 @@ namespace NLU.DevOps.Luis
 {
     using System;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -109,16 +110,19 @@ namespace NLU.DevOps.Luis
                 throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");
             }
 
+            var speechMatch = responseJson["NBest"].OrderByDescending(t => t.Value<double?>("Confidence") ?? 0.0).First();
+            var text = speechMatch.Value<string>("Display");
+            var textScore = speechMatch.Value<double?>("Confidence");
+
             var speechPredictionRequest = new PredictionRequest
             {
-                Query = responseJson.Value<string>("DisplayText"),
+                Query = text,
                 DynamicLists = predictionRequest?.DynamicLists,
                 ExternalEntities = predictionRequest?.ExternalEntities,
                 Options = predictionRequest?.Options,
             };
 
             var predictionResponse = await this.QueryAsync(speechPredictionRequest, cancellationToken).ConfigureAwait(false);
-            var textScore = responseJson.Value<double>("Confidence");
             return new SpeechPredictionResponse(predictionResponse, textScore);
         }
 

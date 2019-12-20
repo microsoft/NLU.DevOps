@@ -75,8 +75,5 @@ Be sure to use the [`--output`](Test.md#-o---output) option when running the `te
 ### `-l, --label`
 (Optional) A prefix for the test case names, in cases where you may want to publish multiple test runs for different options (e.g., simultaneously test text utterances and speech).
 
-### `-t, --text`
-(Optional) Specifies whether or not confusion matrix results should be generated for text. This is only useful when running end-to-end tests from speech using the [`--speech`](Test.md#--speech) option with the [`test`](Test.md) command.
-
 ### `-m, --metadata`
 (Optional) Specified whether confusion matrix metadata should be generated in addition to NUnit test output. See [Generating JSON test metadata](#generating-json-test-metadata) for more details.

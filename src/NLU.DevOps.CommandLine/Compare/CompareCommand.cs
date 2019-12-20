@@ -7,8 +7,9 @@ namespace NLU.DevOps.CommandLine.Compare
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using Core;
     using ModelPerformance;
-    using Models;
+    using Newtonsoft.Json.Linq;
     using NUnitLite;
     using static Serializer;
 
@@ -22,7 +23,6 @@ namespace NLU.DevOps.CommandLine.Compare
             var parameters = CreateParameters(
                 (ConfigurationConstants.ExpectedUtterancesPathKey, options.ExpectedUtterancesPath),
                 (ConfigurationConstants.ActualUtterancesPathKey, options.ActualUtterancesPath),
-                (ConfigurationConstants.CompareTextKey, options.CompareText.ToString(CultureInfo.InvariantCulture)),
                 (ConfigurationConstants.TestLabelKey, options.TestLabel));
 
             var arguments = new List<string> { $"-p:{parameters}" };
@@ -33,13 +33,13 @@ namespace NLU.DevOps.CommandLine.Compare
 
             if (options.Metadata)
             {
-                var expectedUtterances = Read<List<CompareLabeledUtterance>>(options.ExpectedUtterancesPath);
-                var actualUtterances = Read<List<ScoredLabeledUtterance>>(options.ActualUtterancesPath);
-                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, options.CompareText);
+                var expectedUtterances = Read<List<JsonLabeledUtterance>>(options.ExpectedUtterancesPath);
+                var actualUtterances = Read<List<JsonLabeledUtterance>>(options.ActualUtterancesPath);
+                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
                 Write(metadataPath, compareResults.TestCases);
-                Write(statisticsPath, compareResults.Statistics);
+                File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
             }
 
             new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());

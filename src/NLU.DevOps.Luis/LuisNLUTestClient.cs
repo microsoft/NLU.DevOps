@@ -22,8 +22,6 @@ namespace NLU.DevOps.Luis
     /// </summary>
     public sealed class LuisNLUTestClient : DefaultNLUTestClient
     {
-        private const double Epsilon = 10e-6;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
@@ -75,28 +73,6 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private static JToken GetEntityValue(JToken resolution)
-        {
-            if (resolution == null)
-            {
-                return null;
-            }
-
-            var value = resolution["value"];
-            if (value != null)
-            {
-                return value;
-            }
-
-            var values = resolution["values"];
-            if (values != null)
-            {
-                return values;
-            }
-
-            return resolution;
-        }
-
         private LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
         {
             if (speechLuisResult == null)
@@ -110,7 +86,17 @@ namespace NLU.DevOps.Luis
             Entity getEntity(EntityModel entity)
             {
                 var entityType = entity.Type;
-                if (entityType != null && mappedTypes.TryGetValue(entityType, out var mappedType))
+                var hasRole = false;
+                if (entity.AdditionalProperties != null &&
+                    entity.AdditionalProperties.TryGetValue("role", out var roleValue) &&
+                    roleValue is string role &&
+                    !string.IsNullOrWhiteSpace(role))
+                {
+                    entityType = role;
+                    hasRole = true;
+                }
+
+                if (!hasRole && entityType != null && mappedTypes.TryGetValue(entityType, out var mappedType))
                 {
                     entityType = mappedType;
                 }
@@ -120,19 +106,18 @@ namespace NLU.DevOps.Luis
                     entity.AdditionalProperties.TryGetValue("resolution", out var resolution) &&
                     resolution is JToken resolutionJson)
                 {
-                    entityValue = GetEntityValue(resolutionJson);
+                    entityValue = resolutionJson;
                 }
 
-                var matchText = entity.Entity;
-                var matches = Regex.Matches(speechLuisResult.LuisResult.Query, matchText, RegexOptions.IgnoreCase);
-                var matchIndex = -1;
-                for (var i = 0; i < matches.Count; ++i)
+                var utterance = speechLuisResult.LuisResult.Query;
+                var startIndex = entity.StartIndex;
+                var matchText = utterance.Substring(startIndex, entity.EndIndex - startIndex + 1);
+                var matchIndex = 0;
+                var currentStart = 0;
+                while ((currentStart = utterance.IndexOf(matchText, currentStart, StringComparison.Ordinal)) != startIndex)
                 {
-                    if (matches[i].Index == entity.StartIndex)
-                    {
-                        matchIndex = i;
-                        break;
-                    }
+                    ++matchIndex;
+                    currentStart++;
                 }
 
                 Debug.Assert(matchIndex >= 0, "Invalid LUIS response.");
@@ -145,17 +130,18 @@ namespace NLU.DevOps.Luis
                     entityScore = scoreValue;
                 }
 
-                return entityScore.HasValue
-                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
-                    : new Entity(entityType, entityValue, matchText, matchIndex);
+                return new Entity(entityType, entityValue, matchText, matchIndex)
+                    .WithScore(entityScore);
             }
 
-            var intent = speechLuisResult.LuisResult.TopScoringIntent?.Intent;
-            var score = speechLuisResult.LuisResult.TopScoringIntent?.Score;
-            var entities = speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList();
-            return !score.HasValue && Math.Abs(speechLuisResult.TextScore) < Epsilon
-                ? new LabeledUtterance(speechLuisResult.LuisResult.Query, intent, entities)
-                : new ScoredLabeledUtterance(speechLuisResult.LuisResult.Query, intent, score ?? 0, speechLuisResult.TextScore, entities);
+            return new LabeledUtterance(
+                    speechLuisResult.LuisResult.Query,
+                    speechLuisResult.LuisResult.TopScoringIntent?.Intent,
+                    speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList())
+                .WithProperty("intents", speechLuisResult.LuisResult.Intents)
+                .WithScore(speechLuisResult.LuisResult.TopScoringIntent?.Score)
+                .WithTextScore(speechLuisResult.TextScore)
+                .WithTimestamp(DateTimeOffset.Now);
         }
     }
 }

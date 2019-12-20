@@ -8,12 +8,12 @@
     "intent": "PlayMusic"
   },
   {
-    "text": "listen to hip hop",
+    "text": "listen to country",
     "intent": "PlayMusic",
     "entities": [
       {
         "entityType": "Genre",
-        "matchText": "hip hop",
+        "matchText": "country",
         "matchIndex": 0
       }
     ]
@@ -30,19 +30,21 @@
     ]
   },
   {
-    "text": "play two songs from my playlist",
+    "text": "play five songs from my playlist",
     "intent": "PlayMusic",
     "entities": [
       {
-        "entityType": "number",
-        "matchText": "two",
+        "entityType": "songCount",
+        "matchText": "five",
         "matchIndex": 0,
-        "entityValue": "2"
+        "entityValue": {
+          "value": "5"
+        }
       }
     ]
   },
   {
-    "text": "skip this one",
+    "text": "skip ahead",
     "intent": "Skip"
   },
   {
@@ -62,7 +64,29 @@
     "intent": "None"
   },
   {
-    "text": "what's the weather like",
+    "text": "what is the weather like",
     "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
   }
 ]
