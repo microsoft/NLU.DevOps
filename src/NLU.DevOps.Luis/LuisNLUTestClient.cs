@@ -11,8 +11,10 @@ namespace NLU.DevOps.Luis
     using System.Threading.Tasks;
     using Core;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json.Linq;
+    using NLU.DevOps.Logging;
 
     /// <summary>
     /// Test a LUIS model with text or speech.
@@ -31,6 +33,10 @@ namespace NLU.DevOps.Luis
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
+
         private LuisSettings LuisSettings { get; }
 
         private ILuisTestClient LuisClient { get; }
@@ -40,8 +46,16 @@ namespace NLU.DevOps.Luis
             string utterance,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, null));
+            try
+            {
+                var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
+                return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
+            }
+            catch (APIErrorException ex)
+            {
+                Logger.LogError($"Received error with status code '{ex.Body.StatusCode}' and message '{ex.Body.Message}'.");
+                throw;
+            }
         }
 
         /// <inheritdoc />
