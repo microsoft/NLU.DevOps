@@ -41,13 +41,13 @@ namespace NLU.DevOps.MockProvider
 
         protected override Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
-            var matchedUtterance = this.Utterances.FirstOrDefault(u => u.Text == utterance);
-            return Task.FromResult(matchedUtterance ?? new LabeledUtterance(null, null, null));
+            var matchedUtterance = this.Utterances.FirstOrDefault(u => u.Text == utterance) ?? new LabeledUtterance(null, null, null);
+            return Task.FromResult(matchedUtterance.WithTimestamp(DateTimeOffset.Now));
         }
 
         protected override Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new LabeledUtterance(null, null, null));
         }
 
         protected override void Dispose(bool disposing)

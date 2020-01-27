@@ -204,7 +204,7 @@ namespace NLU.DevOps.Luis.Tests
             luisConfiguration.SpeechEndpoint.Should().Be(
                 new Uri(string.Format(
                     CultureInfo.InvariantCulture,
-                    @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US",
+                    @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed",
                     regionValue)));
         }
 
@@ -225,7 +225,7 @@ namespace NLU.DevOps.Luis.Tests
             luisConfiguration.SpeechEndpoint.Should().Be(
                 new Uri(string.Format(
                     CultureInfo.InvariantCulture,
-                    @"https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language=en-US&?cid={1}",
+                    @"https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language=en-US&cid={1}&format=detailed",
                     regionValue,
                     appId)));
         }
@@ -244,7 +244,7 @@ namespace NLU.DevOps.Luis.Tests
             luisConfiguration.SpeechEndpoint.Should().Be(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US",
+                    @"https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed",
                     speechRegion));
         }
 #if LUIS_V2

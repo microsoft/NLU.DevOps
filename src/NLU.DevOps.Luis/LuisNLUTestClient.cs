@@ -11,8 +11,10 @@ namespace NLU.DevOps.Luis
     using System.Threading.Tasks;
     using Core;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
+    using Microsoft.Extensions.Logging;
     using Models;
     using Newtonsoft.Json.Linq;
+    using NLU.DevOps.Logging;
 
     /// <summary>
     /// Test a LUIS model with text or speech.
@@ -20,8 +22,6 @@ namespace NLU.DevOps.Luis
     /// </summary>
     public sealed class LuisNLUTestClient : DefaultNLUTestClient
     {
-        private const double Epsilon = 10e-6;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
@@ -33,6 +33,10 @@ namespace NLU.DevOps.Luis
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
+        private static ILogger Logger => LazyLogger.Value;
+
+        private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
+
         private LuisSettings LuisSettings { get; }
 
         private ILuisTestClient LuisClient { get; }
@@ -42,8 +46,16 @@ namespace NLU.DevOps.Luis
             string utterance,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
+            try
+            {
+                var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
+                return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
+            }
+            catch (APIErrorException ex)
+            {
+                Logger.LogError($"Received error with status code '{ex.Body.StatusCode}' and message '{ex.Body.Message}'.");
+                throw;
+            }
         }
 
         /// <inheritdoc />
@@ -59,28 +71,6 @@ namespace NLU.DevOps.Luis
         protected override void Dispose(bool disposing)
         {
             this.LuisClient.Dispose();
-        }
-
-        private static JToken GetEntityValue(JToken resolution)
-        {
-            if (resolution == null)
-            {
-                return null;
-            }
-
-            var value = resolution["value"];
-            if (value != null)
-            {
-                return value;
-            }
-
-            var values = resolution["values"];
-            if (values != null)
-            {
-                return values;
-            }
-
-            return resolution;
         }
 
         private LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
@@ -99,7 +89,8 @@ namespace NLU.DevOps.Luis
                 var hasRole = false;
                 if (entity.AdditionalProperties != null &&
                     entity.AdditionalProperties.TryGetValue("role", out var roleValue) &&
-                    roleValue is string role)
+                    roleValue is string role &&
+                    !string.IsNullOrWhiteSpace(role))
                 {
                     entityType = role;
                     hasRole = true;
@@ -115,19 +106,18 @@ namespace NLU.DevOps.Luis
                     entity.AdditionalProperties.TryGetValue("resolution", out var resolution) &&
                     resolution is JToken resolutionJson)
                 {
-                    entityValue = GetEntityValue(resolutionJson);
+                    entityValue = resolutionJson;
                 }
 
-                var matchText = entity.Entity;
-                var matches = Regex.Matches(speechLuisResult.LuisResult.Query, matchText, RegexOptions.IgnoreCase);
-                var matchIndex = -1;
-                for (var i = 0; i < matches.Count; ++i)
+                var utterance = speechLuisResult.LuisResult.Query;
+                var startIndex = entity.StartIndex;
+                var matchText = utterance.Substring(startIndex, entity.EndIndex - startIndex + 1);
+                var matchIndex = 0;
+                var currentStart = 0;
+                while ((currentStart = utterance.IndexOf(matchText, currentStart, StringComparison.Ordinal)) != startIndex)
                 {
-                    if (matches[i].Index == entity.StartIndex)
-                    {
-                        matchIndex = i;
-                        break;
-                    }
+                    ++matchIndex;
+                    currentStart++;
                 }
 
                 Debug.Assert(matchIndex >= 0, "Invalid LUIS response.");
@@ -140,17 +130,18 @@ namespace NLU.DevOps.Luis
                     entityScore = scoreValue;
                 }
 
-                return entityScore.HasValue
-                    ? new ScoredEntity(entityType, entityValue, matchText, matchIndex, entityScore.Value)
-                    : new Entity(entityType, entityValue, matchText, matchIndex);
+                return new Entity(entityType, entityValue, matchText, matchIndex)
+                    .WithScore(entityScore);
             }
 
-            var intent = speechLuisResult.LuisResult.TopScoringIntent?.Intent;
-            var score = speechLuisResult.LuisResult.TopScoringIntent?.Score;
-            var entities = speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList();
-            return !score.HasValue && Math.Abs(speechLuisResult.TextScore) < Epsilon
-                ? new LabeledUtterance(speechLuisResult.LuisResult.Query, intent, entities)
-                : new ScoredLabeledUtterance(speechLuisResult.LuisResult.Query, intent, score ?? 0, speechLuisResult.TextScore, entities);
+            return new LabeledUtterance(
+                    speechLuisResult.LuisResult.Query,
+                    speechLuisResult.LuisResult.TopScoringIntent?.Intent,
+                    speechLuisResult.LuisResult.Entities?.Select(getEntity).ToList())
+                .WithProperty("intents", speechLuisResult.LuisResult.Intents)
+                .WithScore(speechLuisResult.LuisResult.TopScoringIntent?.Score)
+                .WithTextScore(speechLuisResult.TextScore)
+                .WithTimestamp(DateTimeOffset.Now);
         }
     }
 }

@@ -7,12 +7,15 @@ namespace NLU.DevOps.Luis.Tests
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using FluentAssertions;
     using FluentAssertions.Json;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Models;
     using Moq;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
     using NUnit.Framework;
 
     [TestFixture]
@@ -68,6 +71,7 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Should().BeOfType<JsonLabeledUtterance>();
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -114,6 +118,7 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestSpeechAsync(testFile).ConfigureAwait(false);
+                result.Should().BeOfType<JsonLabeledUtterance>();
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -152,8 +157,8 @@ namespace NLU.DevOps.Luis.Tests
                 var result = await luis.TestSpeechAsync(testFile).ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
-                result.As<ScoredLabeledUtterance>().TextScore.Should().Be(0.5);
-                result.As<ScoredLabeledUtterance>().Score.Should().Be(0);
+                result.GetTextScore().Should().Be(0.5);
+                result.GetScore().Should().BeNull();
             }
         }
 
@@ -241,7 +246,7 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType(typeof(Models.LabeledUtterance));
+                result.GetScore().Should().BeNull();
             }
         }
 
@@ -271,8 +276,8 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType(typeof(ScoredLabeledUtterance));
-                result.As<ScoredLabeledUtterance>().Score.Should().Be(0.42);
+                result.Should().BeOfType(typeof(JsonLabeledUtterance));
+                result.GetScore().Should().Be(0.42);
             }
         }
 
@@ -350,8 +355,85 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(1);
-                result.Entities[0].Should().BeOfType(typeof(ScoredEntity));
-                result.Entities[0].As<ScoredEntity>().Score.Should().Be(0.42);
+                result.Entities[0].Should().BeOfType(typeof(JsonEntity));
+                result.Entities[0].GetScore().Should().Be(0.42);
+            }
+        }
+
+        [Test]
+        public static async Task WithMultipleIntents()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<PredictionRequest>(query => query.Query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PredictionResponse
+                {
+                    Query = test,
+                    Prediction = new Prediction
+                    {
+                        TopIntent = "intent",
+                        Intents = new Dictionary<string, Intent>
+                        {
+                            { "intent", new Intent { Score = 0.42 } },
+                            { "foo", new Intent { Score = 0.07 } },
+                        },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Should().BeOfType(typeof(JsonLabeledUtterance));
+                var serializer = JsonSerializer.CreateDefault();
+                serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                var intents = JArray.FromObject(result.GetProperty<object>("intents"), serializer);
+                intents.Count.Should().Be(2);
+                intents[0].Value<string>("intent").Should().Be("intent");
+                intents[0].Value<double>("score").Should().Be(0.42);
+                intents[1].Value<string>("intent").Should().Be("foo");
+                intents[1].Value<double>("score").Should().Be(0.07);
+            }
+        }
+
+        [Test]
+        public static async Task EntityTextDoesNotMatch()
+        {
+            var test = "show me past - due my past-due tasks";
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<PredictionRequest>(query => query.Query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PredictionResponse
+                {
+                    Query = test,
+                    Prediction = new Prediction
+                    {
+                        TopIntent = "intent",
+                        Entities = ToEntityDictionary(new[]
+                        {
+                            new EntityModel
+                            {
+                                Entity = "past - due",
+                                Type = "type",
+                                StartIndex = 22,
+                                EndIndex = 29,
+                            },
+                        }),
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].MatchText.Should().Be("past-due");
+                result.Entities[0].MatchIndex.Should().Be(0);
             }
         }
 

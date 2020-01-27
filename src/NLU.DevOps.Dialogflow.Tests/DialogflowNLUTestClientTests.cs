@@ -7,6 +7,7 @@ namespace NLU.DevOps.Dialogflow.Tests
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
+    using Core;
     using FluentAssertions;
     using FluentAssertions.Json;
     using Google.Cloud.Dialogflow.V2;
@@ -21,6 +22,8 @@ namespace NLU.DevOps.Dialogflow.Tests
     [TestFixture]
     internal static class DialogflowNLUTestClientTests
     {
+        private const double Epsilon = 1e-6;
+
         [Test]
         public static void ThrowsArgumentNull()
         {
@@ -266,6 +269,30 @@ namespace NLU.DevOps.Dialogflow.Tests
             result.Intent.Should().Be(intentName);
         }
 
+        [Test]
+        public static async Task TestSpeechAsyncReturnsScores()
+        {
+            var intentName = Guid.NewGuid().ToString();
+            var client = CreateTestClient(
+                new DetectIntentResponse
+                {
+                    QueryResult = new QueryResult
+                    {
+                        QueryText = string.Empty,
+                        Intent = new Intent { DisplayName = intentName },
+                        SpeechRecognitionConfidence = 0.42f,
+                        IntentDetectionConfidence = 0.5f,
+                    }
+                });
+
+            var speechFile = Path.Combine("Assets", "test.txt");
+            var result = await client.TestSpeechAsync(speechFile).ConfigureAwait(false);
+            result.Intent.Should().Be(intentName);
+            result.Should().BeOfType<JsonLabeledUtterance>();
+            result.GetScore().Should().BeApproximately(0.5, Epsilon);
+            result.GetTextScore().Should().BeApproximately(0.42, Epsilon);
+        }
+
         private static DialogflowNLUTestClient CreateTestClient(DetectIntentResponse response, Action<DetectIntentRequest> callback = null)
         {
             var mockCallInvoker = new Mock<CallInvoker>();
@@ -289,9 +316,9 @@ namespace NLU.DevOps.Dialogflow.Tests
                         callback?.Invoke(request));
 
             var sessionsClient = new SessionsClientBuilder
-                {
-                    CallInvoker = mockCallInvoker.Object
-                }
+            {
+                CallInvoker = mockCallInvoker.Object
+            }
                 .Build();
 
             var configuration = new ConfigurationBuilder()

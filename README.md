@@ -38,6 +38,7 @@ Detailed information on the CLI tool sub-commands and arguments can be found in 
 - [Tearing down an NLU model](docs/Clean.md)
 - [Analyzing NLU model results](docs/Compare.md)
 - [Generic utterances model](docs/GenericUtterances.md)
+- [Extending the generic utterance model](docs/UtteranceExtensions.md)
 - [LUIS model configuration](docs/LuisModelConfiguration.md)
 - [LUIS endpoint configuration](docs/LuisEndpointConfiguration.md)
 - [Lex bot configuration](docs/LexModelConfiguration.md)

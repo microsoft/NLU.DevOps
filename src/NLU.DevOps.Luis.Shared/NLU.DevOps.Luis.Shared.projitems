@@ -15,8 +15,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)LuisTrainClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClient.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ScoredEntity.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ScoredLabeledUtterance.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfiguration.cs" />

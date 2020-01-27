@@ -10,6 +10,7 @@ namespace NLU.DevOps.Lex.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using Amazon.Lex.Model;
+    using Core;
     using FluentAssertions;
     using FluentAssertions.Json;
     using Models;
@@ -87,6 +88,9 @@ namespace NLU.DevOps.Lex.Tests
                 // assert reads content from file (file contents are "hello world")
                 content.Should().Be("hello world");
 
+                // assert result type
+                result.Should().BeOfType<JsonLabeledUtterance>();
+
                 // assert intent and text
                 result.Intent.Should().Be(intent);
                 result.Text.Should().Be(transcript);
@@ -119,6 +123,7 @@ namespace NLU.DevOps.Lex.Tests
             using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
+                response.Should().BeOfType<JsonLabeledUtterance>();
                 response.Text.Should().Be(text);
                 response.Intent.Should().Be(intent);
                 response.Entities.Should().BeEmpty();
