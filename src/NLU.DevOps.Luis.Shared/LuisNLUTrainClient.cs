@@ -97,7 +97,15 @@ namespace NLU.DevOps.Luis
             }
             catch (ErrorResponseException ex)
             {
-                Logger.LogError($"Received error with status code '{ex.Body.Code}' and message '{ex.Body.Message}'.");
+                if (ex.Body == null)
+                {
+                    Logger.LogError($"Received error with message '{ex.Message}'.");
+                }
+                else
+                {
+                    Logger.LogError($"Received error with status code '{ex.Body.Code}' and message '{ex.Body.Message}'.");
+                }
+
                 throw;
             }
         }
@@ -117,7 +125,15 @@ namespace NLU.DevOps.Luis
             }
             catch (ErrorResponseException ex)
             {
-                Logger.LogError($"Received error with status code '{ex.Body.Code}' and message '{ex.Body.Message}'.");
+                if (ex.Body == null)
+                {
+                    Logger.LogError($"Received error with message '{ex.Message}'.");
+                }
+                else
+                {
+                    Logger.LogError($"Received error with status code '{ex.Body.Code}' and message '{ex.Body.Message}'.");
+                }
+
                 throw;
             }
         }

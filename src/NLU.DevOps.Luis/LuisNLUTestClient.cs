@@ -53,7 +53,15 @@ namespace NLU.DevOps.Luis
             }
             catch (APIErrorException ex)
             {
-                Logger.LogError($"Received error with status code '{ex.Body.StatusCode}' and message '{ex.Body.Message}'.");
+                if (ex.Body == null)
+                {
+                    Logger.LogError($"Received error with message '{ex.Message}'.");
+                }
+                else
+                {
+                    Logger.LogError($"Received error with status code '{ex.Body.StatusCode}' and message '{ex.Body.Message}'.");
+                }
+
                 throw;
             }
         }
