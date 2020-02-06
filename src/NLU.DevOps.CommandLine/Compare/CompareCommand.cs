@@ -40,6 +40,8 @@ namespace NLU.DevOps.CommandLine.Compare
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
                 Write(metadataPath, compareResults.TestCases);
                 File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
+
+                Utilities.PrintResults(compareResults.Statistics);
             }
 
             new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
