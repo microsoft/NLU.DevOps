@@ -10,12 +10,12 @@ namespace NLU.DevOps.ModelPerformance.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    internal class UtilitiesTests
+    internal class NLUAccuracyTests
     {
         [Test]
         public void CalculateWithZeroDivisor()
         {
-            var result = Utilities.Calculate(100, 0);
+            var result = NLUAccuracy.Calculate(100, 0);
 
             result.Should().Be(0);
         }
@@ -23,9 +23,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public void CalculateNonZeroDivisor()
         {
-            var result = Utilities.Calculate(20, 40);
+            var result = NLUAccuracy.Calculate(20, 40);
 
-            result.Should().Be(new decimal(0.5));
+            result.Should().Be(0.5);
         }
 
         [Test]
@@ -33,7 +33,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
-            var result = Utilities.CalcPrecision(cm);
+            var result = NLUAccuracy.CalcPrecision(cm);
 
             result.Should().Be(0);
         }
@@ -43,9 +43,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(10, 0, 10, 50);
 
-            var result = Utilities.CalcPrecision(cm);
+            var result = NLUAccuracy.CalcPrecision(cm);
 
-            result.Should().Be(new decimal(0.5));
+            result.Should().Be(0.5);
         }
 
         [Test]
@@ -53,7 +53,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
-            var result = Utilities.CalcRecall(cm);
+            var result = NLUAccuracy.CalcRecall(cm);
 
             result.Should().Be(0);
         }
@@ -63,9 +63,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(10, 0, 10, 40);
 
-            var result = Utilities.CalcRecall(cm);
+            var result = NLUAccuracy.CalcRecall(cm);
 
-            result.Should().Be(new decimal(0.2));
+            result.Should().Be(0.2);
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
-            var result = Utilities.CalcF1(cm);
+            var result = NLUAccuracy.CalcF1(cm);
 
             result.Should().Be(0);
         }
@@ -83,10 +83,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(10, 0, 10, 40);
 
-            var result = Utilities.CalcF1(cm);
-            var roundedResult = decimal.Round(result, 5);
+            var result = NLUAccuracy.CalcF1(cm);
+            var roundedResult = Math.Round(result, 5);
 
-            roundedResult.Should().Be(new decimal(0.28571));
+            roundedResult.Should().Be(0.28571);
         }
     }
 }
