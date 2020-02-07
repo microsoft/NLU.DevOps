@@ -13,27 +13,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
     internal class NLUAccuracyTests
     {
         [Test]
-        public void CalculateWithZeroDivisor()
-        {
-            var result = NLUAccuracy.Calculate(100, 0);
-
-            result.Should().Be(0);
-        }
-
-        [Test]
-        public void CalculateNonZeroDivisor()
-        {
-            var result = NLUAccuracy.Calculate(20, 40);
-
-            result.Should().Be(0.5);
-        }
-
-        [Test]
         public void PrecisionWithAllZeroes()
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
-            var result = NLUAccuracy.CalcPrecision(cm);
+            var result = NLUAccuracy.Precision(cm);
 
             result.Should().Be(0);
         }
@@ -43,7 +27,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(10, 0, 10, 50);
 
-            var result = NLUAccuracy.CalcPrecision(cm);
+            var result = NLUAccuracy.Precision(cm);
 
             result.Should().Be(0.5);
         }
@@ -53,7 +37,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
-            var result = NLUAccuracy.CalcRecall(cm);
+            var result = NLUAccuracy.Recall(cm);
 
             result.Should().Be(0);
         }
@@ -63,7 +47,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(10, 0, 10, 40);
 
-            var result = NLUAccuracy.CalcRecall(cm);
+            var result = NLUAccuracy.Recall(cm);
 
             result.Should().Be(0.2);
         }
@@ -73,7 +57,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
-            var result = NLUAccuracy.CalcF1(cm);
+            var result = NLUAccuracy.F1(cm);
 
             result.Should().Be(0);
         }
@@ -83,7 +67,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             ConfusionMatrix cm = new ConfusionMatrix(10, 0, 10, 40);
 
-            var result = NLUAccuracy.CalcF1(cm);
+            var result = NLUAccuracy.F1(cm);
             var roundedResult = Math.Round(result, 5);
 
             roundedResult.Should().Be(0.28571);

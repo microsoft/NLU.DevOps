@@ -41,7 +41,7 @@ namespace NLU.DevOps.CommandLine.Compare
                 Write(metadataPath, compareResults.TestCases);
                 File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
 
-                Utilities.PrintResults(compareResults.Statistics);
+                compareResults.Statistics.PrintResults();
             }
 
             new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());

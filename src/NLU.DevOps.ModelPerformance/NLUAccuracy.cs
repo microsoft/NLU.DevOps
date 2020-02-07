@@ -3,9 +3,11 @@
 
 namespace NLU.DevOps.ModelPerformance
 {
+    using ConsoleTables;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
     using System.Text;
 
     /// <summary>
@@ -14,25 +16,14 @@ namespace NLU.DevOps.ModelPerformance
     /// </summary>
     public static class NLUAccuracy
     {
-       /// <summary>
-       /// Divides the dividend input by the diviso
-       /// </summary>
-       /// <param name="dividend"> The dividend in the division</param>
-       /// <param name="divisor"> The divisor in the division</param>
-       /// <returns>The division result</returns>
-        public static double Calculate(double dividend, double divisor)
-        {
-            return divisor != 0 ? dividend / divisor : 0;
-        }
-
         /// <summary>
         /// Calculates the precision from a confusion matrix
         /// </summary>
         /// <param name="cm">confusion matrix metrics</param>
         /// <returns>The precision result</returns>
-        public static double CalcPrecision(ConfusionMatrix cm)
+        public static double Precision(this ConfusionMatrix cm)
         {
-            return Calculate(cm.TruePositive, cm.TruePositive + cm.FalsePositive);
+            return Divide(cm.TruePositive, cm.TruePositive + cm.FalsePositive);
         }
 
         /// <summary>
@@ -40,9 +31,9 @@ namespace NLU.DevOps.ModelPerformance
         /// </summary>
         /// <param name="cm"> confusin matrix metrics</param>
         /// <returns> The recall result</returns>
-        public static double CalcRecall(ConfusionMatrix cm)
+        public static double Recall(this ConfusionMatrix cm)
         {
-            return Calculate(cm.TruePositive, cm.TruePositive + cm.FalseNegative);
+            return Divide(cm.TruePositive, cm.TruePositive + cm.FalseNegative);
         }
 
         /// <summary>
@@ -50,10 +41,10 @@ namespace NLU.DevOps.ModelPerformance
         /// </summary>
         /// <param name="cm"> confusion matrix metrics</param>
         /// <returns> the f1 result</returns>
-        public static double CalcF1(ConfusionMatrix cm)
+        public static double F1(ConfusionMatrix cm)
         {
-            var precision = CalcPrecision(cm);
-            var recall = CalcRecall(cm);
+            var precision = cm.Precision();
+            var recall = cm.Recall();
             var denominator = precision + recall;
             return denominator != 0 ? 2 * (precision * recall) / denominator : 0;
         }
@@ -67,9 +58,9 @@ namespace NLU.DevOps.ModelPerformance
         {
             List<double> metrics = new List<double>
             {
-                CalcPrecision(cm),
-                CalcRecall(cm),
-                CalcF1(cm)
+                Precision(cm),
+                Recall(cm),
+                F1(cm)
             };
             return metrics;
         }
@@ -78,41 +69,48 @@ namespace NLU.DevOps.ModelPerformance
         /// Prints to the console the intents and entities performance results in a table
         /// </summary>
         /// <param name="statistics"> The computed data for intents and entities</param>
-        public static void PrintResults(NLUStatistics statistics)
+        public static void PrintResults(this NLUStatistics statistics)
         {
-            Console.WriteLine("== Intents results == ");
-            Console.WriteLine("Intent          | Precision | Recall    | F1        |");
-            Console.WriteLine("=====================================================");
-            Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-15} |", "*"));
+            const int roundingplace = 4;
 
-            List<double> intentsTotalResults = NLUAccuracy.CalcMetrics(statistics.Intent);
-            intentsTotalResults.ForEach(entry => Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-10} |", Math.Round(entry, 4))));
-            Console.WriteLine();
+            Console.WriteLine("== Intents results == ");
+            var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1");
+            var intentsTotalResults = NLUAccuracy.CalcMetrics(statistics.Intent).Select(intent => Math.Round(intent, roundingplace)).ToList();
+            intentTable.AddRow("*", intentsTotalResults[0], intentsTotalResults[1], intentsTotalResults[1]);
 
             foreach (KeyValuePair<string, ConfusionMatrix> kvp in statistics.ByIntent)
             {
-                Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-15} |", kvp.Key));
-                NLUAccuracy.CalcMetrics(kvp.Value).ForEach(intent => Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-10} |", Math.Round(intent, 4))));
-                Console.WriteLine();
+                // Calculating accuracy and rounding up the result values
+                var results = NLUAccuracy.CalcMetrics(kvp.Value).Select(value => value = Math.Round(value, roundingplace)).ToList();
+                intentTable.AddRow(kvp.Key, results[0], results[1], results[2]);
             }
 
+            intentTable.Write();
             Console.WriteLine();
-            Console.WriteLine("== Entity results == ");
-            Console.WriteLine("Entity            | Precision | Recall    | F1        |");
-            Console.WriteLine("=======================================================");
-            Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-17} |", "*"));
 
-            List<double> entityTotalResults = NLUAccuracy.CalcMetrics(statistics.Entity);
-            entityTotalResults.ForEach(entry => Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-10} |", Math.Round(entry, 4))));
-            Console.WriteLine();
+            Console.WriteLine("== Entity results == ");
+            var entityTable = new ConsoleTable("Entity", "Precision", "Recall", "F1");
+            var entityTotalResults = NLUAccuracy.CalcMetrics(statistics.Entity).Select(value => value = Math.Round(value, roundingplace)).ToList();
+            entityTable.AddRow("*", entityTotalResults[0], entityTotalResults[1], entityTotalResults[2]);
 
             foreach (KeyValuePair<string, ConfusionMatrix> kvp in statistics.ByEntityType)
             {
-                Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-17} |", kvp.Key));
-                var entityResults = NLUAccuracy.CalcMetrics(kvp.Value);
-                entityResults.ForEach(entity => Console.Out.Write(string.Format(CultureInfo.InvariantCulture, "{0,-10} |", Math.Round(entity, 4))));
-                Console.WriteLine();
+                var entityResults = NLUAccuracy.CalcMetrics(kvp.Value).Select(value => value = Math.Round(value, roundingplace)).ToList();
+                entityTable.AddRow(kvp.Key, entityResults[0], entityResults[1], entityResults[2]);
             }
+
+            entityTable.Write();
+        }
+
+        /// <summary>
+        /// Divides the dividend input by the divisor
+        /// </summary>
+        /// <param name="dividend"> The dividend in the division</param>
+        /// <param name="divisor"> The divisor in the division</param>
+        /// <returns>The division result</returns>
+        private static double Divide(double dividend, double divisor)
+        {
+            return divisor != 0 ? dividend / divisor : 0;
         }
     }
 }
