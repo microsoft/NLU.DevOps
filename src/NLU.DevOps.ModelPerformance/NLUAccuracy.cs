@@ -3,12 +3,12 @@
 
 namespace NLU.DevOps.ModelPerformance
 {
-    using ConsoleTables;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Text;
+    using ConsoleTables;
 
     /// <summary>
     /// This class contains utils function for performance calculations
@@ -17,50 +17,18 @@ namespace NLU.DevOps.ModelPerformance
     public static class NLUAccuracy
     {
         /// <summary>
-        /// Calculates the precision from a confusion matrix
-        /// </summary>
-        /// <param name="cm">confusion matrix metrics</param>
-        /// <returns>The precision result</returns>
-        public static double Precision(this ConfusionMatrix cm)
-        {
-            return Divide(cm.TruePositive, cm.TruePositive + cm.FalsePositive);
-        }
-
-        /// <summary>
-        ///  Calculates the recall from a confusion matrix
-        /// </summary>
-        /// <param name="cm"> confusin matrix metrics</param>
-        /// <returns> The recall result</returns>
-        public static double Recall(this ConfusionMatrix cm)
-        {
-            return Divide(cm.TruePositive, cm.TruePositive + cm.FalseNegative);
-        }
-
-        /// <summary>
-        /// Calculates the f1 score from a confusion matrix
-        /// </summary>
-        /// <param name="cm"> confusion matrix metrics</param>
-        /// <returns> the f1 result</returns>
-        public static double F1(ConfusionMatrix cm)
-        {
-            var precision = cm.Precision();
-            var recall = cm.Recall();
-            var denominator = precision + recall;
-            return denominator != 0 ? 2 * (precision * recall) / denominator : 0;
-        }
-
-        /// <summary>
         /// Calculates Precision, Recall and F1 Score
         /// </summary>
         /// <param name="cm">confusion matrix metrics</param>
+        /// <param name="roundingplace"> Specifies the number of digits after the decimal point</param>
         /// <returns>List that contains the results calculated</returns>
-        public static List<double> CalcMetrics(ConfusionMatrix cm)
+        public static List<double> CalcAccuracy(this ConfusionMatrix cm, int roundingplace = 4)
         {
-            List<double> metrics = new List<double>
+            var metrics = new List<double>
             {
-                Precision(cm),
-                Recall(cm),
-                F1(cm)
+                Math.Round(cm.Precision(), roundingplace),
+                Math.Round(cm.Recall(), roundingplace),
+                Math.Round(cm.F1(), roundingplace)
             };
             return metrics;
         }
@@ -71,33 +39,32 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="statistics"> The computed data for intents and entities</param>
         public static void PrintResults(this NLUStatistics statistics)
         {
-            const int roundingplace = 4;
-
             Console.WriteLine("== Intents results == ");
             var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1");
-            var intentsTotalResults = NLUAccuracy.CalcMetrics(statistics.Intent).Select(intent => Math.Round(intent, roundingplace)).ToList();
-            intentTable.AddRow("*", intentsTotalResults[0], intentsTotalResults[1], intentsTotalResults[1]);
+            var intentAverageResults = statistics.Intent.CalcAccuracy();
+            intentTable.AddRow("*", intentAverageResults[0], intentAverageResults[1], intentAverageResults[1]);
 
-            foreach (KeyValuePair<string, ConfusionMatrix> kvp in statistics.ByIntent)
+            statistics.ByIntent.ToList().ForEach(kvp =>
             {
-                // Calculating accuracy and rounding up the result values
-                var results = NLUAccuracy.CalcMetrics(kvp.Value).Select(value => value = Math.Round(value, roundingplace)).ToList();
+                // Calculating accuracy numbers and rounding up the result values for each intent
+                var results = kvp.Value.CalcAccuracy();
                 intentTable.AddRow(kvp.Key, results[0], results[1], results[2]);
-            }
+            });
 
             intentTable.Write();
             Console.WriteLine();
 
             Console.WriteLine("== Entity results == ");
             var entityTable = new ConsoleTable("Entity", "Precision", "Recall", "F1");
-            var entityTotalResults = NLUAccuracy.CalcMetrics(statistics.Entity).Select(value => value = Math.Round(value, roundingplace)).ToList();
-            entityTable.AddRow("*", entityTotalResults[0], entityTotalResults[1], entityTotalResults[2]);
+            var entityAverageResults = statistics.Entity.CalcAccuracy();
+            entityTable.AddRow("*", entityAverageResults[0], entityAverageResults[1], entityAverageResults[2]);
 
-            foreach (KeyValuePair<string, ConfusionMatrix> kvp in statistics.ByEntityType)
+            statistics.ByEntityType.ToList().ForEach(kvp =>
             {
-                var entityResults = NLUAccuracy.CalcMetrics(kvp.Value).Select(value => value = Math.Round(value, roundingplace)).ToList();
+                // Calculating accuracy numbers and rounding up the result values for each entity
+                var entityResults = kvp.Value.CalcAccuracy().ToList();
                 entityTable.AddRow(kvp.Key, entityResults[0], entityResults[1], entityResults[2]);
-            }
+            });
 
             entityTable.Write();
         }
@@ -111,6 +78,39 @@ namespace NLU.DevOps.ModelPerformance
         private static double Divide(double dividend, double divisor)
         {
             return divisor != 0 ? dividend / divisor : 0;
+        }
+
+        /// <summary>
+        /// Calculates the precision from a confusion matrix
+        /// </summary>
+        /// <param name="cm">confusion matrix metrics</param>
+        /// <returns>The precision result</returns>
+        private static double Precision(this ConfusionMatrix cm)
+        {
+            return Divide(cm.TruePositive, cm.TruePositive + cm.FalsePositive);
+        }
+
+        /// <summary>
+        ///  Calculates the recall from a confusion matrix
+        /// </summary>
+        /// <param name="cm"> confusin matrix metrics</param>
+        /// <returns> The recall result</returns>
+        private static double Recall(this ConfusionMatrix cm)
+        {
+            return Divide(cm.TruePositive, cm.TruePositive + cm.FalseNegative);
+        }
+
+        /// <summary>
+        /// Calculates the f1 score from a confusion matrix
+        /// </summary>
+        /// <param name="cm"> confusion matrix metrics</param>
+        /// <returns> the f1 result</returns>
+        private static double F1(this ConfusionMatrix cm)
+        {
+            var precision = cm.Precision();
+            var recall = cm.Recall();
+            var denominator = precision + recall;
+            return denominator != 0 ? 2 * (precision * recall) / denominator : 0;
         }
     }
 }
