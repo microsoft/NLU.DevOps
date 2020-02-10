@@ -423,13 +423,13 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         [TestCase("foo", "foo", 1, 0, 0, 0)]
         [TestCase(null, null, 0, 1, 0, 0)]
-        [TestCase(null, "None", 0, 1, 0, 0)]
+        [TestCase(null, "None", 0, 0, 0, 1)]
         [TestCase("None", null, 0, 1, 0, 0)]
         [TestCase(null, "foo", 0, 0, 1, 0)]
-        [TestCase("None", "foo", 0, 0, 1, 0)]
+        [TestCase("None", "foo", 0, 0, 1, 1)]
         [TestCase("foo", "bar", 0, 0, 1, 1)]
         [TestCase("foo", null, 0, 0, 0, 1)]
-        [TestCase("foo", "None", 0, 0, 0, 1)]
+        [TestCase("foo", "None", 0, 0, 1, 1)]
         public static void GetNLUCompareResultsIntentStatistics(
             string expected,
             string actual,
