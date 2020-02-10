@@ -42,7 +42,7 @@ namespace NLU.DevOps.ModelPerformance
             Console.WriteLine("== Intents results == ");
             var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1");
             var intentAverageResults = statistics.Intent.CalcAccuracy();
-            intentTable.AddRow("*", intentAverageResults[0], intentAverageResults[1], intentAverageResults[1]);
+            intentTable.AddRow("*", intentAverageResults[0], intentAverageResults[1], intentAverageResults[2]);
 
             statistics.ByIntent.ToList().ForEach(kvp =>
             {
