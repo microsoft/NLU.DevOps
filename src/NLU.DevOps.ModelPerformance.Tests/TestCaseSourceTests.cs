@@ -41,10 +41,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var actualFalsePositive = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
             var actualFalseNegative = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
             actualFalsePositive.Should().NotBeNull();
-            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveIntentRegex);
             actualFalsePositive.Group.Should().Be(actual);
             actualFalseNegative.Should().NotBeNull();
-            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeIntentRegex);
             actualFalseNegative.Group.Should().Be(expected);
         }
 
@@ -61,14 +61,15 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             var tests = TestCaseSource.ToIntentTestCases(utterances);
 
+            var testList = tests.ToList();
             tests.Count().Should().Be(2);
             var actualFalsePositive = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
             var actualFalseNegative = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
             actualFalsePositive.Should().NotBeNull();
-            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveIntentRegex);
             actualFalsePositive.Group.Should().Be(actual);
             actualFalseNegative.Should().NotBeNull();
-            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeIntentRegex);
             actualFalseNegative.Group.Should().Be(expected);
         }
 
@@ -439,9 +440,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var expectedUtterance = new LabeledUtterance(null, expected, null);
             var actualUtterance = new LabeledUtterance(null, actual, null);
+
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
                 new[] { actualUtterance });
+
             compareResults.Statistics.Intent.TruePositive.Should().Be(truePositive);
             compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
