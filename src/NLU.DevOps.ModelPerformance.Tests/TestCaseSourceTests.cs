@@ -422,13 +422,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
         [Test]
         [TestCase("foo", "foo", 1, 0, 0, 0)]
-        [TestCase(null, null, 0, 1, 0, 0)]
-        [TestCase(null, "None", 0, 0, 0, 1)]
-        [TestCase("None", null, 0, 1, 0, 0)]
-        [TestCase(null, "foo", 0, 0, 1, 0)]
         [TestCase("None", "foo", 0, 0, 1, 1)]
         [TestCase("foo", "bar", 0, 0, 1, 1)]
-        [TestCase("foo", null, 0, 0, 0, 1)]
         [TestCase("foo", "None", 0, 0, 1, 1)]
         public static void GetNLUCompareResultsIntentStatistics(
             string expected,
@@ -449,15 +444,11 @@ namespace NLU.DevOps.ModelPerformance.Tests
             compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
             compareResults.Statistics.Intent.FalseNegative.Should().Be(falseNegative);
-            if (expected != null)
-            {
-                compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
-                compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
-            }
-            else if (actual != null)
-            {
-                compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
-            }
+
+            compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
+            compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
+
         }
 
         [Test]
