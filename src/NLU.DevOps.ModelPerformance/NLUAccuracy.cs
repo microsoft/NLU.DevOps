@@ -39,9 +39,9 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="statistics"> The computed data for intents and entities</param>
         public static void PrintResults(this NLUStatistics statistics)
         {
+            var intentAverageResults = statistics.Intent.CalcAccuracy();
             Console.WriteLine("== Intents results == ");
             var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1");
-            var intentAverageResults = statistics.Intent.CalcAccuracy();
             intentTable.AddRow("*", intentAverageResults[0], intentAverageResults[1], intentAverageResults[2]);
 
             statistics.ByIntent.ToList().ForEach(kvp =>
@@ -52,11 +52,10 @@ namespace NLU.DevOps.ModelPerformance
             });
 
             intentTable.Write();
-            Console.WriteLine();
 
+            var entityAverageResults = statistics.Entity.CalcAccuracy();
             Console.WriteLine("== Entity results == ");
             var entityTable = new ConsoleTable("Entity", "Precision", "Recall", "F1");
-            var entityAverageResults = statistics.Entity.CalcAccuracy();
             entityTable.AddRow("*", entityAverageResults[0], entityAverageResults[1], entityAverageResults[2]);
 
             statistics.ByEntityType.ToList().ForEach(kvp =>
