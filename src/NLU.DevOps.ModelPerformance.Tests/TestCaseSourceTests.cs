@@ -27,31 +27,49 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void TestToIntentTestCaseExpectingNoneActualDayTime()
         {
+            var actual = "DayTime";
+            var expected = "None";
             var utterances = CreatePair(new[]
             {
-                new LabeledUtterance("FOO", "None", null),
-                new LabeledUtterance("FOO", "DayTime", null)
+                new LabeledUtterance("FOO", expected, null),
+                new LabeledUtterance("FOO", actual, null)
             });
 
             var tests = TestCaseSource.ToIntentTestCases(utterances);
-            tests.Count().Should().Be(1);
-            tests.Single().TestName.Should().MatchRegex(FalsePositiveIntentRegex);
-            tests.Single().ResultKind.Should().Be(ConfusionMatrixResultKind.FalsePositive);
+
+            tests.Count().Should().Be(2);
+            var actualFalsePositive = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
+            var actualFalseNegative = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
+            actualFalsePositive.Should().NotBeNull();
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
+            actualFalsePositive.Group.Should().Be(actual);
+            actualFalseNegative.Should().NotBeNull();
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
+            actualFalseNegative.Group.Should().Be(expected);
         }
 
         [Test]
         public static void TestToIntentTestCaseActualNoneExpectingDayTime()
         {
+            var actual = "None";
+            var expected = "Daytime";
             var utterances = CreatePair(new[]
             {
-                new LabeledUtterance("FOO", "DayTime", null),
-                new LabeledUtterance("FOO", "None", null)
+                new LabeledUtterance("FOO", expected, null),
+                new LabeledUtterance("FOO", actual, null)
             });
 
             var tests = TestCaseSource.ToIntentTestCases(utterances);
-            tests.Count().Should().Be(1);
-            tests.Single().TestName.Should().MatchRegex(FalseNegativeIntentRegex);
-            tests.Single().ResultKind.Should().Be(ConfusionMatrixResultKind.FalseNegative);
+
+            tests.Count().Should().Be(2);
+            var actualFalsePositive = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
+            var actualFalseNegative = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
+            actualFalsePositive.Should().NotBeNull();
+            actualFalsePositive.TestName.Should().MatchRegex(FalsePositiveEntityRegex);
+            actualFalsePositive.Group.Should().Be(actual);
+            actualFalseNegative.Should().NotBeNull();
+            actualFalseNegative.TestName.Should().MatchRegex(FalseNegativeEntityRegex);
+            actualFalseNegative.Group.Should().Be(expected);
         }
 
         [Test]
@@ -428,12 +446,12 @@ namespace NLU.DevOps.ModelPerformance.Tests
             compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
             compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
             compareResults.Statistics.Intent.FalseNegative.Should().Be(falseNegative);
-            if (expected != null && expected != "None")
+            if (expected != null)
             {
                 compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
                 compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
             }
-            else if (actual != null && actual != "None")
+            else if (actual != null)
             {
                 compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
             }
