@@ -34,17 +34,18 @@ namespace NLU.DevOps.ModelPerformance
         }
 
         /// <summary>
-        /// Prints to the console the intents and entities performance results in a table
+        /// Prints to the console the intents, entities performance results
+        /// and a confusion table for intents
         /// </summary>
-        /// <param name="statistics"> The computed data for intents and entities</param>
-        public static void PrintResults(this NLUStatistics statistics)
+        /// <param name="compareResults"> The comparison results for intents and entities</param>
+        public static void PrintResults(this NLUCompareResults compareResults)
         {
-            var intentAverageResults = statistics.Intent.CalcAccuracy();
+            var intentAverageResults = compareResults.Statistics.Intent.CalcAccuracy();
             Console.WriteLine("== Intents results == ");
             var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1");
             intentTable.AddRow("*", intentAverageResults[0], intentAverageResults[1], intentAverageResults[2]);
 
-            statistics.ByIntent.ToList().ForEach(kvp =>
+            compareResults.Statistics.ByIntent.ToList().ForEach(kvp =>
             {
                 // Calculating accuracy numbers and rounding up the result values for each intent
                 var results = kvp.Value.CalcAccuracy();
@@ -53,12 +54,12 @@ namespace NLU.DevOps.ModelPerformance
 
             intentTable.Write();
 
-            var entityAverageResults = statistics.Entity.CalcAccuracy();
+            var entityAverageResults = compareResults.Statistics.Entity.CalcAccuracy();
             Console.WriteLine("== Entity results == ");
             var entityTable = new ConsoleTable("Entity", "Precision", "Recall", "F1");
             entityTable.AddRow("*", entityAverageResults[0], entityAverageResults[1], entityAverageResults[2]);
 
-            statistics.ByEntityType.ToList().ForEach(kvp =>
+            compareResults.Statistics.ByEntityType.ToList().ForEach(kvp =>
             {
                 // Calculating accuracy numbers and rounding up the result values for each entity
                 var entityResults = kvp.Value.CalcAccuracy().ToList();
@@ -66,6 +67,8 @@ namespace NLU.DevOps.ModelPerformance
             });
 
             entityTable.Write();
+
+            PrintIntentConfusionTable(compareResults.TestCases);
         }
 
         /// <summary>
@@ -110,6 +113,31 @@ namespace NLU.DevOps.ModelPerformance
             var recall = cm.Recall();
             var denominator = precision + recall;
             return denominator != 0 ? 2 * (precision * recall) / denominator : 0;
+        }
+
+        /// <summary>
+        /// Prints the confusion table for intents
+        /// </summary>
+        /// <param name="testCases"> The calculated metadata results</param>
+        private static void PrintIntentConfusionTable(IReadOnlyList<TestCase> testCases)
+        {
+            var falsePositiveIntents = testCases
+                                       .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent 
+                                                          && testCase.ResultKind == ConfusionMatrixResultKind.FalsePositive)
+                                       .GroupBy(testCase => (testCase.ExpectedUtterance.Intent, testCase.ActualUtterance.Intent))
+                                       .ToDictionary(
+                                           group => group.Key,
+                                           group => group.Count())
+                                       .OrderByDescending(group => group.Value);
+
+            Console.WriteLine("== Intent Confusion Matrix == ");
+            var confusionMatrix = new ConsoleTable("Expected intent", "Actual Intent", "FP");
+            falsePositiveIntents.ToList().ForEach(kvp =>
+            {
+                confusionMatrix.AddRow(kvp.Key.Item1, kvp.Key.Item2, kvp.Value);
+            });
+
+            confusionMatrix.Write();
         }
     }
 }
