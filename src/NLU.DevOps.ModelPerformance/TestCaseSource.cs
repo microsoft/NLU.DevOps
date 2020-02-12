@@ -71,7 +71,7 @@ namespace NLU.DevOps.ModelPerformance
                 return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
 
-            var intents = expectedUtterances.Select(utterance => utterance.Intent).Distinct().ToList();
+            var intents = actualUtterances.Select(utterance => utterance.Intent).Distinct().ToList();
             var zippedUtterances = expectedUtterances
                 .Select((utterance, i) => new { Utterance = utterance, UtteranceId = getUtteranceId(utterance, i) })
                 .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
