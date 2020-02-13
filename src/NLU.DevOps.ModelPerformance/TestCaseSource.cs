@@ -71,12 +71,15 @@ namespace NLU.DevOps.ModelPerformance
                 return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
 
+            var intents = actualUtterances.Select(utterance => utterance.Intent).Distinct().ToList();
             var zippedUtterances = expectedUtterances
                 .Select((utterance, i) => new { Utterance = utterance, UtteranceId = getUtteranceId(utterance, i) })
                 .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
                 .ToList();
 
-            var testCases = zippedUtterances.SelectMany(ToIntentTestCases)
+            var intentTestCases = zippedUtterances.SelectMany(utterance => ToIntentTestCases(utterance, intents));
+
+            var testCases = intentTestCases
                 .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
                 .Concat(zippedUtterances.SelectMany(ToTextTestCases));
 
@@ -152,7 +155,7 @@ namespace NLU.DevOps.ModelPerformance
             }
         }
 
-        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtterancePair pair)
+        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtterancePair pair, List<string> intents)
         {
             var expectedUtterance = pair.Expected;
             var actualUtterance = pair.Actual;
@@ -162,25 +165,9 @@ namespace NLU.DevOps.ModelPerformance
             var expected = expectedUtterance.Intent;
             var actual = actualUtterance.Intent;
 
-            bool isNoneIntent(string intent)
+            if (expected == null || actual == null)
             {
-                return intent == null || intent == "None";
-            }
-
-            if (isNoneIntent(expected) && isNoneIntent(actual))
-            {
-                yield return TrueNegative(
-                    pair.UtteranceId,
-                    ComparisonTargetKind.Intent,
-                    expectedUtterance,
-                    actualUtterance,
-                    score,
-                    null,
-                    new[] { text },
-                    "Both intents are 'None'.",
-                    "Intent");
-
-                yield break;
+                throw new InvalidOperationException("Intent information is missing");
             }
 
             if (expected == actual)
@@ -195,11 +182,9 @@ namespace NLU.DevOps.ModelPerformance
                     new[] { expected, text },
                     "Utterances have matching intent.",
                     "Intent");
-
-                yield break;
             }
 
-            if (!isNoneIntent(expected))
+            if (expected != actual)
             {
                 yield return FalseNegative(
                     pair.UtteranceId,
@@ -211,10 +196,7 @@ namespace NLU.DevOps.ModelPerformance
                     new[] { expected, actual, text },
                     $"Expected intent '{expected}', actual intent '{actual}'.",
                     "Intent");
-            }
 
-            if (!isNoneIntent(actual))
-            {
                 yield return FalsePositive(
                     pair.UtteranceId,
                     ComparisonTargetKind.Intent,
@@ -225,6 +207,23 @@ namespace NLU.DevOps.ModelPerformance
                     new[] { expected, actual, text },
                     $"Expected intent '{expected}', actual intent '{actual}'.",
                     "Intent");
+            }
+
+            foreach (string intent in intents)
+            {
+                if (intent != actual && intent != expected)
+                {
+                    yield return TrueNegative(
+                        pair.UtteranceId,
+                        ComparisonTargetKind.Intent,
+                        expectedUtterance,
+                        actualUtterance,
+                        score,
+                        intent,
+                        new[] { text },
+                        $"The actual and expected are different from '{intent}'.",
+                        "Intent");
+                }
             }
         }
 
