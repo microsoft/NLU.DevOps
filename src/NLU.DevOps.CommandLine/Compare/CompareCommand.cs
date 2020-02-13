@@ -38,8 +38,10 @@ namespace NLU.DevOps.CommandLine.Compare
                 var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
+
                 Write(metadataPath, compareResults.TestCases);
                 File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
+                compareResults.PrintResults();
             }
 
             new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
