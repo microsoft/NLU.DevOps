@@ -76,8 +76,6 @@ namespace NLU.DevOps.ModelPerformance
                 .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
                 .ToList();
 
-            var intentTestCases = zippedUtterances.SelectMany(utterance => ToIntentTestCases(utterance));
-
             var testCases = zippedUtterances.SelectMany(ToIntentTestCases)
                 .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
                 .Concat(zippedUtterances.SelectMany(ToTextTestCases));
