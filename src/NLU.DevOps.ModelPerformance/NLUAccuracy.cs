@@ -75,9 +75,9 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="dividend"> The dividend in the division</param>
         /// <param name="divisor"> The divisor in the division</param>
         /// <returns>The division result</returns>
-        private static double Divide(double dividend, double divisor)
+        private static double Divide(double dividend, int divisor)
         {
-            return Math.Abs(divisor) > double.Epsilon ? dividend / divisor : 0;
+            return divisor != 0 ? dividend / divisor : 0;
         }
 
         /// <summary>
