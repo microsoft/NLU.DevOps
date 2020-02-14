@@ -71,7 +71,7 @@ namespace NLU.DevOps.Luis
                 catch (ErrorException ex)
                 when ((int)ex.Response.StatusCode == 429)
                 {
-                    Logger.LogWarning("Received HTTP 429 result from Cognitive Services. Retrying.");
+                    Logger.LogTrace("Received HTTP 429 result from Cognitive Services. Retrying.");
                     await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }

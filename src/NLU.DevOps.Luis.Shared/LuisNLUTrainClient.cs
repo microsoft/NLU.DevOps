@@ -218,7 +218,7 @@ namespace NLU.DevOps.Luis
                 catch (ErrorResponseException ex)
                 when ((int)ex.Response.StatusCode == 429)
                 {
-                    Logger.LogWarning("Received HTTP 429 result from LUIS. Retrying.");
+                    Logger.LogTrace("Received HTTP 429 result from LUIS. Retrying.");
                     await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
