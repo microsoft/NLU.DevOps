@@ -122,7 +122,7 @@ namespace NLU.DevOps.ModelPerformance
         private static void PrintIntentConfusionTable(IReadOnlyList<TestCase> testCases)
         {
             var falsePositiveIntents = testCases
-                                       .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent 
+                                       .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent
                                                           && testCase.ResultKind == ConfusionMatrixResultKind.FalsePositive)
                                        .GroupBy(testCase => (testCase.ExpectedUtterance.Intent, testCase.ActualUtterance.Intent))
                                        .ToDictionary(

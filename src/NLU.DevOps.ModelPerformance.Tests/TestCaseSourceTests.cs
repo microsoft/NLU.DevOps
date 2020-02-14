@@ -29,13 +29,14 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actual = "DayTime";
             var expected = "None";
+            var intents = new List<string> { actual, expected };
             var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", expected, null),
                 new LabeledUtterance("FOO", actual, null)
             });
 
-            var tests = TestCaseSource.ToIntentTestCases(utterances);
+            var tests = TestCaseSource.ToIntentTestCases(utterances, intents);
 
             tests.Count().Should().Be(2);
             var actualFalsePositive = tests.FirstOrDefault(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
@@ -53,13 +54,14 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var actual = "None";
             var expected = "Daytime";
+            var intents = new List<string> { actual, expected };
             var utterances = CreatePair(new[]
             {
                 new LabeledUtterance("FOO", expected, null),
                 new LabeledUtterance("FOO", actual, null)
             });
 
-            var tests = TestCaseSource.ToIntentTestCases(utterances);
+            var tests = TestCaseSource.ToIntentTestCases(utterances, intents);
 
             var testList = tests.ToList();
             tests.Count().Should().Be(2);
@@ -421,6 +423,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
+        [TestCase(null, null, 0, 1, 0, 0)]
+        [TestCase(null, "foo", 0, 1, 0, 0)]
+        [TestCase("bar", null, 0, 1, 0, 0)]
         [TestCase("foo", "foo", 1, 0, 0, 0)]
         [TestCase("None", "foo", 0, 0, 1, 1)]
         [TestCase("foo", "bar", 0, 0, 1, 1)]
@@ -436,19 +441,27 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var expectedUtterance = new LabeledUtterance(null, expected, null);
             var actualUtterance = new LabeledUtterance(null, actual, null);
 
-            var compareResults = TestCaseSource.GetNLUCompareResults(
+            if (expected == null || actual == null)
+            {
+                Assert.Throws<InvalidOperationException>(() => TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance }));
+            }
+            else
+            {
+                var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
                 new[] { actualUtterance });
 
-            compareResults.Statistics.Intent.TruePositive.Should().Be(truePositive);
-            compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
-            compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
-            compareResults.Statistics.Intent.FalseNegative.Should().Be(falseNegative);
+                compareResults.Statistics.Intent.TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
+                compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
+                compareResults.Statistics.Intent.FalseNegative.Should().Be(falseNegative);
 
-            compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
-            compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
-            compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
-
+                compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
+                compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
+            }
         }
 
         [Test]
