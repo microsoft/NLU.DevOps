@@ -107,7 +107,8 @@ Within an `appsettings.luis.json` file use the following:
 {
   "luisAuthoringKey": "...",
   "luisAuthoringRegion": "westus",
-  "luisAppId": "00000000-0000-0000-0000-000000000000"
+  "luisAppId": "00000000-0000-0000-0000-000000000000",
+  "luisAppCreated": true
 }
 ```
 
@@ -117,6 +118,7 @@ If using environment variables set the values (example shown using Powershell):
 $env:luisAuthoringKey='...'
 $env:luisAuthoringRegion='westus'
 $env:luisAppId='00000000-0000-0000-0000-000000000000'
+$env:luisAppCreated='true'
 ```
 
 Example below uses the export command to create environment variables on a Mac:
@@ -125,9 +127,12 @@ Example below uses the export command to create environment variables on a Mac:
 export luisAuthoringKey='...'
 export luisAuthoringRegion='westus'
 export luisAppId='00000000-0000-0000-0000-000000000000'
+export luisAppCreated='true'
 ```
 
 This will allow you to call the `clean` sub-command for LUIS (see [Tearing down an NLU model](Clean.md) for more details).
+
+If you only wish to delete a specific version trained by NLU.DevOps (see [Configuration for LUIS version](#configuration-for-luis-version)), make sure the [`luisAppCreated`](#luisappcreated) configuration value is not set to `true`.
 
 To simplify the configuration process in continuous integration scenarios, you can use the [`--save-appsettings`](Train.md#-a---save-appsettings) option to save the LUIS app ID generated from a previous call to `train` in a `appsettings.luis.json` file.
 
@@ -136,6 +141,15 @@ Options to consider for tearing down a LUIS model include:
 - [`luisAuthoringKey`](#luisauthoringkey)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisAppId`](#luisappid)
+- [`luisAppCreated`](#luisappcreated)
+
+## Configuration for LUIS version
+
+By default, NLU.DevOps will try to publish your LUIS app using version `"0.1.1"`. There are a few configuration values that can be set to create set a specific LUIS version instead.
+
+If you are publishing a specific version, you can simply set the [`luisVersionId`](#luisversionid) configuration value.
+
+If you are setting up a pipeline for CI/CD in Azure DevOps, you may want to consider using the [`luisVersionPrefix`](#luisversionprefix), which will be prepended to the Azure Pipelines build ID, i.e., `$(luisVersionPrefix).$(Build.BuildId)`.
 
 ## Configuration for Azure resource assignment
 
@@ -212,6 +226,11 @@ Required for `test` and `clean`. Optional for `train`; when supplied, the sub-co
 (Optional) Boolean signaling whether to use the LUIS staging endpoint.
 
 Optional for `train` and `test`. When supplied for `train` as `true`, the CLI tool will publish the model to the staging endpoint. When supplied for `test` as `true`, the CLI tool will make requests against the staging endpoint.
+
+### `luisAppCreated`
+(Optional) Boolean signaling whether the LUIS app was created in the current context.
+
+Optional for `clean`. When supplied as `true`, the CLI tool will delete the LUIS app. Otherwise, when supplied as `false`, the CLI tool will only delete the configured LUIS version.
 
 ### `luisSlotName`
 

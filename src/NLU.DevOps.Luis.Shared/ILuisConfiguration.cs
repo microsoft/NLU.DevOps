@@ -51,6 +51,11 @@ namespace NLU.DevOps.Luis
         bool IsStaging { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the LUIS app was created in the current context.
+        /// </summary>
+        bool AppCreated { get; }
+
+        /// <summary>
         /// Gets the Cognitive Services speech key.
         /// </summary>
         string SpeechKey { get; }

@@ -47,6 +47,8 @@ namespace NLU.DevOps.Luis
         private const string CustomSpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language={1}&cid={2}&format=detailed";
         private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}&format=detailed";
 
+        private static readonly string LuisAppCreatedConfigurationKey = CamelCase(nameof(LuisNLUTrainClient.LuisAppCreated));
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisConfiguration"/> class.
         /// </summary>
@@ -84,6 +86,9 @@ namespace NLU.DevOps.Luis
 
         /// <inheritdoc />
         public bool IsStaging => this.GetConfigurationBoolean(LuisIsStagingConfigurationKey);
+
+        /// <inheritdoc />
+        public bool AppCreated => this.GetConfigurationBoolean(LuisAppCreatedConfigurationKey);
 
         /// <inheritdoc />
         public string SpeechKey => this.EnsureConfigurationString(

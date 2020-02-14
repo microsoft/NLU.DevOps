@@ -9,7 +9,6 @@ namespace NLU.DevOps.Luis
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
-    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Logging;
     using Models;
@@ -35,12 +34,22 @@ namespace NLU.DevOps.Luis
             this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
             this.LuisAppId = luisConfiguration.AppId;
+            this.LuisAppCreated = luisConfiguration.AppCreated;
         }
 
         /// <summary>
         /// Gets the LUIS app ID.
         /// </summary>
         public string LuisAppId { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the app was created.
+        /// </summary>
+        /// <remarks>
+        /// Used by the <see cref="CleanupAsync(CancellationToken)"/> method to
+        /// determine whether the LUIS application should be cleaned up.
+        /// </remarks>
+        public bool LuisAppCreated { get; private set; }
 
         private static ILogger Logger => LazyLogger.Value;
 
@@ -74,6 +83,7 @@ namespace NLU.DevOps.Luis
                 if (this.LuisAppId == null)
                 {
                     this.LuisAppId = await this.LuisClient.CreateAppAsync(this.LuisConfiguration.AppName, cancellationToken).ConfigureAwait(false);
+                    this.LuisAppCreated = true;
                     Logger.LogTrace($"Created LUIS app '{this.LuisConfiguration.AppName}' with ID '{this.LuisConfiguration}'.");
                 }
 
@@ -121,7 +131,9 @@ namespace NLU.DevOps.Luis
                         $"The '{nameof(this.LuisAppId)}' must be set before calling '{nameof(LuisNLUTrainClient.CleanupAsync)}'.");
                 }
 
-                return this.LuisClient.DeleteAppAsync(this.LuisAppId, cancellationToken);
+                return this.LuisAppCreated
+                    ? this.LuisClient.DeleteAppAsync(this.LuisAppId, cancellationToken)
+                    : this.LuisClient.DeleteVersionAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken);
             }
             catch (ErrorResponseException ex)
             {

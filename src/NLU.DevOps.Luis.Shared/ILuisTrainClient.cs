@@ -31,6 +31,15 @@ namespace NLU.DevOps.Luis
         Task DeleteAppAsync(string appId, CancellationToken cancellationToken);
 
         /// <summary>
+        /// Deletes the LUIS app version.
+        /// </summary>
+        /// <returns>Task to await the delete operation.</returns>
+        /// <param name="appId">LUIS app ID.</param>
+        /// <param name="versionId">LUIS version ID.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task DeleteVersionAsync(string appId, string versionId, CancellationToken cancellationToken);
+
+        /// <summary>
         /// Gets the training status for the LUIS app version.
         /// </summary>
         /// <returns>Task to await the training status response.</returns>
