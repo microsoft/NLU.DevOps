@@ -5,9 +5,7 @@ namespace NLU.DevOps.ModelPerformance
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
     using System.Linq;
-    using System.Text;
     using ConsoleTables;
 
     /// <summary>
@@ -79,7 +77,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>The division result</returns>
         private static double Divide(double dividend, double divisor)
         {
-            return divisor != 0 ? dividend / divisor : 0;
+            return Math.Abs(divisor) > double.Epsilon ? dividend / divisor : 0;
         }
 
         /// <summary>
@@ -112,7 +110,7 @@ namespace NLU.DevOps.ModelPerformance
             var precision = cm.Precision();
             var recall = cm.Recall();
             var denominator = precision + recall;
-            return denominator != 0 ? 2 * (precision * recall) / denominator : 0;
+            return Math.Abs(denominator) > double.Epsilon ? 2 * (precision * recall) / denominator : 0;
         }
 
         /// <summary>
@@ -122,7 +120,7 @@ namespace NLU.DevOps.ModelPerformance
         private static void PrintIntentConfusionTable(IReadOnlyList<TestCase> testCases)
         {
             var falsePositiveIntents = testCases
-                                       .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent 
+                                       .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent
                                                           && testCase.ResultKind == ConfusionMatrixResultKind.FalsePositive)
                                        .GroupBy(testCase => (testCase.ExpectedUtterance.Intent, testCase.ActualUtterance.Intent))
                                        .ToDictionary(

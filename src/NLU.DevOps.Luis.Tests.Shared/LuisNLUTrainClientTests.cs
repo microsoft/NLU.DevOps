@@ -222,6 +222,7 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static void TrainingFailedThrowsInvalidOperation()
         {
+            var failureReason = Guid.NewGuid().ToString();
             var builder = new LuisNLUTrainClientBuilder();
             builder.MockLuisTrainClient
                 .Setup(luis => luis.GetTrainingStatusAsync(
@@ -232,14 +233,14 @@ namespace NLU.DevOps.Luis.Tests
                 {
                     new ModelTrainingInfo
                     {
-                        Details = new ModelTrainingDetails { Status = "Fail" }
+                        Details = new ModelTrainingDetails { Status = "Fail", FailureReason = failureReason }
                     }
                 }));
 
             using (var luis = builder.Build())
             {
                 Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>());
-                trainAsync.Should().Throw<InvalidOperationException>();
+                trainAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(failureReason);
             }
         }
 

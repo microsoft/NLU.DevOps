@@ -22,8 +22,6 @@ namespace NLU.DevOps.Dialogflow.Tests
     [TestFixture]
     internal static class DialogflowNLUTestClientTests
     {
-        private const double Epsilon = 1e-6;
-
         [Test]
         public static void ThrowsArgumentNull()
         {
@@ -289,8 +287,8 @@ namespace NLU.DevOps.Dialogflow.Tests
             var result = await client.TestSpeechAsync(speechFile).ConfigureAwait(false);
             result.Intent.Should().Be(intentName);
             result.Should().BeOfType<JsonLabeledUtterance>();
-            result.GetScore().Should().BeApproximately(0.5, Epsilon);
-            result.GetTextScore().Should().BeApproximately(0.42, Epsilon);
+            result.GetScore().Should().BeApproximately(0.5, double.Epsilon);
+            result.GetTextScore().Should().BeApproximately(0.42, double.Epsilon);
         }
 
         private static DialogflowNLUTestClient CreateTestClient(DetectIntentResponse response, Action<DetectIntentRequest> callback = null)

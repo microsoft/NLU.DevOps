@@ -3,17 +3,14 @@
 
 namespace NLU.DevOps.ModelPerformance.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
     using FluentAssertions;
     using NUnit.Framework;
 
     [TestFixture]
-    internal class NLUAccuracyTests
+    internal static class NLUAccuracyTests
     {
         [Test]
-        public void AccuracyWithAllZeroes()
+        public static void AccuracyWithAllZeroes()
         {
             ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
 
@@ -26,7 +23,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
-        public void AccuracyWithValues()
+        public static void AccuracyWithValues()
         {
             ConfusionMatrix cm = new ConfusionMatrix(13, 0, 10, 45);
 
@@ -39,7 +36,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
-        public void AccuracyWithValuesWithdRoundingDecimal()
+        public static void AccuracyWithValuesWithdRoundingDecimal()
         {
             ConfusionMatrix cm = new ConfusionMatrix(13, 0, 10, 45);
 

@@ -12,8 +12,6 @@ namespace NLU.DevOps.Core.Tests
     [TestFixture]
     internal static class LabeledUtterancePropertyExtensionsTests
     {
-        private const double Epsilon = 1e-6;
-
         [Test]
         public static void ThrowsArgumentNull()
         {
@@ -38,7 +36,7 @@ namespace NLU.DevOps.Core.Tests
             var actual = expected.WithScore(0.1);
             actual.Should().BeSameAs(expected);
             expected.AdditionalProperties.ContainsKey("score").Should().BeTrue();
-            expected.AdditionalProperties["score"].As<double>().Should().BeApproximately(0.1, Epsilon);
+            expected.AdditionalProperties["score"].As<double>().Should().BeApproximately(0.1, double.Epsilon);
         }
 
         [Test]
@@ -50,8 +48,8 @@ namespace NLU.DevOps.Core.Tests
                 .WithTimestamp(DateTimeOffset.Now.Date)
                 .WithProperty("foo", new[] { 42 });
             var roundtrip = JToken.FromObject(utterance).ToObject<JsonLabeledUtterance>();
-            roundtrip.GetScore().Should().BeApproximately(utterance.GetScore(), Epsilon);
-            roundtrip.GetTextScore().Should().BeApproximately(utterance.GetTextScore(), Epsilon);
+            roundtrip.GetScore().Should().BeApproximately(utterance.GetScore(), double.Epsilon);
+            roundtrip.GetTextScore().Should().BeApproximately(utterance.GetTextScore(), double.Epsilon);
             roundtrip.GetTimestamp().Should().Be(utterance.GetTimestamp());
             roundtrip.GetProperty<JArray>("foo").Should().BeEquivalentTo(new[] { 42 });
         }
@@ -81,7 +79,7 @@ namespace NLU.DevOps.Core.Tests
             var entity = new Entity(null, null, null, 0)
                 .WithScore(0.42);
             var roundtrip = JToken.FromObject(entity).ToObject<JsonEntity>();
-            roundtrip.GetScore().Should().BeApproximately(entity.GetScore(), Epsilon);
+            roundtrip.GetScore().Should().BeApproximately(entity.GetScore(), double.Epsilon);
         }
     }
 }
