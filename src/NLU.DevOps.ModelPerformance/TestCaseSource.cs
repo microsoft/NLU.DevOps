@@ -71,15 +71,14 @@ namespace NLU.DevOps.ModelPerformance
                 return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
 
-            var intents = actualUtterances.Select(utterance => utterance.Intent).Distinct().ToList();
             var zippedUtterances = expectedUtterances
                 .Select((utterance, i) => new { Utterance = utterance, UtteranceId = getUtteranceId(utterance, i) })
                 .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
                 .ToList();
 
-            var intentTestCases = zippedUtterances.SelectMany(utterance => ToIntentTestCases(utterance, intents));
+            var intentTestCases = zippedUtterances.SelectMany(utterance => ToIntentTestCases(utterance));
 
-            var testCases = intentTestCases
+            var testCases = zippedUtterances.SelectMany(ToIntentTestCases)
                 .Concat(zippedUtterances.SelectMany(ToEntityTestCases))
                 .Concat(zippedUtterances.SelectMany(ToTextTestCases));
 
@@ -155,20 +154,15 @@ namespace NLU.DevOps.ModelPerformance
             }
         }
 
-        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtterancePair pair, List<string> intents)
+        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtterancePair pair)
         {
             var expectedUtterance = pair.Expected;
             var actualUtterance = pair.Actual;
             var score = actualUtterance.GetScore();
 
             var text = expectedUtterance.Text;
-            var expected = expectedUtterance.Intent;
-            var actual = actualUtterance.Intent;
-
-            if (expected == null || actual == null)
-            {
-                throw new InvalidOperationException("Intent information is missing");
-            }
+            var expected = expectedUtterance.Intent ?? "null";
+            var actual = actualUtterance.Intent ?? "null";
 
             if (expected == actual)
             {
@@ -207,23 +201,6 @@ namespace NLU.DevOps.ModelPerformance
                     new[] { expected, actual, text },
                     $"Expected intent '{expected}', actual intent '{actual}'.",
                     "Intent");
-            }
-
-            foreach (string intent in intents)
-            {
-                if (intent != actual && intent != expected)
-                {
-                    yield return TrueNegative(
-                        pair.UtteranceId,
-                        ComparisonTargetKind.Intent,
-                        expectedUtterance,
-                        actualUtterance,
-                        score,
-                        intent,
-                        new[] { text },
-                        $"The actual and expected are different from '{intent}'.",
-                        "Intent");
-                }
             }
         }
 
