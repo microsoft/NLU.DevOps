@@ -175,8 +175,7 @@ namespace NLU.DevOps.ModelPerformance
                     "Utterances have matching intent.",
                     "Intent");
             }
-
-            if (expected != actual)
+            else
             {
                 yield return FalseNegative(
                     pair.UtteranceId,
@@ -206,25 +205,10 @@ namespace NLU.DevOps.ModelPerformance
         {
             var expectedUtterance = pair.Expected;
             var actualUtterance = pair.Actual;
+
             var text = expectedUtterance.Text;
             var expected = expectedUtterance.Entities;
             var actual = actualUtterance.Entities;
-
-            if ((expected == null || expected.Count == 0) && (actual == null || actual.Count == 0))
-            {
-                yield return TrueNegative(
-                    pair.UtteranceId,
-                    ComparisonTargetKind.Entity,
-                    expectedUtterance,
-                    actualUtterance,
-                    0,
-                    null,
-                    new[] { text },
-                    "Neither utterances have entities.",
-                    "Entity");
-
-                yield break;
-            }
 
             bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
             {

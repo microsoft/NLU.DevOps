@@ -459,7 +459,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
         [Test]
         [TestCase("foo", "foo", 1, 0, 0, 0)]
-        [TestCase(null, null, 0, 1, 0, 0)]
+        [TestCase(null, null, 0, 0, 0, 0)]
         [TestCase(null, "foo", 0, 0, 1, 0)]
         [TestCase("foo", "bar", 0, 0, 1, 1)]
         [TestCase("foo", null, 0, 0, 0, 1)]
@@ -629,9 +629,9 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance, expectedUtterance },
                 new[] { actualUtterance, actualUtterance });
-            compareResults.TestCases.Count.Should().Be(4);
-            compareResults.TestCases.Where(t => t.UtteranceId == "0").Count().Should().Be(2);
-            compareResults.TestCases.Where(t => t.UtteranceId == "1").Count().Should().Be(2);
+            compareResults.TestCases.Count.Should().Be(2);
+            compareResults.TestCases.Where(t => t.UtteranceId == "0").Count().Should().Be(1);
+            compareResults.TestCases.Where(t => t.UtteranceId == "1").Count().Should().Be(1);
         }
 
         [Test]
@@ -644,8 +644,8 @@ namespace NLU.DevOps.ModelPerformance.Tests
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
                 new[] { actualUtterance });
-            compareResults.TestCases.Count.Should().Be(2);
-            compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(2);
+            compareResults.TestCases.Count.Should().Be(1);
+            compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(1);
         }
 
         private static List<Entity> CreateEntityList(string type)
