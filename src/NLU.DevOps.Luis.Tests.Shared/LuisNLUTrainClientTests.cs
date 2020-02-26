@@ -5,6 +5,7 @@ namespace NLU.DevOps.Luis.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -171,12 +172,32 @@ namespace NLU.DevOps.Luis.Tests
         [Test]
         public static async Task CleanupModel()
         {
+            var builder = new LuisNLUTrainClientBuilder
+            {
+                AppCreated = true,
+            };
+
+            using (var luis = builder.Build())
+            {
+                await luis.CleanupAsync().ConfigureAwait(false);
+                var deleteAppRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.DeleteAppAsync));
+                var deleteVersionRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.DeleteVersionAsync));
+                deleteAppRequest.Should().NotBeNull();
+                deleteVersionRequest.Should().BeNull();
+            }
+        }
+
+        [Test]
+        public static async Task CleanupModelVersionOnly()
+        {
             var builder = new LuisNLUTrainClientBuilder();
             using (var luis = builder.Build())
             {
                 await luis.CleanupAsync().ConfigureAwait(false);
-                var cleanupRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.DeleteAppAsync));
-                cleanupRequest.Should().NotBeNull();
+                var deleteAppRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.DeleteAppAsync));
+                var deleteVersionRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.DeleteVersionAsync));
+                deleteAppRequest.Should().BeNull();
+                deleteVersionRequest.Should().NotBeNull();
             }
         }
 
@@ -372,6 +393,8 @@ namespace NLU.DevOps.Luis.Tests
 
             public string AppName { get; set; } = "test";
 
+            public bool AppCreated { get; set; } = false;
+
             public Mock<ILuisTrainClient> MockLuisTrainClient { get; } = new Mock<ILuisTrainClient>();
 
             public LuisSettings LuisSettings { get; set; } = new LuisSettings();
@@ -386,6 +409,7 @@ namespace NLU.DevOps.Luis.Tests
                     .AddInMemoryCollection(new Dictionary<string, string>
                     {
                         { "luisAppId", this.AppId },
+                        { "luisAppCreated", this.AppCreated.ToString(CultureInfo.InvariantCulture) },
                         { "luisVersionId", this.AppVersion },
                         { "luisAppName", this.AppName },
                     })

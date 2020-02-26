@@ -59,6 +59,11 @@ namespace NLU.DevOps.Luis
             return this.AuthoringClient.Apps.DeleteAsync(Guid.Parse(appId), cancellationToken: cancellationToken);
         }
 
+        public Task DeleteVersionAsync(string appId, string versionId, CancellationToken cancellationToken)
+        {
+            return this.AuthoringClient.Versions.DeleteAsync(Guid.Parse(appId), versionId, cancellationToken);
+        }
+
         public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
             return this.AuthoringClient.Train.GetStatusAsync(Guid.Parse(appId), versionId, cancellationToken);
