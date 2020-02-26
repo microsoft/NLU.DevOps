@@ -138,7 +138,7 @@ namespace NLU.DevOps.Dialogflow
                 catch (RpcException ex)
                 when (ex.StatusCode == StatusCode.ResourceExhausted)
                 {
-                    Logger.LogWarning("Received HTTP 429 result from Dialogflow. Retrying in 30 seconds.");
+                    Logger.LogTrace("Received HTTP 429 result from Dialogflow. Retrying in 30 seconds.");
                     await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
