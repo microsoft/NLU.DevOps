@@ -386,6 +386,89 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
+        [Test]
+        public static async Task UtteranceWithComplexMLEntity()
+        {
+            var test = "the quick brown fox jumped over the lazy dog";
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<PredictionRequest>(query => query.Query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PredictionResponse
+                {
+                    Query = test,
+                    Prediction = new Prediction
+                    {
+                        TopIntent = "intent",
+                        Entities = new Dictionary<string, object>
+                        {
+                            {
+                                "animal",
+                                new JArray
+                                {
+                                    JObject.FromObject(ToEntityDictionary(new[]
+                                    {
+                                        new EntityModel
+                                        {
+                                            Entity = "brown",
+                                            Type = "color",
+                                            StartIndex = 10,
+                                            EndIndex = 14
+                                        },
+                                        new EntityModel
+                                        {
+                                            Entity = "fox",
+                                            Type = "species",
+                                            StartIndex = 16,
+                                            EndIndex = 18
+                                        },
+                                    })),
+                                }
+                            },
+                            {
+                                "$instance",
+                                new JObject
+                                {
+                                    {
+                                        "animal",
+                                        new JArray
+                                        {
+                                            new JObject
+                                            {
+                                                { "startIndex", 10 },
+                                                { "length", 9 },
+                                            },
+                                        }
+                                    },
+                                }
+                            },
+                        },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Text.Should().Be(test);
+                result.Intent.Should().Be("intent");
+                result.Entities.Count.Should().Be(1);
+                result.Entities[0].EntityType.Should().Be("animal");
+                result.Entities[0].EntityValue.Should().BeNull();
+                result.Entities[0].MatchText.Should().Be("brown fox");
+                result.Entities[0].MatchIndex.Should().Be(0);
+                result.Entities[0].Children.Count.Should().Be(2);
+                result.Entities[0].Children[0].EntityType.Should().Be("color");
+                result.Entities[0].Children[0].EntityValue.Should().BeEquivalentTo(new JValue("brown"));
+                result.Entities[0].Children[0].MatchText.Should().Be("brown");
+                result.Entities[0].Children[0].MatchIndex.Should().Be(0);
+                result.Entities[0].Children[1].EntityType.Should().Be("species");
+                result.Entities[0].Children[1].EntityValue.Should().BeEquivalentTo(new JValue("fox"));
+                result.Entities[0].Children[1].MatchText.Should().Be("fox");
+                result.Entities[0].Children[1].MatchIndex.Should().Be(0);
+            }
+        }
+
         private static IDictionary<string, object> ToEntityDictionary(IEnumerable<EntityModel> entities)
         {
             var result = new Dictionary<string, object>();

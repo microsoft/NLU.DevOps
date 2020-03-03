@@ -236,27 +236,12 @@ namespace NLU.DevOps.ModelPerformance
             var expected = expectedUtterance.Entities;
             var actual = actualUtterance.Entities;
 
-            if ((expected == null || expected.Count == 0) && (actual == null || actual.Count == 0))
-            {
-                yield return TrueNegative(
-                    pair.UtteranceId,
-                    ComparisonTargetKind.Entity,
-                    expectedUtterance,
-                    actualUtterance,
-                    0,
-                    null,
-                    new[] { text },
-                    "Neither utterances have entities.",
-                    "Entity");
-
-                yield break;
-            }
-
             bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
             {
                 return expectedEntity.EntityType == actualEntity.EntityType
                     && (isEntityTextMatch(expectedEntity, actualEntity)
-                    || isEntityValueMatch(expectedEntity, actualEntity));
+                    || isEntityValueMatch(expectedEntity, actualEntity))
+                    && !getResults(expectedEntity.Children, actualEntity.Children).Any(IsFalse);
             }
 
             bool isEntityTextMatch(Entity expectedEntity, Entity actualEntity)
@@ -274,103 +259,124 @@ namespace NLU.DevOps.ModelPerformance
                     || EqualsNormalizedJson(expectedEntity.MatchText, actualEntity.EntityValue));
             }
 
-            if (expected != null)
+            IEnumerable<TestCase> getResults(IReadOnlyList<Entity> expectedEntities, IReadOnlyList<Entity> actualEntities)
             {
-                foreach (var entity in expected)
+                if ((expectedEntities == null || expectedEntities.Count == 0) && (actualEntities == null || actualEntities.Count == 0))
                 {
-                    // "Soft" entity match test cases
-                    var entityValue = entity.MatchText ?? entity.EntityValue;
-                    var formattedEntity = entityValue.ToString(Formatting.None);
-                    var matchedEntity = actual != null
-                        ? actual.FirstOrDefault(actualEntity => isEntityMatch(entity, actualEntity))
-                        : null;
+                    yield return TrueNegative(
+                        pair.UtteranceId,
+                        ComparisonTargetKind.Entity,
+                        expectedUtterance,
+                        actualUtterance,
+                        0,
+                        null,
+                        new[] { text },
+                        "Neither utterances have entities.",
+                        "Entity");
 
-                    var score = matchedEntity.GetScore();
+                    yield break;
+                }
 
-                    if (matchedEntity == null)
+                if (expectedEntities != null)
+                {
+                    foreach (var entity in expectedEntities)
                     {
-                        yield return FalseNegative(
-                            pair.UtteranceId,
-                            ComparisonTargetKind.Entity,
-                            expectedUtterance,
-                            actualUtterance,
-                            score,
-                            entity.EntityType,
-                            new[] { entity.EntityType, formattedEntity, text },
-                            $"Actual utterance does not have entity matching '{entityValue}'.",
-                            "Entity");
-                    }
-                    else
-                    {
-                        yield return TruePositive(
-                            pair.UtteranceId,
-                            ComparisonTargetKind.Entity,
-                            expectedUtterance,
-                            actualUtterance,
-                            score,
-                            entity.EntityType,
-                            new[] { entity.EntityType, formattedEntity, text },
-                            $"Both utterances have entity '{entityValue}'.",
-                            "Entity");
-                    }
+                        // "Soft" entity match test cases
+                        var entityValue = entity.MatchText ?? entity.EntityValue;
+                        var formattedEntity = entityValue.ToString(Formatting.None);
+                        var matchedEntity = actualEntities != null
+                            ? actualEntities.FirstOrDefault(actualEntity => isEntityMatch(entity, actualEntity))
+                            : null;
 
-                    if (matchedEntity != null)
-                    {
-                        if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
+                        var score = matchedEntity.GetScore();
+
+                        if (matchedEntity == null)
                         {
-                            var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
-                            if (!ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
+                            yield return FalseNegative(
+                                pair.UtteranceId,
+                                ComparisonTargetKind.Entity,
+                                expectedUtterance,
+                                actualUtterance,
+                                score,
+                                entity.EntityType,
+                                new[] { entity.EntityType, formattedEntity, text },
+                                $"Actual utterance does not have entity matching '{entityValue}'.",
+                                "Entity");
+                        }
+                        else
+                        {
+                            yield return TruePositive(
+                                pair.UtteranceId,
+                                ComparisonTargetKind.Entity,
+                                expectedUtterance,
+                                actualUtterance,
+                                score,
+                                entity.EntityType,
+                                new[] { entity.EntityType, formattedEntity, text },
+                                $"Both utterances have entity '{entityValue}'.",
+                                "Entity");
+                        }
+
+                        if (matchedEntity != null)
+                        {
+                            if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
                             {
-                                yield return FalseNegative(
-                                    pair.UtteranceId,
-                                    ComparisonTargetKind.EntityValue,
-                                    expectedUtterance,
-                                    actualUtterance,
-                                    score,
-                                    entity.EntityType,
-                                    new[] { entity.EntityType, formattedEntityValue, text },
-                                    $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
-                                    "Entity");
+                                var formattedEntityValue = entity.EntityValue.ToString(Formatting.None);
+                                if (!ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
+                                {
+                                    yield return FalseNegative(
+                                        pair.UtteranceId,
+                                        ComparisonTargetKind.EntityValue,
+                                        expectedUtterance,
+                                        actualUtterance,
+                                        score,
+                                        entity.EntityType,
+                                        new[] { entity.EntityType, formattedEntityValue, text },
+                                        $"Actual utterance does not have entity value matching '{formattedEntityValue}'.",
+                                        "Entity");
+                                }
+                                else
+                                {
+                                    yield return TruePositive(
+                                        pair.UtteranceId,
+                                        ComparisonTargetKind.EntityValue,
+                                        expectedUtterance,
+                                        actualUtterance,
+                                        score,
+                                        entity.EntityType,
+                                        new[] { entity.EntityType, formattedEntityValue, text },
+                                        $"Both utterances have entity value '{formattedEntityValue}'.",
+                                        "Entity");
+                                }
                             }
-                            else
-                            {
-                                yield return TruePositive(
-                                    pair.UtteranceId,
-                                    ComparisonTargetKind.EntityValue,
-                                    expectedUtterance,
-                                    actualUtterance,
-                                    score,
-                                    entity.EntityType,
-                                    new[] { entity.EntityType, formattedEntityValue, text },
-                                    $"Both utterances have entity value '{formattedEntityValue}'.",
-                                    "Entity");
-                            }
+                        }
+                    }
+                }
+
+                if (actualEntities != null)
+                {
+                    foreach (var entity in actualEntities)
+                    {
+                        var score = entity.GetScore();
+                        var entityValue = entity.MatchText ?? entity.EntityValue;
+                        if (expectedEntities == null || !expectedEntities.Any(expectedEntity => isEntityMatch(expectedEntity, entity)))
+                        {
+                            yield return FalsePositive(
+                                pair.UtteranceId,
+                                ComparisonTargetKind.Entity,
+                                expectedUtterance,
+                                actualUtterance,
+                                score,
+                                entity.EntityType,
+                                new[] { entity.EntityType, entityValue.ToString(Formatting.None), text },
+                                $"Expected utterance does not have entity matching '{entityValue}'.",
+                                "Entity");
                         }
                     }
                 }
             }
 
-            if (actual != null)
-            {
-                foreach (var entity in actual)
-                {
-                    var score = entity.GetScore();
-                    var entityValue = entity.MatchText ?? entity.EntityValue;
-                    if (expected == null || !expected.Any(expectedEntity => isEntityMatch(expectedEntity, entity)))
-                    {
-                        yield return FalsePositive(
-                            pair.UtteranceId,
-                            ComparisonTargetKind.Entity,
-                            expectedUtterance,
-                            actualUtterance,
-                            score,
-                            entity.EntityType,
-                            new[] { entity.EntityType, entityValue.ToString(Formatting.None), text },
-                            $"Expected utterance does not have entity matching '{entityValue}'.",
-                            "Entity");
-                    }
-                }
-            }
+            return getResults(expected, actual);
         }
 
         private static TestCaseData ToTestCaseData(this TestCase testCase)

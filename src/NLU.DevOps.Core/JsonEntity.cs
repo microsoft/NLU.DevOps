@@ -20,8 +20,9 @@ namespace NLU.DevOps.Core
         /// <param name="entityValue">Entity value, generally a canonical form of the entity.</param>
         /// <param name="matchText">Matching text in the utterance.</param>
         /// <param name="matchIndex">Occurrence index of matching token in the utterance.</param>
-        public JsonEntity(string entityType, JToken entityValue, string matchText, int matchIndex)
-            : base(entityType, entityValue, matchText, matchIndex)
+        /// <param name="children">Composite entity children.</param>
+        public JsonEntity(string entityType, JToken entityValue, string matchText, int matchIndex, IReadOnlyList<Entity> children)
+            : base(entityType, entityValue, matchText, matchIndex, children)
         {
         }
 
