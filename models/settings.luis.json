@@ -1,40 +1,35 @@
 {
-  "roles": {
-    "songCount": "number"
-  },
-  "appTemplate": {
-    "prebuiltEntities": [
-      {
-        "name": "number",
-        "roles": [
-          "songCount"
-        ]
+  "prebuiltEntities": [
+    {
+      "name": "number",
+      "roles": [
+        "songCount"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "name": "Skip",
+      "inherits": {
+        "domain_name": "Music",
+        "model_name": "SkipForward"
       }
-    ],
-    "intents": [
-      {
-        "name": "Skip",
-        "inherits": {
-          "domain_name": "Music",
-          "model_name": "SkipForward"
-        }
+    }
+  ],
+  "entities": [
+    {
+      "name": "Genre",
+      "inherits": {
+        "domain_name": "Music",
+        "model_name": "Genre"
       }
-    ],
-    "entities": [
-      {
-        "name": "Genre",
-        "inherits": {
-          "domain_name": "Music",
-          "model_name": "Genre"
-        }
-      }
-    ],
-    "utterances": [
-      {
-        "text": "next song",
-        "intent": "Skip",
-        "entities": []
-      }
-    ]
-  }
+    }
+  ],
+  "utterances": [
+    {
+      "text": "next song",
+      "intent": "Skip",
+      "entities": []
+    }
+  ]
 }
