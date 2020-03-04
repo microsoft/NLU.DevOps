@@ -28,14 +28,14 @@ namespace NLU.DevOps.Lex.Tests
         {
             var nullBotName = new Action(() => new LexNLUTrainClient(null, string.Empty, null, default(ILexTrainClient)));
             var nullBotAlias = new Action(() => new LexNLUTrainClient(string.Empty, null, null, default(ILexTrainClient)));
-            var nullLexSettings = new Action(() => new LexNLUTrainClient(string.Empty, string.Empty, null, default(ILexTrainClient)));
-            var nullLexClient = new Action(() => new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), default(ILexTrainClient)));
+            var nullImportBotTemplate = new Action(() => new LexNLUTrainClient(string.Empty, string.Empty, null, default(ILexTrainClient)));
+            var nullLexClient = new Action(() => new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), default(ILexTrainClient)));
             nullBotName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botName");
             nullBotAlias.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botAlias");
-            nullLexSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexSettings");
+            nullImportBotTemplate.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("importBotTemplate");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), new Mock<ILexTrainClient>().Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), new Mock<ILexTrainClient>().Object))
             {
                 var nullUtterances = new Func<Task>(() => lex.TrainAsync(null));
                 var nullUtteranceItem = new Func<Task>(() => lex.TrainAsync(new LabeledUtterance[] { null }));
@@ -50,7 +50,7 @@ namespace NLU.DevOps.Lex.Tests
             var text = "foo";
             var match = "bar";
             var mockClient = CreateLexTrainClientMock();
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), mockClient.Object))
             {
                 var entity = new Entity(null, null, match, 0);
                 var utterance = new LabeledUtterance(text, null, new[] { entity });
@@ -76,8 +76,7 @@ namespace NLU.DevOps.Lex.Tests
                     payload = GetPayloadJson(request.Payload));
 
             var slot = CreateSlot(entityTypeName, entityTypeName);
-            var lexSettings = new LexSettings(new JArray { slot });
-            using (var lex = new LexNLUTrainClient(botName, string.Empty, lexSettings, mockClient.Object))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new JObject(), mockClient.Object))
             {
                 var entity = new Entity(entityTypeName, "Earth", "world", 0);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -128,8 +127,7 @@ namespace NLU.DevOps.Lex.Tests
                     payload = GetPayloadJson(request.Payload));
 
             var slot = CreateSlot(entityTypeName, entityTypeName);
-            var lexSettings = new LexSettings(new JArray { slot });
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient.Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), mockClient.Object))
             {
                 var entity = new Entity(entityTypeName, null, entityMatch, matchIndex);
                 var utterance = new LabeledUtterance(text, intent, new[] { entity });
@@ -167,7 +165,7 @@ namespace NLU.DevOps.Lex.Tests
                 }))
                 .Callback(() => timestamps[count - 1] = DateTimeOffset.Now);
 
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -206,7 +204,7 @@ namespace NLU.DevOps.Lex.Tests
                     FailureReason = failureReason,
                 }));
 
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
 
@@ -225,7 +223,7 @@ namespace NLU.DevOps.Lex.Tests
             mockClient.Setup(client => client.Dispose())
                 .Callback(() => handle.Set());
 
-            var lex = new LexNLUTrainClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object);
+            var lex = new LexNLUTrainClient(string.Empty, string.Empty, new JObject(), mockClient.Object);
             lex.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
@@ -250,7 +248,7 @@ namespace NLU.DevOps.Lex.Tests
                 }))
                 .Callback(() => timestamps[count - 1] = DateTimeOffset.Now);
 
-            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new JObject(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 await lex.TrainAsync(new[] { utterance }).ConfigureAwait(false);
@@ -280,7 +278,7 @@ namespace NLU.DevOps.Lex.Tests
                     Status = ++count < 2 ? Status.NOT_BUILT : new Status(status),
                 }));
 
-            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new JObject(), mockClient.Object))
             {
                 var utterance = new LabeledUtterance(string.Empty, string.Empty, null);
                 var buildFailed = new Func<Task>(() => lex.TrainAsync(new[] { utterance }));
@@ -302,7 +300,7 @@ namespace NLU.DevOps.Lex.Tests
             var botName = Guid.NewGuid().ToString();
             var botAlias = Guid.NewGuid().ToString();
             var mockClient = CreateLexTrainClientMock();
-            using (var lex = new LexNLUTrainClient(botName, botAlias, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(botName, botAlias, new JObject(), mockClient.Object))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
@@ -329,7 +327,7 @@ namespace NLU.DevOps.Lex.Tests
                     It.IsAny<CancellationToken>()))
                 .Throws(new NotFoundException(string.Empty));
 
-            using (var lex = new LexNLUTrainClient(botName, botAlias, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(botName, botAlias, new JObject(), mockClient.Object))
             {
                 await lex.CleanupAsync().ConfigureAwait(false);
                 mockClient.Invocations.Select(i => i.Arguments[0]).OfType<DeleteBotAliasRequest>().Count().Should().Be(1);
@@ -355,7 +353,7 @@ namespace NLU.DevOps.Lex.Tests
                 },
             }));
 
-            using (var lex = new LexNLUTrainClient(botName, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(botName, string.Empty, new JObject(), mockClient.Object))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>()).ConfigureAwait(false);
 
@@ -382,7 +380,7 @@ namespace NLU.DevOps.Lex.Tests
                 },
             }));
 
-            using (var lex = new LexNLUTrainClient(string.Empty, botAlias, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, botAlias, new JObject(), mockClient.Object))
             {
                 await lex.TrainAsync(Array.Empty<LabeledUtterance>()).ConfigureAwait(false);
 
@@ -433,8 +431,7 @@ namespace NLU.DevOps.Lex.Tests
                     (request, cancellationToken) => payload = GetPayloadJson(request.Payload));
 
             var slot = CreateSlot(entityTypeName, Guid.NewGuid().ToString());
-            var lexSettings = new LexSettings(new JArray { slot }, importBotTemplate);
-            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, lexSettings, mockClient.Object))
+            using (var lex = new LexNLUTrainClient(string.Empty, string.Empty, importBotTemplate, mockClient.Object))
             {
                 var text = Guid.NewGuid().ToString();
                 var entity = new Entity(entityTypeName, null, text, 0);

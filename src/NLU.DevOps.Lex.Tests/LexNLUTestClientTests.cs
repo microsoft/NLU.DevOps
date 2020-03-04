@@ -24,16 +24,14 @@ namespace NLU.DevOps.Lex.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            var nullBotName = new Action(() => new LexNLUTestClient(null, string.Empty, null, default(ILexTestClient)));
-            var nullBotAlias = new Action(() => new LexNLUTestClient(string.Empty, null, null, default(ILexTestClient)));
-            var nullLexSettings = new Action(() => new LexNLUTestClient(string.Empty, string.Empty, null, default(ILexTestClient)));
-            var nullLexClient = new Action(() => new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), default(ILexTestClient)));
+            var nullBotName = new Action(() => new LexNLUTestClient(null, string.Empty, default(ILexTestClient)));
+            var nullBotAlias = new Action(() => new LexNLUTestClient(string.Empty, null, default(ILexTestClient)));
+            var nullLexClient = new Action(() => new LexNLUTestClient(string.Empty, string.Empty, default(ILexTestClient)));
             nullBotName.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botName");
             nullBotAlias.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("botAlias");
-            nullLexSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexSettings");
             nullLexClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("lexClient");
 
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), new Mock<ILexTestClient>().Object))
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new Mock<ILexTestClient>().Object))
             {
                 var nullSpeechFile = new Func<Task>(() => lex.TestSpeechAsync(null));
                 var nullTestUtterance = new Func<Task>(() => lex.TestAsync(default(JToken)));
@@ -50,7 +48,7 @@ namespace NLU.DevOps.Lex.Tests
             mockClient.Setup(client => client.Dispose())
                 .Callback(() => handle.Set());
 
-            var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object);
+            var lex = new LexNLUTestClient(string.Empty, string.Empty, mockClient.Object);
             lex.Dispose();
 
             handle.WaitOne(5000).Should().BeTrue();
@@ -79,7 +77,7 @@ namespace NLU.DevOps.Lex.Tests
                 .Callback<PostContentRequest, CancellationToken>(
                     (request, cancellationToken) => content = GetContent(request.InputStream));
 
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, mockClient.Object))
             {
                 // slots response will be null in this first request
                 // using a text file because we don't need to work with real audio
@@ -120,7 +118,7 @@ namespace NLU.DevOps.Lex.Tests
                     It.IsAny<CancellationToken>()))
                 .Returns(() => Task.FromResult(new PostTextResponse { IntentName = intent }));
 
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, mockClient.Object))
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Should().BeOfType<JsonLabeledUtterance>();
@@ -148,7 +146,7 @@ namespace NLU.DevOps.Lex.Tests
                     It.IsAny<CancellationToken>()))
                 .Returns(() => Task.FromResult(new PostTextResponse { Slots = slots }));
 
-            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, new LexSettings(), mockClient.Object))
+            using (var lex = new LexNLUTestClient(string.Empty, string.Empty, mockClient.Object))
             {
                 var response = await lex.TestAsync(text).ConfigureAwait(false);
                 response.Entities[0].EntityType.Should().Be(entityType);

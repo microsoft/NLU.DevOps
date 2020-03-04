@@ -28,16 +28,14 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
-        /// <param name="lexSettings">Lex settings.</param>
         /// <param name="credentials">Credentials.</param>
         /// <param name="regionEndpoint">Region endpoint.</param>
         public LexNLUTestClient(
             string botName,
             string botAlias,
-            LexSettings lexSettings,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, botAlias, lexSettings, new LexTestClient(credentials, regionEndpoint))
+            : this(botName, botAlias, new LexTestClient(credentials, regionEndpoint))
         {
         }
 
@@ -46,17 +44,14 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
-        /// <param name="lexSettings">Lex settings.</param>
         /// <param name="lexClient">Lex client.</param>
         public LexNLUTestClient(
             string botName,
             string botAlias,
-            LexSettings lexSettings,
             ILexTestClient lexClient)
         {
             this.LexBotName = botName ?? throw new ArgumentNullException(nameof(botName));
             this.LexBotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
-            this.LexSettings = lexSettings ?? throw new ArgumentNullException(nameof(lexSettings));
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
 
@@ -67,8 +62,6 @@ namespace NLU.DevOps.Lex
         private string LexBotName { get; }
 
         private string LexBotAlias { get; }
-
-        private LexSettings LexSettings { get; }
 
         private ILexTestClient LexClient { get; }
 
