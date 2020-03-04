@@ -26,4 +26,9 @@
     <ProjectReference Include="..\NLU.DevOps.Models\NLU.DevOps.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Resources\nested.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
