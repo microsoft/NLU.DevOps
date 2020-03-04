@@ -6,6 +6,7 @@ namespace NLU.DevOps.Luis
     using System;
     using System.Composition;
     using System.IO;
+    using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json.Linq;
@@ -25,14 +26,14 @@ namespace NLU.DevOps.Luis
             }
 
             var luisConfiguration = new LuisConfiguration(configuration);
-            var luisSettings = settingsPath != null
-                ? LuisSettings.FromJson(JObject.Parse(File.ReadAllText(settingsPath)))
-                : new LuisSettings();
+            var luisTemplate = settingsPath != null
+                ? JObject.Parse(File.ReadAllText(settingsPath)).ToObject<LuisApp>()
+                : new LuisApp();
 
             var luisClient = new LuisTrainClient(luisConfiguration);
             return new LuisNLUTrainClient(
                 luisConfiguration,
-                luisSettings,
+                luisTemplate,
                 luisClient);
         }
 
@@ -44,13 +45,9 @@ namespace NLU.DevOps.Luis
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            var luisSettings = settingsPath != null
-                ? LuisSettings.FromJson(JObject.Parse(File.ReadAllText(settingsPath)))
-                : new LuisSettings();
-
             var luisConfiguration = new TestLuisConfiguration(configuration);
             var luisClient = new LuisTestClient(luisConfiguration);
-            return new LuisNLUTestClient(luisSettings, luisClient);
+            return new LuisNLUTestClient(luisClient);
         }
     }
 }

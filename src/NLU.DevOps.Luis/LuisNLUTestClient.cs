@@ -25,19 +25,15 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
-        /// <param name="luisSettings">LUIS settings.</param>
         /// <param name="luisClient">LUIS test client.</param>
-        public LuisNLUTestClient(LuisSettings luisSettings, ILuisTestClient luisClient)
+        public LuisNLUTestClient(ILuisTestClient luisClient)
         {
-            this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
-
-        private LuisSettings LuisSettings { get; }
 
         private ILuisTestClient LuisClient { get; }
 
@@ -49,7 +45,7 @@ namespace NLU.DevOps.Luis
             try
             {
                 var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
-                return this.LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
+                return LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
             }
             catch (APIErrorException ex)
             {
@@ -72,7 +68,7 @@ namespace NLU.DevOps.Luis
             CancellationToken cancellationToken)
         {
             var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, cancellationToken).ConfigureAwait(false);
-            return this.LuisResultToLabeledUtterance(luisResult);
+            return LuisResultToLabeledUtterance(luisResult);
         }
 
         /// <inheritdoc />
@@ -81,32 +77,22 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
+        private static LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
         {
             if (speechLuisResult == null)
             {
                 return new LabeledUtterance(null, null, null);
             }
 
-            var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
-                .ToDictionary(pair => $"builtin.{pair.Value}", pair => pair.Key);
-
             Entity getEntity(EntityModel entity)
             {
                 var entityType = entity.Type;
-                var hasRole = false;
                 if (entity.AdditionalProperties != null &&
                     entity.AdditionalProperties.TryGetValue("role", out var roleValue) &&
                     roleValue is string role &&
                     !string.IsNullOrWhiteSpace(role))
                 {
                     entityType = role;
-                    hasRole = true;
-                }
-
-                if (!hasRole && entityType != null && mappedTypes.TryGetValue(entityType, out var mappedType))
-                {
-                    entityType = mappedType;
                 }
 
                 var entityValue = default(JToken);

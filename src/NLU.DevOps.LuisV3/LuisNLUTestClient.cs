@@ -24,19 +24,15 @@ namespace NLU.DevOps.Luis
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
-        /// <param name="luisSettings">LUIS settings.</param>
         /// <param name="luisClient">LUIS client.</param>
-        public LuisNLUTestClient(LuisSettings luisSettings, ILuisTestClient luisClient)
+        public LuisNLUTestClient(ILuisTestClient luisClient)
         {
-            this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
 
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
-
-        private LuisSettings LuisSettings { get; }
 
         private ILuisTestClient LuisClient { get; }
 
@@ -99,7 +95,7 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private static IEnumerable<Entity> GetEntities(string utterance, IDictionary<string, object> entities, IDictionary<string, string> mappedTypes)
+        private static IEnumerable<Entity> GetEntities(string utterance, IDictionary<string, object> entities)
         {
             if (entities == null)
             {
@@ -121,14 +117,7 @@ namespace NLU.DevOps.Luis
                 }
 
                 var entityValue = PruneMetadata(entityJson);
-
-                var modifiedEntityType = entityType;
-                if (mappedTypes.TryGetValue(entityType, out var mappedEntityType))
-                {
-                    modifiedEntityType = mappedEntityType;
-                }
-
-                return new Entity(modifiedEntityType, entityValue, matchText, matchIndex)
+                return new Entity(entityType, entityValue, matchText, matchIndex)
                     .WithScore(score);
             }
 
@@ -184,14 +173,10 @@ namespace NLU.DevOps.Luis
                 return new LabeledUtterance(null, null, null);
             }
 
-            var mappedTypes = this.LuisSettings.PrebuiltEntityTypes
-                .ToDictionary(pair => $"builtin.{pair.Value}", pair => pair.Key);
-
             var query = speechPredictionResponse.PredictionResponse.Query;
             var entities = GetEntities(
                     query,
-                    speechPredictionResponse.PredictionResponse.Prediction.Entities,
-                    mappedTypes)?
+                    speechPredictionResponse.PredictionResponse.Prediction.Entities)?
                 .ToList();
 
             var intent = speechPredictionResponse.PredictionResponse.Prediction.TopIntent;

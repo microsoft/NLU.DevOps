@@ -26,12 +26,12 @@ namespace NLU.DevOps.Luis
         /// Initializes a new instance of the <see cref="LuisNLUTrainClient"/> class.
         /// </summary>
         /// <param name="luisConfiguration">LUIS configuration.</param>
-        /// <param name="luisSettings">LUIS settings.</param>
+        /// <param name="luisTemplate">LUIS app template.</param>
         /// <param name="luisClient">LUIS client.</param>
-        public LuisNLUTrainClient(ILuisConfiguration luisConfiguration, LuisSettings luisSettings, ILuisTrainClient luisClient)
+        public LuisNLUTrainClient(ILuisConfiguration luisConfiguration, LuisApp luisTemplate, ILuisTrainClient luisClient)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
-            this.LuisSettings = luisSettings ?? throw new ArgumentNullException(nameof(luisSettings));
+            this.LuisTemplate = luisTemplate ?? throw new ArgumentNullException(nameof(luisTemplate));
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
             this.LuisAppId = luisConfiguration.AppId;
             this.LuisAppCreated = luisConfiguration.AppCreated;
@@ -57,7 +57,7 @@ namespace NLU.DevOps.Luis
 
         private ILuisConfiguration LuisConfiguration { get; }
 
-        private LuisSettings LuisSettings { get; }
+        private LuisApp LuisTemplate { get; }
 
         private ILuisTrainClient LuisClient { get; }
 
@@ -174,7 +174,7 @@ namespace NLU.DevOps.Luis
             // Add utterances to model
             luisApp.Utterances = luisApp.Utterances ?? new List<JSONUtterance>();
             utterances
-                .Select(utterance => utterance.ToJSONUtterance(this.LuisSettings))
+                .Select(utterance => utterance.ToJSONUtterance(luisApp))
                 .ToList()
                 .ForEach(luisApp.Utterances.Add);
 
@@ -199,7 +199,7 @@ namespace NLU.DevOps.Luis
                 patterns: new List<PatternRule>());
 
             var templateJson = JObject.FromObject(defaultTemplate);
-            templateJson.Merge(JObject.FromObject(this.LuisSettings.AppTemplate));
+            templateJson.Merge(JObject.FromObject(this.LuisTemplate));
             return templateJson.ToObject<LuisApp>();
         }
 
