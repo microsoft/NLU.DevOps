@@ -404,26 +404,52 @@ namespace NLU.DevOps.Luis.Tests
                         Entities = new Dictionary<string, object>
                         {
                             {
-                                "animal",
+                                "phrase",
                                 new JArray
                                 {
-                                    JObject.FromObject(ToEntityDictionary(new[]
+                                    new JObject
                                     {
-                                        new EntityModel
                                         {
-                                            Entity = "brown",
-                                            Type = "color",
-                                            StartIndex = 10,
-                                            EndIndex = 14
+                                            "animal",
+                                            new JArray
+                                            {
+                                                JObject.FromObject(ToEntityDictionary(new[]
+                                                {
+                                                    new EntityModel
+                                                    {
+                                                        Entity = "brown",
+                                                        Type = "color",
+                                                        StartIndex = 10,
+                                                        EndIndex = 14
+                                                    },
+                                                    new EntityModel
+                                                    {
+                                                        Entity = "fox",
+                                                        Type = "species",
+                                                        StartIndex = 16,
+                                                        EndIndex = 18
+                                                    },
+                                                })),
+                                            }
                                         },
-                                        new EntityModel
                                         {
-                                            Entity = "fox",
-                                            Type = "species",
-                                            StartIndex = 16,
-                                            EndIndex = 18
+                                            "$instance",
+                                            new JObject
+                                            {
+                                                {
+                                                    "animal",
+                                                    new JArray
+                                                    {
+                                                        new JObject
+                                                        {
+                                                            { "startIndex", 10 },
+                                                            { "length", 9 },
+                                                        },
+                                                    }
+                                                },
+                                            }
                                         },
-                                    })),
+                                    },
                                 }
                             },
                             {
@@ -431,13 +457,13 @@ namespace NLU.DevOps.Luis.Tests
                                 new JObject
                                 {
                                     {
-                                        "animal",
+                                        "phrase",
                                         new JArray
                                         {
                                             new JObject
                                             {
-                                                { "startIndex", 10 },
-                                                { "length", 9 },
+                                                { "startIndex", 4 },
+                                                { "length", 15 },
                                             },
                                         }
                                     },
@@ -452,20 +478,23 @@ namespace NLU.DevOps.Luis.Tests
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
-                result.Entities.Count.Should().Be(1);
-                result.Entities[0].EntityType.Should().Be("animal");
-                result.Entities[0].EntityValue.Should().BeNull();
-                result.Entities[0].MatchText.Should().Be("brown fox");
+                result.Entities.Count.Should().Be(4);
+                result.Entities[0].EntityType.Should().Be("color");
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("brown"));
+                result.Entities[0].MatchText.Should().Be("brown");
                 result.Entities[0].MatchIndex.Should().Be(0);
-                result.Entities[0].Children.Count.Should().Be(2);
-                result.Entities[0].Children[0].EntityType.Should().Be("color");
-                result.Entities[0].Children[0].EntityValue.Should().BeEquivalentTo(new JValue("brown"));
-                result.Entities[0].Children[0].MatchText.Should().Be("brown");
-                result.Entities[0].Children[0].MatchIndex.Should().Be(0);
-                result.Entities[0].Children[1].EntityType.Should().Be("species");
-                result.Entities[0].Children[1].EntityValue.Should().BeEquivalentTo(new JValue("fox"));
-                result.Entities[0].Children[1].MatchText.Should().Be("fox");
-                result.Entities[0].Children[1].MatchIndex.Should().Be(0);
+                result.Entities[1].EntityType.Should().Be("species");
+                result.Entities[1].EntityValue.Should().BeEquivalentTo(new JValue("fox"));
+                result.Entities[1].MatchText.Should().Be("fox");
+                result.Entities[1].MatchIndex.Should().Be(0);
+                result.Entities[2].EntityType.Should().Be("animal");
+                result.Entities[2].EntityValue.Should().BeEquivalentTo(JObject.Parse(@"{ ""color"": [ ""brown"" ], ""species"": [ ""fox"" ] }"));
+                result.Entities[2].MatchText.Should().Be("brown fox");
+                result.Entities[2].MatchIndex.Should().Be(0);
+                result.Entities[3].EntityType.Should().Be("phrase");
+                result.Entities[3].EntityValue.Should().BeEquivalentTo(JObject.Parse(@"{ ""animal"": [ { ""color"": [ ""brown"" ], ""species"": [ ""fox"" ] } ] }"));
+                result.Entities[3].MatchText.Should().Be("quick brown fox");
+                result.Entities[3].MatchIndex.Should().Be(0);
             }
         }
 

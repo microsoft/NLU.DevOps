@@ -34,7 +34,7 @@ namespace NLU.DevOps.Core.Tests
         [Test]
         public static void DoesNotCreateNewInstance()
         {
-            var expected = new JsonEntity(string.Empty, null, string.Empty, 0, null);
+            var expected = new JsonEntity(string.Empty, null, string.Empty, 0);
             var actual = expected.WithScore(0.1);
             actual.Should().BeSameAs(expected);
             expected.AdditionalProperties.ContainsKey("score").Should().BeTrue();

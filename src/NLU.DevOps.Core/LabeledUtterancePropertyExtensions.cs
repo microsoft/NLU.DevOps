@@ -179,7 +179,7 @@ namespace NLU.DevOps.Core
         {
             return entity is JsonEntity jsonEntity
                 ? jsonEntity
-                : new JsonEntity(entity.EntityType, entity.EntityValue, entity.MatchText, entity.MatchIndex, entity.Children);
+                : new JsonEntity(entity.EntityType, entity.EntityValue, entity.MatchText, entity.MatchIndex);
         }
 
         private static T GetPropertyCore<T>(this object instance, string propertyName)

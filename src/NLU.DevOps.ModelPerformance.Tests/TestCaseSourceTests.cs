@@ -630,53 +630,6 @@ namespace NLU.DevOps.ModelPerformance.Tests
             compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(2);
         }
 
-        [Test]
-        public static void EntityWithFalsePositiveChildEntities()
-        {
-            var childEntity1 = new Entity("bar", null, "hello", 0);
-            var childEntity2 = new Entity("bar", null, "world", 0);
-            var expectedEntity = new Entity("foo", null, "hello world", 0, new[] { childEntity1 });
-            var actualEntity = new Entity("foo", null, "hello world", 0, new[] { childEntity1, childEntity2 });
-            var utterances = CreatePair(
-                new LabeledUtterance("hello world", null, new[] { expectedEntity }),
-                new LabeledUtterance("hello world", null, new[] { actualEntity }));
-            var testCases = TestCaseSource.ToEntityTestCases(utterances);
-            testCases.Count().Should().Be(2);
-            testCases.Should().Contain(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
-            testCases.Should().Contain(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
-        }
-
-        [Test]
-        public static void EntityWithFalseNegativeChildEntities()
-        {
-            var childEntity1 = new Entity("bar", null, "hello", 0);
-            var childEntity2 = new Entity("bar", null, "world", 0);
-            var expectedEntity = new Entity("foo", null, "hello world", 0, new[] { childEntity1, childEntity2 });
-            var actualEntity = new Entity("foo", null, "hello world", 0, new[] { childEntity2 });
-            var utterances = CreatePair(
-                new LabeledUtterance("hello world", null, new[] { expectedEntity }),
-                new LabeledUtterance("hello world", null, new[] { actualEntity }));
-            var testCases = TestCaseSource.ToEntityTestCases(utterances);
-            testCases.Count().Should().Be(2);
-            testCases.Should().Contain(t => t.ResultKind == ConfusionMatrixResultKind.FalsePositive);
-            testCases.Should().Contain(t => t.ResultKind == ConfusionMatrixResultKind.FalseNegative);
-        }
-
-        [Test]
-        public static void EntityWithMatchingChildEntities()
-        {
-            var childEntity1 = new Entity("bar", null, "hello", 0);
-            var childEntity2 = new Entity("bar", null, "world", 0);
-            var expectedEntity = new Entity("foo", null, "hello world", 0, new[] { childEntity2, childEntity1 });
-            var actualEntity = new Entity("foo", null, "hello world", 0, new[] { childEntity1, childEntity2 });
-            var utterances = CreatePair(
-                new LabeledUtterance("hello world", null, new[] { expectedEntity }),
-                new LabeledUtterance("hello world", null, new[] { actualEntity }));
-            var testCases = TestCaseSource.ToEntityTestCases(utterances);
-            testCases.Count().Should().Be(1);
-            testCases.Should().Contain(t => t.ResultKind == ConfusionMatrixResultKind.TruePositive);
-        }
-
         private static List<Entity> CreateEntityList(string type)
         {
             return new List<Entity> { new Entity(type, "EntityValue", "matchedText", 1) };
