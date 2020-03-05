@@ -25,5 +25,8 @@ namespace NLU.DevOps.CommandLine.Compare
 
         [Option("strict", HelpText = "Return false positive results for all unexpected entities.", Required = false)]
         public bool Strict { get; set; }
+
+        [Option('n', "true-negative-intent", HelpText = "Specifies the name of the intent that used for true negatives.", Required = false)]
+        public string TrueNegativeIntent { get; set; }
     }
 }

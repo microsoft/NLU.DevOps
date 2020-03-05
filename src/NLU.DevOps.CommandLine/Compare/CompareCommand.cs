@@ -24,7 +24,8 @@ namespace NLU.DevOps.CommandLine.Compare
                 (ConfigurationConstants.ExpectedUtterancesPathKey, options.ExpectedUtterancesPath),
                 (ConfigurationConstants.ActualUtterancesPathKey, options.ActualUtterancesPath),
                 (ConfigurationConstants.TestLabelKey, options.TestLabel),
-                (ConfigurationConstants.StrictKey, options.Strict.ToString(CultureInfo.InvariantCulture)));
+                (ConfigurationConstants.StrictKey, options.Strict.ToString(CultureInfo.InvariantCulture)),
+                (ConfigurationConstants.TrueNegativeIntentKey, options.TrueNegativeIntent));
 
             var arguments = new List<string> { $"-p:{parameters}" };
             if (options.OutputFolder != null)
@@ -34,9 +35,15 @@ namespace NLU.DevOps.CommandLine.Compare
 
             if (options.Metadata)
             {
+                var testOptions = new TestOptions
+                {
+                    Strict = options.Strict,
+                    TrueNegativeIntent = options.TrueNegativeIntent,
+                };
+
                 var expectedUtterances = Read<List<JsonLabeledUtterance>>(options.ExpectedUtterancesPath);
                 var actualUtterances = Read<List<JsonLabeledUtterance>>(options.ActualUtterancesPath);
-                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, options.Strict);
+                var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, testOptions);
                 var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
                 var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
 

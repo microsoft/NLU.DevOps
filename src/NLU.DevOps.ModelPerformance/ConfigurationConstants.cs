@@ -27,5 +27,10 @@ namespace NLU.DevOps.ModelPerformance
         /// The test label key.
         /// </summary>
         public const string TestLabelKey = "testLabel";
+
+        /// <summary>
+        /// The intent name used for true negative results.
+        /// </summary>
+        public const string TrueNegativeIntentKey = "trueNegativeIntent";
     }
 }
