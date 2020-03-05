@@ -43,28 +43,28 @@ namespace NLU.DevOps.Luis
             }
 
             // Search for any entity type with given name as role
-            var entity = luisApp.Entities.FirstOrDefault(e => e.Roles.Contains(role));
+            var entity = luisApp.Entities.FirstOrDefault(e => e.Roles?.Contains(role) ?? false);
             if (entity != null)
             {
                 entityType = entity.Name;
                 return true;
             }
 
-            var prebuiltEntity = luisApp.PrebuiltEntities.FirstOrDefault(e => e.Roles.Contains(role));
+            var prebuiltEntity = luisApp.PrebuiltEntities.FirstOrDefault(e => e.Roles?.Contains(role) ?? false);
             if (prebuiltEntity != null)
             {
                 entityType = prebuiltEntity.Name;
                 return true;
             }
 
-            var regexEntity = luisApp.RegexEntities.FirstOrDefault(e => e.Roles.Contains(role));
+            var regexEntity = luisApp.RegexEntities.FirstOrDefault(e => e.Roles?.Contains(role) ?? false);
             if (regexEntity != null)
             {
                 entityType = regexEntity.Name;
                 return true;
             }
 
-            var patternAnyEntity = luisApp.PatternAnyEntities.FirstOrDefault(e => e.Roles.Contains(role));
+            var patternAnyEntity = luisApp.PatternAnyEntities.FirstOrDefault(e => e.Roles?.Contains(role) ?? false);
             if (patternAnyEntity != null)
             {
                 entityType = patternAnyEntity.Name;
