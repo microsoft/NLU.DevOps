@@ -29,11 +29,11 @@ namespace NLU.DevOps.Luis.Tests
         {
             var luisTrainClient = new Mock<ILuisTrainClient>().Object;
             var luisConfiguration = new LuisConfiguration(new ConfigurationBuilder().Build());
-            Action nullLuisConfiguration = () => new LuisNLUTrainClient(null, new LuisSettings(), luisTrainClient);
-            Action nullLuisSettings = () => new LuisNLUTrainClient(luisConfiguration, null, luisTrainClient);
-            Action nullLuisClient = () => new LuisNLUTrainClient(luisConfiguration, new LuisSettings(), null);
+            Action nullLuisConfiguration = () => new LuisNLUTrainClient(null, new LuisApp(), luisTrainClient);
+            Action nullLuisTemplate = () => new LuisNLUTrainClient(luisConfiguration, null, luisTrainClient);
+            Action nullLuisClient = () => new LuisNLUTrainClient(luisConfiguration, new LuisApp(), null);
             nullLuisConfiguration.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisConfiguration");
-            nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
+            nullLuisTemplate.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisTemplate");
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
             using (var luis = new LuisNLUTrainClientBuilder().Build())
@@ -306,7 +306,7 @@ namespace NLU.DevOps.Luis.Tests
             };
 
             var builder = new LuisNLUTrainClientBuilder();
-            builder.LuisSettings = new LuisSettings(appTemplate);
+            builder.LuisTemplate = appTemplate;
             using (var luis = builder.Build())
             {
                 var utterance = new Models.LabeledUtterance(null, intentName, null);
@@ -323,53 +323,27 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
-        public static async Task TagsPrebuiltEntityWithReplacementName()
-        {
-            var text = Guid.NewGuid().ToString();
-            var entityTypeName1 = Guid.NewGuid().ToString();
-            var entityTypeName2 = Guid.NewGuid().ToString();
-            var prebuiltEntityTypes = new Dictionary<string, string>
-            {
-                { entityTypeName1, entityTypeName2 },
-            };
-
-            var builder = new LuisNLUTrainClientBuilder();
-            builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
-            using (var luis = builder.Build())
-            {
-                var entity1 = new Entity(entityTypeName1, null, text, 0);
-                var entity2 = new Entity(entityTypeName2, null, text, 0);
-                var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
-                await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
-
-                // Ensure LUIS app intent still has role
-                var importRequest = builder.MockLuisTrainClient.Invocations.FirstOrDefault(request => request.Method.Name == nameof(ILuisTrainClient.ImportVersionAsync));
-                importRequest.Should().NotBeNull();
-                var luisApp = importRequest.Arguments[2].As<LuisApp>();
-                luisApp.Utterances.Should().Contain(u => u.Text == text);
-                luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(2);
-                luisApp.Utterances.First(u => u.Text == text).Entities[0].Entity.Should().Be(entityTypeName2);
-                luisApp.Utterances.First(u => u.Text == text).Entities[1].Entity.Should().Be(entityTypeName2);
-            }
-        }
-
-        [Test]
         public static async Task AddsRoleToEntities()
         {
             var text = Guid.NewGuid().ToString();
-            var entityTypeName1 = Guid.NewGuid().ToString();
-            var entityTypeName2 = Guid.NewGuid().ToString();
-            var roles = new Dictionary<string, string>
-            {
-                { entityTypeName1, entityTypeName2 },
-            };
 
             var builder = new LuisNLUTrainClientBuilder();
-            builder.LuisSettings = new LuisSettings(null, null, roles);
+            builder.LuisTemplate = new LuisApp
+            {
+                PrebuiltEntities = new[]
+                {
+                    new PrebuiltEntity
+                    {
+                        Name = "number",
+                        Roles = new[] { "count" },
+                    }
+                },
+            };
+
             using (var luis = builder.Build())
             {
-                var entity1 = new Entity(entityTypeName1, null, text, 0);
-                var entity2 = new Entity(entityTypeName2, null, text, 0);
+                var entity1 = new Entity("number", null, text, 0);
+                var entity2 = new Entity("count", null, text, 0);
                 var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
                 await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
@@ -379,9 +353,9 @@ namespace NLU.DevOps.Luis.Tests
                 var luisApp = importRequest.Arguments[2].As<LuisApp>();
                 luisApp.Utterances.Should().Contain(u => u.Text == text);
                 luisApp.Utterances.First(u => u.Text == text).Entities.Count().Should().Be(2);
-                luisApp.Utterances.First(u => u.Text == text).Entities[0].Entity.Should().Be(entityTypeName2);
-                luisApp.Utterances.First(u => u.Text == text).Entities[1].Entity.Should().Be(entityTypeName2);
-                luisApp.Utterances.First(u => u.Text == text).Entities.OfType<JSONEntityWithRole>().Single().Role.Should().Be(entityTypeName1);
+                luisApp.Utterances.First(u => u.Text == text).Entities[0].Entity.Should().Be("number");
+                luisApp.Utterances.First(u => u.Text == text).Entities[1].Entity.Should().Be("number");
+                luisApp.Utterances.First(u => u.Text == text).Entities.OfType<JSONEntityWithRole>().Single().Role.Should().Be("count");
             }
         }
 
@@ -397,7 +371,7 @@ namespace NLU.DevOps.Luis.Tests
 
             public Mock<ILuisTrainClient> MockLuisTrainClient { get; } = new Mock<ILuisTrainClient>();
 
-            public LuisSettings LuisSettings { get; set; } = new LuisSettings();
+            public LuisApp LuisTemplate { get; set; } = new LuisApp();
 
             public LuisNLUTrainClient Build()
             {
@@ -415,7 +389,7 @@ namespace NLU.DevOps.Luis.Tests
                     })
                     .Build());
 
-                return new LuisNLUTrainClient(luisConfiguration, this.LuisSettings, this.MockLuisTrainClient.Object);
+                return new LuisNLUTrainClient(luisConfiguration, this.LuisTemplate, this.MockLuisTrainClient.Object);
             }
         }
     }

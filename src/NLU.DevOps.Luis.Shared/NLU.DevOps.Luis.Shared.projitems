@@ -13,7 +13,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)AzureSubscriptionInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LabeledUtteranceExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisTrainClient.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)LuisSettings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisNLUTrainClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ILuisConfiguration.cs" />

@@ -25,9 +25,7 @@ namespace NLU.DevOps.Luis.Tests
         public static void ThrowsArgumentNull()
         {
             var luisTestClient = new Mock<ILuisTestClient>().Object;
-            Action nullLuisSettings = () => new LuisNLUTestClient(null, luisTestClient);
-            Action nullLuisClient = () => new LuisNLUTestClient(new LuisSettings(), null);
-            nullLuisSettings.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisSettings");
+            Action nullLuisClient = () => new LuisNLUTestClient(null);
             nullLuisClient.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("luisClient");
 
             using (var luis = new LuisNLUTestClientBuilder().Build())
@@ -159,55 +157,6 @@ namespace NLU.DevOps.Luis.Tests
                 result.Intent.Should().Be("intent");
                 result.GetTextScore().Should().Be(0.5);
                 result.GetScore().Should().BeNull();
-            }
-        }
-
-        [Test]
-        public static async Task TestWithPrebuiltEntity()
-        {
-            var test = "the quick brown fox jumped over the lazy dog";
-            var builtinType = Guid.NewGuid().ToString();
-
-            var prebuiltEntityTypes = new Dictionary<string, string>
-            {
-                { "type", "test" },
-            };
-
-            var builder = new LuisNLUTestClientBuilder();
-            builder.LuisSettings = new LuisSettings(prebuiltEntityTypes);
-            builder.LuisTestClientMock
-                .Setup(luis => luis.QueryAsync(
-                    It.Is<PredictionRequest>(query => query.Query == test),
-                    It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult(new PredictionResponse
-                {
-                    Query = test,
-                    Prediction = new Prediction
-                    {
-                        TopIntent = "intent",
-                        Entities = ToEntityDictionary(new[]
-                        {
-                            new EntityModel
-                            {
-                                Entity = "the",
-                                Type = "builtin.test",
-                                StartIndex = 32,
-                                EndIndex = 34
-                            },
-                        }),
-                    },
-                }));
-
-            using (var luis = builder.Build())
-            {
-                var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Text.Should().Be(test);
-                result.Intent.Should().Be("intent");
-                result.Entities.Count.Should().Be(1);
-                result.Entities[0].EntityType.Should().Be("type");
-                result.Entities[0].EntityValue.Should().BeEquivalentTo(new JValue("the"));
-                result.Entities[0].MatchText.Should().Be("the");
-                result.Entities[0].MatchIndex.Should().Be(1);
             }
         }
 
@@ -475,13 +424,11 @@ namespace NLU.DevOps.Luis.Tests
 
         private class LuisNLUTestClientBuilder
         {
-            public LuisSettings LuisSettings { get; set; } = new LuisSettings();
-
             public Mock<ILuisTestClient> LuisTestClientMock { get; } = new Mock<ILuisTestClient>();
 
             public LuisNLUTestClient Build()
             {
-                return new LuisNLUTestClient(this.LuisSettings, this.LuisTestClientMock.Object);
+                return new LuisNLUTestClient(this.LuisTestClientMock.Object);
             }
         }
 
