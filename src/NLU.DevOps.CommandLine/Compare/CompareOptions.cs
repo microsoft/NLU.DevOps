@@ -22,5 +22,8 @@ namespace NLU.DevOps.CommandLine.Compare
 
         [Option('o', "output-folder", HelpText = "Output path for test results.", Required = false)]
         public string OutputFolder { get; set; }
+
+        [Option("strict", HelpText = "Return false positive results for all unexpected entities.", Required = false)]
+        public bool Strict { get; set; }
     }
 }
