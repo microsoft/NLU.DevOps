@@ -5,6 +5,7 @@ namespace NLU.DevOps.Luis.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
     using Core;
@@ -383,6 +384,56 @@ namespace NLU.DevOps.Luis.Tests
                 result.Entities.Count.Should().Be(1);
                 result.Entities[0].MatchText.Should().Be("past-due");
                 result.Entities[0].MatchIndex.Should().Be(0);
+            }
+        }
+
+        [Test]
+        public static async Task UtteranceWithNestedMLEntity()
+        {
+            var test = "i want to request sick leave for 6 days starting march 5";
+            var predictionJson = File.ReadAllText("Resources/nested.json");
+            var prediction = JObject.Parse(predictionJson).ToObject<PredictionResponse>();
+
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<PredictionRequest>(query => query.Query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(prediction));
+
+            using (var luis = builder.Build())
+            {
+                var result = await luis.TestAsync(test).ConfigureAwait(false);
+                result.Text.Should().Be(test);
+                result.Intent.Should().Be("RequestVacation");
+                result.Entities.Count.Should().Be(7);
+                result.Entities[0].EntityType.Should().Be("leave-type");
+                result.Entities[0].EntityValue.Should().BeEquivalentTo(@"[ ""sick"" ]");
+                result.Entities[0].MatchText.Should().Be("sick leave");
+                result.Entities[0].MatchIndex.Should().Be(0);
+                result.Entities[1].EntityType.Should().Be("days-number");
+                result.Entities[1].EntityValue.Should().BeEquivalentTo("6");
+                result.Entities[1].MatchText.Should().Be("6");
+                result.Entities[1].MatchIndex.Should().Be(0);
+                result.Entities[2].EntityType.Should().Be("days-duration");
+                result.Entities[2].EntityValue.Should().BeEquivalentTo(@"{ ""days-number"": [ 6 ] }");
+                result.Entities[2].MatchText.Should().Be("6 days");
+                result.Entities[2].MatchIndex.Should().Be(0);
+                result.Entities[3].EntityType.Should().Be("start-date");
+                result.Entities[3].MatchText.Should().Be("starting march 5");
+                result.Entities[3].MatchIndex.Should().Be(0);
+                result.Entities[4].EntityType.Should().Be("vacation-request");
+                result.Entities[4].EntityValue.Should().ContainSubtree(@"{ ""leave-type"": [ [ ""sick"" ] ], ""days-duration"": [ { ""days-number"": [ 6 ] } ], ""start-date"": [ { ""type"": ""daterange"" } ] }");
+                result.Entities[4].MatchText.Should().Be("sick leave for 6 days starting march 5");
+                result.Entities[4].MatchIndex.Should().Be(0);
+                result.Entities[5].EntityType.Should().Be("datetimeV2");
+                result.Entities[5].EntityValue.Should().ContainSubtree(@"{ ""type"": ""duration"" }");
+                result.Entities[5].MatchText.Should().Be("6 days");
+                result.Entities[5].MatchIndex.Should().Be(0);
+                result.Entities[6].EntityType.Should().Be("number");
+                result.Entities[6].EntityValue.Should().BeEquivalentTo("5");
+                result.Entities[6].MatchText.Should().Be("5");
+                result.Entities[6].MatchIndex.Should().Be(0);
             }
         }
 

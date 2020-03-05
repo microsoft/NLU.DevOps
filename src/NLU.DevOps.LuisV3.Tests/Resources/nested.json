@@ -1,0 +1,166 @@
+﻿{
+    "query": "i want to request sick leave for 6 days starting march 5",
+    "prediction": {
+        "topIntent": "RequestVacation",
+        "intents": {},
+        "entities": {
+            "vacation-request": [
+                {
+                    "leave-type": [
+                        [
+                            "sick"
+                        ]
+                    ],
+                    "days-duration": [
+                        {
+                            "days-number": [
+                                6
+                            ],
+                            "$instance": {
+                                "days-number": [
+                                    {
+                                        "type": "builtin.number",
+                                        "text": "6",
+                                        "startIndex": 33,
+                                        "length": 1,
+                                        "score": 0.9959739,
+                                        "modelTypeId": 1,
+                                        "modelType": "Entity Extractor",
+                                        "recognitionSources": [
+                                            "model"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "start-date": [
+                        {
+                            "type": "daterange",
+                            "values": [
+                                {
+                                    "timex": "XXXX-03-05",
+                                    "mod": "after",
+                                    "resolution": [
+                                        {
+                                            "sourceEntity": "datetimepoint",
+                                            "start": "2019-03-05"
+                                        },
+                                        {
+                                            "sourceEntity": "datetimepoint",
+                                            "start": "2020-03-05"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "$instance": {
+                        "leave-type": [
+                            {
+                                "type": "LeaveType",
+                                "text": "sick leave",
+                                "startIndex": 18,
+                                "length": 10,
+                                "score": 0.9796427,
+                                "modelTypeId": 1,
+                                "modelType": "Entity Extractor",
+                                "recognitionSources": [
+                                    "model"
+                                ]
+                            }
+                        ],
+                        "days-duration": [
+                            {
+                                "type": "days-duration",
+                                "text": "6 days",
+                                "startIndex": 33,
+                                "length": 6,
+                                "score": 0.991851747,
+                                "modelTypeId": 1,
+                                "modelType": "Entity Extractor",
+                                "recognitionSources": [
+                                    "model"
+                                ]
+                            }
+                        ],
+                        "start-date": [
+                            {
+                                "type": "builtin.datetimeV2.daterange",
+                                "text": "starting march 5",
+                                "startIndex": 40,
+                                "length": 16,
+                                "score": 0.985748947,
+                                "modelTypeId": 1,
+                                "modelType": "Entity Extractor",
+                                "recognitionSources": [
+                                    "model"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "datetimeV2": [
+                {
+                    "type": "duration",
+                    "values": [
+                        {
+                            "timex": "P6D",
+                            "resolution": [
+                                {
+                                    "value": "518400"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "number": [
+                5
+            ],
+            "$instance": {
+                "vacation-request": [
+                    {
+                        "type": "vacation-request",
+                        "text": "sick leave for 6 days starting march 5",
+                        "startIndex": 18,
+                        "length": 38,
+                        "score": 0.994492054,
+                        "modelTypeId": 1,
+                        "modelType": "Entity Extractor",
+                        "recognitionSources": [
+                            "model"
+                        ]
+                    }
+                ],
+                "datetimeV2": [
+                    {
+                        "type": "builtin.datetimeV2.duration",
+                        "text": "6 days",
+                        "startIndex": 33,
+                        "length": 6,
+                        "modelTypeId": 2,
+                        "modelType": "Prebuilt Entity Extractor",
+                        "recognitionSources": [
+                            "model"
+                        ]
+                    }
+                ],
+                "number": [
+                    {
+                        "type": "builtin.number",
+                        "text": "5",
+                        "startIndex": 55,
+                        "length": 1,
+                        "modelTypeId": 2,
+                        "modelType": "Prebuilt Entity Extractor",
+                        "recognitionSources": [
+                            "model"
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

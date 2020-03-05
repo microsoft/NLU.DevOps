@@ -102,7 +102,23 @@ namespace NLU.DevOps.Luis
                 return null;
             }
 
-            Entity getEntity(string entityType, JToken entityJson, JToken entityMetadata)
+            IEnumerable<Entity> getEntitiesForType(string type, object instances, JToken metadata)
+            {
+                if (instances is JArray instancesJson)
+                {
+                    var typeMetadata = metadata?[type];
+                    return instancesJson
+                        .Zip(
+                            typeMetadata,
+                            (instance, instanceMetadata) =>
+                                getEntitiesRecursive(type, instance, instanceMetadata))
+                        .SelectMany(e => e);
+                }
+
+                return Array.Empty<Entity>();
+            }
+
+            IEnumerable<Entity> getEntitiesRecursive(string entityType, JToken entityJson, JToken entityMetadata)
             {
                 var startIndex = entityMetadata.Value<int>("startIndex");
                 var length = entityMetadata.Value<int>("length");
@@ -117,34 +133,29 @@ namespace NLU.DevOps.Luis
                 }
 
                 var entityValue = PruneMetadata(entityJson);
-                return new Entity(entityType, entityValue, matchText, matchIndex)
+                if (entityJson is JObject entityJsonObject && entityJsonObject.TryGetValue("$instance", out var innerMetadata))
+                {
+                    var children = ((IDictionary<string, JToken>)entityJsonObject)
+                        .SelectMany(pair => getEntitiesForType(pair.Key, pair.Value, innerMetadata));
+
+                    foreach (var child in children)
+                    {
+                        yield return child;
+                    }
+                }
+
+                yield return new Entity(entityType, entityValue, matchText, matchIndex)
                     .WithScore(score);
             }
 
-            var instanceMetadata = default(JObject);
-            if (entities.TryGetValue("$instance", out var instanceJson))
+            var globalMetadata = entities["$instance"] as JToken;
+            if (globalMetadata == null)
             {
-                instanceMetadata = instanceJson as JObject;
+                throw new InvalidOperationException("Expected top-level metadata for entities.");
             }
 
-            return entities
-                .Where(pair => pair.Key != "$instance")
-                .Select(pair =>
-                    new
-                    {
-                        EntityType = pair.Key,
-                        Entities = ((JArray)pair.Value).Zip(
-                            instanceMetadata?[pair.Key],
-                            (entityValue, entityMetadata) =>
-                                new
-                                {
-                                    EntityValue = entityValue,
-                                    EntityMetadata = entityMetadata
-                                })
-                    })
-                .SelectMany(entityInfo =>
-                    entityInfo.Entities.Select(entity =>
-                        getEntity(entityInfo.EntityType, entity.EntityValue, entity.EntityMetadata)));
+            return entities.SelectMany(pair =>
+                getEntitiesForType(pair.Key, pair.Value, globalMetadata));
         }
 
         private static JToken PruneMetadata(JToken json)
@@ -161,6 +172,17 @@ namespace NLU.DevOps.Luis
                 }
 
                 return prunedObject;
+            }
+
+            if (json is JArray jsonArray)
+            {
+                var prunedArray = new JArray();
+                foreach (var item in jsonArray)
+                {
+                    prunedArray.Add(PruneMetadata(item));
+                }
+
+                return prunedArray;
             }
 
             return json;
