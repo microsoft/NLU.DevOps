@@ -81,6 +81,11 @@ namespace NLU.DevOps.Luis
 
         private async Task<SpeechLuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
         {
+            if (this.LuisConfiguration.IsStaging)
+            {
+                throw new NotSupportedException("Testing LUIS from speech with the Speech SDK does not currently support the LUIS staging endpoint.");
+            }
+
             var speechConfig = SpeechConfig.FromSubscription(this.LuisConfiguration.SpeechKey, this.LuisConfiguration.SpeechRegion);
             using (var audioInput = AudioConfig.FromWavFileInput(speechFile))
             using (var recognizer = new IntentRecognizer(speechConfig, audioInput))
