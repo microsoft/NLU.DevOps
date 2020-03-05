@@ -13,6 +13,7 @@ namespace NLU.DevOps.Lex
     using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Lex NLU client factory.
@@ -47,12 +48,12 @@ namespace NLU.DevOps.Lex
             var userDefinedName = configuration[LexBotNameConfigurationKey];
             var botName = userDefinedName ?? GetRandomName(configuration[LexBotNamePrefixConfigurationKey]);
             var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
-            var lexSettings = settingsPath != null
-                ? JsonConvert.DeserializeObject<LexSettings>(File.ReadAllText(settingsPath))
-                : new LexSettings();
+            var importBotTemplate = settingsPath != null
+                ? JObject.Parse(File.ReadAllText(settingsPath))
+                : new JObject();
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
-            return new LexNLUTrainClient(botName, botAlias, lexSettings, credentials, regionEndpoint);
+            return new LexNLUTrainClient(botName, botAlias, importBotTemplate, credentials, regionEndpoint);
         }
 
         /// <inheritdoc />
@@ -65,12 +66,9 @@ namespace NLU.DevOps.Lex
 
             var botName = configuration[LexBotNameConfigurationKey];
             var botAlias = configuration[LexBotAliasConfigurationKey] ?? botName;
-            var lexSettings = settingsPath != null
-                ? JsonConvert.DeserializeObject<LexSettings>(File.ReadAllText(settingsPath))
-                : new LexSettings();
             var credentials = new BasicAWSCredentials(configuration[LexAccessKeyConfigurationKey], GetSecretKey(configuration));
             var regionEndpoint = GetRegionEndpoint(configuration[LexRegionConfigurationKey]);
-            return new LexNLUTestClient(botName, botAlias, lexSettings, credentials, regionEndpoint);
+            return new LexNLUTestClient(botName, botAlias, credentials, regionEndpoint);
         }
 
         private static string GetRandomName(string prefix)

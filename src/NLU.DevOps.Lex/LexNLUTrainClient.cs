@@ -35,16 +35,16 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
-        /// <param name="lexSettings">Lex settings.</param>
+        /// <param name="importBotTemplate">Bot template.</param>
         /// <param name="credentials">Credentials.</param>
         /// <param name="regionEndpoint">Region endpoint.</param>
         public LexNLUTrainClient(
             string botName,
             string botAlias,
-            LexSettings lexSettings,
+            JObject importBotTemplate,
             AWSCredentials credentials,
             RegionEndpoint regionEndpoint)
-            : this(botName, botAlias, lexSettings, new LexTrainClient(credentials, regionEndpoint))
+            : this(botName, botAlias, importBotTemplate, new LexTrainClient(credentials, regionEndpoint))
         {
         }
 
@@ -53,17 +53,17 @@ namespace NLU.DevOps.Lex
         /// </summary>
         /// <param name="botName">Bot name.</param>
         /// <param name="botAlias">Bot alias.</param>
-        /// <param name="lexSettings">Lex settings.</param>
+        /// <param name="importBotTemplate">Bot template.</param>
         /// <param name="lexClient">Lex client.</param>
         public LexNLUTrainClient(
             string botName,
             string botAlias,
-            LexSettings lexSettings,
+            JObject importBotTemplate,
             ILexTrainClient lexClient)
         {
             this.LexBotName = botName ?? throw new ArgumentNullException(nameof(botName));
             this.LexBotAlias = botAlias ?? throw new ArgumentNullException(nameof(botAlias));
-            this.LexSettings = lexSettings ?? throw new ArgumentNullException(nameof(lexSettings));
+            this.ImportBotTemplate = importBotTemplate ?? throw new ArgumentNullException(nameof(importBotTemplate));
             this.LexClient = lexClient ?? throw new ArgumentNullException(nameof(lexClient));
         }
 
@@ -81,7 +81,7 @@ namespace NLU.DevOps.Lex
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LexNLUTrainClient>());
 
-        private LexSettings LexSettings { get; }
+        private JObject ImportBotTemplate { get; }
 
         private ILexTrainClient LexClient { get; }
 
@@ -136,6 +136,41 @@ namespace NLU.DevOps.Lex
         public void Dispose()
         {
             this.LexClient.Dispose();
+        }
+
+        private static JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances)
+        {
+            // Create a new intent with the given name
+            var intentJson = ImportBotTemplates.IntentJson;
+            intentJson.SelectToken(".name").Replace(intent);
+
+            // Create slots for the intent
+            //
+            // Currently, the algorithm only adds slots that
+            // exist in the training set for the given intent.
+            var slots = utterances
+                .SelectMany(utterance => utterance.Entities ?? Array.Empty<Entity>())
+                .Select(entity => entity.EntityType)
+                .Distinct()
+                .Select(slot =>
+                {
+                    var slotJson = ImportBotTemplates.SlotJson;
+                    slotJson.SelectToken(".name").Replace(slot);
+                    slotJson.SelectToken(".slotType").Replace(slot);
+                    return slotJson;
+                });
+            Debug.Assert(intentJson.SelectToken(".slots") is JArray, "Intent template includes slots JSON array.");
+            var slotsArray = (JArray)intentJson.SelectToken(".slots");
+            slotsArray.AddRange(slots);
+
+            // Create Lex sample utterances
+            var sampleUtterances = utterances
+                .Select(utterance => CreateSampleUtterance(utterance));
+            Debug.Assert(intentJson.SelectToken(".sampleUtterances") is JArray, "Intent template includes sampleUtterances JSON array.");
+            var sampleUtterancesArray = (JArray)intentJson.SelectToken(".sampleUtterances");
+            sampleUtterancesArray.AddRange(sampleUtterances);
+
+            return intentJson;
         }
 
         private static string CreateSampleUtterance(LabeledUtterance utterance)
@@ -231,63 +266,17 @@ namespace NLU.DevOps.Lex
             // Add name to imports JSON template
             var importJson = ImportBotTemplates.ImportJson;
             importJson.SelectToken(".resource.name").Replace(this.LexBotName);
-            importJson.Merge(this.LexSettings.ImportBotTemplate);
+            importJson.Merge(this.ImportBotTemplate);
 
             // Add intents to imports JSON template
             var intents = utterances
                 .GroupBy(utterance => utterance.Intent)
-                .Select(group => this.CreateIntent(group.Key, group));
+                .Select(group => CreateIntent(group.Key, group));
             Debug.Assert(importJson.SelectToken(".resource.intents") is JArray, "Import template includes intents JSON array.");
             var intentsArray = (JArray)importJson.SelectToken(".resource.intents");
             AddOrMergeIntents(intentsArray, intents);
 
             return importJson;
-        }
-
-        private JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances)
-        {
-            // Create a new intent with the given name
-            var intentJson = ImportBotTemplates.IntentJson;
-            intentJson.SelectToken(".name").Replace(intent);
-
-            // Create slots for the intent
-            //
-            // Currently, the algorithm only adds slots that
-            // exist in the training set for the given intent.
-            var slots = utterances
-                .SelectMany(utterance => utterance.Entities ?? Array.Empty<Entity>())
-                .Select(entity => entity.EntityType)
-                .Distinct()
-                .Select(slot => this.CreateSlot(slot));
-            Debug.Assert(intentJson.SelectToken(".slots") is JArray, "Intent template includes slots JSON array.");
-            var slotsArray = (JArray)intentJson.SelectToken(".slots");
-            slotsArray.AddRange(slots);
-
-            // Create Lex sample utterances
-            var sampleUtterances = utterances
-                .Select(utterance => CreateSampleUtterance(utterance));
-            Debug.Assert(intentJson.SelectToken(".sampleUtterances") is JArray, "Intent template includes sampleUtterances JSON array.");
-            var sampleUtterancesArray = (JArray)intentJson.SelectToken(".sampleUtterances");
-            sampleUtterancesArray.AddRange(sampleUtterances);
-
-            return intentJson;
-        }
-
-        private JToken CreateSlot(string slot)
-        {
-            var slotJson = ImportBotTemplates.SlotJson;
-            var existingSlot = this.LexSettings.Slots.SelectToken($"[?(@.name == '{slot}')]");
-            if (existingSlot != null)
-            {
-                slotJson.Merge(existingSlot);
-            }
-            else
-            {
-                slotJson.SelectToken(".name").Replace(slot);
-                slotJson.SelectToken(".slotType").Replace(slot);
-            }
-
-            return slotJson;
         }
 
         private async Task ImportBotAsync(JToken importJson, CancellationToken cancellationToken)
