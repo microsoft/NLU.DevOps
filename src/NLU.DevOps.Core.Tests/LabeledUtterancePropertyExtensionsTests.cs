@@ -63,16 +63,6 @@ namespace NLU.DevOps.Core.Tests
             utterance.GetScore().Should().BeNull();
             utterance.GetTextScore().Should().BeNull();
             utterance.GetTimestamp().Should().BeNull();
-            utterance.GetUtteranceId().Should().BeNull();
-        }
-
-        [Test]
-        public static void GetsUtteranceIdFromJson()
-        {
-            var utteranceId = Guid.NewGuid().ToString();
-            var utterance = new JsonLabeledUtterance(null, null, null);
-            utterance.AdditionalProperties.Add("utteranceId", utteranceId);
-            utterance.GetUtteranceId().Should().Be(utteranceId);
         }
 
         [Test]
