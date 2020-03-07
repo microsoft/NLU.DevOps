@@ -14,7 +14,6 @@ namespace NLU.DevOps.ModelPerformance
     /// </summary>
     public class TestSettings
     {
-        private const string CompareEntityValueConfigurationKey = "compareEntityValue";
         private const string IgnoreEntitiesConfigurationKey = "ignoreEntities";
         private const string StrictEntitiesConfigurationKey = "strictEntities";
         private const string TrueNegativeIntentConfigurationKey = "trueNegativeIntent";
@@ -27,11 +26,6 @@ namespace NLU.DevOps.ModelPerformance
         {
             this.Configuration = configuration;
         }
-
-        /// <summary>
-        /// Gets a value indicating whether the semantic value of entities should be compared.
-        /// </summary>
-        public bool CompareEntityValue => this.Configuration.GetValue(CompareEntityValueConfigurationKey, true);
 
         /// <summary>
         /// Gets the default set of entities that should never return false positive results.
