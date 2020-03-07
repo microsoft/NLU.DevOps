@@ -19,5 +19,14 @@ namespace NLU.DevOps.CommandLine.Compare
 
         [Option('t', "test-settings", HelpText = "Path to test settings.", Required = false)]
         public string TestSettingsPath { get; set; }
+
+        /// <summary>
+        /// Metadata command line option.
+        /// </summary>
+        /// <remarks>
+        /// This option will be deprecated in a future release.
+        /// </remarks>
+        [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results.", Required = false, Hidden = true)]
+        public bool Metadata { get; set; }
     }
 }

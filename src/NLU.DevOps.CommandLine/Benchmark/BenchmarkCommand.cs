@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.CommandLine.Compare
+namespace NLU.DevOps.CommandLine.Benchmark
 {
     using System.Collections.Generic;
     using System.IO;
@@ -16,7 +16,7 @@ namespace NLU.DevOps.CommandLine.Compare
         private const string TestMetadataFileName = "metadata.json";
         private const string TestStatisticsFileName = "statistics.json";
 
-        public static int Run(CompareOptions options)
+        public static int Run(BenchmarkOptions options)
         {
             var expectedUtterances = Read<List<JsonLabeledUtterance>>(options.ExpectedUtterancesPath);
             var actualUtterances = Read<List<JsonLabeledUtterance>>(options.ActualUtterancesPath);

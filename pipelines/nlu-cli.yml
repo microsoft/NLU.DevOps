@@ -104,6 +104,7 @@ steps:
     arguments: compare
       --expected models/tests.json
       --actual $(Agent.TempDirectory)/results.json
+      --test-settings models/compare.json
       --output-folder $(Build.ArtifactStagingDirectory)
 
 - task: DotNetCoreCLI@2

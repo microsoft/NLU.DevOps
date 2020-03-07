@@ -5,6 +5,7 @@ namespace NLU.DevOps.CommandLine.Compare
 {
     using System.Collections.Generic;
     using System.Linq;
+    using Benchmark;
     using ModelPerformance;
     using NUnitLite;
 
@@ -24,6 +25,17 @@ namespace NLU.DevOps.CommandLine.Compare
             }
 
             new AutoRun(typeof(ConfigurationConstants).Assembly).Execute(arguments.ToArray());
+
+            if (options.Metadata)
+            {
+                BenchmarkCommand.Run(new BenchmarkOptions
+                {
+                    ExpectedUtterancesPath = options.ExpectedUtterancesPath,
+                    ActualUtterancesPath = options.ActualUtterancesPath,
+                    OutputFolder = options.OutputFolder,
+                    TestSettingsPath = options.TestSettingsPath,
+                });
+            }
 
             // We don't care if there are any failing NUnit tests
             return 0;
