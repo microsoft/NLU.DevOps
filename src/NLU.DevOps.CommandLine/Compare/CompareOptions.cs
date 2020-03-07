@@ -21,7 +21,7 @@ namespace NLU.DevOps.CommandLine.Compare
         public string TestSettingsPath { get; set; }
 
         /// <summary>
-        /// Metadata command line option.
+        /// Gets or sets a value indicating whether confusion matrix metadata should be included in the output.
         /// </summary>
         /// <remarks>
         /// This option will be deprecated in a future release.

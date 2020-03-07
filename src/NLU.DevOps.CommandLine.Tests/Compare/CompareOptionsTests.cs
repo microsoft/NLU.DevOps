@@ -23,6 +23,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("actualUtterances");
             optionsList.Add("-o");
             optionsList.Add("outputFolder");
+            optionsList.Add("-m");
             var args = optionsList.ToArray();
             var parser = Parser.Default.ParseArguments<CompareOptions>(args)
                 .WithParsed(o =>
@@ -30,6 +31,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
                     o.ExpectedUtterancesPath.Should().Be("expectedUtterances");
                     o.ActualUtterancesPath.Should().Be("actualUtterances");
                     o.OutputFolder.Should().Be("outputFolder");
+                    o.Metadata.Should().BeTrue();
                 })
                 .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
@@ -47,6 +49,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
                 .WithParsed(o =>
                 {
                     o.OutputFolder.Should().Be(null);
+                    o.Metadata.Should().BeFalse();
                 })
                 .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }

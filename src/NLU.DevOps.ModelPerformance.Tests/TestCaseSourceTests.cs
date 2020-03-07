@@ -11,6 +11,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
     using FluentAssertions;
     using Microsoft.Extensions.Configuration;
     using Models;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using NUnit.Framework;
 
@@ -640,6 +641,110 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 GetDefaultTestSettings());
             compareResults.TestCases.Count.Should().Be(2);
             compareResults.TestCases.Where(t => t.UtteranceId == utteranceId).Count().Should().Be(2);
+        }
+
+        [Test]
+        [TestCase("x", "x", "", true, 1, 0, 0, 0)]
+        [TestCase("a", "x", "", true, 0, 0, 1, 1)]
+        [TestCase("a", "b", "", true, 0, 0, 0, 1)]
+        [TestCase("a", "d", "", true, 0, 0, 0, 1)]
+        [TestCase("a", "f", "", true, 0, 0, 1, 1)]
+        [TestCase("x", "x", "foo", true, 0, 0, 1, 1)]
+        [TestCase("a", "a", "foo", true, 0, 0, 1, 1)]
+        [TestCase("b", "b", "foo", true, 0, 0, 0, 1)]
+        [TestCase("f", "f", "foo", true, 0, 0, 1, 1)]
+        [TestCase("x", "x", "", false, 1, 0, 0, 0)]
+        [TestCase("a", "x", "", false, 0, 0, 0, 1)]
+        [TestCase("a", "b", "", false, 0, 0, 0, 1)]
+        [TestCase("a", "d", "", false, 0, 0, 0, 1)]
+        [TestCase("a", "e", "", false, 0, 0, 0, 1)]
+        [TestCase("x", "x", "foo", false, 0, 0, 0, 1)]
+        [TestCase("a", "a", "foo", false, 0, 0, 1, 1)]
+        [TestCase("b", "b", "foo", false, 0, 0, 0, 1)]
+        [TestCase("e", "e", "foo", false, 0, 0, 0, 1)]
+        public static void GlobalLocalStrictIgnoreEntities(
+            string expected,
+            string actual,
+            string value,
+            bool strict,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var expectedEntity = new Entity(expected, null, string.Empty, 0);
+            var actualEntity = new Entity(actual, null, value, 0);
+            var expectedUtterance = new LabeledUtterance(null, null, new[] { expectedEntity })
+                .WithProperty("strictEntities", new JArray { "a", "f" })
+                .WithProperty("ignoreEntities", new JArray { "b", "e" });
+            var actualUtterance = new LabeledUtterance(null, null, new[] { actualEntity });
+
+            var testSettings = new TestSettings(new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "strictEntities", new JArray { "c", "e" }.ToString(Formatting.None) },
+                    { "ignoreEntities", new JArray { "d", "f" }.ToString(Formatting.None) },
+                })
+                .Build())
+            {
+                Strict = strict,
+            };
+
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance },
+                testSettings);
+
+            compareResults.Statistics.Entity.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.Entity.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.Entity.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.Entity.FalseNegative.Should().Be(falseNegative);
+        }
+
+        [Test]
+        [TestCase("foo", "foo", 0, 1, 0, 0)]
+        [TestCase(null, null, 0, 1, 0, 0)]
+        [TestCase(null, "None", 0, 0, 1, 0)]
+        [TestCase("None", null, 0, 0, 0, 1)]
+        [TestCase(null, "foo", 0, 1, 0, 0)]
+        [TestCase("None", "foo", 0, 0, 0, 1)]
+        [TestCase("foo", "bar", 0, 0, 1, 0)]
+        [TestCase("foo", null, 0, 1, 0, 0)]
+        [TestCase("foo", "None", 0, 0, 1, 0)]
+        public static void CustomTrueNegativeIntent(
+            string expected,
+            string actual,
+            int truePositive,
+            int trueNegative,
+            int falsePositive,
+            int falseNegative)
+        {
+            var expectedUtterance = new LabeledUtterance(null, expected, null);
+            var actualUtterance = new LabeledUtterance(null, actual, null);
+            var testSettings = new TestSettings(new ConfigurationBuilder()
+                    .AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { "trueNegativeIntent", "foo" },
+                    })
+                    .Build());
+
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance },
+                testSettings);
+            compareResults.Statistics.Intent.TruePositive.Should().Be(truePositive);
+            compareResults.Statistics.Intent.TrueNegative.Should().Be(trueNegative);
+            compareResults.Statistics.Intent.FalsePositive.Should().Be(falsePositive);
+            compareResults.Statistics.Intent.FalseNegative.Should().Be(falseNegative);
+            if (expected != null && expected != "foo")
+            {
+                compareResults.Statistics.ByIntent[expected].TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.ByIntent[expected].FalseNegative.Should().Be(falseNegative);
+            }
+            else if (actual != null && actual != "foo")
+            {
+                compareResults.Statistics.ByIntent[actual].FalsePositive.Should().Be(falsePositive);
+            }
         }
 
         private static List<Entity> CreateEntityList(string type)
