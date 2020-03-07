@@ -440,10 +440,13 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
-            var configurationBuilder = new ConfigurationBuilder();
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+
             if (testSettingsPath != null)
             {
-                configurationBuilder.AddJsonFile(testSettingsPath);
+                configurationBuilder = configurationBuilder
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile(testSettingsPath);
             }
 
             var testSettings = new TestSettings(configurationBuilder.Build());

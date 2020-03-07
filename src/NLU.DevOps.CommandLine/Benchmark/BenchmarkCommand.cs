@@ -34,10 +34,13 @@ namespace NLU.DevOps.CommandLine.Benchmark
 
         private static TestSettings CreateTestSettings(string testSettingsPath)
         {
-            var configurationBuilder = new ConfigurationBuilder();
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+
             if (testSettingsPath != null)
             {
-                configurationBuilder.AddJsonFile(testSettingsPath);
+                configurationBuilder = configurationBuilder
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile(testSettingsPath);
             }
 
             return new TestSettings(configurationBuilder.Build())
