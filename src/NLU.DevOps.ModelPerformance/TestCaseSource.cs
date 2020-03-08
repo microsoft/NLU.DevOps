@@ -322,7 +322,7 @@ namespace NLU.DevOps.ModelPerformance
                             "Entity");
                     }
 
-                    if (testInput.TestSettings.CompareEntityValue && matchedEntity != null)
+                    if (matchedEntity != null)
                     {
                         if (entity.EntityValue != null && entity.EntityValue.Type != JTokenType.Null)
                         {
