@@ -445,8 +445,7 @@ namespace NLU.DevOps.ModelPerformance
             if (testSettingsPath != null)
             {
                 configurationBuilder = configurationBuilder
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile(testSettingsPath);
+                    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), testSettingsPath));
             }
 
             var testSettings = new TestSettings(configurationBuilder.Build());

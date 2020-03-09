@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.CommandLine.Benchmark
@@ -39,8 +39,7 @@ namespace NLU.DevOps.CommandLine.Benchmark
             if (testSettingsPath != null)
             {
                 configurationBuilder = configurationBuilder
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile(testSettingsPath);
+                    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), testSettingsPath));
             }
 
             return new TestSettings(configurationBuilder.Build())
