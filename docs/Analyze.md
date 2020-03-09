@@ -12,8 +12,7 @@ dotnet nlu compare -e utterances.json -a results.json
 dotnet nlu benchmark -e utterances.json -a results.json
 ```
 
-The `utterances.json` argument is the path to the "expected" utterances file, usually the file path you supplied to the `test` command. The `results.json` is the path to the 
-to the output utterances from a `test` command (see [Testing an NLU model](Test.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` or `benchmark` command as you supplied to `test`.
+The `utterances.json` argument is the path to the "expected" utterances file, usually the file path you supplied to the `test` command. The `results.json` argument is the path to the output utterances from a `test` command (see [Testing an NLU model](Test.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` or `benchmark` command as you supplied to `test`.
 
 For example, if you use the training cases supplied in [Training an NLU model](Train.md#getting-started) and the test cases supplied in [Testing an NLU model](Test.md#getting-started) on LUIS, you will recall that we had one resulting intent that was incorrectly labeled with the "None" intent. In this case, the `compare` command will generate passing tests (either true positive or true negative) for all text, intents, and entities, except for the one mismatched case. The mismatched case will generate a single failing test result, labeled as a false negative intent. Here is the specific output:
 ```bash
@@ -48,7 +47,7 @@ Test Run Summary
 
 The `compare` command will generate NUnit output, where true positive and true negative results are treated as passing tests and false positive and false negative results are treated as failing tests. It will identify true positives, true negatives, false positives, and false negatives for intents, entities and entity values. For entities, false positive results will only be identified for explicitly declared entity types. For entity values, only either true positive or false negative results are generated.
 
-E.g., the following is likely to generate a false positive entity result for `genre`, as it was not declared in `entities` and the type was listed in the `strictEntities` property.
+For example, the following is likely to generate a false positive entity result for `genre`, as it was not declared in `entities` and the type was listed in the `strictEntities` property.
 ```json
 [
   {
@@ -67,9 +66,9 @@ The `benchmark` command will generate JSON output for the confusion matrix with 
 [
   {
     "utteranceId": "0", /* index or user-provided ID */
-    "group": "intentName", /* intent ID or entity type for result */
+    "group": "intentName", /* intent name or entity type for result */
     "resultKind": "truePositive", /* one of: truePositive, trueNegative, falsePositive, falseNegative */
-    "targetKind": "intent", /* one of: intent, entity */
+    "targetKind": "intent", /* one of: intent, entity, entityValue, text */
     "expectedUtterance": {
       ...
     }, /* JSON for expected utterance */
@@ -81,9 +80,9 @@ The `benchmark` command will generate JSON output for the confusion matrix with 
 ]
 ```
 
-The results generated for the `benchmark` command are equivalent to the `compare` command for intents, but generate all false positive results for unexpected entities by default, except in cases where they are explicity ignored.
+The results generated for the `benchmark` command are equivalent to the `compare` command for intents. For entities, `benchmark` generates all false positive results for unexpected entities by default, except in cases where they are explicity ignored.
 
-E.g., the following would not generate a false positive result for `genre`, as even though it was not declared in `entities`, the entity type was listed in the `ignoreEntities` property.
+For example, the following would not generate a false positive result for `genre`, as even though it was not declared in `entities`, the entity type was listed in the `ignoreEntities` property.
 ```json
 [
   {
@@ -94,6 +93,24 @@ E.g., the following would not generate a false positive result for `genre`, as e
   }
 ]
 ```
+
+## Configuring test settings
+
+There are a handful of test settings that you can specify when running either the `compare` or `benchmark` command. Currently, you can configure:
+
+- `trueNegativeIntent` - The intent name used to denote a negative response. In LUIS, this is typically the "None" intent. In Dialogflow or Lex, this is generally the default intent.
+- `strictEntities` - Configures a global set of entity types that should generate false positive entity results. This is only used for unit testing with the `compare` command. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `ignoreEntities` property on the test utterance.
+- `ignoreEntities` - Configures a global set of entity types that should not generate false positive entity results. This is only used for F-measure testing with the `benchmark` command. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `strictEntities` property on the test utterance.
+
+For example, the following specifies an intent called "None" as the true negative intent and ignores false postives from the "number" entity:
+```json
+{
+  "trueNegativeIntent": "None",
+  "ignoreEntities": [ "number" ]
+}
+```
+
+You can specify these test settings using the [`--test-settings`](#-t---test-settings) option.
 
 ## How text is compared
 
@@ -120,10 +137,10 @@ The path to the result utterances from the `test` command.
 Be sure to use the [`--output`](Test.md#-o---output) option when running the `test` command.
 
 ### `-o, --output-folder`
-(Optional) The path to write the NUnit test results. If not provided, the current working directory is used.
+(Optional) The folder where the NUnit test results or confusion matrix JSON is written. If not provided, the current working directory is used.
 
 ### `-t, --test-settings`
-(Optional) Specified whether confusion matrix metadata should be generated in addition to NUnit test output. See [Generating JSON test metadata](#generating-json-test-metadata) for more details.
+(Optional) Path to test settings file used to configure the NLU comparison. See [Configuring test settings](#configuring-test-settings).
 
 ### `-b, --baseline`
 (Optional) For the `benchmark` sub-command only, specifies output folder of a previous test run to compare against.
