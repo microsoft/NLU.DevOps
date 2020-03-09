@@ -16,6 +16,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             matrix.Precision().Should().Be(0);
             matrix.Recall().Should().Be(0);
             matrix.F1().Should().Be(0);
+            matrix.Total().Should().Be(0);
         }
 
         [Test]
@@ -25,6 +26,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             matrix.Precision().Should().BeApproximately(0.5652, 0.0001);
             matrix.Recall().Should().BeApproximately(0.2241, 0.0001);
             matrix.F1().Should().BeApproximately(0.3210, 0.0001);
+            matrix.Total().Should().Be(68);
         }
     }
 }

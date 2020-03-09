@@ -26,50 +26,64 @@ namespace NLU.DevOps.ModelPerformance
             var allIntentsPrecision = Print(compareResults.Statistics.Intent.Precision(), baseline?.Intent.Precision());
             var allIntentsRecall = Print(compareResults.Statistics.Intent.Recall(), baseline?.Intent.Recall());
             var allIntentsF1 = Print(compareResults.Statistics.Intent.F1(), baseline?.Intent.F1());
+            var allIntentsTotal = Print(compareResults.Statistics.Intent.Total(), baseline?.Intent.Total(), 0);
+            var allIntentsFP = Print(compareResults.Statistics.Intent.FalsePositive, baseline?.Intent.FalsePositive, 0);
 
-            Console.WriteLine("# Intents results");
+            Console.WriteLine("## Intents Results");
 
-            var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1");
-            intentTable.AddRow("*", allIntentsPrecision, allIntentsRecall, allIntentsF1);
+            var intentTable = new ConsoleTable("Intent", "Precision", "Recall", "F1", "Total", "FP");
+            intentTable.AddRow("*", allIntentsPrecision, allIntentsRecall, allIntentsF1, allIntentsTotal, allIntentsFP);
 
-            compareResults.Statistics.ByIntent.ToList().ForEach(intentItem =>
-            {
-                var baselineResults = default(ConfusionMatrix);
-                if (baseline != null && !baseline.ByIntent.TryGetValue(intentItem.Key, out baselineResults))
+            compareResults.Statistics.ByIntent
+                .OrderBy(intentItem => intentItem.Key)
+                .ToList()
+                .ForEach(intentItem =>
                 {
-                    baselineResults = ConfusionMatrix.Default;
-                }
+                    var baselineResults = default(ConfusionMatrix);
+                    if (baseline != null && !baseline.ByIntent.TryGetValue(intentItem.Key, out baselineResults))
+                    {
+                        baselineResults = ConfusionMatrix.Default;
+                    }
 
-                var intentPrecision = Print(intentItem.Value.Precision(), baselineResults?.Precision());
-                var intentRecall = Print(intentItem.Value.Recall(), baselineResults?.Recall());
-                var intentF1 = Print(intentItem.Value.F1(), baselineResults?.F1());
-                intentTable.AddRow(intentItem.Key, intentPrecision, intentRecall, intentF1);
-            });
+                    var intentPrecision = Print(intentItem.Value.Precision(), baselineResults?.Precision());
+                    var intentRecall = Print(intentItem.Value.Recall(), baselineResults?.Recall());
+                    var intentF1 = Print(intentItem.Value.F1(), baselineResults?.F1());
+                    var intentTotal = Print(intentItem.Value.Total(), baselineResults?.Total(), 0);
+                    var intentFP = Print(intentItem.Value.FalsePositive, baselineResults?.FalsePositive, 0);
+                    intentTable.AddRow(intentItem.Key, intentPrecision, intentRecall, intentF1, intentTotal, intentFP);
+                });
 
             intentTable.Write(Format.MarkDown);
 
             var allEntitiesPrecision = Print(compareResults.Statistics.Entity.Precision(), baseline?.Entity.Precision());
             var allEntitiesRecall = Print(compareResults.Statistics.Entity.Recall(), baseline?.Entity.Recall());
             var allEntitiesF1 = Print(compareResults.Statistics.Entity.F1(), baseline?.Entity.F1());
+            var allEntitiesTotal = Print(compareResults.Statistics.Entity.Total(), baseline?.Entity.Total(), 0);
+            var allEntitiesFP = Print(compareResults.Statistics.Entity.FalsePositive, baseline?.Entity.FalsePositive, 0);
 
-            Console.WriteLine("# Entity results");
+            Console.WriteLine("## Entity Results");
 
-            var entityTable = new ConsoleTable("Entity", "Precision", "Recall", "F1");
-            entityTable.AddRow("*", allEntitiesPrecision, allEntitiesRecall, allEntitiesF1);
+            var entityTable = new ConsoleTable("Entity", "Precision", "Recall", "F1", "Total", "FP");
+            entityTable.AddRow("*", allEntitiesPrecision, allEntitiesRecall, allEntitiesF1, allEntitiesTotal, allEntitiesFP);
 
-            compareResults.Statistics.ByEntityType.ToList().ForEach(entityItem =>
-            {
-                var baselineResults = default(ConfusionMatrix);
-                if (baseline != null && !baseline.ByEntityType.TryGetValue(entityItem.Key, out baselineResults))
+            compareResults.Statistics.ByEntityType
+                .OrderBy(entityItem => entityItem.Key)
+                .ToList()
+                .ForEach(entityItem =>
                 {
-                    baselineResults = ConfusionMatrix.Default;
-                }
+                    var baselineResults = default(ConfusionMatrix);
+                    if (baseline != null && !baseline.ByEntityType.TryGetValue(entityItem.Key, out baselineResults))
+                    {
+                        baselineResults = ConfusionMatrix.Default;
+                    }
 
-                var entityPrecision = Print(entityItem.Value.Precision(), baselineResults?.Precision());
-                var entityRecall = Print(entityItem.Value.Recall(), baselineResults?.Recall());
-                var entityF1 = Print(entityItem.Value.F1(), baselineResults?.F1());
-                entityTable.AddRow(entityItem.Key, entityPrecision, entityRecall, entityF1);
-            });
+                    var entityPrecision = Print(entityItem.Value.Precision(), baselineResults?.Precision());
+                    var entityRecall = Print(entityItem.Value.Recall(), baselineResults?.Recall());
+                    var entityF1 = Print(entityItem.Value.F1(), baselineResults?.F1());
+                    var entityTotal = Print(entityItem.Value.Total(), baselineResults?.Total(), 0);
+                    var entityFP = Print(entityItem.Value.FalsePositive, baselineResults?.FalsePositive, 0);
+                    entityTable.AddRow(entityItem.Key, entityPrecision, entityRecall, entityF1, entityTotal, entityFP);
+                });
 
             entityTable.Write(Format.MarkDown);
 
@@ -77,30 +91,30 @@ namespace NLU.DevOps.ModelPerformance
         }
 
         /// <summary>
-        /// Calculates the precision from a confusion matrix
+        /// Calculates the precision from a confusion matrix.
         /// </summary>
-        /// <param name="matrix">confusion matrix metrics</param>
-        /// <returns>The precision result</returns>
+        /// <param name="matrix">Confusion matrix.</param>
+        /// <returns>Precision value.</returns>
         internal static double Precision(this ConfusionMatrix matrix)
         {
             return Divide(matrix.TruePositive, matrix.TruePositive + matrix.FalsePositive);
         }
 
         /// <summary>
-        ///  Calculates the recall from a confusion matrix
+        /// Calculates the recall from a confusion matrix.
         /// </summary>
-        /// <param name="matrix"> confusin matrix metrics</param>
-        /// <returns> The recall result</returns>
+        /// <param name="matrix">Confusion matrix.</param>
+        /// <returns>Recall value.</returns>
         internal static double Recall(this ConfusionMatrix matrix)
         {
             return Divide(matrix.TruePositive, matrix.TruePositive + matrix.FalseNegative);
         }
 
         /// <summary>
-        /// Calculates the f1 score from a confusion matrix
+        /// Calculates the F<sub>1</sub> score from a confusion matrix.
         /// </summary>
-        /// <param name="matrix"> confusion matrix metrics</param>
-        /// <returns> the f1 result</returns>
+        /// <param name="matrix">Confusion matrix.</param>
+        /// <returns>F<sub>1</sub> score.</returns>
         internal static double F1(this ConfusionMatrix matrix)
         {
             var precision = matrix.Precision();
@@ -110,37 +124,55 @@ namespace NLU.DevOps.ModelPerformance
         }
 
         /// <summary>
-        /// Divides the dividend input by the divisor
+        /// Calculates total count for the confusion matrix.
         /// </summary>
-        /// <param name="dividend"> The dividend in the division</param>
-        /// <param name="divisor"> The divisor in the division</param>
-        /// <returns>The division result</returns>
+        /// <param name="matrix">Confusion matrix.</param>
+        /// <returns>Total count.</returns>
+        internal static int Total(this ConfusionMatrix matrix)
+        {
+            return matrix.TruePositive + matrix.TrueNegative + matrix.FalsePositive + matrix.FalseNegative;
+        }
+
+        /// <summary>
+        /// Divides the dividend input by the divisor.
+        /// </summary>
+        /// <param name="dividend"> Dividend in the division.</param>
+        /// <param name="divisor"> Divisor in the division.</param>
+        /// <returns>Division result.</returns>
         private static double Divide(double dividend, int divisor)
         {
             return divisor != 0 ? dividend / divisor : 0;
         }
 
         /// <summary>
-        /// Prints the confusion table for intents
+        /// Prints the confusion table for intents.
         /// </summary>
-        /// <param name="testCases"> The calculated metadata results</param>
+        /// <param name="testCases"> Test cases.</param>
         private static void PrintIntentConfusionTable(IReadOnlyList<TestCase> testCases)
         {
+            bool isFalsePositiveIntent(TestCase testCase)
+            {
+                return testCase.TargetKind == ComparisonTargetKind.Intent
+                    && testCase.ResultKind == ConfusionMatrixResultKind.FalsePositive;
+            }
+
+            (string Expected, string Actual) keySelector(TestCase testCase)
+            {
+                return (testCase.ExpectedUtterance.Intent, testCase.ActualUtterance.Intent);
+            }
+
             var falsePositiveIntents = testCases
-                                       .Where(testCase => testCase.TargetKind == ComparisonTargetKind.Intent
-                                                          && testCase.ResultKind == ConfusionMatrixResultKind.FalsePositive)
-                                       .GroupBy(testCase => (testCase.ExpectedUtterance.Intent, testCase.ActualUtterance.Intent))
-                                       .ToDictionary(
-                                           group => group.Key,
-                                           group => group.Count())
-                                       .OrderByDescending(group => group.Value);
+                .Where(isFalsePositiveIntent)
+                .GroupBy(keySelector)
+                .ToDictionary(group => group.Key, group => group.Count())
+                .OrderByDescending(group => group.Value);
 
-            Console.WriteLine("# Intent Confusion Matrix");
+            Console.WriteLine("## Intent Confusion Matrix");
 
-            var confusionMatrix = new ConsoleTable("Expected intent", "Actual Intent", "FP");
+            var confusionMatrix = new ConsoleTable("Expected", "Actual", "FP");
             falsePositiveIntents.ToList().ForEach(kvp =>
             {
-                confusionMatrix.AddRow(kvp.Key.Item1, kvp.Key.Item2, kvp.Value);
+                confusionMatrix.AddRow(kvp.Key.Expected, kvp.Key.Actual, kvp.Value);
             });
 
             confusionMatrix.Write(Format.MarkDown);
@@ -151,12 +183,14 @@ namespace NLU.DevOps.ModelPerformance
         /// </summary>
         /// <param name="current">Current value.</param>
         /// <param name="baseline">Baseline value.</param>
+        /// <param name="precision">Rounding precision.</param>
         /// <returns>Printed value and difference with baseline.</returns>
-        private static string Print(double current, double? baseline)
+        private static string Print(double current, double? baseline, int precision = 3)
         {
+            var format = $"0.{string.Join(string.Empty, Enumerable.Repeat("0", precision))}";
             return baseline.HasValue
-                ? string.Format(CultureInfo.CurrentCulture, "{0:0.0000} ({1:0.0000})", current, current - baseline)
-                : string.Format(CultureInfo.CurrentCulture, "{0:0.0000}", current);
+                ? string.Format(CultureInfo.CurrentCulture, $"{{0:{format}}} ({{1:{format}}})", current, current - baseline)
+                : string.Format(CultureInfo.CurrentCulture, $"{{0:{format}}}", current);
         }
     }
 }
