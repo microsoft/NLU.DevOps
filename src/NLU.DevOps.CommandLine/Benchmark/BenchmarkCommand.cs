@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 namespace NLU.DevOps.CommandLine.Benchmark
@@ -27,7 +27,9 @@ namespace NLU.DevOps.CommandLine.Benchmark
 
             Write(metadataPath, compareResults.TestCases);
             File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
-            compareResults.PrintResults();
+
+            var baseline = options.BaselineResultsPath != null ? Read<NLUStatistics>(options.BaselineResultsPath) : null;
+            compareResults.PrintResults(baseline);
 
             return 0;
         }

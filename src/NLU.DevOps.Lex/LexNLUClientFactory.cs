@@ -12,7 +12,6 @@ namespace NLU.DevOps.Lex
     using Amazon.Runtime;
     using Microsoft.Extensions.Configuration;
     using Models;
-    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     /// <summary>

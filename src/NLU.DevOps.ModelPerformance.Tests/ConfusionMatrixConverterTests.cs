@@ -3,6 +3,7 @@
 
 namespace NLU.DevOps.ModelPerformance.Tests
 {
+    using System;
     using FluentAssertions;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -11,6 +12,41 @@ namespace NLU.DevOps.ModelPerformance.Tests
     [TestFixture]
     internal static class ConfusionMatrixConverterTests
     {
+        [Test]
+        public static void ReadsNullValue()
+        {
+            var converter = new ConfusionMatrixConverter();
+            var nullResult = JsonConvert.DeserializeObject<ConfusionMatrix>("null", converter);
+            var undefinedResult = JsonConvert.DeserializeObject<ConfusionMatrix>("undefined", converter);
+            nullResult.Should().BeNull();
+            undefinedResult.Should().BeNull();
+        }
+
+        [Test]
+        public static void ReadsCorrectValue()
+        {
+            var converter = new ConfusionMatrixConverter();
+            var result = JsonConvert.DeserializeObject<ConfusionMatrix>("[ 1, 2, 3, 4 ]", converter);
+            result.TruePositive.Should().Be(1);
+            result.TrueNegative.Should().Be(2);
+            result.FalsePositive.Should().Be(3);
+            result.FalseNegative.Should().Be(4);
+        }
+
+        [Test]
+        [TestCase("42")]
+        [TestCase("{}")]
+        [TestCase("{\"truePositive\": 42}")]
+        [TestCase("[42]")]
+        [TestCase("[1,2,3,4,5]")]
+        [TestCase("[1,2,3,4.1]")]
+        public static void ReadThrowsOnInvalidJson(string invalidJson)
+        {
+            var converter = new ConfusionMatrixConverter();
+            Action deserialize = () => JsonConvert.DeserializeObject<ConfusionMatrix>(invalidJson, converter);
+            deserialize.Should().Throw<InvalidOperationException>();
+        }
+
         [Test]
         public static void WritesNullValue()
         {
