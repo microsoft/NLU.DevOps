@@ -20,13 +20,7 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('t', "test-settings", HelpText = "Path to test settings.", Required = false)]
         public string TestSettingsPath { get; set; }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether confusion matrix metadata should be included in the output.
-        /// </summary>
-        /// <remarks>
-        /// This option will be deprecated in a future release.
-        /// </remarks>
-        [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results.", Required = false, Hidden = true)]
+        [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results. This option will be deprecated in the next release, use the 'benchmark' command instead.", Required = false, Hidden = true)]
         public bool Metadata { get; set; }
     }
 }
