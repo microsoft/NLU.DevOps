@@ -36,7 +36,7 @@ Detailed information on the CLI tool sub-commands and arguments can be found in 
 - [Training an NLU model](docs/Train.md)
 - [Testing an NLU model](docs/Test.md)
 - [Tearing down an NLU model](docs/Clean.md)
-- [Analyzing NLU model results](docs/Compare.md)
+- [Analyzing NLU model results](docs/Analyze.md)
 - [Generic utterances model](docs/GenericUtterances.md)
 - [Extending the generic utterance model](docs/UtteranceExtensions.md)
 - [LUIS model configuration](docs/LuisModelConfiguration.md)

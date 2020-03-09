@@ -5,6 +5,7 @@ namespace NLU.DevOps.CommandLine
 {
     using System.Collections.Generic;
     using System.Linq;
+    using Benchmark;
     using Clean;
     using Compare;
     using global::CommandLine;
@@ -16,12 +17,14 @@ namespace NLU.DevOps.CommandLine
         private static int Main(string[] args)
         {
             return Parser.Default.ParseArguments<
+                BenchmarkOptions,
                 CleanOptions,
                 CompareOptions,
                 TestOptions,
                 TrainOptions
             >(args)
                 .MapResult(
+                    (BenchmarkOptions options) => BenchmarkCommand.Run(options),
                     (CleanOptions options) => Run(new CleanCommand(options)),
                     (CompareOptions options) => CompareCommand.Run(options),
                     (TestOptions options) => Run(new TestCommand(options)),

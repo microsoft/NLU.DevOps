@@ -21,8 +21,6 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("expectedUtterances");
             optionsList.Add("-a");
             optionsList.Add("actualUtterances");
-            optionsList.Add("-l");
-            optionsList.Add("testLabel");
             optionsList.Add("-o");
             optionsList.Add("outputFolder");
             optionsList.Add("-m");
@@ -32,7 +30,6 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
                 {
                     o.ExpectedUtterancesPath.Should().Be("expectedUtterances");
                     o.ActualUtterancesPath.Should().Be("actualUtterances");
-                    o.TestLabel.Should().Be("testLabel");
                     o.OutputFolder.Should().Be("outputFolder");
                     o.Metadata.Should().BeTrue();
                 })
@@ -51,7 +48,6 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             var parser = Parser.Default.ParseArguments<CompareOptions>(args)
                 .WithParsed(o =>
                 {
-                    o.TestLabel.Should().Be(null);
                     o.OutputFolder.Should().Be(null);
                     o.Metadata.Should().BeFalse();
                 })

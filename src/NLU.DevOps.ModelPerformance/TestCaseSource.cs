@@ -21,9 +21,6 @@ namespace NLU.DevOps.ModelPerformance
     /// </summary>
     public static class TestCaseSource
     {
-        private const string AppSettingsPath = "appsettings.json";
-        private const string AppSettingsLocalPath = "appsettings.local.json";
-
         /// <summary>
         /// Gets the passing tests.
         /// </summary>
@@ -40,14 +37,6 @@ namespace NLU.DevOps.ModelPerformance
             .Where(IsFalse)
             .Select(ToTestCaseData);
 
-        private static string TestLabel => TestContext.Parameters.Get(ConfigurationConstants.TestLabelKey) ?? Configuration[ConfigurationConstants.TestLabelKey];
-
-        private static IConfiguration Configuration { get; } = new ConfigurationBuilder()
-            .AddJsonFile(AppSettingsPath, true)
-            .AddJsonFile(AppSettingsLocalPath, true)
-            .AddEnvironmentVariables()
-            .Build();
-
         private static Lazy<IReadOnlyList<TestCase>> LazyTestCases { get; } =
             new Lazy<IReadOnlyList<TestCase>>(LoadTestCases);
 
@@ -57,10 +46,27 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>The test cases.</returns>
         /// <param name="expectedUtterances">Expected utterances.</param>
         /// <param name="actualUtterances">Actual utterances.</param>
+        /// <param name="testSettings">Test settings.</param>
         public static NLUCompareResults GetNLUCompareResults(
             IReadOnlyList<LabeledUtterance> expectedUtterances,
-            IReadOnlyList<LabeledUtterance> actualUtterances)
+            IReadOnlyList<LabeledUtterance> actualUtterances,
+            TestSettings testSettings)
         {
+            if (expectedUtterances == null)
+            {
+                throw new ArgumentNullException(nameof(expectedUtterances));
+            }
+
+            if (actualUtterances == null)
+            {
+                throw new ArgumentNullException(nameof(actualUtterances));
+            }
+
+            if (testSettings == null)
+            {
+                throw new ArgumentNullException(nameof(testSettings));
+            }
+
             if (expectedUtterances.Count != actualUtterances.Count)
             {
                 throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
@@ -71,9 +77,11 @@ namespace NLU.DevOps.ModelPerformance
                 return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
 
+            testSettings = testSettings ?? new TestSettings(new ConfigurationBuilder().Build());
+
             var zippedUtterances = expectedUtterances
                 .Select((utterance, i) => new { Utterance = utterance, UtteranceId = getUtteranceId(utterance, i) })
-                .Zip(actualUtterances, (expected, actual) => new LabeledUtterancePair(expected.UtteranceId, expected.Utterance, actual))
+                .Zip(actualUtterances, (expected, actual) => new LabeledUtteranceTestInput(expected.UtteranceId, expected.Utterance, actual, testSettings))
                 .ToList();
 
             var testCases = zippedUtterances.SelectMany(ToIntentTestCases)
@@ -83,9 +91,9 @@ namespace NLU.DevOps.ModelPerformance
             return new NLUCompareResults(testCases.ToList());
         }
 
-        internal static IEnumerable<TestCase> ToTextTestCases(LabeledUtterancePair pair)
+        internal static IEnumerable<TestCase> ToTextTestCases(LabeledUtteranceTestInput testInput)
         {
-            var expectedUtterance = pair.Expected;
+            var expectedUtterance = testInput.Expected;
 
             // Skip if the test was not a speech test
             if (expectedUtterance.GetProperty<string>("speechFile") == null)
@@ -93,7 +101,7 @@ namespace NLU.DevOps.ModelPerformance
                 yield break;
             }
 
-            var actualUtterance = pair.Actual;
+            var actualUtterance = testInput.Actual;
             var expected = expectedUtterance.Text;
             var actual = actualUtterance.Text;
             var score = actualUtterance.GetTextScore();
@@ -101,7 +109,7 @@ namespace NLU.DevOps.ModelPerformance
             if (expected == null && actual == null)
             {
                 yield return TrueNegative(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
@@ -114,7 +122,7 @@ namespace NLU.DevOps.ModelPerformance
             else if (actual == null)
             {
                 yield return FalseNegative(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
@@ -127,7 +135,7 @@ namespace NLU.DevOps.ModelPerformance
             else if (EqualsNormalized(expected, actual))
             {
                 yield return TruePositive(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
@@ -140,7 +148,7 @@ namespace NLU.DevOps.ModelPerformance
             else
             {
                 yield return FalsePositive(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Text,
                     expectedUtterance,
                     actualUtterance,
@@ -152,10 +160,10 @@ namespace NLU.DevOps.ModelPerformance
             }
         }
 
-        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtterancePair pair)
+        internal static IEnumerable<TestCase> ToIntentTestCases(LabeledUtteranceTestInput testInput)
         {
-            var expectedUtterance = pair.Expected;
-            var actualUtterance = pair.Actual;
+            var expectedUtterance = testInput.Expected;
+            var actualUtterance = testInput.Actual;
             var score = actualUtterance.GetScore();
 
             var text = expectedUtterance.Text;
@@ -164,13 +172,13 @@ namespace NLU.DevOps.ModelPerformance
 
             bool isNoneIntent(string intent)
             {
-                return intent == null || intent == "None";
+                return intent == null || intent == testInput.TestSettings.TrueNegativeIntent;
             }
 
             if (isNoneIntent(expected) && isNoneIntent(actual))
             {
                 yield return TrueNegative(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
                     actualUtterance,
@@ -186,7 +194,7 @@ namespace NLU.DevOps.ModelPerformance
             if (expected == actual)
             {
                 yield return TruePositive(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
                     actualUtterance,
@@ -202,7 +210,7 @@ namespace NLU.DevOps.ModelPerformance
             if (!isNoneIntent(expected))
             {
                 yield return FalseNegative(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
                     actualUtterance,
@@ -216,7 +224,7 @@ namespace NLU.DevOps.ModelPerformance
             if (!isNoneIntent(actual))
             {
                 yield return FalsePositive(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Intent,
                     expectedUtterance,
                     actualUtterance,
@@ -228,10 +236,10 @@ namespace NLU.DevOps.ModelPerformance
             }
         }
 
-        internal static IEnumerable<TestCase> ToEntityTestCases(LabeledUtterancePair pair)
+        internal static IEnumerable<TestCase> ToEntityTestCases(LabeledUtteranceTestInput testInput)
         {
-            var expectedUtterance = pair.Expected;
-            var actualUtterance = pair.Actual;
+            var expectedUtterance = testInput.Expected;
+            var actualUtterance = testInput.Actual;
             var text = expectedUtterance.Text;
             var expected = expectedUtterance.Entities;
             var actual = actualUtterance.Entities;
@@ -239,7 +247,7 @@ namespace NLU.DevOps.ModelPerformance
             if ((expected == null || expected.Count == 0) && (actual == null || actual.Count == 0))
             {
                 yield return TrueNegative(
-                    pair.UtteranceId,
+                    testInput.UtteranceId,
                     ComparisonTargetKind.Entity,
                     expectedUtterance,
                     actualUtterance,
@@ -290,7 +298,7 @@ namespace NLU.DevOps.ModelPerformance
                     if (matchedEntity == null)
                     {
                         yield return FalseNegative(
-                            pair.UtteranceId,
+                            testInput.UtteranceId,
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
@@ -303,7 +311,7 @@ namespace NLU.DevOps.ModelPerformance
                     else
                     {
                         yield return TruePositive(
-                            pair.UtteranceId,
+                            testInput.UtteranceId,
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
@@ -322,7 +330,7 @@ namespace NLU.DevOps.ModelPerformance
                             if (!ContainsSubtree(entity.EntityValue, matchedEntity.EntityValue))
                             {
                                 yield return FalseNegative(
-                                    pair.UtteranceId,
+                                    testInput.UtteranceId,
                                     ComparisonTargetKind.EntityValue,
                                     expectedUtterance,
                                     actualUtterance,
@@ -335,7 +343,7 @@ namespace NLU.DevOps.ModelPerformance
                             else
                             {
                                 yield return TruePositive(
-                                    pair.UtteranceId,
+                                    testInput.UtteranceId,
                                     ComparisonTargetKind.EntityValue,
                                     expectedUtterance,
                                     actualUtterance,
@@ -356,10 +364,11 @@ namespace NLU.DevOps.ModelPerformance
                 {
                     var score = entity.GetScore();
                     var entityValue = entity.MatchText ?? entity.EntityValue;
-                    if (expected == null || !expected.Any(expectedEntity => isEntityMatch(expectedEntity, entity)))
+                    var isStrictEntity = IsStrictEntity(entity.EntityType, expectedUtterance, testInput.TestSettings);
+                    if (isStrictEntity && (expected == null || !expected.Any(expectedEntity => isEntityMatch(expectedEntity, entity))))
                     {
                         yield return FalsePositive(
-                            pair.UtteranceId,
+                            testInput.UtteranceId,
                             ComparisonTargetKind.Entity,
                             expectedUtterance,
                             actualUtterance,
@@ -371,6 +380,30 @@ namespace NLU.DevOps.ModelPerformance
                     }
                 }
             }
+        }
+
+        private static bool IsStrictEntity(
+            string entityType,
+            LabeledUtterance expectedUtterance,
+            TestSettings testSettings)
+        {
+            var localIgnoreEntities = expectedUtterance.GetIgnoreEntities();
+            var localStrictEntities = expectedUtterance.GetStrictEntities();
+
+            if (testSettings.Strict)
+            {
+                var globalIgnoreEntities = testSettings.IgnoreEntities;
+                return !localIgnoreEntities
+                    .Union(globalIgnoreEntities)
+                    .Except(localStrictEntities)
+                    .Contains(entityType);
+            }
+
+            var globalStrictEntities = testSettings.StrictEntities;
+            return localStrictEntities
+                .Union(globalStrictEntities)
+                .Except(localIgnoreEntities)
+                .Contains(entityType);
         }
 
         private static TestCaseData ToTestCaseData(this TestCase testCase)
@@ -398,17 +431,27 @@ namespace NLU.DevOps.ModelPerformance
 
         private static IReadOnlyList<TestCase> LoadTestCases()
         {
-            var expectedPath = TestContext.Parameters.Get(ConfigurationConstants.ExpectedUtterancesPathKey) ?? Configuration[ConfigurationConstants.ExpectedUtterancesPathKey];
-            var actualPath = TestContext.Parameters.Get(ConfigurationConstants.ActualUtterancesPathKey) ?? Configuration[ConfigurationConstants.ActualUtterancesPathKey];
+            var expectedPath = TestContext.Parameters.Get(ConfigurationConstants.ExpectedUtterancesPathKey) ?? "expected.json";
+            var actualPath = TestContext.Parameters.Get(ConfigurationConstants.ActualUtterancesPathKey) ?? "actual.json";
+            var testSettingsPath = TestContext.Parameters.Get(ConfigurationConstants.TestSettingsPathKey);
 
             if (string.IsNullOrEmpty(expectedPath) || string.IsNullOrEmpty(actualPath))
             {
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+
+            if (testSettingsPath != null)
+            {
+                configurationBuilder = configurationBuilder
+                    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), testSettingsPath));
+            }
+
+            var testSettings = new TestSettings(configurationBuilder.Build());
             var expected = Read(expectedPath);
             var actual = Read(actualPath);
-            return GetNLUCompareResults(expected, actual).TestCases;
+            return GetNLUCompareResults(expected, actual, testSettings).TestCases;
         }
 
         private static List<JsonLabeledUtterance> Read(string path)
@@ -625,7 +668,6 @@ namespace NLU.DevOps.ModelPerformance
             string because,
             IEnumerable<string> categories)
         {
-            var testLabel = TestLabel != null ? $"[{TestLabel}] " : string.Empty;
             var categoriesWithGroup = categories;
             if (group != null)
             {
@@ -640,21 +682,23 @@ namespace NLU.DevOps.ModelPerformance
                 actualUtterance,
                 score,
                 group,
-                $"{testLabel}{resultKind}{targetKind}('{string.Join("', '", args)}')",
+                $"{resultKind}{targetKind}('{string.Join("', '", args)}')",
                 because,
                 categoriesWithGroup);
         }
 
-        internal class LabeledUtterancePair
+        internal class LabeledUtteranceTestInput
         {
-            public LabeledUtterancePair(
+            public LabeledUtteranceTestInput(
                 string utteranceId,
                 LabeledUtterance expected,
-                LabeledUtterance actual)
+                LabeledUtterance actual,
+                TestSettings testSettings)
             {
                 this.UtteranceId = utteranceId;
                 this.Expected = expected;
                 this.Actual = actual;
+                this.TestSettings = testSettings;
             }
 
             public string UtteranceId { get; }
@@ -662,6 +706,8 @@ namespace NLU.DevOps.ModelPerformance
             public LabeledUtterance Expected { get; }
 
             public LabeledUtterance Actual { get; }
+
+            public TestSettings TestSettings { get; }
         }
     }
 }

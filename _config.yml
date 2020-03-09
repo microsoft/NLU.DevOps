@@ -11,7 +11,7 @@ include:
   - docs/Train.md
   - docs/Test.md
   - docs/Clean.md
-  - docs/Compare.md
+  - docs/Analyze.md
   - docs/LuisModelConfiguration.md
   - docs/LuisEndpointConfiguration.md
   - docs/LexModelConfiguration.md

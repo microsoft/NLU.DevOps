@@ -15,7 +15,6 @@ namespace NLU.DevOps.Core
         private const string ScorePropertyName = "score";
         private const string TextScorePropertyName = "textScore";
         private const string TimestampPropertyName = "timestamp";
-        private const string UtteranceIdPropertyName = "utteranceId";
 
         /// <summary>
         /// Adds a confidence score for the intent label to the labeled utterance.
@@ -121,16 +120,6 @@ namespace NLU.DevOps.Core
         public static T GetProperty<T>(this LabeledUtterance instance, string propertyName)
         {
             return instance.GetPropertyCore<T>(propertyName);
-        }
-
-        /// <summary>
-        /// Gets the utterance identifier for the labeled utterance.
-        /// </summary>
-        /// <param name="instance">Labeled utterance instance.</param>
-        /// <returns>Utterance identifier.</returns>
-        public static string GetUtteranceId(this LabeledUtterance instance)
-        {
-            return instance.GetPropertyCore<string>(UtteranceIdPropertyName);
         }
 
         /// <summary>
