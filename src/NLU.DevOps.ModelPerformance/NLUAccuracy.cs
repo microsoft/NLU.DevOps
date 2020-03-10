@@ -39,17 +39,17 @@ namespace NLU.DevOps.ModelPerformance
                 .ToList()
                 .ForEach(intentItem =>
                 {
-                    var baselineResults = default(ConfusionMatrix);
-                    if (baseline != null && !baseline.ByIntent.TryGetValue(intentItem.Key, out baselineResults))
+                    var intentBaseline = default(ConfusionMatrix);
+                    if (baseline != null && !baseline.ByIntent.TryGetValue(intentItem.Key, out intentBaseline))
                     {
-                        baselineResults = ConfusionMatrix.Default;
+                        intentBaseline = ConfusionMatrix.Default;
                     }
 
-                    var intentPrecision = Print(intentItem.Value.Precision(), baselineResults?.Precision());
-                    var intentRecall = Print(intentItem.Value.Recall(), baselineResults?.Recall());
-                    var intentF1 = Print(intentItem.Value.F1(), baselineResults?.F1());
-                    var intentTotal = Print(intentItem.Value.Total(), baselineResults?.Total(), 0);
-                    var intentFP = Print(intentItem.Value.FalsePositive, baselineResults?.FalsePositive, 0);
+                    var intentPrecision = Print(intentItem.Value.Precision(), intentBaseline?.Precision());
+                    var intentRecall = Print(intentItem.Value.Recall(), intentBaseline?.Recall());
+                    var intentF1 = Print(intentItem.Value.F1(), intentBaseline?.F1());
+                    var intentTotal = Print(intentItem.Value.Total(), intentBaseline?.Total(), 0);
+                    var intentFP = Print(intentItem.Value.FalsePositive, intentBaseline?.FalsePositive, 0);
                     intentTable.AddRow(intentItem.Key, intentPrecision, intentRecall, intentF1, intentTotal, intentFP);
                 });
 
@@ -71,17 +71,17 @@ namespace NLU.DevOps.ModelPerformance
                 .ToList()
                 .ForEach(entityItem =>
                 {
-                    var baselineResults = default(ConfusionMatrix);
-                    if (baseline != null && !baseline.ByEntityType.TryGetValue(entityItem.Key, out baselineResults))
+                    var entityBaseline = default(ConfusionMatrix);
+                    if (baseline != null && !baseline.ByEntityType.TryGetValue(entityItem.Key, out entityBaseline))
                     {
-                        baselineResults = ConfusionMatrix.Default;
+                        entityBaseline = ConfusionMatrix.Default;
                     }
 
-                    var entityPrecision = Print(entityItem.Value.Precision(), baselineResults?.Precision());
-                    var entityRecall = Print(entityItem.Value.Recall(), baselineResults?.Recall());
-                    var entityF1 = Print(entityItem.Value.F1(), baselineResults?.F1());
-                    var entityTotal = Print(entityItem.Value.Total(), baselineResults?.Total(), 0);
-                    var entityFP = Print(entityItem.Value.FalsePositive, baselineResults?.FalsePositive, 0);
+                    var entityPrecision = Print(entityItem.Value.Precision(), entityBaseline?.Precision());
+                    var entityRecall = Print(entityItem.Value.Recall(), entityBaseline?.Recall());
+                    var entityF1 = Print(entityItem.Value.F1(), entityBaseline?.F1());
+                    var entityTotal = Print(entityItem.Value.Total(), entityBaseline?.Total(), 0);
+                    var entityFP = Print(entityItem.Value.FalsePositive, entityBaseline?.FalsePositive, 0);
                     entityTable.AddRow(entityItem.Key, entityPrecision, entityRecall, entityF1, entityTotal, entityFP);
                 });
 
@@ -187,9 +187,11 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>Printed value and difference with baseline.</returns>
         private static string Print(double current, double? baseline, int precision = 3)
         {
-            var format = $"0.{string.Join(string.Empty, Enumerable.Repeat("0", precision))}";
+            var precisionString = string.Join(string.Empty, Enumerable.Repeat("0", precision));
+            var format = $"0.{precisionString}";
+            var diffFormat = $"+0.{precisionString};-0.{precisionString};+0.{precisionString}";
             return baseline.HasValue
-                ? string.Format(CultureInfo.CurrentCulture, $"{{0:{format}}} ({{1:{format}}})", current, current - baseline)
+                ? string.Format(CultureInfo.CurrentCulture, $"{{0:{format}}} ({{1:{diffFormat}}})", current, current - baseline)
                 : string.Format(CultureInfo.CurrentCulture, $"{{0:{format}}}", current);
         }
     }
