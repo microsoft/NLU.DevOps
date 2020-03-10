@@ -12,40 +12,21 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void AccuracyWithAllZeroes()
         {
-            ConfusionMatrix cm = new ConfusionMatrix(0, 0, 0, 0);
-
-            var result = cm.CalcAccuracy();
-
-            result.Count.Should().Be(3);
-            result[0].Should().Be(0);
-            result[1].Should().Be(0);
-            result[2].Should().Be(0);
+            var matrix = new ConfusionMatrix(0, 0, 0, 0);
+            matrix.Precision().Should().Be(0);
+            matrix.Recall().Should().Be(0);
+            matrix.F1().Should().Be(0);
+            matrix.Total().Should().Be(0);
         }
 
         [Test]
         public static void AccuracyWithValues()
         {
-            ConfusionMatrix cm = new ConfusionMatrix(13, 0, 10, 45);
-
-            var result = cm.CalcAccuracy();
-
-            result.Count.Should().Be(3);
-            result[0].Should().Be(0.5652);
-            result[1].Should().Be(0.2241);
-            result[2].Should().Be(0.3210);
-        }
-
-        [Test]
-        public static void AccuracyWithValuesWithdRoundingDecimal()
-        {
-            ConfusionMatrix cm = new ConfusionMatrix(13, 0, 10, 45);
-
-            var result = cm.CalcAccuracy(5);
-
-            result.Count.Should().Be(3);
-            result[0].Should().Be(0.56522);
-            result[1].Should().Be(0.22414);
-            result[2].Should().Be(0.32099);
+            var matrix = new ConfusionMatrix(13, 0, 10, 45);
+            matrix.Precision().Should().BeApproximately(0.5652, 0.0001);
+            matrix.Recall().Should().BeApproximately(0.2241, 0.0001);
+            matrix.F1().Should().BeApproximately(0.3210, 0.0001);
+            matrix.Total().Should().Be(68);
         }
     }
 }

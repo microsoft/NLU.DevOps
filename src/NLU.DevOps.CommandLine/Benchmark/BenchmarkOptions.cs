@@ -3,7 +3,6 @@
 
 namespace NLU.DevOps.CommandLine.Benchmark
 {
-    using Compare;
     using global::CommandLine;
 
     [Verb("benchmark", HelpText = "Compute confusion matrix results.")]

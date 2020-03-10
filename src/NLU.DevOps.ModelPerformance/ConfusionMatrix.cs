@@ -31,6 +31,11 @@ namespace NLU.DevOps.ModelPerformance
         }
 
         /// <summary>
+        /// Gets the default confusion matrix.
+        /// </summary>
+        public static ConfusionMatrix Default { get; } = new ConfusionMatrix(0, 0, 0, 0);
+
+        /// <summary>
         /// Gets the true positive count.
         /// </summary>
         public int TruePositive { get; }

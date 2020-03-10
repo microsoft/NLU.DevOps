@@ -61,7 +61,7 @@ For example, the following is likely to generate a false positive entity result 
 
 ### `benchmark`
 
-The `benchmark` command will generate JSON output for the confusion matrix with the following format:
+The `benchmark` command will output a JSON file called `metadata.json` for the confusion matrix with the following format:
 ```plaintext
 [
   {
@@ -80,7 +80,29 @@ The `benchmark` command will generate JSON output for the confusion matrix with 
 ]
 ```
 
-The results generated for the `benchmark` command are equivalent to the `compare` command for intents. For entities, `benchmark` generates all false positive results for unexpected entities by default, except in cases where they are explicity ignored.
+It also generates a much smaller high-level summary of confusion matrix results grouped by intent and entity type, called `statistics.json`:
+```plaintext
+{
+  "intent": [
+    7, /* true positive */
+    4, /* true negative */
+    1, /* false positive */
+    3  /* false negative */
+  ],
+  "entity": [ 2, 10, 1, 2 ],
+  "byIntent": {
+    "PlayMusic": [ 5, 0, 1, 1 ],
+    "Skip": [ 2, 0, 0, 2 ]
+  },
+  "byEntityType": {
+    "Genre": [ 1, 0, 0, 2 ]
+  }
+}
+```
+
+The `metadata.json` output is useful for reviewing fine-grained details of NLU tests, whereas the `statistics.json`, given it's more compact representation, is useful for comparing course-grained measurements (e.g., precision and recall) over time across multiple test runs.
+
+The confusion matrix results generated for the `benchmark` command are equivalent to the `compare` command for intents. For entities, `benchmark` generates all false positive results for unexpected entities by default, except in cases where they are explicity ignored.
 
 For example, the following would not generate a false positive result for `genre`, as even though it was not declared in `entities`, the entity type was listed in the `ignoreEntities` property.
 ```json

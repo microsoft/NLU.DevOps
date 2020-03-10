@@ -5,7 +5,9 @@ namespace NLU.DevOps.ModelPerformance
 {
     using System;
     using System.Diagnostics;
+    using System.Linq;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// JSON converter for <see cref="ConfusionMatrix"/>.
@@ -13,12 +15,25 @@ namespace NLU.DevOps.ModelPerformance
     public class ConfusionMatrixConverter : JsonConverter<ConfusionMatrix>
     {
         /// <inheritdoc />
-        public override bool CanRead => false;
-
-        /// <inheritdoc />
         public override ConfusionMatrix ReadJson(JsonReader reader, Type objectType, ConfusionMatrix existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            var json = JToken.Load(reader);
+            if (json.Type == JTokenType.Null || json.Type == JTokenType.Undefined)
+            {
+                return null;
+            }
+
+            var jsonArray = json as JArray;
+            if (jsonArray == null || jsonArray.Count != 4 || jsonArray.Any(t => t.Type != JTokenType.Integer))
+            {
+                throw new InvalidOperationException("Expected JSON array of confusion matrix integers.");
+            }
+
+            return new ConfusionMatrix(
+                jsonArray[0].Value<int>(),
+                jsonArray[1].Value<int>(),
+                jsonArray[2].Value<int>(),
+                jsonArray[3].Value<int>());
         }
 
         /// <inheritdoc />
