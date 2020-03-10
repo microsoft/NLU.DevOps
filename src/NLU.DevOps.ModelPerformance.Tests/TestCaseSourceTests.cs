@@ -5,7 +5,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
     using Core;
@@ -673,33 +673,45 @@ namespace NLU.DevOps.ModelPerformance.Tests
             int falsePositive,
             int falseNegative)
         {
-            var expectedEntity = new Entity(expected, null, string.Empty, 0);
-            var actualEntity = new Entity(actual, null, value, 0);
-            var expectedUtterance = new LabeledUtterance(null, null, new[] { expectedEntity })
-                .WithProperty("strictEntities", new JArray { "a", "f" })
-                .WithProperty("ignoreEntities", new JArray { "b", "e" });
-            var actualUtterance = new LabeledUtterance(null, null, new[] { actualEntity });
-
-            var testSettings = new TestSettings(new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
-                {
-                    { "strictEntities", new JArray { "c", "e" }.ToString(Formatting.None) },
-                    { "ignoreEntities", new JArray { "d", "f" }.ToString(Formatting.None) },
-                })
-                .Build())
+            var globalSettingsFile = Guid.NewGuid().ToString();
+            var globalSettings = new JObject
             {
-                Strict = strict,
+                { "strictEntities", new JArray { "c", "e" } },
+                { "ignoreEntities", new JArray { "d", "f" } },
             };
 
-            var compareResults = TestCaseSource.GetNLUCompareResults(
-                new[] { expectedUtterance },
-                new[] { actualUtterance },
-                testSettings);
+            File.WriteAllText(globalSettingsFile, globalSettings.ToString());
 
-            compareResults.Statistics.Entity.TruePositive.Should().Be(truePositive);
-            compareResults.Statistics.Entity.TrueNegative.Should().Be(trueNegative);
-            compareResults.Statistics.Entity.FalsePositive.Should().Be(falsePositive);
-            compareResults.Statistics.Entity.FalseNegative.Should().Be(falseNegative);
+            try
+            {
+                var expectedEntity = new Entity(expected, null, string.Empty, 0);
+                var actualEntity = new Entity(actual, null, value, 0);
+                var expectedUtterance = new LabeledUtterance(null, null, new[] { expectedEntity })
+                    .WithProperty("strictEntities", new JArray { "a", "f" })
+                    .WithProperty("ignoreEntities", new JArray { "b", "e" });
+                var actualUtterance = new LabeledUtterance(null, null, new[] { actualEntity });
+
+                var testSettings = new TestSettings(new ConfigurationBuilder()
+                    .AddJsonFile(globalSettingsFile)
+                    .Build())
+                {
+                    Strict = strict,
+                };
+
+                var compareResults = TestCaseSource.GetNLUCompareResults(
+                    new[] { expectedUtterance },
+                    new[] { actualUtterance },
+                    testSettings);
+
+                compareResults.Statistics.Entity.TruePositive.Should().Be(truePositive);
+                compareResults.Statistics.Entity.TrueNegative.Should().Be(trueNegative);
+                compareResults.Statistics.Entity.FalsePositive.Should().Be(falsePositive);
+                compareResults.Statistics.Entity.FalseNegative.Should().Be(falseNegative);
+            }
+            finally
+            {
+                File.Delete(globalSettingsFile);
+            }
         }
 
         [Test]

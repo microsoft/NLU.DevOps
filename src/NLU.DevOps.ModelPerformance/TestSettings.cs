@@ -6,8 +6,6 @@ namespace NLU.DevOps.ModelPerformance
     using System;
     using System.Collections.Generic;
     using Microsoft.Extensions.Configuration;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// A wrapper class to expose test configuration values.
@@ -24,7 +22,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="configuration">Test cconfiguration.</param>
         public TestSettings(IConfiguration configuration)
         {
-            this.Configuration = configuration;
+            this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
@@ -33,7 +31,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <remarks>
         /// This is only relevant when used with the benchmark command, which runs in strict mode.
         /// </remarks>
-        public IReadOnlyList<string> IgnoreEntities => this.GetArrayValue(IgnoreEntitiesConfigurationKey);
+        public IReadOnlyList<string> IgnoreEntities => this.Configuration.GetSection(IgnoreEntitiesConfigurationKey).Get<string[]>() ?? Array.Empty<string>();
 
         /// <summary>
         /// Gets or sets a value indicating whether unexpected
@@ -47,7 +45,7 @@ namespace NLU.DevOps.ModelPerformance
         /// <remarks>
         /// This is only relevant when used with the compare command, which is not run in strict mode.
         /// </remarks>
-        public IReadOnlyList<string> StrictEntities => this.GetArrayValue(StrictEntitiesConfigurationKey);
+        public IReadOnlyList<string> StrictEntities => this.Configuration.GetSection(StrictEntitiesConfigurationKey).Get<string[]>() ?? Array.Empty<string>();
 
         /// <summary>
         /// Gets the name of the intent used for true negatives.
@@ -55,22 +53,5 @@ namespace NLU.DevOps.ModelPerformance
         public string TrueNegativeIntent => this.Configuration.GetValue(TrueNegativeIntentConfigurationKey, default(string));
 
         private IConfiguration Configuration { get; }
-
-        private IReadOnlyList<string> GetArrayValue(string key)
-        {
-            var value = this.Configuration.GetValue(key, default(string));
-            try
-            {
-                if (value != null)
-                {
-                    return JToken.Parse(value).ToObject<string[]>();
-                }
-            }
-            catch (JsonException)
-            {
-            }
-
-            return Array.Empty<string>();
-        }
     }
 }
