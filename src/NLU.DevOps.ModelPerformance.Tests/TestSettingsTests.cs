@@ -25,11 +25,19 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var settingsFile = Guid.NewGuid().ToString();
 
+            var threshold = new JObject
+            {
+                { "type", "intent" },
+                { "group", "*" },
+                { "threshold", 0.05 },
+            };
+
             var settings = new JObject
             {
                 { "trueNegativeIntent", "default" },
                 { "strictEntities", new JArray { "strict" } },
                 { "ignoreEntities", new JArray { "ignore" } },
+                { "thresholds", new JArray { threshold } },
             };
 
             File.WriteAllText(settingsFile, settings.ToString());
@@ -40,6 +48,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 testSettings.TrueNegativeIntent.Should().Be("default");
                 testSettings.StrictEntities.Should().BeEquivalentTo("strict");
                 testSettings.IgnoreEntities.Should().BeEquivalentTo("ignore");
+                testSettings.Thresholds.Count.Should().Be(1);
+                testSettings.Thresholds[0].Type.Should().Be("intent");
+                testSettings.Thresholds[0].Group.Should().Be("*");
+                testSettings.Thresholds[0].Threshold.Should().BeApproximately(0.05, 0.001);
             }
             finally
             {
@@ -50,7 +62,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void CreateFromYaml()
         {
-            var settingsFile = $"{Guid.NewGuid().ToString()}.yml";
+            var settingsFile = $"{Guid.NewGuid()}.yml";
             var settings = new[]
             {
                 "trueNegativeIntent: default",
@@ -58,6 +70,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 "- strict",
                 "ignoreEntities:",
                 "- ignore",
+                "thresholds:",
+                "- type: intent",
+                "  group: '*'",
+                "  threshold: 0.05",
             };
 
             File.WriteAllText(settingsFile, string.Join(Environment.NewLine, settings));
@@ -68,6 +84,10 @@ namespace NLU.DevOps.ModelPerformance.Tests
                 testSettings.TrueNegativeIntent.Should().Be("default");
                 testSettings.StrictEntities.Should().BeEquivalentTo("strict");
                 testSettings.IgnoreEntities.Should().BeEquivalentTo("ignore");
+                testSettings.Thresholds.Count.Should().Be(1);
+                testSettings.Thresholds[0].Type.Should().Be("intent");
+                testSettings.Thresholds[0].Group.Should().Be("*");
+                testSettings.Thresholds[0].Threshold.Should().BeApproximately(0.05, 0.001);
             }
             finally
             {

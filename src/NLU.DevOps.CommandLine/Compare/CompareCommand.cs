@@ -8,8 +8,10 @@ namespace NLU.DevOps.CommandLine.Compare
     using System.IO;
     using System.Linq;
     using Core;
+    using Microsoft.Extensions.Logging;
     using ModelPerformance;
     using Newtonsoft.Json.Linq;
+    using NLU.DevOps.Logging;
     using NUnitLite;
     using static Serializer;
 
@@ -17,6 +19,11 @@ namespace NLU.DevOps.CommandLine.Compare
     {
         private const string TestMetadataFileName = "metadata.json";
         private const string TestStatisticsFileName = "statistics.json";
+
+        private static ILogger Logger { get; } =
+            ApplicationLogger.LoggerFactory
+                .AddConsole(LogLevel.Warning)
+                .CreateLogger(typeof(CompareCommand));
 
         public static int Run(CompareOptions options)
         {
@@ -40,7 +47,17 @@ namespace NLU.DevOps.CommandLine.Compare
             Write(metadataPath, compareResults.TestCases);
             File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
 
-            return 0;
+            var failedThresholds = testSettings.Thresholds
+                .Where(t => !compareResults.Statistics.CheckThreshold(baseline, t))
+                .ToList();
+
+            if (failedThresholds.Count > 0)
+            {
+                var failedThresholdsInfo = string.Join(", ", failedThresholds.Select(t => t.GetDescription()));
+                Logger.LogWarning($"Performance threshold not met for {failedThresholdsInfo}.");
+            }
+
+            return failedThresholds.Count;
         }
 
         private static int RunNUnit(CompareOptions options)
@@ -67,6 +84,14 @@ namespace NLU.DevOps.CommandLine.Compare
                 .Select(p => $"{p.Item1}={p.Item2}");
 
             return string.Join(';', filteredParameters);
+        }
+
+        private static string GetDescription(this NLUThreshold threshold)
+        {
+            var type = threshold.Type == "entity" ? "entity type" : threshold.Type;
+            return threshold.Group == null || threshold.Type == "*"
+                ? $"all {type}s"
+                : $"{type} '{threshold.Group}'";
         }
     }
 }
