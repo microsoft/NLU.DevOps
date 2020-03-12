@@ -191,7 +191,8 @@ async function downloadBaselineStatistics() {
             throw new Error("Must specify a branch name in 'baselineBranchName'.");
         }
 
-        return await downloadStatisticsFromBranch(1, branchName);
+        const results = await downloadStatisticsFromBranch(1, branchName);
+        return results.length && results[0].path;
     }
 
     const results = await downloadStatisticsFromBranch(1);
