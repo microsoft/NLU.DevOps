@@ -27,6 +27,7 @@ describe("NLUTest", () => {
     let addAttachmentStub: sinon.SinonStub<any[], any>;
     let addBuildTagStub: sinon.SinonStub<any[], any>;
     let getBuildStatisticsStub: sinon.SinonStub<any[], any>;
+    let downloadBuildStatisticsStub: sinon.SinonStub<any[], any>;
     let writeFileSyncStub: sinon.SinonStub<any[], any>;
     let getVariableStub: sinon.SinonStub<any[], any>;
 
@@ -41,6 +42,7 @@ describe("NLUTest", () => {
         addAttachmentStub = ImportMock.mockFunction(tl, "addAttachment");
         addBuildTagStub = ImportMock.mockFunction(tl, "addBuildTag");
         getBuildStatisticsStub = ImportMock.mockFunction(artifacts, "getBuildStatistics");
+        downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
         writeFileSyncStub = ImportMock.mockFunction(fs, "writeFileSync");
 
         getVariableStub = ImportMock.mockFunction(tl, "getVariable");
@@ -59,6 +61,7 @@ describe("NLUTest", () => {
         addBuildTagStub.restore();
         writeFileSyncStub.restore();
         getBuildStatisticsStub.restore();
+        downloadBuildStatisticsStub.restore();
 
         getVariableStub.restore();
     });
@@ -89,6 +92,7 @@ describe("NLUTest", () => {
         addAttachmentStub.reset();
         addBuildTagStub.reset();
         getBuildStatisticsStub.reset();
+        downloadBuildStatisticsStub.reset();
         writeFileSyncStub.reset();
 
         // restore tl.tool method
@@ -194,6 +198,9 @@ describe("NLUTest", () => {
         getInputStub.withArgs("utterances").returns(utterances);
         getBoolInputStub.withArgs("publishTestResults").returns(true);
 
+        // stub previous build results
+        downloadBuildStatisticsStub.returns([]);
+
         // stub test results match
         const resultFiles = [ "foo" ];
         findMatchStub.returns(resultFiles);
@@ -241,6 +248,9 @@ describe("NLUTest", () => {
         getInputStub.withArgs("utterances").returns(utterances);
         getBoolInputStub.withArgs("publishTestResults").returns(true);
 
+        // stub previous build results
+        downloadBuildStatisticsStub.returns([]);
+
         // stub test results match
         const resultsFiles = [];
         findMatchStub.returns(resultsFiles);
@@ -270,16 +280,14 @@ describe("NLUTest", () => {
 
         // stub previous build results
         getBuildStatisticsStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(calls.length).to.equal(8 /* test */ + 8 /* compare */);
-
-        // exec dotnet-nlu call
-        expect(calls[15].calledWith("-m")).to.be.ok;
+        expect(calls.length).to.equal(8 /* test */ + 7 /* compare */);
 
         // assert statistics written
         const allStatisticsPath = path.join(".nlu", "allStatistics.json");
@@ -291,7 +299,7 @@ describe("NLUTest", () => {
         expect(addAttachmentStub.calledWith("nlu.devops", "statistics.json", allStatisticsPath)).to.be.ok;
     });
 
-    it("publishes statistics if master build", async () => {
+    it("always publishes statistics from any build", async () => {
         // stub exec
         const execStub = toolMock.mock("exec");
         execStub.onCall(0).returns(0);
@@ -306,15 +314,10 @@ describe("NLUTest", () => {
 
         // stub previous build results
         getBuildStatisticsStub.returns([]);
-
-        // mock tl.getVariable("Source.Branch");
-        getVariableStub.withArgs("Build.SourceBranch").returns("refs/heads/master");
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
-
-        // reset tl.getVariable("Source.Branch");
-        getVariableStub.withArgs("Build.SourceBranch").returns(undefined);
 
         // assert publishes artifact
         const statisticsPath = path.join(".nlu", "statistics.json");
@@ -346,7 +349,7 @@ describe("NLUTest", () => {
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        getBuildStatisticsStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
@@ -372,15 +375,100 @@ describe("NLUTest", () => {
         const compareOutput = "compareOutput";
         getInputStub.withArgs("service").returns(service);
         getInputStub.withArgs("utterances").returns(utterances);
-        getBoolInputStub.withArgs("compareOutput").returns(compareOutput);
+        getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        getBuildStatisticsStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
 
         // assert result
         expect(setResultStub.calledWith(tl.TaskResult.Failed)).to.be.ok;
+    });
+
+    it("adds baseline when returned by downloadBuildStatistics", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(0);
+        execStub.onCall(1).returns(0);
+
+        // stub inputs
+        const service = "foo";
+        const utterances = "bar";
+        const compareOutput = "compareOutput";
+        getInputStub.withArgs("service").returns(service);
+        getInputStub.withArgs("utterances").returns(utterances);
+        getInputStub.withArgs("compareOutput").returns(compareOutput);
+
+        // stub previous build results
+        downloadBuildStatisticsStub.returns([ { path: "baseline" } ]);
+
+        // run test
+        await run();
+
+        // assert calls
+        const calls = argMock.getCalls();
+        expect(calls.length).to.equal(8 /* test */ + 9 /* compare */);
+        expect(calls[15].calledWith("-b")).to.be.ok;
+        expect(calls[16].calledWith("baseline")).to.be.ok;
+    });
+
+    it("throws when baselineBuildType is latestFromBranch with no branch name", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(0);
+        execStub.onCall(1).returns(0);
+
+        // stub inputs
+        const service = "foo";
+        const utterances = "bar";
+        const compareOutput = "compareOutput";
+        getInputStub.withArgs("service").returns(service);
+        getInputStub.withArgs("utterances").returns(utterances);
+        getInputStub.withArgs("baselineBuildType").returns("latestFromBranch");
+        getInputStub.withArgs("compareOutput").returns(compareOutput);
+
+        // disable downloadBuildStatistics stub
+        downloadBuildStatisticsStub.restore();
+
+        // run test
+        await run();
+
+        // re-enable the downloadBuildStatistics stub
+        downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
+
+        // assert result
+        expect(setResultStub.calledWith(tl.TaskResult.Failed)).to.be.ok;
+        expect(setResultStub.firstCall.args[1]).to.contain("baselineBranchName");
+    });
+
+    it("throws when baselineBuildType is specific with no build ID", async () => {
+        // stub exec
+        const execStub = toolMock.mock("exec");
+        execStub.onCall(0).returns(0);
+        execStub.onCall(1).returns(0);
+
+        // stub inputs
+        const service = "foo";
+        const utterances = "bar";
+        const compareOutput = "compareOutput";
+        getInputStub.withArgs("service").returns(service);
+        getInputStub.withArgs("utterances").returns(utterances);
+        getInputStub.withArgs("baselineBuildType").returns("specific");
+        getInputStub.withArgs("compareOutput").returns(compareOutput);
+
+        // disable downloadBuildStatistics stub
+        downloadBuildStatisticsStub.restore();
+
+        // run test
+        await run();
+
+        // re-enable the downloadBuildStatistics stub
+        downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
+
+        // assert result
+        expect(setResultStub.calledWith(tl.TaskResult.Failed)).to.be.ok;
+        expect(setResultStub.firstCall.args[1]).to.contain("baselineBuildId");
     });
 });
