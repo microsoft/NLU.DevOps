@@ -185,17 +185,14 @@ async function downloadBaselineStatistics() {
         }
 
         return await downloadStatisticsFromBuildId(buildId);
-    } else if (buildType === "latestFromBranch") {
-        const branchName = tl.getInput("baselineBranchName");
-        if (!branchName) {
-            throw new Error("Must specify a branch name in 'baselineBranchName'.");
-        }
-
-        const results = await downloadStatisticsFromBranch(1, branchName);
-        return results.length && results[0].path;
     }
 
-    const results = await downloadStatisticsFromBranch(1);
+    const branchName = tl.getInput("baselineBranchName") || undefined;
+    if (buildType === "latestFromBranch" && !branchName) {
+        throw new Error("Must specify a branch name in 'baselineBranchName'.");
+    }
+
+    const results = await downloadStatisticsFromBranch(1, branchName);
     return results.length && results[0].path;
 }
 
