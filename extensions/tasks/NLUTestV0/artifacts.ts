@@ -48,7 +48,7 @@ export async function downloadBuildStatistics(count: number) {
             {
                 id: buildIdInput,
                 path: await downloadStatisticsFromBuildId(buildId),
-            }
+            },
         ];
     }
 
