@@ -16,7 +16,7 @@ export async function getBuildStatistics(statisticsPath: string) {
         throw new Error("Input value for 'compareBuildCount' must be a valid integer.");
     }
 
-    const buildStatistics = await downloadStatisticsFromBranch(compareBuildCount, "refs/heads/master");
+    const buildStatistics = await downloadBuildStatistics(compareBuildCount);
 
     const statisticsData = readFileSync(statisticsPath).toString().trim();
     const statistics = JSON.parse(statisticsData);
@@ -35,7 +35,33 @@ export async function getBuildStatistics(statisticsPath: string) {
     ];
 }
 
-export async function downloadStatisticsFromBranch(count: number, branchName?: string) {
+export async function downloadBuildStatistics(count: number) {
+    const buildType = tl.getInput("baselineBuildType");
+    if (buildType === "specific") {
+        const buildIdInput = tl.getInput("baselineBuildId");
+        const buildId = parseInt(buildIdInput, 10);
+        if (Number.isNaN(buildId)) {
+            throw new Error("Must specify a valid build ID in 'baselineBuildId' input.");
+        }
+
+        return [
+            {
+                id: buildIdInput,
+                path: await downloadStatisticsFromBuildId(buildId),
+            }
+        ];
+    }
+
+    const branchName = tl.getInput("baselineBranchName") || undefined;
+    if (buildType === "latestFromBranch" && !branchName) {
+        throw new Error("Must specify a branch name in 'baselineBranchName'.");
+    }
+
+    const results = await downloadStatisticsFromBranch(count, branchName);
+    return results;
+}
+
+async function downloadStatisticsFromBranch(count: number, branchName?: string) {
     if (!count) {
         return [];
     }
@@ -80,7 +106,7 @@ export async function downloadStatisticsFromBranch(count: number, branchName?: s
     return await Promise.all(artifactPromises);
 }
 
-export async function downloadStatisticsFromBuildId(buildId: number) {
+async function downloadStatisticsFromBuildId(buildId: number) {
     const endpointUrl = tl.getVariable("System.TeamFoundationCollectionUri");
     const accessToken = tl.getEndpointAuthorizationParameter("SYSTEMVSSCONNECTION", "AccessToken", false);
     const credentialHandler = getHandlerFromToken(accessToken);

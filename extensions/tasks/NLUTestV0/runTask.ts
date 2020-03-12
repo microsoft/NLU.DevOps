@@ -7,8 +7,7 @@ import { writeFileSync } from "fs";
 import { getNLUToolRunner } from "nlu-devops-common/utilities";
 import * as path from "path";
 import {
-    downloadStatisticsFromBranch,
-    downloadStatisticsFromBuildId,
+    downloadBuildStatistics,
     getBuildStatistics,
 } from "./artifacts";
 
@@ -94,10 +93,10 @@ async function runNLUCompare(output): Promise<any> {
             .arg(testSettings);
     }
 
-    const baseline = await downloadBaselineStatistics();
-    if (baseline) {
+    const baseline = await downloadBuildStatistics(1);
+    if (baseline.length) {
         tool.arg("-b")
-            .arg(baseline);
+            .arg(baseline[0].path);
     }
 
     let isError = false;
@@ -173,27 +172,6 @@ async function publishNLUResults() {
 
     tl.command("artifact.upload", publishData, statisticsPath);
     tl.addBuildTag("nlu.devops.statistics");
-}
-
-async function downloadBaselineStatistics() {
-    const buildType = tl.getInput("baselineBuildType");
-    if (buildType === "specific") {
-        const buildIdInput = tl.getInput("baselineBuildId");
-        const buildId = parseInt(buildIdInput, 10);
-        if (Number.isNaN(buildId)) {
-            throw new Error("Must specify a valid build ID in 'baselineBuildId' input.");
-        }
-
-        return await downloadStatisticsFromBuildId(buildId);
-    }
-
-    const branchName = tl.getInput("baselineBranchName") || undefined;
-    if (buildType === "latestFromBranch" && !branchName) {
-        throw new Error("Must specify a branch name in 'baselineBranchName'.");
-    }
-
-    const results = await downloadStatisticsFromBranch(1, branchName);
-    return results.length && results[0].path;
 }
 
 function getOutputPath() {

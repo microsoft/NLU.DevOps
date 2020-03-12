@@ -27,8 +27,7 @@ describe("NLUTest", () => {
     let addAttachmentStub: sinon.SinonStub<any[], any>;
     let addBuildTagStub: sinon.SinonStub<any[], any>;
     let getBuildStatisticsStub: sinon.SinonStub<any[], any>;
-    let downloadStatisticsFromBranchStub: sinon.SinonStub<any[], any>;
-    let downloadStatisticsFromBuildIdStub: sinon.SinonStub<any[], any>;
+    let downloadBuildStatisticsStub: sinon.SinonStub<any[], any>;
     let writeFileSyncStub: sinon.SinonStub<any[], any>;
     let getVariableStub: sinon.SinonStub<any[], any>;
 
@@ -43,8 +42,7 @@ describe("NLUTest", () => {
         addAttachmentStub = ImportMock.mockFunction(tl, "addAttachment");
         addBuildTagStub = ImportMock.mockFunction(tl, "addBuildTag");
         getBuildStatisticsStub = ImportMock.mockFunction(artifacts, "getBuildStatistics");
-        downloadStatisticsFromBranchStub = ImportMock.mockFunction(artifacts, "downloadStatisticsFromBranch");
-        downloadStatisticsFromBuildIdStub = ImportMock.mockFunction(artifacts, "downloadStatisticsFromBuildId");
+        downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
         writeFileSyncStub = ImportMock.mockFunction(fs, "writeFileSync");
 
         getVariableStub = ImportMock.mockFunction(tl, "getVariable");
@@ -63,8 +61,7 @@ describe("NLUTest", () => {
         addBuildTagStub.restore();
         writeFileSyncStub.restore();
         getBuildStatisticsStub.restore();
-        downloadStatisticsFromBranchStub.restore();
-        downloadStatisticsFromBuildIdStub.restore();
+        downloadBuildStatisticsStub.restore();
 
         getVariableStub.restore();
     });
@@ -95,8 +92,7 @@ describe("NLUTest", () => {
         addAttachmentStub.reset();
         addBuildTagStub.reset();
         getBuildStatisticsStub.reset();
-        downloadStatisticsFromBranchStub.reset();
-        downloadStatisticsFromBuildIdStub.reset();
+        downloadBuildStatisticsStub.reset();
         writeFileSyncStub.reset();
 
         // restore tl.tool method
@@ -203,7 +199,7 @@ describe("NLUTest", () => {
         getBoolInputStub.withArgs("publishTestResults").returns(true);
 
         // stub previous build results
-        downloadStatisticsFromBranchStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // stub test results match
         const resultFiles = [ "foo" ];
@@ -253,7 +249,7 @@ describe("NLUTest", () => {
         getBoolInputStub.withArgs("publishTestResults").returns(true);
 
         // stub previous build results
-        downloadStatisticsFromBranchStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // stub test results match
         const resultsFiles = [];
@@ -284,7 +280,7 @@ describe("NLUTest", () => {
 
         // stub previous build results
         getBuildStatisticsStub.returns([]);
-        downloadStatisticsFromBranchStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
@@ -318,7 +314,7 @@ describe("NLUTest", () => {
 
         // stub previous build results
         getBuildStatisticsStub.returns([]);
-        downloadStatisticsFromBranchStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
@@ -353,7 +349,7 @@ describe("NLUTest", () => {
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        downloadStatisticsFromBranchStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
@@ -382,7 +378,7 @@ describe("NLUTest", () => {
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        downloadStatisticsFromBranchStub.returns([]);
+        downloadBuildStatisticsStub.returns([]);
 
         // run test
         await run();
@@ -391,67 +387,7 @@ describe("NLUTest", () => {
         expect(setResultStub.calledWith(tl.TaskResult.Failed)).to.be.ok;
     });
 
-    it("adds baseline when baselineBuildType is specific", async () => {
-        // stub exec
-        const execStub = toolMock.mock("exec");
-        execStub.onCall(0).returns(0);
-        execStub.onCall(1).returns(0);
-
-        // stub inputs
-        const service = "foo";
-        const utterances = "bar";
-        const compareOutput = "compareOutput";
-        getInputStub.withArgs("service").returns(service);
-        getInputStub.withArgs("utterances").returns(utterances);
-        getInputStub.withArgs("baselineBuildType").returns("specific");
-        getInputStub.withArgs("baselineBuildId").returns("42");
-        getInputStub.withArgs("compareOutput").returns(compareOutput);
-
-        // stub previous build results
-        downloadStatisticsFromBuildIdStub.returns("baseline");
-
-        // run test
-        await run();
-
-        // assert calls
-        const calls = argMock.getCalls();
-        expect(downloadStatisticsFromBuildIdStub.firstCall.calledWith(42)).to.be.ok;
-        expect(calls.length).to.equal(8 /* test */ + 9 /* compare */);
-        expect(calls[15].calledWith("-b")).to.be.ok;
-        expect(calls[16].calledWith("baseline")).to.be.ok;
-    });
-
-    it("adds baseline when baselineBuildType is latestFromBranch", async () => {
-        // stub exec
-        const execStub = toolMock.mock("exec");
-        execStub.onCall(0).returns(0);
-        execStub.onCall(1).returns(0);
-
-        // stub inputs
-        const service = "foo";
-        const utterances = "bar";
-        const compareOutput = "compareOutput";
-        getInputStub.withArgs("service").returns(service);
-        getInputStub.withArgs("utterances").returns(utterances);
-        getInputStub.withArgs("baselineBuildType").returns("latestFromBranch");
-        getInputStub.withArgs("baselineBranchName").returns("branchName");
-        getInputStub.withArgs("compareOutput").returns(compareOutput);
-
-        // stub previous build results
-        downloadStatisticsFromBranchStub.returns([ { path: "baseline" } ]);
-
-        // run test
-        await run();
-
-        // assert calls
-        const calls = argMock.getCalls();
-        expect(downloadStatisticsFromBranchStub.firstCall.calledWith(1, "branchName")).to.be.ok;
-        expect(calls.length).to.equal(8 /* test */ + 9 /* compare */);
-        expect(calls[15].calledWith("-b")).to.be.ok;
-        expect(calls[16].calledWith("baseline")).to.be.ok;
-    });
-
-    it("adds baseline when baselineBuildType is latest", async () => {
+    it("adds baseline when returned by downloadBuildStatistics", async () => {
         // stub exec
         const execStub = toolMock.mock("exec");
         execStub.onCall(0).returns(0);
@@ -466,14 +402,13 @@ describe("NLUTest", () => {
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        downloadStatisticsFromBranchStub.returns([ { path: "baseline" } ]);
+        downloadBuildStatisticsStub.returns([ { path: "baseline" } ]);
 
         // run test
         await run();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(downloadStatisticsFromBranchStub.firstCall.calledWith(1)).to.be.ok;
         expect(calls.length).to.equal(8 /* test */ + 9 /* compare */);
         expect(calls[15].calledWith("-b")).to.be.ok;
         expect(calls[16].calledWith("baseline")).to.be.ok;
@@ -494,8 +429,14 @@ describe("NLUTest", () => {
         getInputStub.withArgs("baselineBuildType").returns("latestFromBranch");
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
+        // disable downloadBuildStatistics stub
+        downloadBuildStatisticsStub.restore();
+
         // run test
         await run();
+
+        // re-enable the downloadBuildStatistics stub
+        downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
 
         // assert result
         expect(setResultStub.calledWith(tl.TaskResult.Failed)).to.be.ok;
@@ -517,8 +458,14 @@ describe("NLUTest", () => {
         getInputStub.withArgs("baselineBuildType").returns("specific");
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
+        // disable downloadBuildStatistics stub
+        downloadBuildStatisticsStub.restore();
+
         // run test
         await run();
+
+        // re-enable the downloadBuildStatistics stub
+        downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
 
         // assert result
         expect(setResultStub.calledWith(tl.TaskResult.Failed)).to.be.ok;
