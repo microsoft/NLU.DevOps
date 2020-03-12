@@ -6,7 +6,11 @@ import * as tr from "azure-pipelines-task-lib/toolrunner";
 import { writeFileSync } from "fs";
 import { getNLUToolRunner } from "nlu-devops-common/utilities";
 import * as path from "path";
-import { getBuildStatistics } from "./artifacts";
+import {
+    downloadStatisticsFromBranch,
+    downloadStatisticsFromBuildId,
+    getBuildStatistics,
+} from "./artifacts";
 
 export async function run() {
     try {
@@ -84,9 +88,16 @@ async function runNLUCompare(output): Promise<any> {
         .arg("-o")
         .arg(compareOutput);
 
-    const publishNLUResultsInput = tl.getBoolInput("publishNLUResults");
-    if (publishNLUResultsInput) {
-        tool.arg("-m");
+    const testSettings = tl.getInput("testSettings");
+    if (testSettings) {
+        tool.arg("-t")
+            .arg(testSettings);
+    }
+
+    const baseline = await downloadBaselineStatistics();
+    if (baseline) {
+        tool.arg("-b")
+            .arg(baseline);
     }
 
     let isError = false;
@@ -145,27 +156,46 @@ async function publishNLUResults() {
 
     const compareOutput = getCompareOutputPath() as string;
 
-    console.log("Publishing metadata attachment for NLU results.");
     tl.addAttachment("nlu.devops", "metadata.json", path.join(compareOutput, `metadata.json`));
 
-    console.log("Publishing statistics attachment for NLU results.");
     const statisticsPath = path.join(compareOutput, "statistics.json");
     const allStatisticsPath = path.join(compareOutput, "allStatistics.json");
     const buildStatistics = await getBuildStatistics(statisticsPath);
     writeFileSync(allStatisticsPath, JSON.stringify(buildStatistics, null, 2));
     tl.addAttachment("nlu.devops", "statistics.json", allStatisticsPath);
 
-    if (tl.getVariable("Build.SourceBranch") === "refs/heads/master") {
-        const publishData = {
-            artifactname: "statistics",
-            artifacttype: "container",
-            containerfolder: "statistics",
-            localpath: statisticsPath,
-        };
+    const publishData = {
+        artifactname: "statistics",
+        artifacttype: "container",
+        containerfolder: "statistics",
+        localpath: statisticsPath,
+    };
 
-        tl.command("artifact.upload", publishData, statisticsPath);
-        tl.addBuildTag("nlu.devops.statistics");
+    tl.command("artifact.upload", publishData, statisticsPath);
+    tl.addBuildTag("nlu.devops.statistics");
+}
+
+async function downloadBaselineStatistics() {
+    const buildType = tl.getInput("baselineBuildType");
+    if (buildType === "specific") {
+        const buildIdInput = tl.getInput("baselineBuildId");
+        const buildId = parseInt(buildIdInput, 10);
+        if (Number.isNaN(buildId)) {
+            throw new Error("Must specify a valid build ID in 'baselineBuildId' input.");
+        }
+
+        return await downloadStatisticsFromBuildId(buildId);
+    } else if (buildType === "latestFromBranch") {
+        const branchName = tl.getInput("baselineBranchName");
+        if (!branchName) {
+            throw new Error("Must specify a branch name in 'baselineBranchName'.");
+        }
+
+        return await downloadStatisticsFromBranch(1, branchName);
     }
+
+    const results = await downloadStatisticsFromBranch(1);
+    return results.length && results[0].path;
 }
 
 function getOutputPath() {

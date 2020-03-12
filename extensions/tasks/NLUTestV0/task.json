@@ -62,19 +62,20 @@
             "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-d---speech-directory)."
         },
         {
-            "name": "includePath",
-            "type": "string",
-            "label": "NLU.DevOps custom NLU provider include path.",
-            "required": false,
-            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#include)."
-        },
-        {
             "name": "compareOutput",
             "type": "string",
             "label": "Base directory where compare output will be stored.",
             "required": false,
             "defaultValue": null,
-            "helpMarkDown": "[Learn more about this option]()."
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md#-o---output-folder)."
+        },
+        {
+            "name": "testSettings",
+            "type": "string",
+            "label": "Test settings for configuring NLU confusion matrix analysis.",
+            "required": false,
+            "defaultValue": null,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md#-t---test-settings)."
         },
         {
             "name": "publishTestResults",
@@ -82,7 +83,7 @@
             "label": "Signals whether to publish a test results tab.",
             "required": false,
             "defaultValue": false,
-            "helpMarkDown": "Uses generated NUnit output from NLU.DevOps `compare` command to populate the test results tab. [Learn more about the `compare` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Compare.md)."
+            "helpMarkDown": "Uses generated NUnit output from NLU.DevOps `compare` command to populate the test results tab. [Learn more about the `compare` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md)."
         },
         {
             "name": "publishNLUResults",
@@ -90,7 +91,31 @@
             "label": "Signals whether to publish an NLU results tab.",
             "required": false,
             "defaultValue": false,
-            "helpMarkDown": "Uses generated JSON metadata output from NLU.DevOps `compare` command to populate the NLU results tab. [Learn more about the `compare` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Compare.md)."
+            "helpMarkDown": "Uses generated JSON metadata output from NLU.DevOps `benchmark` command to populate the NLU results tab. [Learn more about the `benchmark` command](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Analyze.md)."
+        },
+        {
+            "name": "baselineBuildType",
+            "type": "string",
+            "label": "Specifies how to download the baseline build artifact. Options: latest, latestFromBranch, specific",
+            "helpMarkDown": "Specifies how to download the baseline build artifact. Options: latest, latestFromBranch, specific",
+            "required": false,
+            "defaultValue": null
+        },
+        {
+            "name": "baselineBranchName",
+            "type": "string",
+            "label": "Specifies which branch to download the baseline build artifact. Required when baselineBuildType == latestFromBranch",
+            "helpMarkDown": "Specifies which branch to download the baseline build artifact. Required when baselineBuildType == latestFromBranch",
+            "required": false,
+            "defaultValue": null
+        },
+        {
+            "name": "baselineBuildId",
+            "type": "string",
+            "label": "Specifies the specific build to download the baseline build artifact. Required when baselineBuildType == specific",
+            "helpMarkDown": "Specifies the specific build to download the baseline build artifact. Required when baselineBuildType == specific",
+            "required": false,
+            "defaultValue": null
         },
         {
             "name": "compareBuildCount",
@@ -99,6 +124,13 @@
             "helpMarkDown": "Number of previous builds to compare against in NLU results.",
             "required": false,
             "defaultValue": "1"
+        },
+        {
+            "name": "includePath",
+            "type": "string",
+            "label": "NLU.DevOps custom NLU provider include path.",
+            "required": false,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Test.md#-i---include)."
         },
         {
             "name": "workingDirectory",

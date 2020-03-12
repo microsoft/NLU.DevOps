@@ -27,6 +27,7 @@ describe("NLUTest", () => {
     let addAttachmentStub: sinon.SinonStub<any[], any>;
     let addBuildTagStub: sinon.SinonStub<any[], any>;
     let getBuildStatisticsStub: sinon.SinonStub<any[], any>;
+    let downloadStatisticsFromBranchStub: sinon.SinonStub<any[], any>;
     let writeFileSyncStub: sinon.SinonStub<any[], any>;
     let getVariableStub: sinon.SinonStub<any[], any>;
 
@@ -41,6 +42,7 @@ describe("NLUTest", () => {
         addAttachmentStub = ImportMock.mockFunction(tl, "addAttachment");
         addBuildTagStub = ImportMock.mockFunction(tl, "addBuildTag");
         getBuildStatisticsStub = ImportMock.mockFunction(artifacts, "getBuildStatistics");
+        downloadStatisticsFromBranchStub = ImportMock.mockFunction(artifacts, "downloadStatisticsFromBranch");
         writeFileSyncStub = ImportMock.mockFunction(fs, "writeFileSync");
 
         getVariableStub = ImportMock.mockFunction(tl, "getVariable");
@@ -59,6 +61,7 @@ describe("NLUTest", () => {
         addBuildTagStub.restore();
         writeFileSyncStub.restore();
         getBuildStatisticsStub.restore();
+        downloadStatisticsFromBranchStub.restore();
 
         getVariableStub.restore();
     });
@@ -89,6 +92,7 @@ describe("NLUTest", () => {
         addAttachmentStub.reset();
         addBuildTagStub.reset();
         getBuildStatisticsStub.reset();
+        downloadStatisticsFromBranchStub.reset();
         writeFileSyncStub.reset();
 
         // restore tl.tool method
@@ -194,6 +198,9 @@ describe("NLUTest", () => {
         getInputStub.withArgs("utterances").returns(utterances);
         getBoolInputStub.withArgs("publishTestResults").returns(true);
 
+        // stub previous build results
+        downloadStatisticsFromBranchStub.returns([]);
+
         // stub test results match
         const resultFiles = [ "foo" ];
         findMatchStub.returns(resultFiles);
@@ -241,6 +248,9 @@ describe("NLUTest", () => {
         getInputStub.withArgs("utterances").returns(utterances);
         getBoolInputStub.withArgs("publishTestResults").returns(true);
 
+        // stub previous build results
+        downloadStatisticsFromBranchStub.returns([]);
+
         // stub test results match
         const resultsFiles = [];
         findMatchStub.returns(resultsFiles);
@@ -270,16 +280,14 @@ describe("NLUTest", () => {
 
         // stub previous build results
         getBuildStatisticsStub.returns([]);
+        downloadStatisticsFromBranchStub.returns([]);
 
         // run test
         await run();
 
         // assert calls
         const calls = argMock.getCalls();
-        expect(calls.length).to.equal(8 /* test */ + 8 /* compare */);
-
-        // exec dotnet-nlu call
-        expect(calls[15].calledWith("-m")).to.be.ok;
+        expect(calls.length).to.equal(8 /* test */ + 7 /* compare */);
 
         // assert statistics written
         const allStatisticsPath = path.join(".nlu", "allStatistics.json");
@@ -291,7 +299,7 @@ describe("NLUTest", () => {
         expect(addAttachmentStub.calledWith("nlu.devops", "statistics.json", allStatisticsPath)).to.be.ok;
     });
 
-    it("publishes statistics if master build", async () => {
+    it("always publishes statistics from any build", async () => {
         // stub exec
         const execStub = toolMock.mock("exec");
         execStub.onCall(0).returns(0);
@@ -306,15 +314,10 @@ describe("NLUTest", () => {
 
         // stub previous build results
         getBuildStatisticsStub.returns([]);
-
-        // mock tl.getVariable("Source.Branch");
-        getVariableStub.withArgs("Build.SourceBranch").returns("refs/heads/master");
+        downloadStatisticsFromBranchStub.returns([]);
 
         // run test
         await run();
-
-        // reset tl.getVariable("Source.Branch");
-        getVariableStub.withArgs("Build.SourceBranch").returns(undefined);
 
         // assert publishes artifact
         const statisticsPath = path.join(".nlu", "statistics.json");
@@ -346,7 +349,7 @@ describe("NLUTest", () => {
         getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        getBuildStatisticsStub.returns([]);
+        downloadStatisticsFromBranchStub.returns([]);
 
         // run test
         await run();
@@ -372,10 +375,10 @@ describe("NLUTest", () => {
         const compareOutput = "compareOutput";
         getInputStub.withArgs("service").returns(service);
         getInputStub.withArgs("utterances").returns(utterances);
-        getBoolInputStub.withArgs("compareOutput").returns(compareOutput);
+        getInputStub.withArgs("compareOutput").returns(compareOutput);
 
         // stub previous build results
-        getBuildStatisticsStub.returns([]);
+        downloadStatisticsFromBranchStub.returns([]);
 
         // run test
         await run();

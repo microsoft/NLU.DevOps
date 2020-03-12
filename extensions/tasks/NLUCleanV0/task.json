@@ -31,18 +31,18 @@
             "helpMarkDown": "Usually one of: 'luis', 'luisV3', or 'lex'."
         },
         {
-            "name": "includePath",
-            "type": "string",
-            "label": "NLU.DevOps custom NLU provider include path.",
-            "required": false,
-            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Clean.md#include)."
-        },
-        {
             "name": "workingDirectory",
             "type": "filePath",
             "label": "Working Directory",
             "helpMarkDown": "Current working directory where the script is run. Empty is the root of the repo (build) or artifacts (release), which is $(System.DefaultWorkingDirectory)",
             "required": false
+        },
+        {
+            "name": "includePath",
+            "type": "string",
+            "label": "NLU.DevOps custom NLU provider include path.",
+            "required": false,
+            "helpMarkDown": "[Learn more about this option](https://github.com/microsoft/NLU.DevOps/blob/master/docs/Clean.md#-i---include)."
         },
         {
             "name": "nupkgPath",
