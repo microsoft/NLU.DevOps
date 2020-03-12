@@ -97,7 +97,6 @@ steps:
       --delete-appsettings
 
 - task: DownloadBuildArtifacts@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
   displayName: Download test results from master
   inputs:
     buildType: specific
