@@ -16,7 +16,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Func<bool> nullConfiguration = () => new TestSettings(null).Strict;
+            Func<bool> nullConfiguration = () => new TestSettings(default(IConfiguration), false).UnitTestMode;
             nullConfiguration.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("configuration");
         }
 
@@ -40,7 +40,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
                     .AddJsonFile(settingsFile)
                     .Build();
 
-                var testSettings = new TestSettings(configuration);
+                var testSettings = new TestSettings(configuration, false);
                 testSettings.TrueNegativeIntent.Should().Be("default");
                 testSettings.StrictEntities.Should().BeEquivalentTo("strict");
                 testSettings.IgnoreEntities.Should().BeEquivalentTo("ignore");

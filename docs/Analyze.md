@@ -1,18 +1,17 @@
 # Analyzing NLU model results
 
-The NLU.DevOps CLI tool includes two sub-commands that allows you to compare results returned from an NLU model via the `test` command with the expected results, `compare` and `benchmark`.
+The NLU.DevOps CLI tool includes the `compare` command, which allows you to compare results returned from an NLU model via the `test` command with the expected results.
 
-The `compare` command generates NUnit test output and can often be useful to generate smoke tests for high priority NLU scenarios. The `benchmark` command generates confusion matrix output, and can be used for comparing NLU model results against a baseline (e.g., results from previous release).
+The `compare` command generates NUnit test output and confusion matrix results in JSON format, and can be used either to assert all tests pass or measure performance against a baseline test run.
 
 ## Getting Started
 
-Run one of the following commands:
+Run the following command:
 ```bash
 dotnet nlu compare -e utterances.json -a results.json
-dotnet nlu benchmark -e utterances.json -a results.json
 ```
 
-The `utterances.json` argument is the path to the "expected" utterances file, usually the file path you supplied to the `test` command. The `results.json` argument is the path to the output utterances from a `test` command (see [Testing an NLU model](Test.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` or `benchmark` command as you supplied to `test`.
+The `utterances.json` argument is the path to the "expected" utterances file, usually the file path you supplied to the `test` command. The `results.json` argument is the path to the output utterances from a `test` command (see [Testing an NLU model](Test.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` command as you supplied to `test`.
 
 For example, if you use the training cases supplied in [Training an NLU model](Train.md#getting-started) and the test cases supplied in [Testing an NLU model](Test.md#getting-started) on LUIS, you will recall that we had one resulting intent that was incorrectly labeled with the "None" intent. In this case, the `compare` command will generate passing tests (either true positive or true negative) for all text, intents, and entities, except for the one mismatched case. The mismatched case will generate a single failing test result, labeled as a false negative intent. Here is the specific output:
 ```bash
@@ -41,27 +40,11 @@ Test Run Summary
     Duration: 0.224 seconds
 ```
 
-### Command Differences
+The unit test XML results are also written to a file called `TestResult.xml` in the folder specified by the [`--output-folder`](#-o---output-folder) option (or the current working directory if not specified).
 
-### `compare`
+## JSON Output
 
-The `compare` command will generate NUnit output, where true positive and true negative results are treated as passing tests and false positive and false negative results are treated as failing tests. It will identify true positives, true negatives, false positives, and false negatives for intents, entities and entity values. For entities, false positive results will only be identified for explicitly declared entity types. For entity values, only either true positive or false negative results are generated.
-
-For example, the following is likely to generate a false positive entity result for `genre`, as it was not declared in `entities` and the type was listed in the `strictEntities` property.
-```json
-[
-  {
-    "text": "play a jazz song",
-    "intent": "PlayMusic",
-    "entities": [],
-    "strictEntities": [ "genre" ]
-  }
-]
-```
-
-### `benchmark`
-
-The `benchmark` command will output a JSON file called `metadata.json` for the confusion matrix with the following format:
+In addition to the NUnit output, the `compare` command will output a JSON file called `metadata.json` to the [--output-folder](#-o---output-folder) for the confusion matrix with the following format:
 ```plaintext
 [
   {
@@ -102,27 +85,19 @@ It also generates a much smaller high-level summary of confusion matrix results 
 
 The `metadata.json` output is useful for reviewing fine-grained details of NLU tests, whereas the `statistics.json`, given it's more compact representation, is useful for comparing course-grained measurements (e.g., precision and recall) over time across multiple test runs.
 
-The confusion matrix results generated for the `benchmark` command are equivalent to the `compare` command for intents. For entities, `benchmark` generates all false positive results for unexpected entities by default, except in cases where they are explicity ignored.
+### Unit Test Mode
 
-For example, the following would not generate a false positive result for `genre`, as even though it was not declared in `entities`, the entity type was listed in the `ignoreEntities` property.
-```json
-[
-  {
-    "text": "play a jazz song",
-    "intent": "PlayMusic",
-    "entities": [],
-    "ignoreEntities": [ "genre" ]
-  }
-]
-```
+The `compare` command will generate confusion matrix results, identifying true positive, true negative, false positive, and false negative results for intents, entities and entity values. By default, false positive results will be generated for any entity that is not declared as an expected entity, unless it's type is included in the `ignoreEntities` configuration in the supplied [`--test-settings`](#-t---test-settings), or in an `ignoreEntities` property on the labeled test utterance. 
+
+Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. This flag also configures the command to return a non-zero exit code if any false positive or false negative results are detected.
 
 ## Configuring test settings
 
-There are a handful of test settings that you can specify when running either the `compare` or `benchmark` command. Currently, you can configure:
+There are a few test settings that you can specify when running the `compare` command. Currently, you can configure:
 
 - `trueNegativeIntent` - The intent name used to denote a negative response. In LUIS, this is typically the "None" intent. In Dialogflow or Lex, this is generally the default intent.
-- `strictEntities` - Configures a global set of entity types that should generate false positive entity results. This is only used for unit testing with the `compare` command. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `ignoreEntities` property on the test utterance.
-- `ignoreEntities` - Configures a global set of entity types that should not generate false positive entity results. This is only used for F-measure testing with the `benchmark` command. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `strictEntities` property on the test utterance.
+- `strictEntities` - Configures a global set of entity types that should generate false positive entity results. This is only used when the [`--unit-test`](#-u---unit-test) flag is set. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `ignoreEntities` property on the test utterance.
+- `ignoreEntities` - Configures a global set of entity types that should not generate false positive entity results. This is only used when the [`--unit-test`](#-u---unit-test) flag is not set. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `strictEntities` property on the test utterance.
 
 For example, the following specifies an intent called "None" as the true negative intent and ignores false postives from the "number" entity:
 ```json
@@ -164,5 +139,8 @@ Be sure to use the [`--output`](Test.md#-o---output) option when running the `te
 ### `-t, --test-settings`
 (Optional) Path to test settings file used to configure the NLU comparison. See [Configuring test settings](#configuring-test-settings).
 
+### `-u, --unit-test`
+(Optional) Flag used to specify that the compare operation should run in unit test mode. See [Unit Test Mode](#unit-test-mode) for more details.
+
 ### `-b, --baseline`
-(Optional) For the `benchmark` sub-command only, specifies output folder of a previous test run to compare against.
+(Optional) Specifies the path to the confusion matrix statisticcs of a previous test run to compare against.

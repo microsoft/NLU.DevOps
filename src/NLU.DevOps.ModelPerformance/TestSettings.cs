@@ -5,6 +5,7 @@ namespace NLU.DevOps.ModelPerformance
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using Microsoft.Extensions.Configuration;
 
     /// <summary>
@@ -19,32 +20,39 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Initializes a new instance of the <see cref="TestSettings"/> class.
         /// </summary>
-        /// <param name="configuration">Test cconfiguration.</param>
-        public TestSettings(IConfiguration configuration)
+        /// <param name="configurationPath">Test configuration path.</param>
+        /// <param name="unitTestMode">Unit test mode.</param>
+        public TestSettings(string configurationPath, bool unitTestMode)
+            : this(CreateConfiguration(configurationPath), unitTestMode)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestSettings"/> class.
+        /// </summary>
+        /// <param name="configuration">Test configuration.</param>
+        /// <param name="unitTestMode">Test mode.</param>
+        public TestSettings(IConfiguration configuration, bool unitTestMode)
         {
             this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.UnitTestMode = unitTestMode;
         }
 
         /// <summary>
         /// Gets the default set of entities that should never return false positive results.
         /// </summary>
-        /// <remarks>
-        /// This is only relevant when used with the benchmark command, which runs in strict mode.
-        /// </remarks>
         public IReadOnlyList<string> IgnoreEntities => this.Configuration.GetSection(IgnoreEntitiesConfigurationKey).Get<string[]>() ?? Array.Empty<string>();
 
         /// <summary>
-        /// Gets or sets a value indicating whether unexpected
-        /// utterances should always return false positive results.
+        /// Gets a value indicating whether comparison should run in "unit test
+        /// mode", which primarily signals that false positive entity results
+        /// are not generated unless explicitly declared.
         /// </summary>
-        public bool Strict { get; set; }
+        public bool UnitTestMode { get; }
 
         /// <summary>
         /// Gets the default set of entities that should always return false positive results.
         /// </summary>
-        /// <remarks>
-        /// This is only relevant when used with the compare command, which is not run in strict mode.
-        /// </remarks>
         public IReadOnlyList<string> StrictEntities => this.Configuration.GetSection(StrictEntitiesConfigurationKey).Get<string[]>() ?? Array.Empty<string>();
 
         /// <summary>
@@ -53,5 +61,18 @@ namespace NLU.DevOps.ModelPerformance
         public string TrueNegativeIntent => this.Configuration.GetValue(TrueNegativeIntentConfigurationKey, default(string));
 
         private IConfiguration Configuration { get; }
+
+        private static IConfiguration CreateConfiguration(string path)
+        {
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+
+            if (path != null)
+            {
+                configurationBuilder = configurationBuilder
+                    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), path));
+            }
+
+            return configurationBuilder.Build();
+        }
     }
 }

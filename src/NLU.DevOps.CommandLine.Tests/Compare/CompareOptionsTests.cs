@@ -8,6 +8,7 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
     using CommandLine.Compare;
     using FluentAssertions;
     using global::CommandLine;
+    using ModelPerformance;
     using NUnit.Framework;
 
     [TestFixture]
@@ -21,17 +22,23 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             optionsList.Add("expectedUtterances");
             optionsList.Add("-a");
             optionsList.Add("actualUtterances");
+            optionsList.Add("-t");
+            optionsList.Add("testSettings");
             optionsList.Add("-o");
             optionsList.Add("outputFolder");
-            optionsList.Add("-m");
+            optionsList.Add("-b");
+            optionsList.Add("baseline");
+            optionsList.Add("-u");
             var args = optionsList.ToArray();
             var parser = Parser.Default.ParseArguments<CompareOptions>(args)
                 .WithParsed(o =>
                 {
                     o.ExpectedUtterancesPath.Should().Be("expectedUtterances");
                     o.ActualUtterancesPath.Should().Be("actualUtterances");
+                    o.TestSettingsPath.Should().Be("testSettings");
                     o.OutputFolder.Should().Be("outputFolder");
-                    o.Metadata.Should().BeTrue();
+                    o.UnitTestMode.Should().BeTrue();
+                    o.BaselinePath.Should().Be("baseline");
                 })
                 .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }
@@ -48,8 +55,10 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
             var parser = Parser.Default.ParseArguments<CompareOptions>(args)
                 .WithParsed(o =>
                 {
-                    o.OutputFolder.Should().Be(null);
-                    o.Metadata.Should().BeFalse();
+                    o.OutputFolder.Should().BeNull();
+                    o.TestSettingsPath.Should().BeNull();
+                    o.UnitTestMode.Should().BeFalse();
+                    o.BaselinePath.Should().BeNull();
                 })
                 .WithNotParsed(o => Assert.Fail("Could not Parse Options"));
         }

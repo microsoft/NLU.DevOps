@@ -645,29 +645,29 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
-        [TestCase("x", "x", "", true, 1, 0, 0, 0)]
-        [TestCase("a", "x", "", true, 0, 0, 1, 1)]
-        [TestCase("a", "b", "", true, 0, 0, 0, 1)]
-        [TestCase("a", "d", "", true, 0, 0, 0, 1)]
-        [TestCase("a", "f", "", true, 0, 0, 1, 1)]
-        [TestCase("x", "x", "foo", true, 0, 0, 1, 1)]
-        [TestCase("a", "a", "foo", true, 0, 0, 1, 1)]
-        [TestCase("b", "b", "foo", true, 0, 0, 0, 1)]
-        [TestCase("f", "f", "foo", true, 0, 0, 1, 1)]
         [TestCase("x", "x", "", false, 1, 0, 0, 0)]
-        [TestCase("a", "x", "", false, 0, 0, 0, 1)]
+        [TestCase("a", "x", "", false, 0, 0, 1, 1)]
         [TestCase("a", "b", "", false, 0, 0, 0, 1)]
         [TestCase("a", "d", "", false, 0, 0, 0, 1)]
-        [TestCase("a", "e", "", false, 0, 0, 0, 1)]
-        [TestCase("x", "x", "foo", false, 0, 0, 0, 1)]
+        [TestCase("a", "f", "", false, 0, 0, 1, 1)]
+        [TestCase("x", "x", "foo", false, 0, 0, 1, 1)]
         [TestCase("a", "a", "foo", false, 0, 0, 1, 1)]
         [TestCase("b", "b", "foo", false, 0, 0, 0, 1)]
-        [TestCase("e", "e", "foo", false, 0, 0, 0, 1)]
+        [TestCase("f", "f", "foo", false, 0, 0, 1, 1)]
+        [TestCase("x", "x", "", true, 1, 0, 0, 0)]
+        [TestCase("a", "x", "", true, 0, 0, 0, 1)]
+        [TestCase("a", "b", "", true, 0, 0, 0, 1)]
+        [TestCase("a", "d", "", true, 0, 0, 0, 1)]
+        [TestCase("a", "e", "", true, 0, 0, 0, 1)]
+        [TestCase("x", "x", "foo", true, 0, 0, 0, 1)]
+        [TestCase("a", "a", "foo", true, 0, 0, 1, 1)]
+        [TestCase("b", "b", "foo", true, 0, 0, 0, 1)]
+        [TestCase("e", "e", "foo", true, 0, 0, 0, 1)]
         public static void GlobalLocalStrictIgnoreEntities(
             string expected,
             string actual,
             string value,
-            bool strict,
+            bool unitTestMode,
             int truePositive,
             int trueNegative,
             int falsePositive,
@@ -690,13 +690,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
                     .WithProperty("strictEntities", new JArray { "a", "f" })
                     .WithProperty("ignoreEntities", new JArray { "b", "e" });
                 var actualUtterance = new LabeledUtterance(null, null, new[] { actualEntity });
-
-                var testSettings = new TestSettings(new ConfigurationBuilder()
-                    .AddJsonFile(globalSettingsFile)
-                    .Build())
-                {
-                    Strict = strict,
-                };
+                var testSettings = new TestSettings(globalSettingsFile, unitTestMode);
 
                 var compareResults = TestCaseSource.GetNLUCompareResults(
                     new[] { expectedUtterance },
@@ -734,12 +728,15 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var expectedUtterance = new LabeledUtterance(null, expected, null);
             var actualUtterance = new LabeledUtterance(null, actual, null);
-            var testSettings = new TestSettings(new ConfigurationBuilder()
-                    .AddInMemoryCollection(new Dictionary<string, string>
-                    {
-                        { "trueNegativeIntent", "foo" },
-                    })
-                    .Build());
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "trueNegativeIntent", "foo" },
+                })
+                .Build();
+
+            var testSettings = new TestSettings(configuration, false);
 
             var compareResults = TestCaseSource.GetNLUCompareResults(
                 new[] { expectedUtterance },
@@ -782,16 +779,14 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
         private static TestSettings GetDefaultTestSettings()
         {
-            return new TestSettings(
-                    new ConfigurationBuilder()
-                        .AddInMemoryCollection(new Dictionary<string, string>
-                        {
-                            { "trueNegativeIntent", "None" },
-                        })
-                        .Build())
-            {
-                Strict = true,
-            };
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "trueNegativeIntent", "None" },
+                })
+                .Build();
+
+            return new TestSettings(configuration, false);
         }
     }
 }
