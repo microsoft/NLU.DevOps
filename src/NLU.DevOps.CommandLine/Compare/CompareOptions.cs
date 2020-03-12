@@ -20,7 +20,13 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('t', "test-settings", HelpText = "Path to test settings.", Required = false)]
         public string TestSettingsPath { get; set; }
 
-        [Option('m', "metadata", HelpText = "Return test case metadata in addition to NUnit test results. This option will be deprecated in the next release, use the 'benchmark' command instead.", Required = false, Hidden = true)]
+        [Option('u', "unit-test", HelpText = "Runs compare operation in unit test mode.", Required = false)]
+        public bool UnitTestMode { get; set; }
+
+        [Option('b', "baseline", HelpText = "Path to baseline confusion matrix results. Optional when '--mode' is set to 'performance' and '--format' is set to 'json'.", Required = false)]
+        public string BaselinePath { get; set; }
+
+        [Option('m', "metadata", HelpText = "No longer relevant flag which will be removed in future build.", Required = false, Hidden = true)]
         public bool Metadata { get; set; }
     }
 }

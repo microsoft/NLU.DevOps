@@ -22,5 +22,10 @@ namespace NLU.DevOps.ModelPerformance
         /// The test settings path key.
         /// </summary>
         public const string TestSettingsPathKey = "testSettings";
+
+        /// <summary>
+        /// The mode being used to generate tests.
+        /// </summary>
+        public const string UnitTestModeKey = "unitTestMode";
     }
 }

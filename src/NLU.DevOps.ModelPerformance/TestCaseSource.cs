@@ -77,7 +77,7 @@ namespace NLU.DevOps.ModelPerformance
                 return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
 
-            testSettings = testSettings ?? new TestSettings(new ConfigurationBuilder().Build());
+            testSettings = testSettings ?? new TestSettings(default(string), false);
 
             var zippedUtterances = expectedUtterances
                 .Select((utterance, i) => new { Utterance = utterance, UtteranceId = getUtteranceId(utterance, i) })
@@ -390,7 +390,7 @@ namespace NLU.DevOps.ModelPerformance
             var localIgnoreEntities = expectedUtterance.GetIgnoreEntities();
             var localStrictEntities = expectedUtterance.GetStrictEntities();
 
-            if (testSettings.Strict)
+            if (!testSettings.UnitTestMode)
             {
                 var globalIgnoreEntities = testSettings.IgnoreEntities;
                 return !localIgnoreEntities
@@ -433,7 +433,6 @@ namespace NLU.DevOps.ModelPerformance
         {
             var expectedPath = TestContext.Parameters.Get(ConfigurationConstants.ExpectedUtterancesPathKey) ?? "expected.json";
             var actualPath = TestContext.Parameters.Get(ConfigurationConstants.ActualUtterancesPathKey) ?? "actual.json";
-            var testSettingsPath = TestContext.Parameters.Get(ConfigurationConstants.TestSettingsPathKey);
 
             if (string.IsNullOrEmpty(expectedPath) || string.IsNullOrEmpty(actualPath))
             {
@@ -442,13 +441,20 @@ namespace NLU.DevOps.ModelPerformance
 
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
+            var testSettingsPath = TestContext.Parameters.Get(ConfigurationConstants.TestSettingsPathKey);
             if (testSettingsPath != null)
             {
                 configurationBuilder = configurationBuilder
                     .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), testSettingsPath));
             }
 
-            var testSettings = new TestSettings(configurationBuilder.Build());
+            var unitTestModeString = TestContext.Parameters.Get(ConfigurationConstants.UnitTestModeKey);
+            if (unitTestModeString == null || !bool.TryParse(unitTestModeString, out var unitTestMode))
+            {
+                unitTestMode = false;
+            }
+
+            var testSettings = new TestSettings(configurationBuilder.Build(), unitTestMode);
             var expected = Read(expectedPath);
             var actual = Read(actualPath);
             return GetNLUCompareResults(expected, actual, testSettings).TestCases;
