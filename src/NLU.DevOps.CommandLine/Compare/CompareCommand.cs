@@ -31,14 +31,14 @@ namespace NLU.DevOps.CommandLine.Compare
             var actualUtterances = Read<List<JsonLabeledUtterance>>(options.ActualUtterancesPath);
             var testSettings = new TestSettings(options.TestSettingsPath, options.UnitTestMode);
             var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, testSettings);
-            var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
-            var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
-
-            Write(metadataPath, compareResults.TestCases);
-            File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
 
             var baseline = options.BaselinePath != null ? Read<NLUStatistics>(options.BaselinePath) : null;
             compareResults.PrintResults(baseline);
+
+            var metadataPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestMetadataFileName) : TestMetadataFileName;
+            var statisticsPath = options.OutputFolder != null ? Path.Combine(options.OutputFolder, TestStatisticsFileName) : TestStatisticsFileName;
+            Write(metadataPath, compareResults.TestCases);
+            File.WriteAllText(statisticsPath, JObject.FromObject(compareResults.Statistics).ToString());
 
             return 0;
         }

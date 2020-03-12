@@ -23,7 +23,7 @@ namespace NLU.DevOps.CommandLine.Compare
         [Option('u', "unit-test", HelpText = "Runs compare operation in unit test mode.", Required = false)]
         public bool UnitTestMode { get; set; }
 
-        [Option('b', "baseline", HelpText = "Path to baseline confusion matrix results. Optional when '--mode' is set to 'performance' and '--format' is set to 'json'.", Required = false)]
+        [Option('b', "baseline", HelpText = "Path to baseline confusion matrix results.", Required = false)]
         public string BaselinePath { get; set; }
 
         [Option('m', "metadata", HelpText = "No longer relevant flag which will be removed in future build.", Required = false, Hidden = true)]
