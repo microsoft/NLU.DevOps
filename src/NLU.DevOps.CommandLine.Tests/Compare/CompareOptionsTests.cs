@@ -8,7 +8,6 @@ namespace NLU.DevOps.CommandLine.Tests.Compare
     using CommandLine.Compare;
     using FluentAssertions;
     using global::CommandLine;
-    using ModelPerformance;
     using NUnit.Framework;
 
     [TestFixture]
