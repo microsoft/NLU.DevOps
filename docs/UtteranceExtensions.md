@@ -40,6 +40,20 @@ When analyzing results for a set of NLU predictions, it is often important conte
 ```
 Without the context provided by the `timestamp` property, we wouldn't be able to make any assertion about the correctness of the `entityValue` property for time. Currently, LUIS, Lex, and Dialogflow return a timestamp for each prediction result.
 
+## Adjusting entity compare results
+
+When running the [`compare`](Analyze.md) command, false positive entity results may or may not be generated.  By default, the `compare` command generates false positive results for any unexpected entities. When using the [`--unit-test`] flag with the `compare` command, false positive entities are ignored by default. The `strictEntities` and `ignoreEntities` extension properties allow you to change this default behavior for a specific utterance.
+
+In the following example, if a `date` entity is recognized, it would not generate a false positive result:
+```json
+{
+    "text": "schedule a meeting for tomorrow",
+    "intent": "BookMeeting",
+    "entities": [],
+    "ignoreEntities": [ "date" ]
+}
+```
+
 ## Utterance Extension Properties
 
 ### `score`
@@ -56,9 +70,17 @@ The timestamp for when the NLU prediction was made.
 
 ### `utteranceId`
 
-Used for aggregation of [`compare`](Compare.md) command results. 
+Used for aggregation of [`compare`](Analyze.md) command results. 
 
-Each NLU prediction may produce multiple classification results (e.g., true positive intent and true n egative entities). When an `utteranceId` is provided on a given utterance model, it will be included as metadata for each classification result produced when running the [`compare`](Compare.md) command.
+Each NLU prediction may produce multiple classification results (e.g., true positive intent and true negative entities). When an `utteranceId` is provided on a given set of labeled utterances, it will be included as metadata for each classification result produced when running the [`compare`](Analyze.md) command.
+
+### `strictEntities`
+
+Used when running the [`compare`](Analyze.md) command to ensure false positive results are generated for included entity types, even if they are ignored in the global test settings.
+
+### `ignoreEntities`
+
+Used when running the [`compare`](Analyze.md) command to ensure false positive results are not generated for included entity types, even if they are declared as strict entities in the global test settings.
 
 ## Entity Extension Properties
 

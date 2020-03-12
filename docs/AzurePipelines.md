@@ -186,7 +186,7 @@ We write the test results to the `$(Build.ArtifactStagingDirectory)` for a futur
 TestResult.xml
 ```
 
-The `TestResult.xml` file that is created contains the sensitivity and specifity results in NUnit format, where true positives and true negatives are passing tests and false positives and false negatives are failing tests. See [Analyzing NLU model results](Compare.md) for more details.
+The `TestResult.xml` file that is created contains the sensitivity and specifity results in NUnit format, where true positives and true negatives are passing tests and false positives and false negatives are failing tests. See [Analyzing NLU model results](Analyze.md) for more details.
 
 ### Uninstall the CLI tool on the host
 
