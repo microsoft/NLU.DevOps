@@ -55,6 +55,7 @@ namespace NLU.DevOps.Luis
                             this.LuisConfiguration.AppId,
                             text,
                             staging: this.LuisConfiguration.IsStaging,
+                            log: false,
                             cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
                 }
