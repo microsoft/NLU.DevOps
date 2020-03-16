@@ -24,6 +24,21 @@ namespace NLU.DevOps.Dialogflow.Tests
     {
         private const double Epsilon = 1e-6;
 
+        private static TimeSpan originalThrottle;
+
+        [OneTimeSetUp]
+        public static void SetUp()
+        {
+            originalThrottle = DialogflowNLUTestClient.ThrottleQueryDelay;
+            DialogflowNLUTestClient.ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
+        }
+
+        [OneTimeTearDown]
+        public static void TearDown()
+        {
+            DialogflowNLUTestClient.ThrottleQueryDelay = originalThrottle;
+        }
+
         [Test]
         public static void ThrowsArgumentNull()
         {

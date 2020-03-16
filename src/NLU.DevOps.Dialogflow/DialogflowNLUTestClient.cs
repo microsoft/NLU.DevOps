@@ -29,9 +29,6 @@ namespace NLU.DevOps.Dialogflow
         private const string DialogflowProjectIdConfigurationKey = "dialogflowProjectId";
         private const string DialogflowSessionIdConfigurationKey = "dialogflowSessionId";
 
-        // Dialogflow typically limits the number of requests per minute, so setting a retry delay to 30 seconds.
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromSeconds(30);
-
         private SessionsClient sessionsClient;
 
         public DialogflowNLUTestClient(SessionsClient sessionsClient, IConfiguration configuration)
@@ -44,6 +41,9 @@ namespace NLU.DevOps.Dialogflow
         {
             this.Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
+
+        // Dialogflow typically limits the number of requests per minute, so setting a retry delay to 30 seconds.
+        internal static TimeSpan ThrottleQueryDelay { get; set; } = TimeSpan.FromSeconds(30);
 
         private static ILogger Logger => LazyLogger.Value;
 
