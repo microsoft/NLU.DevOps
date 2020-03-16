@@ -56,6 +56,7 @@ namespace NLU.DevOps.Luis
                                 this.LuisConfiguration.VersionId,
                                 predictionRequest,
                                 verbose: true,
+                                log: false,
                                 cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     }
@@ -65,6 +66,7 @@ namespace NLU.DevOps.Luis
                             this.LuisConfiguration.SlotName,
                             predictionRequest,
                             verbose: true,
+                            log: false,
                             cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
                 }
