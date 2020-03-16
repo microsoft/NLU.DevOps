@@ -709,6 +709,24 @@ namespace NLU.DevOps.ModelPerformance.Tests
         }
 
         [Test]
+        public static void NoFalsePositiveIntentsUnitTestMode()
+        {
+            var expectedUtterance = new LabeledUtterance(null, null, null);
+            var actualUtterance = new LabeledUtterance(null, "foo", null);
+            var testSettings = new TestSettings(default(string), true);
+
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance },
+                testSettings);
+
+            compareResults.Statistics.Intent.TruePositive.Should().Be(0);
+            compareResults.Statistics.Intent.TrueNegative.Should().Be(0);
+            compareResults.Statistics.Intent.FalsePositive.Should().Be(0);
+            compareResults.Statistics.Intent.FalseNegative.Should().Be(0);
+        }
+
+        [Test]
         [TestCase("foo", "foo", 0, 1, 0, 0)]
         [TestCase(null, null, 0, 1, 0, 0)]
         [TestCase(null, "None", 0, 0, 1, 0)]
