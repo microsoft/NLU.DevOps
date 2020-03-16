@@ -145,7 +145,7 @@ namespace NLU.DevOps.ModelPerformance
                     "Utterances have matching text.",
                     "Text");
             }
-            else
+            else if (!testInput.TestSettings.UnitTestMode)
             {
                 yield return FalsePositive(
                     testInput.UtteranceId,
@@ -221,7 +221,7 @@ namespace NLU.DevOps.ModelPerformance
                     "Intent");
             }
 
-            if (!isNoneIntent(actual))
+            if (!isNoneIntent(actual) && !testInput.TestSettings.UnitTestMode)
             {
                 yield return FalsePositive(
                     testInput.UtteranceId,
