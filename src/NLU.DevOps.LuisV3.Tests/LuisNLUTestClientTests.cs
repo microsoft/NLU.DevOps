@@ -437,6 +437,35 @@ namespace NLU.DevOps.Luis.Tests
             }
         }
 
+        [Test]
+        public static void ThrowsInvalidOperationWhenMissingMetadata()
+        {
+            var test = "foo";
+            var builder = new LuisNLUTestClientBuilder();
+            builder.LuisTestClientMock
+                .Setup(luis => luis.QueryAsync(
+                    It.Is<PredictionRequest>(query => query.Query == test),
+                    It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(new PredictionResponse
+                {
+                    Query = test,
+                    Prediction = new Prediction
+                    {
+                        TopIntent = "intent",
+                        Entities = new Dictionary<string, object>
+                        {
+                            { "entityType", new JArray { 42 } },
+                        },
+                    },
+                }));
+
+            using (var luis = builder.Build())
+            {
+                Func<Task> testAsync = () => luis.TestAsync(test);
+                testAsync.Should().Throw<InvalidOperationException>();
+            }
+        }
+
         private static IDictionary<string, object> ToEntityDictionary(IEnumerable<EntityModel> entities)
         {
             var result = new Dictionary<string, object>();

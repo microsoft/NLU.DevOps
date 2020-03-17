@@ -97,7 +97,7 @@ namespace NLU.DevOps.Luis
 
         private static IEnumerable<Entity> GetEntities(string utterance, IDictionary<string, object> entities)
         {
-            if (entities == null)
+            if (entities == null || entities.Count == 0)
             {
                 return null;
             }
@@ -148,8 +148,12 @@ namespace NLU.DevOps.Luis
                     .WithScore(score);
             }
 
-            var globalMetadata = entities["$instance"] as JToken;
-            if (globalMetadata == null)
+            var globalMetadata = default(JToken);
+            if (entities.TryGetValue("$instance", out var globalMetadataValue))
+            {
+                globalMetadata = globalMetadataValue as JToken;
+            }
+            else
             {
                 throw new InvalidOperationException("Expected top-level metadata for entities.");
             }
