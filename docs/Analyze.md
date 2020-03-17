@@ -87,27 +87,35 @@ The `metadata.json` output is useful for reviewing fine-grained details of NLU t
 
 ### Unit Test Mode
 
-The `compare` command will generate confusion matrix results, identifying true positive, true negative, false positive, and false negative results for intents, entities and entity values. By default, false positive results will be generated for any entity that is not declared as an expected entity, unless it's type is included in the `ignoreEntities` configuration in the supplied [`--test-settings`](#-t---test-settings), or in an `ignoreEntities` property on the labeled test utterance. 
+The `compare` command will generate confusion matrix results, identifying true positive, true negative, false positive, and false negative results for intents, entities and entity values. By default, false positive results will be generated for any entity that is not declared as an expected entity, unless it's type is included in the `ignoreEntities` configuration in the supplied [`--test-settings`](#-t---test-settings), or in an `ignoreEntities` property on the labeled test utterance. Both false positive and false negative results are also generated for mismatched intents, except in cases that the expected intent is either `null`, `undefined` or equal to the configured value for [`trueNegativeIntent`](#truenegativeintent).
 
-Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. This flag also configures the command to return a non-zero exit code if any false positive or false negative results are detected.
+Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. Similarly, false positive results will not be generated for intents. This flag also configures the command to return a non-zero exit code if any false positive or false negative results are detected.
 
 ## Configuring test settings
 
-There are a few test settings that you can specify when running the `compare` command. Currently, you can configure:
+There are a few test settings that you can specify when running the `compare` command using the [`--test-settings`](#-t---test-settings) option.
 
-- `trueNegativeIntent` - The intent name used to denote a negative response. In LUIS, this is typically the "None" intent. In Dialogflow or Lex, this is generally the default intent.
-- `strictEntities` - Configures a global set of entity types that should generate false positive entity results. This is only used when the [`--unit-test`](#-u---unit-test) flag is set. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `ignoreEntities` property on the test utterance.
-- `ignoreEntities` - Configures a global set of entity types that should not generate false positive entity results. This is only used when the [`--unit-test`](#-u---unit-test) flag is not set. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `strictEntities` property on the test utterance.
+### `trueNegativeIntent`
 
-For example, the following specifies an intent called "None" as the true negative intent and ignores false postives from the "number" entity:
+The intent name used to denote a negative response. In LUIS, this is typically the "None" intent. In Dialogflow or Lex, this is generally the default intent.
+
+### `strictEntities`
+
+Configures a global set of entity types that should generate false positive entity results. This is only used when the [`--unit-test`](#-u---unit-test) flag is set. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `ignoreEntities` property on the test utterance.
+
+### `ignoreEntities`
+
+Configures a global set of entity types that should not generate false positive entity results. This is only used when the [`--unit-test`](#-u---unit-test) flag is not set. You can override this setting for an entity type in a particular utterance test case by specifying it in the local `strictEntities` property on the test utterance.
+
+### Example test settings
+
+The following specifies an intent called "None" as the true negative intent and ignores false postives from the "number" entity:
 ```json
 {
   "trueNegativeIntent": "None",
   "ignoreEntities": [ "number" ]
 }
 ```
-
-You can specify these test settings using the [`--test-settings`](#-t---test-settings) option.
 
 ## How text is compared
 
