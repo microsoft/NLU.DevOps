@@ -36,11 +36,35 @@ namespace NLU.DevOps.ModelPerformance.Tests
 
             try
             {
-                var configuration = new ConfigurationBuilder()
-                    .AddJsonFile(settingsFile)
-                    .Build();
+                var testSettings = new TestSettings(settingsFile, false);
+                testSettings.TrueNegativeIntent.Should().Be("default");
+                testSettings.StrictEntities.Should().BeEquivalentTo("strict");
+                testSettings.IgnoreEntities.Should().BeEquivalentTo("ignore");
+            }
+            finally
+            {
+                File.Delete(settingsFile);
+            }
+        }
 
-                var testSettings = new TestSettings(configuration, false);
+        [Test]
+        public static void CreateFromYaml()
+        {
+            var settingsFile = $"{Guid.NewGuid().ToString()}.yml";
+            var settings = new[]
+            {
+                "trueNegativeIntent: default",
+                "strictEntities:",
+                "- strict",
+                "ignoreEntities:",
+                "- ignore",
+            };
+
+            File.WriteAllText(settingsFile, string.Join(Environment.NewLine, settings));
+
+            try
+            {
+                var testSettings = new TestSettings(settingsFile, false);
                 testSettings.TrueNegativeIntent.Should().Be("default");
                 testSettings.StrictEntities.Should().BeEquivalentTo("strict");
                 testSettings.IgnoreEntities.Should().BeEquivalentTo("ignore");
