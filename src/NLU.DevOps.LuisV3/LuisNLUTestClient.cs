@@ -149,9 +149,9 @@ namespace NLU.DevOps.Luis
             }
 
             var globalMetadata = default(JToken);
-            if (entities.TryGetValue("$instance", out var globalMetadataValue))
+            if (entities.TryGetValue("$instance", out var metadataValue) && metadataValue is JToken metadataJson)
             {
-                globalMetadata = globalMetadataValue as JToken;
+                globalMetadata = metadataJson;
             }
             else
             {
