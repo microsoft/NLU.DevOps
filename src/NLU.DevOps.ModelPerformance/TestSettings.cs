@@ -66,7 +66,12 @@ namespace NLU.DevOps.ModelPerformance
         {
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
-            if (path != null)
+            if (path != null && (path.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".yml", StringComparison.OrdinalIgnoreCase)))
+            {
+                configurationBuilder = configurationBuilder
+                    .AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), path));
+            }
+            else if (path != null)
             {
                 configurationBuilder = configurationBuilder
                     .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), path));
