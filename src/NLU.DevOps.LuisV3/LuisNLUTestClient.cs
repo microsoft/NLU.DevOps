@@ -212,8 +212,7 @@ namespace NLU.DevOps.Luis
             return new LabeledUtterance(query, intent, entities)
                 .WithProperty("intents", intents)
                 .WithScore(intentData?.Score)
-                .WithTextScore(speechPredictionResponse.TextScore)
-                .WithTimestamp(DateTimeOffset.Now);
+                .WithTextScore(speechPredictionResponse.TextScore);
         }
     }
 }

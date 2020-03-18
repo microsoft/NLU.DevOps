@@ -6,7 +6,9 @@ namespace NLU.DevOps.CommandLine.Test
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using Models;
     using Newtonsoft.Json.Linq;
     using static Serializer;
@@ -31,7 +33,8 @@ namespace NLU.DevOps.CommandLine.Test
 
         protected override INLUTestClient CreateNLUTestClient()
         {
-            return NLUClientFactory.CreateTestInstance(this.Options, this.Configuration, this.Options.SettingsPath);
+            var client = NLUClientFactory.CreateTestInstance(this.Options, this.Configuration, this.Options.SettingsPath);
+            return this.Options.Timestamp ? new TimestampNLUTestClient(client) : client;
         }
 
         private static void EnsureDirectory(string filePath)
@@ -127,6 +130,35 @@ namespace NLU.DevOps.CommandLine.Test
             {
                 var speechFile = query.Value<string>("speechFile");
                 yield return (query, speechFile);
+            }
+        }
+
+        private class TimestampNLUTestClient : INLUTestClient
+        {
+            public TimestampNLUTestClient(INLUTestClient client)
+            {
+                this.Client = client;
+            }
+
+            private INLUTestClient Client { get; }
+
+            public async Task<LabeledUtterance> TestAsync(JToken query, CancellationToken cancellationToken)
+            {
+                var timestamp = DateTimeOffset.Now;
+                var result = await this.Client.TestAsync(query, cancellationToken).ConfigureAwait(false);
+                return result.WithTimestamp(timestamp);
+            }
+
+            public async Task<LabeledUtterance> TestSpeechAsync(string speechFile, JToken query, CancellationToken cancellationToken)
+            {
+                var timestamp = DateTimeOffset.Now;
+                var result = await this.Client.TestSpeechAsync(speechFile, query, cancellationToken).ConfigureAwait(false);
+                return result.WithTimestamp(timestamp);
+            }
+
+            public void Dispose()
+            {
+                this.Client.Dispose();
             }
         }
     }

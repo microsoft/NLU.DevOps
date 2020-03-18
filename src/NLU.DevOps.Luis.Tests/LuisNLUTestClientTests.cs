@@ -66,7 +66,6 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType<JsonLabeledUtterance>();
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);

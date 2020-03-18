@@ -140,6 +140,11 @@ See [Caching speech-to-text transcriptions](#caching-speech-to-text-transcriptio
 
 This is currently only used for LUIS, see the section on LUIS prebuilt entities in [Configuring prebuilt entities](LuisModelConfiguration.md#configuring-prebuilt-entities).
 
+### `--timestamp`
+(Optional) Signals whether to add a timestamp to each NLU test result.
+
+See the documentation on the [`timestamp` property](UtteranceExtensions.md#returning-timestamps-for-each-query) for more details.
+
 ### `-i, --include`
 (Optional) Path to custom NLU provider DLL. See documentation about [Specifying the include path](https://github.com/microsoft/NLU.DevOps/blob/master/docs/CliExtensions.md#specifying-the-include-path) for more details.
 
