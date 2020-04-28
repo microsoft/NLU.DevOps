@@ -17,18 +17,15 @@ namespace NLU.DevOps.Luis
 
     internal sealed class LuisTestClient : ILuisTestClient
     {
-        private const string Protocol = "https://";
-        private const string Domain = ".api.cognitive.microsoft.com";
-
         private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
 
         public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
-            var endpointCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.EndpointKey);
+            var endpointCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.PredictionKey);
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
-                Endpoint = $"{Protocol}{luisConfiguration.EndpointRegion}{Domain}",
+                Endpoint = luisConfiguration.PredictionEndpoint,
             };
         }
 

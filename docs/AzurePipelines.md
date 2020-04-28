@@ -78,7 +78,7 @@ Add the following task to your Azure Pipeline:
 
 You'll need to configure an Azure service principal as a [service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=vsts) and set the name of the service connection to the `azureSubscription` variable.
 
-Also be sure to set the [`azureSubscriptionId`](LuisEndpointConfiguration.md#azuresubscriptionid), [`azureResourceGroup`](LuisEndpointConfiguration.md#azureresourcegroup), [`azureLuisResourceName`](LuisEndpointConfiguration.md#azureluisresourcename), [`luisEndpointKey`](LuisEndpointConfiguration.md#luisendpointkey) and [`luisEndpointRegion`](LuisEndpointConfiguration.md#luisendpointregion) variables.
+Also be sure to set the [`azureSubscriptionId`](LuisEndpointConfiguration.md#azuresubscriptionid), [`azureResourceGroup`](LuisEndpointConfiguration.md#azureresourcegroup), [`luisPredictionResourceName`](LuisEndpointConfiguration.md#luisPredictionResourceName), and [`luisEndpointKey`](LuisEndpointConfiguration.md#luisendpointkey).
 
 ### Train the LUIS model
 

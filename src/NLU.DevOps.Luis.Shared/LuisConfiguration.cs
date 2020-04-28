@@ -25,6 +25,7 @@ namespace NLU.DevOps.Luis
         private const string LuisEndpointKeyConfigurationKey = "luisEndpointKey";
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
         private const string LuisEndpointRegionConfigurationKey = "luisEndpointRegion";
+        private const string LuisPredictionResourceNameConfigurationKey = "luisPredictionResourceName";
         private const string LuisVersionIdConfigurationKey = "luisVersionId";
         private const string LuisVersionPrefixConfigurationKey = "luisVersionPrefix";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
@@ -36,8 +37,8 @@ namespace NLU.DevOps.Luis
 #endif
 #if LUIS_V3
         private const string LuisSlotNameConfigurationKey = "luisSlotName";
-        private const string LuisDirectVersionPublishConfigurationKey = "luisDirectVersionPublish";
 #endif
+        private const string LuisDirectVersionPublishConfigurationKey = "luisDirectVersionPublish";
         private const string AzureSubscriptionIdConfigurationKey = "azureSubscriptionId";
         private const string AzureResourceGroupConfigurationKey = "azureResourceGroup";
         private const string AzureAppNameConfigurationKey = "azureLuisResourceName";
@@ -46,6 +47,8 @@ namespace NLU.DevOps.Luis
 
         private const string CustomSpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language={1}&cid={2}&format=detailed";
         private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}&format=detailed";
+        private const string CognitiveServicesAzureTemplate = "https://{0}.cognitiveservices.azure.com";
+        private const string ApiCognitiveMicrosoftTemplate = "https://{0}.api.cognitive.microsoft.com";
 
         private static readonly string LuisAppCreatedConfigurationKey = CamelCase(nameof(LuisNLUTrainClient.LuisAppCreated));
 
@@ -69,17 +72,20 @@ namespace NLU.DevOps.Luis
         public string AuthoringKey => this.EnsureConfigurationString(LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string AuthoringRegion => this.EnsureConfigurationString(LuisAuthoringRegionConfigurationKey);
+        public string AuthoringEndpoint => string.Format(CultureInfo.InvariantCulture, ApiCognitiveMicrosoftTemplate, this.AuthoringRegion);
 
         /// <inheritdoc />
-        public string EndpointKey => this.EnsureConfigurationString(
+        public string PredictionKey => this.EnsureConfigurationString(
             LuisEndpointKeyConfigurationKey,
             LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string EndpointRegion => this.EnsureConfigurationString(
-            LuisEndpointRegionConfigurationKey,
-            LuisAuthoringRegionConfigurationKey);
+        public string PredictionEndpoint => this.GetPredictionEndpoint();
+
+        /// <inheritdoc />
+        public string PredictionResourceName =>
+            this.Configuration[LuisPredictionResourceNameConfigurationKey] ??
+            this.Configuration[AzureAppNameConfigurationKey];
 
         /// <inheritdoc />
         public virtual string VersionId => this.GetVersionId();
@@ -115,19 +121,16 @@ namespace NLU.DevOps.Luis
         /// <inheritdoc />
         public string SlotName => this.Configuration[LuisSlotNameConfigurationKey]
             ?? (this.IsStaging ? "Staging" : "Production");
+#endif
 
         /// <inheritdoc />
         public bool DirectVersionPublish => this.GetConfigurationBoolean(LuisDirectVersionPublishConfigurationKey);
-#endif
 
         /// <inheritdoc />
         public string AzureResourceGroup => this.Configuration[AzureResourceGroupConfigurationKey];
 
         /// <inheritdoc />
         public string AzureSubscriptionId => this.Configuration[AzureSubscriptionIdConfigurationKey];
-
-        /// <inheritdoc />
-        public string AzureAppName => this.Configuration[AzureAppNameConfigurationKey];
 
         /// <inheritdoc />
         public string ArmToken => this.Configuration[ArmTokenConfigurationKey];
@@ -137,6 +140,12 @@ namespace NLU.DevOps.Luis
         private Lazy<string> LazyAppName { get; }
 
         private string CustomSpeechAppId => this.Configuration[CustomSpeechAppIdConfigurationKey];
+
+        private string AuthoringRegion => this.EnsureConfigurationString(LuisAuthoringRegionConfigurationKey);
+
+        private string EndpointRegion =>
+            this.Configuration[LuisEndpointRegionConfigurationKey] ??
+            this.Configuration[LuisAuthoringRegionConfigurationKey];
 
         /// <summary>
         /// Gets a non-null configuration value, or throws.
@@ -180,6 +189,19 @@ namespace NLU.DevOps.Luis
 
             prefix = prefix != null ? $"{prefix}_" : prefix;
             return $"{prefix}{randomString}";
+        }
+
+        private string GetPredictionEndpoint()
+        {
+            if (this.PredictionResourceName == null && this.EndpointRegion == null)
+            {
+                var keysString = $"{LuisPredictionResourceNameConfigurationKey}, {LuisEndpointRegionConfigurationKey}, or {LuisAuthoringRegionConfigurationKey}";
+                throw new InvalidOperationException($"Configuration value for one of {keysString} must be supplied.");
+            }
+
+            return this.PredictionResourceName != null
+                ? string.Format(CultureInfo.InvariantCulture, CognitiveServicesAzureTemplate, this.PredictionResourceName)
+                : string.Format(CultureInfo.InvariantCulture, ApiCognitiveMicrosoftTemplate, this.EndpointRegion);
         }
 
         private string GetVersionId()
