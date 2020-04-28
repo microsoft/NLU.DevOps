@@ -97,6 +97,7 @@ steps:
       --delete-appsettings
 
 - task: DownloadBuildArtifacts@0
+  condition: ne(variables['skipCompare'], 'true')
   displayName: Download test results from master
   inputs:
     buildType: specific
@@ -109,7 +110,8 @@ steps:
     downloadPath: $(Agent.TempDirectory)
 
 - task: DotNetCoreCLI@2
-  displayName: Compare the NLU text results
+  condition: ne(variables['skipCompare'], 'true')
+  displayName: Compare the NLU text results with baseline
   inputs:
     command: custom
     custom: nlu
@@ -119,6 +121,18 @@ steps:
       --test-settings models/compare.json
       --baseline $(Agent.TempDirectory)/drop/statistics.json
       --output-folder $(Build.ArtifactStagingDirectory)
+
+- task: DotNetCoreCLI@2
+  condition: eq(variables['skipCompare'], 'true')
+  displayName: Compare the NLU text results without baseline
+  inputs:
+    command: custom
+    custom: nlu
+    arguments: compare
+      --expected models/tests.json
+      --actual $(Agent.TempDirectory)/results.json
+      --test-settings models/compare.json
+      --output-folder $(Build.ArtifactStagingDirectory)      
 
 - task: DotNetCoreCLI@2
   displayName: Uninstall dotnet-nlu
@@ -134,7 +148,6 @@ steps:
     testResultsFiles: $(Build.ArtifactStagingDirectory)/**/TestResult.xml
 
 - task: PublishBuildArtifacts@1
-  condition: and(succeeded(), ne(variables['nlu.ci'], 'false'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish build artifacts
   inputs:
     pathToPublish: $(Build.ArtifactStagingDirectory)
@@ -142,13 +155,13 @@ steps:
     artifactType: container
 
 - task: UsePythonVersion@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], true))
   displayName: Set correct Python version
   inputs:
     versionSpec: '>= 3.5'   
 
 - task: PythonScript@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], true))
   displayName: Check for performance regression
   inputs:
     scriptPath: scripts/compare.py
