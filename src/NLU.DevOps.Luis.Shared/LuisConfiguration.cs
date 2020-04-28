@@ -24,6 +24,7 @@ namespace NLU.DevOps.Luis
         private const string LuisAuthoringKeyConfigurationKey = "luisAuthoringKey";
         private const string LuisEndpointKeyConfigurationKey = "luisEndpointKey";
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
+        private const string LuisAuthoringResourceNameConfigurationKey = "luisAuthoringResourceName";
         private const string LuisEndpointRegionConfigurationKey = "luisEndpointRegion";
         private const string LuisPredictionResourceNameConfigurationKey = "luisPredictionResourceName";
         private const string LuisVersionIdConfigurationKey = "luisVersionId";
@@ -72,7 +73,9 @@ namespace NLU.DevOps.Luis
         public string AuthoringKey => this.EnsureConfigurationString(LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string AuthoringEndpoint => string.Format(CultureInfo.InvariantCulture, ApiCognitiveMicrosoftTemplate, this.AuthoringRegion);
+        public string AuthoringEndpoint => this.GetEndpoint(
+            new[] { LuisAuthoringResourceNameConfigurationKey },
+            new[] { LuisAuthoringRegionConfigurationKey });
 
         /// <inheritdoc />
         public string PredictionKey => this.EnsureConfigurationString(
@@ -80,7 +83,9 @@ namespace NLU.DevOps.Luis
             LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string PredictionEndpoint => this.GetPredictionEndpoint();
+        public string PredictionEndpoint => this.GetEndpoint(
+            new[] { LuisPredictionResourceNameConfigurationKey, LuisAuthoringResourceNameConfigurationKey },
+            new[] { LuisEndpointRegionConfigurationKey, LuisAuthoringRegionConfigurationKey });
 
         /// <inheritdoc />
         public string PredictionResourceName =>
@@ -141,12 +146,6 @@ namespace NLU.DevOps.Luis
 
         private string CustomSpeechAppId => this.Configuration[CustomSpeechAppIdConfigurationKey];
 
-        private string AuthoringRegion => this.EnsureConfigurationString(LuisAuthoringRegionConfigurationKey);
-
-        private string EndpointRegion =>
-            this.Configuration[LuisEndpointRegionConfigurationKey] ??
-            this.Configuration[LuisAuthoringRegionConfigurationKey];
-
         /// <summary>
         /// Gets a non-null configuration value, or throws.
         /// </summary>
@@ -191,17 +190,25 @@ namespace NLU.DevOps.Luis
             return $"{prefix}{randomString}";
         }
 
-        private string GetPredictionEndpoint()
+        private string GetEndpoint(string[] resourceNameKeys, string[] regionKeys)
         {
-            if (this.PredictionResourceName == null && this.EndpointRegion == null)
+            Debug.Assert(resourceNameKeys.Length >= 1 && regionKeys.Length >= 1, "Expected more than one configuration key.");
+
+            var resourceName = resourceNameKeys.Select(key => this.Configuration[key]).FirstOrDefault(value => value != null);
+            if (resourceName != null)
             {
-                var keysString = $"{LuisPredictionResourceNameConfigurationKey}, {LuisEndpointRegionConfigurationKey}, or {LuisAuthoringRegionConfigurationKey}";
-                throw new InvalidOperationException($"Configuration value for one of {keysString} must be supplied.");
+                return string.Format(CultureInfo.InvariantCulture, CognitiveServicesAzureTemplate, resourceName);
             }
 
-            return this.PredictionResourceName != null
-                ? string.Format(CultureInfo.InvariantCulture, CognitiveServicesAzureTemplate, this.PredictionResourceName)
-                : string.Format(CultureInfo.InvariantCulture, ApiCognitiveMicrosoftTemplate, this.EndpointRegion);
+            var region = regionKeys.Select(key => this.Configuration[key]).FirstOrDefault(value => value != null);
+            if (region != null)
+            {
+                return string.Format(CultureInfo.InvariantCulture, ApiCognitiveMicrosoftTemplate, region);
+            }
+
+            var keys = resourceNameKeys.Concat(regionKeys);
+            var keysString = $"'{string.Join("', '", keys.SkipLast(1))}' or '{keys.TakeLast(1).Single()}'";
+            throw new InvalidOperationException($"Configuration value for one of {keysString} must be supplied.");
         }
 
         private string GetVersionId()
@@ -242,7 +249,7 @@ namespace NLU.DevOps.Luis
                 }
             }
 
-            var keysString = $"'{string.Join("', '", keys.Take(keys.Length - 1))} or '{keys[keys.Length - 1]}'";
+            var keysString = $"'{string.Join("', '", keys.SkipLast(1))}' or '{keys.TakeLast(1).Single()}'";
             throw new InvalidOperationException($"Configuration value for one of {keysString} must be supplied.");
         }
 

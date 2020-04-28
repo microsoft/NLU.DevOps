@@ -34,6 +34,7 @@ This will allow you to call the `train` sub-command for LUIS (see [Training an N
 Options to consider for training a LUIS model include:
 
 - [`luisAuthoringKey`](#luisauthoringkey)
+- [`luisAuthoringResourceName`](#luisauthoringresourcename)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisAppId`](#luisappid)
 - [`luisIsStaging`](#luisisstaging)
@@ -82,10 +83,11 @@ Also note that the LUIS authoring key has a [quota](https://docs.microsoft.com/e
 Options to consider for testing a LUIS model include:
 
 - [`luisAuthoringKey`](#luisauthoringkey)
+- [`luisAuthoringResourceName`](#luisauthoringresourcename)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisEndpointKey`](#luisendpointkey)
-- [`luisEndpointRegion`](#luisendpointregion)
 - [`luisPredictionResourceName`](#luispredictionresourcename)
+- [`luisEndpointRegion`](#luisendpointregion)
 - [`luisAppId`](#luisappid)
 - [`luisIsStaging`](#luisIsStaging)
 - [`luisSlotName`](#luisslotname)
@@ -140,6 +142,7 @@ To simplify the configuration process in continuous integration scenarios, you c
 Options to consider for tearing down a LUIS model include:
 
 - [`luisAuthoringKey`](#luisauthoringkey)
+- [`luisAuthoringResourceName`](#luisauthoringresourcename)
 - [`luisAuthoringRegion`](#luisauthoringregion)
 - [`luisAppId`](#luisappid)
 - [`luisAppCreated`](#luisappcreated)
@@ -203,10 +206,15 @@ Options to consider for assigning an Azure resource during training:
 
 Required for `train` and `clean`. May be used (to a limited extent subject to [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits)) for `test` from text.
 
+### `luisAuthoringResourceName`
+(Optional) Azure LUIS authoring resource name.
+
+Required for `train` and `clean` if [`luisAuthoringRegion`](#luisauthoringregion) not specified. May be used (to a limited extent subject to [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits)) for `test` from text.
+
 ### `luisAuthoringRegion`
 (Optional) LUIS authoring region.
 
-Required for `train` and `clean`. May be used (to a limited extent subject to [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits)) for `test` from text.
+Required for `train` and `clean` if [`luisAuthoringResourceName`](#luisauthoringresourcename) not specified. May be used (to a limited extent subject to [quota](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-boundaries#key-limits)) for `test` from text. 
 
 ### `luisEndpointKey`
 (Optional) LUIS endpoint key.
@@ -216,7 +224,7 @@ Optional for `test`. If not specified, [`luisAuthoringKey`](#luisauthoringkey) w
 ### `luisEndpointRegion`
 (Optional) LUIS endpoint region.
 
-Optional for `test`. If not specified, [`luisAuthoringRegion`](#luisauthoringregion) will be used.
+Optional for `test`. If not specified, one of [`luisPredictionResourceName`](#luispredictionresourcename), [`luisAuthoringResourceName`](#luisauthoringresourcename), or [`luisAuthoringRegion`](#luisauthoringregion) will be used.
 
 ### `luisAppId`
 (Optional) The LUIS app ID.
@@ -312,7 +320,7 @@ Optional for `train`. When supplied along with [`azureSubscriptionId`](#azuresub
 ### `luisPredictionResourceName`
 (Optional) Azure LUIS prediction resource name.
 
-Optional for `train` and `test`. For `train`, when supplied along with [`azureSubscriptionId`](#azuresubscriptionid), [`azureResourceGroup`](#azureresourcegroup), and [`ARM_TOKEN`](#arm_token), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuration-for-azure-resource-assignment) for more details. If not specified for `test`, NLU.DevOps will fallback on the [`luisEndpointRegion`](#luisendpointregion) or [`luisAuthoringRegion`](#luisauthoringregion).
+Optional for `train` and `test`. For `train`, when supplied along with [`azureSubscriptionId`](#azuresubscriptionid), [`azureResourceGroup`](#azureresourcegroup), and [`ARM_TOKEN`](#arm_token), the CLI tool will assign an Azure LUIS resource to the LUIS app. See [Configuring Azure resource assignment](#configuration-for-azure-resource-assignment) for more details. If not specified for `test`, the implementation will fallback on the [`luisEndpointRegion`](#luisendpointregion), [`luisAuthoringResourceName`](#luisauthoringresourcename), or [`luisAuthoringRegion`](#luisauthoringregion).
 
 ### `ARM_TOKEN`
 (Optional) ARM token for authorizing Azure requests.
