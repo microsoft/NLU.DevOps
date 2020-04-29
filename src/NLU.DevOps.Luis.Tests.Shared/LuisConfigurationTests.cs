@@ -26,16 +26,15 @@ namespace NLU.DevOps.Luis.Tests
         [TestCase(nameof(ILuisConfiguration.AppId), "luisAppId")]
         [TestCase(nameof(ILuisConfiguration.VersionId), "luisVersionId")]
         [TestCase(nameof(ILuisConfiguration.AuthoringKey), "luisAuthoringKey")]
-        [TestCase(nameof(ILuisConfiguration.AuthoringRegion), "luisAuthoringRegion")]
-        [TestCase(nameof(ILuisConfiguration.EndpointKey), "luisEndpointKey")]
-        [TestCase(nameof(ILuisConfiguration.EndpointRegion), "luisEndpointRegion")]
+        [TestCase(nameof(ILuisConfiguration.PredictionKey), "luisEndpointKey")]
 #if LUIS_V3
         [TestCase(nameof(ILuisConfiguration.SlotName), "luisSlotName")]
 #endif
         [TestCase(nameof(ILuisConfiguration.SpeechKey), "speechKey")]
         [TestCase(nameof(ILuisConfiguration.AzureSubscriptionId), "azureSubscriptionId")]
         [TestCase(nameof(ILuisConfiguration.AzureResourceGroup), "azureResourceGroup")]
-        [TestCase(nameof(ILuisConfiguration.AzureAppName), "azureLuisResourceName")]
+        [TestCase(nameof(ILuisConfiguration.PredictionResourceName), "luisPredictionResourceName")]
+        [TestCase(nameof(ILuisConfiguration.PredictionResourceName), "azureLuisResourceName")]
         [TestCase(nameof(ILuisConfiguration.ArmToken), "ARM_TOKEN")]
         public static void ReadsStringConfigurationValues(string propertyName, string configurationKey)
         {
@@ -54,11 +53,9 @@ namespace NLU.DevOps.Luis.Tests
 
         [Test]
         [TestCase(nameof(ILuisConfiguration.IsStaging), "luisIsStaging")]
+        [TestCase(nameof(ILuisConfiguration.DirectVersionPublish), "luisDirectVersionPublish")]
 #if LUIS_V2
         [TestCase(nameof(ILuisConfiguration.UseSpeechEndpoint), "luisUseSpeechEndpoint")]
-#endif
-#if LUIS_V3
-        [TestCase(nameof(ILuisConfiguration.DirectVersionPublish), "luisDirectVersionPublish")]
 #endif
         public static void ReadsBooleanConfigurationValues(string propertyName, string configurationKey)
         {
@@ -94,10 +91,36 @@ namespace NLU.DevOps.Luis.Tests
         }
 
         [Test]
+        [TestCase(nameof(ILuisConfiguration.AuthoringEndpoint), "luisAuthoringResourceName", "https://{0}.cognitiveservices.azure.com", "luisAuthoringRegion")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisAuthoringResourceName", "https://{0}.cognitiveservices.azure.com", "luisAuthoringRegion")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisAuthoringResourceName", "https://{0}.cognitiveservices.azure.com", "luisEndpointRegion")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisPredictionResourceName", "https://{0}.cognitiveservices.azure.com", "luisEndpointRegion")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisPredictionResourceName", "https://{0}.cognitiveservices.azure.com", "luisAuthoringResourceName")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisPredictionResourceName", "https://{0}.cognitiveservices.azure.com", "luisAuthoringRegion")]
+        [TestCase(nameof(ILuisConfiguration.AuthoringEndpoint), "luisAuthoringRegion", "https://{0}.api.cognitive.microsoft.com", "ignore")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisAuthoringRegion", "https://{0}.api.cognitive.microsoft.com", "ignore")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisEndpointRegion", "https://{0}.api.cognitive.microsoft.com", "luisAuthoringRegion")]
+        public static void CreatesEndpointFromRegion(string propertyName, string configurationKey, string template, string otherKey)
+        {
+            var configuration = new ConfigurationBuilder()
+               .AddInMemoryCollection(new Dictionary<string, string>
+               {
+                   { configurationKey, Guid.NewGuid().ToString() },
+                   { otherKey, Guid.NewGuid().ToString() },
+               })
+               .Build();
+
+            var luisConfiguration = new LuisConfiguration(configuration);
+            var property = typeof(LuisConfiguration).GetProperty(propertyName);
+            var propertyValue = property.GetValue(luisConfiguration);
+            propertyValue.Should().Be(string.Format(CultureInfo.InvariantCulture, template, configuration[configurationKey]));
+        }
+
+        [Test]
         [TestCase(nameof(ILuisConfiguration.AuthoringKey), "luisAuthoringKey")]
-        [TestCase(nameof(ILuisConfiguration.AuthoringRegion), "luisAuthoringRegion")]
-        [TestCase(nameof(ILuisConfiguration.EndpointKey), "luisEndpointKey", "luisAuthoringKey")]
-        [TestCase(nameof(ILuisConfiguration.EndpointRegion), "luisEndpointRegion", "luisAuthoringRegion")]
+        [TestCase(nameof(ILuisConfiguration.AuthoringEndpoint), "luisAuthoringResourceName", "luisAuthoringRegion")]
+        [TestCase(nameof(ILuisConfiguration.PredictionKey), "luisEndpointKey", "luisAuthoringKey")]
+        [TestCase(nameof(ILuisConfiguration.PredictionEndpoint), "luisPredictionResourceName", "luisAuthoringResourceName", "luisEndpointRegion", "luisAuthoringRegion")]
         [TestCase(nameof(ILuisConfiguration.SpeechRegion), "speechRegion", "luisEndpointRegion")]
         [TestCase(nameof(ILuisConfiguration.SpeechKey), "speechKey")]
         public static void ThrowsInvalidOperationForMissingConfiguration(string propertyName, params string[] configurationKeys)
@@ -118,7 +141,7 @@ namespace NLU.DevOps.Luis.Tests
         [TestCase(nameof(ILuisConfiguration.AppId))]
         [TestCase(nameof(ILuisConfiguration.AzureSubscriptionId))]
         [TestCase(nameof(ILuisConfiguration.AzureResourceGroup))]
-        [TestCase(nameof(ILuisConfiguration.AzureAppName))]
+        [TestCase(nameof(ILuisConfiguration.PredictionResourceName))]
         [TestCase(nameof(ILuisConfiguration.ArmToken))]
         public static void EmptyConfigurationReturnsNullValue(string propertyName)
         {

@@ -16,16 +16,13 @@ namespace NLU.DevOps.Luis
 
     internal class LuisTrainClient : ILuisTrainClient
     {
-        private const string Protocol = "https://";
-        private const string Domain = ".api.cognitive.microsoft.com";
-
         public LuisTrainClient(ILuisConfiguration luisConfiguration)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
             var authoringCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.AuthoringKey);
             this.AuthoringClient = new LUISAuthoringClient(authoringCredentials)
             {
-                Endpoint = $"{Protocol}{luisConfiguration.AuthoringRegion}{Domain}",
+                Endpoint = luisConfiguration.AuthoringEndpoint,
             };
         }
 
@@ -76,19 +73,10 @@ namespace NLU.DevOps.Luis
 
         public Task PublishAppAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-#if LUIS_V3
             var request = new ApplicationPublishObjectWithDirectVersionPublish();
-#else
-            var request = new ApplicationPublishObject();
-#endif
             request.IsStaging = this.LuisConfiguration.IsStaging;
             request.VersionId = this.LuisConfiguration.VersionId;
-#if LUIS_V2
-            request.Region = this.LuisConfiguration.EndpointRegion;
-#endif
-#if LUIS_V3
             request.DirectVersionPublish = this.LuisConfiguration.DirectVersionPublish;
-#endif
             return this.AuthoringClient.Apps.PublishAsync(Guid.Parse(appId), request, cancellationToken);
         }
 
@@ -132,11 +120,9 @@ namespace NLU.DevOps.Luis
             result.EnsureSuccessStatusCode();
         }
 
-#if LUIS_V3
         private class ApplicationPublishObjectWithDirectVersionPublish : ApplicationPublishObject
         {
             public bool DirectVersionPublish { get; set; }
         }
-#endif
     }
 }

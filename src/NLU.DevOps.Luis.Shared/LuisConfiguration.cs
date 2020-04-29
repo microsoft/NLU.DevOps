@@ -24,7 +24,9 @@ namespace NLU.DevOps.Luis
         private const string LuisAuthoringKeyConfigurationKey = "luisAuthoringKey";
         private const string LuisEndpointKeyConfigurationKey = "luisEndpointKey";
         private const string LuisAuthoringRegionConfigurationKey = "luisAuthoringRegion";
+        private const string LuisAuthoringResourceNameConfigurationKey = "luisAuthoringResourceName";
         private const string LuisEndpointRegionConfigurationKey = "luisEndpointRegion";
+        private const string LuisPredictionResourceNameConfigurationKey = "luisPredictionResourceName";
         private const string LuisVersionIdConfigurationKey = "luisVersionId";
         private const string LuisVersionPrefixConfigurationKey = "luisVersionPrefix";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
@@ -36,8 +38,8 @@ namespace NLU.DevOps.Luis
 #endif
 #if LUIS_V3
         private const string LuisSlotNameConfigurationKey = "luisSlotName";
-        private const string LuisDirectVersionPublishConfigurationKey = "luisDirectVersionPublish";
 #endif
+        private const string LuisDirectVersionPublishConfigurationKey = "luisDirectVersionPublish";
         private const string AzureSubscriptionIdConfigurationKey = "azureSubscriptionId";
         private const string AzureResourceGroupConfigurationKey = "azureResourceGroup";
         private const string AzureAppNameConfigurationKey = "azureLuisResourceName";
@@ -46,6 +48,8 @@ namespace NLU.DevOps.Luis
 
         private const string CustomSpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/interactive/cognitiveservices/v1?language={1}&cid={2}&format=detailed";
         private const string SpeechEndpointTemplate = "https://{0}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language={1}&format=detailed";
+        private const string CognitiveServicesAzureTemplate = "https://{0}.cognitiveservices.azure.com";
+        private const string ApiCognitiveMicrosoftTemplate = "https://{0}.api.cognitive.microsoft.com";
 
         private static readonly string LuisAppCreatedConfigurationKey = CamelCase(nameof(LuisNLUTrainClient.LuisAppCreated));
 
@@ -69,17 +73,24 @@ namespace NLU.DevOps.Luis
         public string AuthoringKey => this.EnsureConfigurationString(LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string AuthoringRegion => this.EnsureConfigurationString(LuisAuthoringRegionConfigurationKey);
+        public string AuthoringEndpoint => this.GetEndpoint(
+            new[] { LuisAuthoringResourceNameConfigurationKey },
+            new[] { LuisAuthoringRegionConfigurationKey });
 
         /// <inheritdoc />
-        public string EndpointKey => this.EnsureConfigurationString(
+        public string PredictionKey => this.EnsureConfigurationString(
             LuisEndpointKeyConfigurationKey,
             LuisAuthoringKeyConfigurationKey);
 
         /// <inheritdoc />
-        public string EndpointRegion => this.EnsureConfigurationString(
-            LuisEndpointRegionConfigurationKey,
-            LuisAuthoringRegionConfigurationKey);
+        public string PredictionEndpoint => this.GetEndpoint(
+            new[] { LuisPredictionResourceNameConfigurationKey, LuisAuthoringResourceNameConfigurationKey },
+            new[] { LuisEndpointRegionConfigurationKey, LuisAuthoringRegionConfigurationKey });
+
+        /// <inheritdoc />
+        public string PredictionResourceName =>
+            this.Configuration[LuisPredictionResourceNameConfigurationKey] ??
+            this.Configuration[AzureAppNameConfigurationKey];
 
         /// <inheritdoc />
         public virtual string VersionId => this.GetVersionId();
@@ -115,19 +126,16 @@ namespace NLU.DevOps.Luis
         /// <inheritdoc />
         public string SlotName => this.Configuration[LuisSlotNameConfigurationKey]
             ?? (this.IsStaging ? "Staging" : "Production");
+#endif
 
         /// <inheritdoc />
         public bool DirectVersionPublish => this.GetConfigurationBoolean(LuisDirectVersionPublishConfigurationKey);
-#endif
 
         /// <inheritdoc />
         public string AzureResourceGroup => this.Configuration[AzureResourceGroupConfigurationKey];
 
         /// <inheritdoc />
         public string AzureSubscriptionId => this.Configuration[AzureSubscriptionIdConfigurationKey];
-
-        /// <inheritdoc />
-        public string AzureAppName => this.Configuration[AzureAppNameConfigurationKey];
 
         /// <inheritdoc />
         public string ArmToken => this.Configuration[ArmTokenConfigurationKey];
@@ -182,6 +190,27 @@ namespace NLU.DevOps.Luis
             return $"{prefix}{randomString}";
         }
 
+        private string GetEndpoint(string[] resourceNameKeys, string[] regionKeys)
+        {
+            Debug.Assert(resourceNameKeys.Length >= 1 && regionKeys.Length >= 1, "Expected more than one configuration key.");
+
+            var resourceName = resourceNameKeys.Select(key => this.Configuration[key]).FirstOrDefault(value => value != null);
+            if (resourceName != null)
+            {
+                return string.Format(CultureInfo.InvariantCulture, CognitiveServicesAzureTemplate, resourceName);
+            }
+
+            var region = regionKeys.Select(key => this.Configuration[key]).FirstOrDefault(value => value != null);
+            if (region != null)
+            {
+                return string.Format(CultureInfo.InvariantCulture, ApiCognitiveMicrosoftTemplate, region);
+            }
+
+            var keys = resourceNameKeys.Concat(regionKeys);
+            var keysString = $"'{string.Join("', '", keys.SkipLast(1))}' or '{keys.TakeLast(1).Single()}'";
+            throw new InvalidOperationException($"Configuration value for one of {keysString} must be supplied.");
+        }
+
         private string GetVersionId()
         {
             var versionId = this.Configuration[LuisVersionIdConfigurationKey];
@@ -220,7 +249,7 @@ namespace NLU.DevOps.Luis
                 }
             }
 
-            var keysString = $"'{string.Join("', '", keys.Take(keys.Length - 1))} or '{keys[keys.Length - 1]}'";
+            var keysString = $"'{string.Join("', '", keys.SkipLast(1))}' or '{keys.TakeLast(1).Single()}'";
             throw new InvalidOperationException($"Configuration value for one of {keysString} must be supplied.");
         }
 

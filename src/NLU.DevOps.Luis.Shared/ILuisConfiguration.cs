@@ -26,19 +26,24 @@ namespace NLU.DevOps.Luis
         string AuthoringKey { get; }
 
         /// <summary>
-        /// Gets the LUIS authoring region.
+        /// Gets the LUIS authoring endpoint.
         /// </summary>
-        string AuthoringRegion { get; }
+        string AuthoringEndpoint { get; }
 
         /// <summary>
-        /// Gets the LUIS endpoint key.
+        /// Gets the LUIS prediction key.
         /// </summary>
-        string EndpointKey { get; }
+        string PredictionKey { get; }
 
         /// <summary>
-        /// Gets the LUIS endpoint region.
+        /// Gets the LUIS prediction endpoint.
         /// </summary>
-        string EndpointRegion { get; }
+        string PredictionEndpoint { get; }
+
+        /// <summary>
+        /// Gets the LUIS prediction resource name.
+        /// </summary>
+        string PredictionResourceName { get; }
 
         /// <summary>
         /// Gets the LUIS version ID.
@@ -69,25 +74,26 @@ namespace NLU.DevOps.Luis
         /// Gets the Cognitive Services speech endpoint.
         /// </summary>
         Uri SpeechEndpoint { get; }
-#if LUIS_V2
 
+#if LUIS_V2
         /// <summary>
         /// Gets a value indicating whether the REST speech endpoint should be used as opposed to the Speech SDK.
         /// </summary>
         bool UseSpeechEndpoint { get; }
+
 #endif
 #if LUIS_V3
-
         /// <summary>
         /// Gets the LUIS staging name.
         /// </summary>
         string SlotName { get; }
 
+#endif
+
         /// <summary>
         /// Gets a value indicating whether the LUIS model should use direct version publish.
         /// </summary>
         bool DirectVersionPublish { get; }
-#endif
 
         /// <summary>
         /// Gets the Azure resource group.
@@ -98,11 +104,6 @@ namespace NLU.DevOps.Luis
         /// Gets the Azure subscription ID.
         /// </summary>
         string AzureSubscriptionId { get; }
-
-        /// <summary>
-        /// Gets the Azure Cognitive Services app name.
-        /// </summary>
-        string AzureAppName { get; }
 
         /// <summary>
         /// Gets the ARM token.

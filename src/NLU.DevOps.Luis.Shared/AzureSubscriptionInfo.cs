@@ -25,7 +25,7 @@ namespace NLU.DevOps.Luis
         {
             if (luisConfiguration.AzureSubscriptionId == null
                 || luisConfiguration.AzureResourceGroup == null
-                || luisConfiguration.AzureAppName == null
+                || luisConfiguration.PredictionResourceName == null
                 || luisConfiguration.ArmToken == null)
             {
                 return null;
@@ -34,7 +34,7 @@ namespace NLU.DevOps.Luis
             return new AzureSubscriptionInfo(
                 luisConfiguration.AzureSubscriptionId,
                 luisConfiguration.AzureResourceGroup,
-                luisConfiguration.AzureAppName);
+                luisConfiguration.PredictionResourceName);
         }
     }
 }
