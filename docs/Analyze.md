@@ -13,6 +13,8 @@ dotnet nlu compare -e utterances.json -a results.json
 
 The `utterances.json` argument is the path to the "expected" utterances file, usually the file path you supplied to the `test` command. The `results.json` argument is the path to the output utterances from a `test` command (see [Testing an NLU model](Test.md) for more details). The two files must have the same number of utterances in the exact same order, which will be the case if you supply the same `utterances.json` to the `compare` command as you supplied to `test`.
 
+The `compare` command generates confusion matrix results identifying true positive, true negative, false positive, and false negative results for intents, entities and entity values. Both false positive and false negative results are also generated for mismatched intents, except in cases that the expected intent is either `null`, `undefined` or equal to the configured value for [`trueNegativeIntent`](#truenegativeintent).
+
 For example, if you use the training cases supplied in [Training an NLU model](Train.md#getting-started) and the test cases supplied in [Testing an NLU model](Test.md#getting-started) on LUIS, you will recall that we had one resulting intent that was incorrectly labeled with the "None" intent. In this case, the `compare` command will generate passing tests (either true positive or true negative) for all text, intents, and entities, except for the one mismatched case. The mismatched case will generate a single failing test result, labeled as a false negative intent. Here is the specific output:
 ```bash
 Test Discovery
@@ -44,6 +46,8 @@ The unit test XML results are also written to a file called `TestResult.xml` in 
 
 ## JSON Output
 
+### Metadata Output
+
 In addition to the NUnit output, the `compare` command will output a JSON file called `metadata.json` to the [--output-folder](#-o---output-folder) for the confusion matrix with the following format:
 ```plaintext
 [
@@ -63,7 +67,9 @@ In addition to the NUnit output, the `compare` command will output a JSON file c
 ]
 ```
 
-It also generates a much smaller high-level summary of confusion matrix results grouped by intent and entity type, called `statistics.json`:
+### Statistics Output
+
+The `compare` command also generates a much smaller high-level summary of confusion matrix results grouped by intent and entity type, called `statistics.json`:
 ```plaintext
 {
   "intent": [
@@ -85,9 +91,41 @@ It also generates a much smaller high-level summary of confusion matrix results 
 
 The `metadata.json` output is useful for reviewing fine-grained details of NLU tests, whereas the `statistics.json`, given it's more compact representation, is useful for comparing course-grained measurements (e.g., precision and recall) over time across multiple test runs.
 
-### Unit Test Mode
+## Test Modes
 
-The `compare` command will generate confusion matrix results, identifying true positive, true negative, false positive, and false negative results for intents, entities and entity values. By default, false positive results will be generated for any entity that is not declared as an expected entity, unless it's type is included in the `ignoreEntities` configuration in the supplied [`--test-settings`](#-t---test-settings), or in an `ignoreEntities` property on the labeled test utterance. Both false positive and false negative results are also generated for mismatched intents, except in cases that the expected intent is either `null`, `undefined` or equal to the configured value for [`trueNegativeIntent`](#truenegativeintent).
+The `compare` command can run in one of two modes, performance test mode (default) or unit test mode. The difference between performance test mode and unit test mode is in the way false positive results are handled: unit test mode is more lenient in the sense that, by default, false positive results are ignored.
+
+### Performance Test Mode
+
+Performance test mode is the default mode for the `compare` command. In performance test mode, false positive results will be generated for any entity that is not declared as an expected entity, unless it's type is included in the `ignoreEntities` configuration in the supplied [`--test-settings`](#-t---test-settings), or in an `ignoreEntities` property on the labeled test utterance.
+
+#### Performance Baseline
+
+Performance test mode allows you to compare against a baseline performance benchmark (e.g., the results from the latest commit to master or the current release). You can specify this baseline by supplying a path to the [`statistics.json`](#statistics-output) output of a previous run via the [`--baseline`](#-b---baseline) CLI option.
+
+#### Performance Regression Thresholds
+
+When comparing against a [baseline](#performance-baseline), you can also specify performance regression thresholds. This is useful for setting up continuous integration that prevents performance regressions greater than a specific amount. Currently, the only supported regression thresholds are based on the F<sub>1</sub> scores for intents and entities. The thresholds are configured via the [test settings](#configuring-test-settings) supplied to the `compare` command:
+
+Here are the properties that can be declared for thresholds:
+- `type` - Specify `intent` for setting a regression threshold for intents, or `entity` for entities.
+- `group` - Optional. When specified, narrows the regression to the specific intent or entity name supplied. When not specified, uses the threshold for all intents or entities (depending on `type`). You may also specify `*` to target all intents or entities.
+- `threshold` - Optional. The numeric regression threshold value. For example, specifying a threshold of 0.1 means that the command will fail if the F<sub>1</sub> score for the targeted intent(s) or entity(s) decreases by more than 0.1. When not specified, a threshold of 0 is used.
+
+Here's an example threshold configuration that limits the performance regression for all intents to 0.05, the `PlayMusic` intent to 0, and all entities to 0.1:
+
+```yaml
+thresholds:
+- type: intent
+  threshold: 0.05
+- type: intent
+  group: PlayMusic
+- type: entity
+  group: '*'
+  threshold: 0.1
+```
+
+### Unit Test Mode
 
 Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. Similarly, false positive results will not be generated for intents. This flag also configures the command to return a non-zero exit code if any false positive or false negative results are detected.
 
@@ -110,12 +148,21 @@ Configures a global set of entity types that should not generate false positive 
 ### Example test settings
 
 The following specifies an intent called "None" as the true negative intent and ignores false postives from the "number" entity:
+
 ```json
 {
   "trueNegativeIntent": "None",
   "ignoreEntities": [ "number" ]
 }
 ```
+
+```yaml
+trueNegativeIntent: None
+ignoreEntities:
+- number
+```
+
+The test settings can be formatted as JSON or YAML and are supplied via the [`--test-settings`](#-t---test-settings) option.
 
 ## How text is compared
 
@@ -151,4 +198,4 @@ Be sure to use the [`--output`](Test.md#-o---output) option when running the `te
 (Optional) Flag used to specify that the compare operation should run in unit test mode. See [Unit Test Mode](#unit-test-mode) for more details.
 
 ### `-b, --baseline`
-(Optional) Specifies the path to the confusion matrix statisticcs of a previous test run to compare against.
+(Optional) Specifies the path to the confusion matrix [statistics](#statistics-output) of a previous test run to compare against.
