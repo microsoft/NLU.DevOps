@@ -6,6 +6,7 @@ namespace NLU.DevOps.ModelPerformance
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using Microsoft.Extensions.Configuration;
 
     /// <summary>
@@ -16,6 +17,7 @@ namespace NLU.DevOps.ModelPerformance
         private const string IgnoreEntitiesConfigurationKey = "ignoreEntities";
         private const string StrictEntitiesConfigurationKey = "strictEntities";
         private const string TrueNegativeIntentConfigurationKey = "trueNegativeIntent";
+        private const string ThresholdsConfigurationKey = "thresholds";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TestSettings"/> class.
@@ -56,6 +58,11 @@ namespace NLU.DevOps.ModelPerformance
         public IReadOnlyList<string> StrictEntities => this.Configuration.GetSection(StrictEntitiesConfigurationKey).Get<string[]>() ?? Array.Empty<string>();
 
         /// <summary>
+        /// Gets the set of thresholds defined in the configuration.
+        /// </summary>
+        public IReadOnlyList<NLUThreshold> Thresholds => this.GetThresholds() ?? Array.Empty<NLUThreshold>();
+
+        /// <summary>
         /// Gets the name of the intent used for true negatives.
         /// </summary>
         public string TrueNegativeIntent => this.Configuration.GetValue(TrueNegativeIntentConfigurationKey, default(string));
@@ -66,13 +73,32 @@ namespace NLU.DevOps.ModelPerformance
         {
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 
-            if (path != null)
+            if (path != null && (path.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".yml", StringComparison.OrdinalIgnoreCase)))
+            {
+                configurationBuilder = configurationBuilder
+                    .AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), path));
+            }
+            else if (path != null)
             {
                 configurationBuilder = configurationBuilder
                     .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), path));
             }
 
             return configurationBuilder.Build();
+        }
+
+        private IReadOnlyList<NLUThreshold> GetThresholds()
+        {
+            return this.Configuration
+                .GetSection(ThresholdsConfigurationKey)?
+                .GetChildren()?
+                .Select(item =>
+                {
+                    var threshold = new NLUThreshold();
+                    item.Bind(threshold);
+                    return threshold;
+                })
+                .ToArray();
         }
     }
 }

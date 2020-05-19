@@ -16,6 +16,51 @@ namespace NLU.DevOps.ModelPerformance
     public static class NLUAccuracy
     {
         /// <summary>
+        /// Checks that NLU results do not regress performance against the baseline beyond the given thresholds.
+        /// </summary>
+        /// <param name="currentResults">Current results.</param>
+        /// <param name="baselineResults">Baseline results.</param>
+        /// <param name="threshold">Performance threshold.</param>
+        /// <returns>
+        /// <code>true</code> if performance has not dropped beyond thresholds, otherwise <code>false</code>.
+        /// </returns>
+        public static bool CheckThreshold(this NLUStatistics currentResults, NLUStatistics baselineResults, NLUThreshold threshold)
+        {
+            ConfusionMatrix getResultsByGroup(string group, IReadOnlyDictionary<string, ConfusionMatrix> groupStatistics)
+            {
+                if (groupStatistics != null && groupStatistics.TryGetValue(group, out var result))
+                {
+                    return result;
+                }
+
+                return null;
+            }
+
+            ConfusionMatrix getResults(NLUStatistics statistics)
+            {
+                if (threshold.Type == "intent" || threshold.Type == "entity")
+                {
+                    if (threshold.Group == null || threshold.Group == "*")
+                    {
+                        return threshold.Type == "intent"
+                            ? statistics?.Intent
+                            : statistics?.Entity;
+                    }
+
+                    return threshold.Type == "intent"
+                        ? getResultsByGroup(threshold.Group, statistics?.ByIntent)
+                        : getResultsByGroup(threshold.Group, statistics?.ByEntityType);
+                }
+
+                return null;
+            }
+
+            var baselineMatrix = getResults(baselineResults) ?? ConfusionMatrix.Default;
+            var currentMatrix = getResults(currentResults) ?? ConfusionMatrix.Default;
+            return baselineMatrix.F1() - currentMatrix.F1() >= threshold.Threshold;
+        }
+
+        /// <summary>
         /// Prints to the console the intents, entities performance results
         /// and a confusion table for intents
         /// </summary>

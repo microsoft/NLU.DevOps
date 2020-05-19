@@ -118,7 +118,7 @@ steps:
     arguments: compare
       --expected models/tests.json
       --actual $(Agent.TempDirectory)/results.json
-      --test-settings models/compare.json
+      --test-settings models/compare.yml
       --baseline $(Agent.TempDirectory)/drop/statistics.json
       --output-folder $(Build.ArtifactStagingDirectory)
 
@@ -131,7 +131,7 @@ steps:
     arguments: compare
       --expected models/tests.json
       --actual $(Agent.TempDirectory)/results.json
-      --test-settings models/compare.json
+      --test-settings models/compare.yml
       --output-folder $(Build.ArtifactStagingDirectory)      
 
 - task: DotNetCoreCLI@2
@@ -143,26 +143,15 @@ steps:
 
 - task: PublishTestResults@2
   displayName: Publish test results
+  condition: succeededOrFailed()
   inputs:
     testResultsFormat: NUnit
     testResultsFiles: $(Build.ArtifactStagingDirectory)/**/TestResult.xml
 
 - task: PublishBuildArtifacts@1
   displayName: Publish build artifacts
+  condition: succeededOrFailed()
   inputs:
     pathToPublish: $(Build.ArtifactStagingDirectory)
     artifactName: drop
     artifactType: container
-
-- task: UsePythonVersion@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], true))
-  displayName: Set correct Python version
-  inputs:
-    versionSpec: '>= 3.5'   
-
-- task: PythonScript@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], true))
-  displayName: Check for performance regression
-  inputs:
-    scriptPath: scripts/compare.py
-    arguments: $(Agent.TempDirectory)/drop/**/TestResult.xml $(Build.ArtifactStagingDirectory)/**/TestResult.xml

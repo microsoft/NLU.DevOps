@@ -439,22 +439,14 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Could not find configuration for expected or actual utterances.");
             }
 
-            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-
             var testSettingsPath = TestContext.Parameters.Get(ConfigurationConstants.TestSettingsPathKey);
-            if (testSettingsPath != null)
-            {
-                configurationBuilder = configurationBuilder
-                    .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), testSettingsPath));
-            }
-
             var unitTestModeString = TestContext.Parameters.Get(ConfigurationConstants.UnitTestModeKey);
             if (unitTestModeString == null || !bool.TryParse(unitTestModeString, out var unitTestMode))
             {
                 unitTestMode = false;
             }
 
-            var testSettings = new TestSettings(configurationBuilder.Build(), unitTestMode);
+            var testSettings = new TestSettings(testSettingsPath, unitTestMode);
             var expected = Read(expectedPath);
             var actual = Read(actualPath);
             return GetNLUCompareResults(expected, actual, testSettings).TestCases;
