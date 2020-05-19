@@ -57,7 +57,7 @@ namespace NLU.DevOps.ModelPerformance
 
             var baselineMatrix = getResults(baselineResults) ?? ConfusionMatrix.Default;
             var currentMatrix = getResults(currentResults) ?? ConfusionMatrix.Default;
-            return baselineMatrix.F1() - currentMatrix.F1() >= threshold.Threshold;
+            return baselineMatrix.F1() - currentMatrix.F1() <= threshold.Threshold;
         }
 
         /// <summary>
