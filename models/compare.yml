@@ -1,0 +1,8 @@
+trueNegativeIntent: None
+thresholds:
+- type: intent
+  group: '*'
+  threshold: 0
+- type: entity
+  group: '*'
+  threshold: 0
