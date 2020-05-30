@@ -88,5 +88,904 @@
     "text": "what's the weather like",
     "intent": "None",
     "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
+  },
+  {
+    "text": "start playing music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "play music",
+    "intent": "PlayMusic"
+  },
+  {
+    "text": "listen to country",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "country",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "listen to jazz",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "jazz",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "play five songs from my playlist",
+    "intent": "PlayMusic",
+    "entities": [
+      {
+        "entityType": "songCount",
+        "matchText": "five",
+        "matchIndex": 0,
+        "entityValue": {
+          "value": "5"
+        }
+      }
+    ]
+  },
+  {
+    "text": "skip ahead",
+    "intent": "Skip"
+  },
+  {
+    "text": "next please",
+    "intent": "Skip"
+  },
+  {
+    "text": "go forward",
+    "intent": "Skip"
+  },
+  {
+    "text": "is it cold out",
+    "intent": "None"
+  },
+  {
+    "text": "how many days until Christmas",
+    "intent": "None"
+  },
+  {
+    "text": "what is the weather like",
+    "intent": "None"
+  },
+  {
+    "text": "listen to hip hop",
+    "intent": "PlayMusic",
+    "speechFile": "listen_to_hiphop.wav",
+    "entities": [
+      {
+        "entityType": "Genre",
+        "matchText": "hip hop",
+        "matchIndex": 0
+      }
+    ]
+  },
+  {
+    "text": "skip this one",
+    "intent": "Skip",
+    "speechFile": "skip_this_one.wav"
+  },
+  {
+    "text": "what's the weather like",
+    "intent": "None",
+    "speechFile": "whats_the_weather_like.wav"
   }
 ]
