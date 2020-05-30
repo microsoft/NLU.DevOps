@@ -16,6 +16,7 @@ namespace NLU.DevOps.Luis
     using Microsoft.CognitiveServices.Speech.Audio;
     using Microsoft.CognitiveServices.Speech.Intent;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Rest.TransientFaultHandling;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -28,6 +29,11 @@ namespace NLU.DevOps.Luis
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
                 Endpoint = luisConfiguration.PredictionEndpoint,
+            };
+
+            RetryPolicy.TestPolicy.Retrying += (s, e) =>
+            {
+                Logger.LogTrace($"Received HTTP {(int)((HttpRequestWithStatusException)e.LastException).StatusCode} result from Cognitive Services. Retrying.");
             };
 
             this.RuntimeClient.SetRetryPolicy(RetryPolicy.TestPolicy);
