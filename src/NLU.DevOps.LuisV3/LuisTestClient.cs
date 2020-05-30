@@ -17,8 +17,6 @@ namespace NLU.DevOps.Luis
 
     internal sealed class LuisTestClient : ILuisTestClient
     {
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
-
         public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
@@ -27,6 +25,8 @@ namespace NLU.DevOps.Luis
             {
                 Endpoint = luisConfiguration.PredictionEndpoint,
             };
+
+            this.RuntimeClient.SetRetryPolicy(RetryPolicy.TestPolicy);
         }
 
         private static ILogger Logger => LazyLogger.Value;
@@ -41,39 +41,28 @@ namespace NLU.DevOps.Luis
 
         public async Task<PredictionResponse> QueryAsync(PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                try
-                {
-                    this.TraceQueryTarget();
-                    if (this.LuisConfiguration.DirectVersionPublish)
-                    {
-                        return await this.RuntimeClient.Prediction.GetVersionPredictionAsync(
-                                Guid.Parse(this.LuisConfiguration.AppId),
-                                this.LuisConfiguration.VersionId,
-                                predictionRequest,
-                                verbose: true,
-                                log: false,
-                                cancellationToken: cancellationToken)
-                            .ConfigureAwait(false);
-                    }
+            this.TraceQueryTarget();
 
-                    return await this.RuntimeClient.Prediction.GetSlotPredictionAsync(
-                            Guid.Parse(this.LuisConfiguration.AppId),
-                            this.LuisConfiguration.SlotName,
-                            predictionRequest,
-                            verbose: true,
-                            log: false,
-                            cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (ErrorException ex)
-                when ((int)ex.Response.StatusCode == 429)
-                {
-                    Logger.LogTrace("Received HTTP 429 result from Cognitive Services. Retrying.");
-                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                }
+            if (this.LuisConfiguration.DirectVersionPublish)
+            {
+                return await this.RuntimeClient.Prediction.GetVersionPredictionAsync(
+                        Guid.Parse(this.LuisConfiguration.AppId),
+                        this.LuisConfiguration.VersionId,
+                        predictionRequest,
+                        verbose: true,
+                        log: false,
+                        cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
             }
+
+            return await this.RuntimeClient.Prediction.GetSlotPredictionAsync(
+                    Guid.Parse(this.LuisConfiguration.AppId),
+                    this.LuisConfiguration.SlotName,
+                    predictionRequest,
+                    verbose: true,
+                    log: false,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public async Task<SpeechPredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)

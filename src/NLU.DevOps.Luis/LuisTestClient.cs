@@ -21,17 +21,16 @@ namespace NLU.DevOps.Luis
 
     internal sealed class LuisTestClient : ILuisTestClient
     {
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
-
         public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
-
             var endpointCredentials = new ApiKeyServiceClientCredentials(luisConfiguration.PredictionKey);
             this.RuntimeClient = new LUISRuntimeClient(endpointCredentials)
             {
                 Endpoint = luisConfiguration.PredictionEndpoint,
             };
+
+            this.RuntimeClient.SetRetryPolicy(RetryPolicy.TestPolicy);
         }
 
         private static ILogger Logger => LazyLogger.Value;
@@ -44,25 +43,13 @@ namespace NLU.DevOps.Luis
 
         public async Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                try
-                {
-                    return await this.RuntimeClient.Prediction.ResolveAsync(
-                            this.LuisConfiguration.AppId,
-                            text,
-                            staging: this.LuisConfiguration.IsStaging,
-                            log: false,
-                            cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (APIErrorException ex)
-                when ((int)ex.Response.StatusCode == 429)
-                {
-                    Logger.LogTrace("Received HTTP 429 result from Cognitive Services. Retrying.");
-                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                }
-            }
+            return await this.RuntimeClient.Prediction.ResolveAsync(
+                    this.LuisConfiguration.AppId,
+                    text,
+                    staging: this.LuisConfiguration.IsStaging,
+                    log: false,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public Task<SpeechLuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
