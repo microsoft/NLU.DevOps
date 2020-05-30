@@ -24,6 +24,8 @@ namespace NLU.DevOps.Luis
             {
                 Endpoint = luisConfiguration.AuthoringEndpoint,
             };
+
+            this.AuthoringClient.SetRetryPolicy(RetryPolicy.TrainPolicy);
         }
 
         private ILuisConfiguration LuisConfiguration { get; }

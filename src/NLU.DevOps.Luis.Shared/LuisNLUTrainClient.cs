@@ -207,36 +207,27 @@ namespace NLU.DevOps.Luis
         {
             while (true)
             {
-                try
+                var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
+                var inProgress = trainingStatus
+                    .Select(modelInfo => modelInfo.Details.Status)
+                    .Any(status => status == "InProgress" || status == "Queued");
+
+                if (!inProgress)
                 {
-                    var trainingStatus = await this.LuisClient.GetTrainingStatusAsync(this.LuisAppId, this.LuisConfiguration.VersionId, cancellationToken).ConfigureAwait(false);
-                    var inProgress = trainingStatus
-                        .Select(modelInfo => modelInfo.Details.Status)
-                        .Any(status => status == "InProgress" || status == "Queued");
-
-                    if (!inProgress)
+                    if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
                     {
-                        if (trainingStatus.Any(modelInfo => modelInfo.Details.Status == "Fail"))
-                        {
-                            var failureReasons = trainingStatus
-                                .Where(modelInfo => modelInfo.Details.Status == "Fail")
-                                .Select(modelInfo => $"- {modelInfo.Details.FailureReason}");
+                        var failureReasons = trainingStatus
+                            .Where(modelInfo => modelInfo.Details.Status == "Fail")
+                            .Select(modelInfo => $"- {modelInfo.Details.FailureReason}");
 
-                            throw new InvalidOperationException($"Failure occurred while training LUIS model:\n{string.Join('\n', failureReasons)}");
-                        }
-
-                        break;
+                        throw new InvalidOperationException($"Failure occurred while training LUIS model:\n{string.Join('\n', failureReasons)}");
                     }
 
-                    Logger.LogTrace($"Training jobs not complete. Polling again.");
-                    await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
+                    break;
                 }
-                catch (ErrorResponseException ex)
-                when ((int)ex.Response.StatusCode == 429)
-                {
-                    Logger.LogTrace("Received HTTP 429 result from LUIS. Retrying.");
-                    await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
-                }
+
+                Logger.LogTrace($"Training jobs not complete. Polling again.");
+                await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
             }
         }
     }
