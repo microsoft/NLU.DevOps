@@ -85,6 +85,7 @@ steps:
       --speech-directory $(recordingsDirectory)
       --model-settings models/settings.$(nlu.service).json
       --output $(Agent.TempDirectory)/results.json
+      --verbose
 
 - task: DotNetCoreCLI@2
   displayName: Cleanup the NLU model
