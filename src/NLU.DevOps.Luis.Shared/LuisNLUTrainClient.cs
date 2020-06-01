@@ -6,6 +6,7 @@ namespace NLU.DevOps.Luis
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using Logging;
@@ -156,6 +157,14 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
+        private static bool IsTransientStatusCode(HttpStatusCode statusCode)
+        {
+            return statusCode == HttpStatusCode.TooManyRequests
+                || (statusCode >= HttpStatusCode.InternalServerError
+                && statusCode != HttpStatusCode.HttpVersionNotSupported
+                && statusCode != HttpStatusCode.NotImplemented);
+        }
+
         private LuisApp CreateLuisApp(IEnumerable<Models.LabeledUtterance> utterances)
         {
             var luisApp = this.CreateLuisAppTemplate();
@@ -232,7 +241,7 @@ namespace NLU.DevOps.Luis
                     await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);
                 }
                 catch (ErrorResponseException ex)
-                when ((int)ex.Response.StatusCode == 429)
+                when (IsTransientStatusCode(ex.Response.StatusCode))
                 {
                     Logger.LogTrace("Received HTTP 429 result from LUIS. Retrying.");
                     await Task.Delay(TrainStatusDelay, cancellationToken).ConfigureAwait(false);

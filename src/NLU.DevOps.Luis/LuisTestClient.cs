@@ -57,9 +57,9 @@ namespace NLU.DevOps.Luis
                         .ConfigureAwait(false);
                 }
                 catch (APIErrorException ex)
-                when ((int)ex.Response.StatusCode == 429)
+                when (IsTransientStatusCode(ex.Response.StatusCode))
                 {
-                    Logger.LogTrace("Received HTTP 429 result from Cognitive Services. Retrying.");
+                    Logger.LogTrace($"Received HTTP {(int)ex.Response.StatusCode} result from Cognitive Services. Retrying.");
                     await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -75,6 +75,14 @@ namespace NLU.DevOps.Luis
         public void Dispose()
         {
             this.RuntimeClient.Dispose();
+        }
+
+        private static bool IsTransientStatusCode(HttpStatusCode statusCode)
+        {
+            return statusCode == HttpStatusCode.TooManyRequests
+                || (statusCode >= HttpStatusCode.InternalServerError
+                && statusCode != HttpStatusCode.NotImplemented
+                && statusCode != HttpStatusCode.HttpVersionNotSupported);
         }
 
         private async Task<SpeechLuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
@@ -129,15 +137,28 @@ namespace NLU.DevOps.Luis
             request.Headers.Add("Ocp-Apim-Subscription-Key", this.LuisConfiguration.SpeechKey);
 
             JObject responseJson;
-            using (var fileStream = File.OpenRead(speechFile))
-            using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
+            while (true)
             {
-                await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
-                using (var response = await request.GetResponseAsync().ConfigureAwait(false))
-                using (var streamReader = new StreamReader(response.GetResponseStream()))
+                try
                 {
-                    var responseText = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-                    responseJson = JObject.Parse(responseText);
+                    using (var fileStream = File.OpenRead(speechFile))
+                    using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
+                    {
+                        await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
+                        using (var response = await request.GetResponseAsync().ConfigureAwait(false))
+                        using (var streamReader = new StreamReader(response.GetResponseStream()))
+                        {
+                            var responseText = await streamReader.ReadToEndAsync().ConfigureAwait(false);
+                            responseJson = JObject.Parse(responseText);
+                            break;
+                        }
+                    }
+                }
+                catch (WebException ex)
+                when (ex.Response is HttpWebResponse response && IsTransientStatusCode(response.StatusCode))
+                {
+                    Logger.LogTrace($"Received HTTP {(int)response.StatusCode} result from Cognitive Services. Retrying.");
+                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
                 }
             }
 
