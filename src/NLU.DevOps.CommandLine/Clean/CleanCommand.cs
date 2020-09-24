@@ -16,7 +16,7 @@ namespace NLU.DevOps.CommandLine.Clean
 
         public override int Main()
         {
-            this.RunAsync().Wait();
+            this.RunAsync().GetAwaiter().GetResult();
             return 0;
         }
 

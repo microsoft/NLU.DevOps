@@ -18,7 +18,7 @@ namespace NLU.DevOps.CommandLine
             }
 
             var indexedItems = items.Select((item, i) => new { Item = item, Index = i });
-            var results = new TResult[items.Count()];
+            var results = new List<TResult>();
             var tasks = new List<Task<Tuple<int, TResult>>>(degreeOfParallelism);
 
             async Task<Tuple<int, TResult>> selectWithIndexAsync(T item, int i)
@@ -37,6 +37,7 @@ namespace NLU.DevOps.CommandLine
                     results[/* (int) */ result.Item1] = /* (TResult) */ result.Item2;
                 }
 
+                results.Add(default);
                 tasks.Add(selectWithIndexAsync(indexedItem.Item, indexedItem.Index));
             }
 
