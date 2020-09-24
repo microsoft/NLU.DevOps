@@ -6,6 +6,7 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading.Tasks;
     using CommandLine.Clean;
     using FluentAssertions;
     using global::CommandLine;
@@ -34,7 +35,7 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
         }
 
         [Test]
-        public void WhenOptionToDeleteAppsettingsFile()
+        public async Task WhenOptionToDeleteAppsettingsFile()
         {
             using (TextWriter tw = new StreamWriter("appsettings.luis.json"))
             {
@@ -44,7 +45,7 @@ namespace NLU.DevOps.CommandLine.Tests.Clean
             File.Exists("appsettings.luis.json").Should().BeTrue();
             this.options.Add("-a");
             this.WhenParserIsRun();
-            this.commandUnderTest.Main();
+            await this.commandUnderTest.RunAsync().ConfigureAwait(false);
             File.Exists("appsettings.luis.json").Should().BeFalse();
         }
 

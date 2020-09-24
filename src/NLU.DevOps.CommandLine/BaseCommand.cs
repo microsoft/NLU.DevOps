@@ -5,6 +5,7 @@ namespace NLU.DevOps.CommandLine
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
     using Logging;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
@@ -40,7 +41,7 @@ namespace NLU.DevOps.CommandLine
 
         private Lazy<ILogger> LazyLogger { get; }
 
-        public abstract int Main();
+        public abstract Task<int> RunAsync();
 
         public void Dispose()
         {

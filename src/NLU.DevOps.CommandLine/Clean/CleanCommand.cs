@@ -14,13 +14,7 @@ namespace NLU.DevOps.CommandLine.Clean
         {
         }
 
-        public override int Main()
-        {
-            this.RunAsync().GetAwaiter().GetResult();
-            return 0;
-        }
-
-        private async Task RunAsync()
+        public override async Task<int> RunAsync()
         {
             this.Log("Cleaning NLU model...");
             await this.NLUTrainClient.CleanupAsync().ConfigureAwait(false);
@@ -29,6 +23,8 @@ namespace NLU.DevOps.CommandLine.Clean
             {
                 File.Delete($"appsettings.{this.Options.Service}.json");
             }
+
+            return 0;
         }
     }
 }

@@ -5,6 +5,7 @@ namespace NLU.DevOps.CommandLine.Tests
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
     using Models;
     using Moq;
@@ -18,7 +19,7 @@ namespace NLU.DevOps.CommandLine.Tests
 
         public new ILogger Logger => base.Logger;
 
-        public override int Main()
+        public override Task<int> RunAsync()
         {
             throw new NotImplementedException();
         }

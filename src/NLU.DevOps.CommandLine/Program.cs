@@ -5,6 +5,7 @@ namespace NLU.DevOps.CommandLine
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using Clean;
     using Compare;
     using global::CommandLine;
@@ -15,31 +16,33 @@ namespace NLU.DevOps.CommandLine
     {
         private static int Main(string[] args)
         {
-            return Parser.Default.ParseArguments<
+            var asyncCommand = Parser.Default.ParseArguments<
                 CleanOptions,
                 CompareOptions,
                 TestOptions,
                 TrainOptions
             >(args)
                 .MapResult(
-                    (CleanOptions options) => Run(new CleanCommand(options)),
-                    (CompareOptions options) => CompareCommand.Run(options),
-                    (TestOptions options) => Run(new TestCommand(options)),
-                    (TrainOptions options) => Run(new TrainCommand(options)),
-                    errors => IsVersionError(errors) ? 0 : 1);
+                    (CleanOptions options) => RunAsync(new CleanCommand(options)),
+                    (CompareOptions options) => Task.FromResult(CompareCommand.Run(options)),
+                    (TestOptions options) => RunAsync(new TestCommand(options)),
+                    (TrainOptions options) => RunAsync(new TrainCommand(options)),
+                    errors => IsVersionError(errors) ? Task.FromResult(0) : Task.FromResult(1));
+
+            return asyncCommand.GetAwaiter().GetResult();
         }
 
-        private static int Run(ICommand command)
+        private static Task<int> RunAsync(ICommand command)
         {
             using (command)
             {
-                return command.Main();
+                return command.RunAsync();
             }
         }
 
         private static bool IsVersionError(IEnumerable<Error> errors)
         {
-            return errors.Count() == 1 && errors.Single().Tag == ErrorType.VersionRequestedError;
+            return errors.SingleOrDefault()?.Tag == ErrorType.VersionRequestedError;
         }
     }
 }
