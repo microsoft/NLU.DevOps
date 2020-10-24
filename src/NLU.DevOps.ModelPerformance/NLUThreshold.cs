@@ -22,5 +22,10 @@ namespace NLU.DevOps.ModelPerformance
         /// Gets or sets the threshold.
         /// </summary>
         public double Threshold { get; set; }
+
+        /// <summary>
+        /// Gets or sets the comparison metric.
+        /// </summary>
+        public string Metric { get; set; }
     }
 }

@@ -57,7 +57,7 @@ namespace NLU.DevOps.ModelPerformance
 
             var baselineMatrix = getResults(baselineResults) ?? ConfusionMatrix.Default;
             var currentMatrix = getResults(currentResults) ?? ConfusionMatrix.Default;
-            return baselineMatrix.F1() - currentMatrix.F1() <= threshold.Threshold;
+            return baselineMatrix.GetMetric(threshold.Metric) - currentMatrix.GetMetric(threshold.Metric) <= threshold.Threshold;
         }
 
         /// <summary>
@@ -136,6 +136,34 @@ namespace NLU.DevOps.ModelPerformance
         }
 
         /// <summary>
+        /// Gets the metric value for the given confusion matrix.
+        /// </summary>
+        /// <param name="matrix">Confusion matrix.</param>
+        /// <param name="metric">Metric to compute.</param>
+        /// <returns>Metric value.</returns>
+        internal static double GetMetric(this ConfusionMatrix matrix, string metric)
+        {
+            if (metric == null)
+            {
+                return matrix.F1();
+            }
+            else if (metric == "precision")
+            {
+                return matrix.Precision();
+            }
+            else if (metric == "recall")
+            {
+                return matrix.Recall();
+            }
+            else if (metric.StartsWith("f", StringComparison.OrdinalIgnoreCase) && double.TryParse(metric.Substring(1), out var beta))
+            {
+                return matrix.FScore(beta);
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(metric), $"Invalid metric value provided.");
+        }
+
+        /// <summary>
         /// Calculates the precision from a confusion matrix.
         /// </summary>
         /// <param name="matrix">Confusion matrix.</param>
@@ -162,10 +190,21 @@ namespace NLU.DevOps.ModelPerformance
         /// <returns>F<sub>1</sub> score.</returns>
         internal static double F1(this ConfusionMatrix matrix)
         {
+            return matrix.FScore(1);
+        }
+
+        /// <summary>
+        /// Calculates the F<sub>β</sub> score from a confusion matrix.
+        /// </summary>
+        /// <param name="matrix">Confusion matrix.</param>
+        /// <param name="beta">F-measure value.</param>
+        /// <returns>F<sub>β</sub> score.</returns>
+        internal static double FScore(this ConfusionMatrix matrix, double beta)
+        {
             var precision = matrix.Precision();
             var recall = matrix.Recall();
-            var denominator = precision + recall;
-            return Math.Abs(denominator) > double.Epsilon ? 2 * (precision * recall) / denominator : 0;
+            var denominator = (Math.Pow(beta, 2) * precision) + recall;
+            return Math.Abs(denominator) > double.Epsilon ? (1 + Math.Pow(beta, 2)) * (precision * recall) / denominator : 0;
         }
 
         /// <summary>
