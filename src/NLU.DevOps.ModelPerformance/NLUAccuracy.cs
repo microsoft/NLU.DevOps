@@ -55,8 +55,13 @@ namespace NLU.DevOps.ModelPerformance
                 return null;
             }
 
-            var baselineMatrix = getResults(baselineResults) ?? ConfusionMatrix.Default;
             var currentMatrix = getResults(currentResults) ?? ConfusionMatrix.Default;
+            if (threshold.Comparison == NLUThresholdKind.Absolute)
+            {
+                return currentMatrix.GetMetric(threshold.Metric) >= threshold.Threshold;
+            }
+
+            var baselineMatrix = getResults(baselineResults) ?? ConfusionMatrix.Default;
             return baselineMatrix.GetMetric(threshold.Metric) - currentMatrix.GetMetric(threshold.Metric) <= threshold.Threshold;
         }
 
