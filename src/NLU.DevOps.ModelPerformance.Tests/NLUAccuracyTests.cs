@@ -3,6 +3,7 @@
 
 namespace NLU.DevOps.ModelPerformance.Tests
 {
+    using System.Collections.Generic;
     using FluentAssertions;
     using NUnit.Framework;
 
@@ -63,6 +64,72 @@ namespace NLU.DevOps.ModelPerformance.Tests
         {
             var matrix = new ConfusionMatrix(1, 0, 1, 0);
             matrix.GetMetric(null).Should().Be(matrix.F1());
+        }
+
+        [Test]
+        public static void CheckThresholdPass()
+        {
+            var threshold = new NLUThreshold
+            {
+                Type = "intent",
+            };
+
+            var current = GetStatistics(new ConfusionMatrix(1, 0, 1, 0));
+            var baseline = GetStatistics(new ConfusionMatrix(0, 0, 2, 0));
+            NLUAccuracy.CheckThreshold(current, baseline, threshold).Should().BeTrue();
+        }
+
+        [Test]
+        public static void CheckThresholdFail()
+        {
+            var threshold = new NLUThreshold
+            {
+                Type = "intent",
+            };
+
+            var current = GetStatistics(new ConfusionMatrix(0, 0, 2, 0));
+            var baseline = GetStatistics(new ConfusionMatrix(1, 0, 1, 0));
+            NLUAccuracy.CheckThreshold(current, baseline, threshold).Should().BeFalse();
+        }
+
+        [Test]
+        public static void CheckThresholdAbsolutePass()
+        {
+            var threshold = new NLUThreshold
+            {
+                Type = "intent",
+                Threshold = 0.5,
+                Comparison = NLUThresholdKind.Absolute,
+            };
+
+            var current = GetStatistics(new ConfusionMatrix(1, 0, 0, 0));
+            NLUAccuracy.CheckThreshold(current, null, threshold).Should().BeTrue();
+        }
+
+        [Test]
+        public static void CheckThresholdAbsoluteFail()
+        {
+            var threshold = new NLUThreshold
+            {
+                Type = "intent",
+                Threshold = 0.5,
+                Comparison = NLUThresholdKind.Absolute,
+            };
+
+            var current = GetStatistics(new ConfusionMatrix(0, 0, 1, 0));
+            NLUAccuracy.CheckThreshold(current, null, threshold).Should().BeFalse();
+        }
+
+        private static NLUStatistics GetStatistics(ConfusionMatrix intent)
+        {
+            return new NLUStatistics(
+                ConfusionMatrix.Default,
+                intent,
+                ConfusionMatrix.Default,
+                ConfusionMatrix.Default,
+                new Dictionary<string, ConfusionMatrix>(),
+                new Dictionary<string, ConfusionMatrix>(),
+                new Dictionary<string, ConfusionMatrix>());
         }
     }
 }

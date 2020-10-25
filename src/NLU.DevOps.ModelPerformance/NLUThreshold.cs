@@ -27,5 +27,10 @@ namespace NLU.DevOps.ModelPerformance
         /// Gets or sets the comparison metric.
         /// </summary>
         public string Metric { get; set; }
+
+        /// <summary>
+        /// Gets or sets the comparison type, relative or absolute.
+        /// </summary>
+        public NLUThresholdKind Comparison { get; set; }
     }
 }
