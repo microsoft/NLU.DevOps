@@ -6,6 +6,7 @@ namespace NLU.DevOps.CommandLine.Tests.Train
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading.Tasks;
     using CommandLine.Train;
     using FluentAssertions;
     using global::CommandLine;
@@ -35,7 +36,7 @@ namespace NLU.DevOps.CommandLine.Tests.Train
         public void WhenArgumentsDoNotIncludeUtterancesOrSettings()
         {
             this.WhenParserIsRun();
-            Action a = () => this.commandUnderTest.Main();
+            Func<Task> a = () => this.commandUnderTest.RunAsync();
             a.Should().Throw<InvalidOperationException>().WithMessage("Must specify either --utterances or --model-settings when using train.");
         }
 
@@ -45,18 +46,18 @@ namespace NLU.DevOps.CommandLine.Tests.Train
             this.options.Add("-u");
             this.options.Add("./bogusfolder/utterances.json");
             this.WhenParserIsRun();
-            Action a = () => this.commandUnderTest.Main();
+            Func<Task> a = () => this.commandUnderTest.RunAsync();
             a.Should().Throw<DirectoryNotFoundException>();
         }
 
         [Test]
-        public void SaveAppsettingsShouldCreateAFile()
+        public async Task SaveAppsettingsShouldCreateAFile()
         {
             this.options.Add("-u");
             this.options.Add("./testdata/utterances.json");
             this.options.Add("-a");
             this.WhenParserIsRun();
-            this.commandUnderTest.Main();
+            await this.commandUnderTest.RunAsync().ConfigureAwait(false);
             File.Exists("appsettings.luis.json").Should().BeTrue();
             File.Delete("appsettings.luis.json");
         }

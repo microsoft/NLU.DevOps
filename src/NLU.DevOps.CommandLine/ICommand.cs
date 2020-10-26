@@ -4,6 +4,7 @@
 namespace NLU.DevOps.CommandLine
 {
     using System;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Interface for commands.
@@ -14,6 +15,6 @@ namespace NLU.DevOps.CommandLine
         /// Command entry point.
         /// </summary>
         /// <returns>Exit code.</returns>
-        int Main();
+        Task<int> RunAsync();
     }
 }

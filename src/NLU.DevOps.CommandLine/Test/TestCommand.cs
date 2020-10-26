@@ -23,27 +23,7 @@ namespace NLU.DevOps.CommandLine.Test
 
         private IDictionary<string, string> Transcriptions => this.LazyTranscriptions.Value;
 
-        public override int Main()
-        {
-            this.RunAsync().Wait();
-            return 0;
-        }
-
-        protected override INLUTestClient CreateNLUTestClient()
-        {
-            return NLUClientFactory.CreateTestInstance(this.Options, this.Configuration, this.Options.SettingsPath);
-        }
-
-        private static void EnsureDirectory(string filePath)
-        {
-            var baseDirectory = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(baseDirectory) && !Directory.Exists(baseDirectory))
-            {
-                Directory.CreateDirectory(baseDirectory);
-            }
-        }
-
-        private async Task RunAsync()
+        public override async Task<int> RunAsync()
         {
             this.Log("Running tests against NLU model...");
 
@@ -66,6 +46,22 @@ namespace NLU.DevOps.CommandLine.Test
             }
 
             this.SaveTranscriptions();
+
+            return 0;
+        }
+
+        protected override INLUTestClient CreateNLUTestClient()
+        {
+            return NLUClientFactory.CreateTestInstance(this.Options, this.Configuration, this.Options.SettingsPath);
+        }
+
+        private static void EnsureDirectory(string filePath)
+        {
+            var baseDirectory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(baseDirectory) && !Directory.Exists(baseDirectory))
+            {
+                Directory.CreateDirectory(baseDirectory);
+            }
         }
 
         private Task<LabeledUtterance> TestAsync((JToken Query, string SpeechFile) utterance)

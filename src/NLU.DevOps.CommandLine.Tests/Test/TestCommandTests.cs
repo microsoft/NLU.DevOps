@@ -18,7 +18,7 @@ namespace NLU.DevOps.CommandLine.Tests.Test
     internal static class TestCommandTests
     {
         [Test]
-        public static void TestOutputTruncatesExistingFile()
+        public static async Task TestOutputTruncatesExistingFile()
         {
             var outputPath = Path.GetRandomFileName();
             File.WriteAllText(outputPath, string.Join(string.Empty, Enumerable.Repeat("!", 1000)));
@@ -30,7 +30,7 @@ namespace NLU.DevOps.CommandLine.Tests.Test
             };
 
             var testCommand = new TestCommandWithMockResult(testResult, options);
-            testCommand.Main();
+            await testCommand.RunAsync().ConfigureAwait(false);
 
             var content = File.ReadAllText(outputPath);
             var json = JToken.Parse(content);

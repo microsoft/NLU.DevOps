@@ -17,18 +17,7 @@ namespace NLU.DevOps.CommandLine.Train
         {
         }
 
-        public override int Main()
-        {
-            this.RunAsync().Wait();
-            return 0;
-        }
-
-        protected override INLUTrainClient CreateNLUTrainClient()
-        {
-            return NLUClientFactory.CreateTrainInstance(this.Options, this.Configuration, this.Options.SettingsPath);
-        }
-
-        private async Task RunAsync()
+        public override async Task<int> RunAsync()
         {
             try
             {
@@ -51,6 +40,13 @@ namespace NLU.DevOps.CommandLine.Train
                     Write($"appsettings.{this.Options.Service}.json", this.NLUTrainClient);
                 }
             }
+
+            return 0;
+        }
+
+        protected override INLUTrainClient CreateNLUTrainClient()
+        {
+            return NLUClientFactory.CreateTrainInstance(this.Options, this.Configuration, this.Options.SettingsPath);
         }
 
         private class TrainLabeledUtterance : LabeledUtterance
