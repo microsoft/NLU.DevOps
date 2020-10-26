@@ -32,11 +32,11 @@ namespace NLU.DevOps.CommandLine
             return asyncCommand.GetAwaiter().GetResult();
         }
 
-        private static Task<int> RunAsync(ICommand command)
+        private static async Task<int> RunAsync(ICommand command)
         {
             using (command)
             {
-                return command.RunAsync();
+                return await command.RunAsync().ConfigureAwait(false);
             }
         }
 
