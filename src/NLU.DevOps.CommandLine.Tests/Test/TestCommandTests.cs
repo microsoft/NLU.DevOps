@@ -7,6 +7,7 @@ namespace NLU.DevOps.CommandLine.Tests.Test
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using FluentAssertions;
     using Models;
     using Moq;
@@ -39,13 +40,13 @@ namespace NLU.DevOps.CommandLine.Tests.Test
 
         private class TestCommandWithMockResult : TestCommand
         {
-            public TestCommandWithMockResult(LabeledUtterance testResult, TestOptions options)
+            public TestCommandWithMockResult(ILabeledUtterance testResult, TestOptions options)
                 : base(options)
             {
                 this.TestResult = testResult;
             }
 
-            private LabeledUtterance TestResult { get; }
+            private ILabeledUtterance TestResult { get; }
 
             protected override INLUTestClient CreateNLUTestClient()
             {

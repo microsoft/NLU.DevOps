@@ -64,14 +64,14 @@ namespace NLU.DevOps.CommandLine.Test
             }
         }
 
-        private Task<LabeledUtterance> TestAsync((JToken Query, string SpeechFile) utterance)
+        private Task<ILabeledUtterance> TestAsync((JToken Query, string SpeechFile) utterance)
         {
             return utterance.SpeechFile != null
                 ? this.TestSpeechAsync(utterance)
                 : this.NLUTestClient.TestAsync(utterance.Query);
         }
 
-        private async Task<LabeledUtterance> TestSpeechAsync((JToken Query, string SpeechFile) utterance)
+        private async Task<ILabeledUtterance> TestSpeechAsync((JToken Query, string SpeechFile) utterance)
         {
             var text = default(string);
             if (this.Transcriptions?.TryGetValue(utterance.SpeechFile, out text) ?? false)

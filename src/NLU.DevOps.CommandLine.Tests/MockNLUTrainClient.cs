@@ -15,7 +15,7 @@ namespace NLU.DevOps.CommandLine.Tests
         public Task CleanupAsync(CancellationToken cancellationToken) =>
             Task.FromResult(0);
 
-        public Task TrainAsync(IEnumerable<LabeledUtterance> utterances, CancellationToken cancellationToken) =>
+        public Task TrainAsync(IEnumerable<ILabeledUtterance> utterances, CancellationToken cancellationToken) =>
             Task.FromResult(0);
 
         public void Dispose()

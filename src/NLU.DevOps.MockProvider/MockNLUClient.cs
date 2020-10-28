@@ -16,7 +16,7 @@ namespace NLU.DevOps.MockProvider
     {
         public MockNLUClient(string trainedUtterances)
         {
-            this.Utterances = new List<LabeledUtterance>();
+            this.Utterances = new List<ILabeledUtterance>();
             if (trainedUtterances != null)
             {
                 this.Utterances.AddRange(
@@ -26,9 +26,9 @@ namespace NLU.DevOps.MockProvider
 
         public string TrainedUtterances => JsonConvert.SerializeObject(this.Utterances);
 
-        private List<LabeledUtterance> Utterances { get; }
+        private List<ILabeledUtterance> Utterances { get; }
 
-        public Task TrainAsync(IEnumerable<LabeledUtterance> utterances, CancellationToken cancellationToken)
+        public Task TrainAsync(IEnumerable<ILabeledUtterance> utterances, CancellationToken cancellationToken)
         {
             this.Utterances.AddRange(utterances);
             return Task.CompletedTask;
@@ -39,15 +39,15 @@ namespace NLU.DevOps.MockProvider
             return Task.CompletedTask;
         }
 
-        protected override Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
+        protected override Task<ILabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
             var matchedUtterance = this.Utterances.FirstOrDefault(u => u.Text == utterance) ?? new LabeledUtterance(null, null, null);
             return Task.FromResult(matchedUtterance.WithTimestamp(DateTimeOffset.Now));
         }
 
-        protected override Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        protected override Task<ILabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new LabeledUtterance(null, null, null));
+            return Task.FromResult<ILabeledUtterance>(new LabeledUtterance(null, null, null));
         }
 
         protected override void Dispose(bool disposing)

@@ -37,7 +37,7 @@ namespace NLU.DevOps.Luis
         private ILuisTestClient LuisClient { get; }
 
         /// <inheritdoc />
-        public async Task<LabeledUtterance> TestAsync(
+        public async Task<ILabeledUtterance> TestAsync(
             JToken query,
             CancellationToken cancellationToken)
         {
@@ -69,7 +69,7 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        public async Task<LabeledUtterance> TestSpeechAsync(
+        public async Task<ILabeledUtterance> TestSpeechAsync(
             string speechFile,
             JToken query,
             CancellationToken cancellationToken)
@@ -95,14 +95,14 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private static IEnumerable<Entity> GetEntities(string utterance, IDictionary<string, object> entities)
+        private static IEnumerable<IEntity> GetEntities(string utterance, IDictionary<string, object> entities)
         {
             if (entities == null || entities.Count == 0)
             {
                 return null;
             }
 
-            IEnumerable<Entity> getEntitiesForType(string type, object instances, JToken metadata)
+            IEnumerable<IEntity> getEntitiesForType(string type, object instances, JToken metadata)
             {
                 if (instances is JArray instancesJson)
                 {
@@ -115,10 +115,10 @@ namespace NLU.DevOps.Luis
                         .SelectMany(e => e);
                 }
 
-                return Array.Empty<Entity>();
+                return Array.Empty<IEntity>();
             }
 
-            IEnumerable<Entity> getEntitiesRecursive(string entityType, JToken entityJson, JToken entityMetadata)
+            IEnumerable<IEntity> getEntitiesRecursive(string entityType, JToken entityJson, JToken entityMetadata)
             {
                 var startIndex = entityMetadata.Value<int>("startIndex");
                 var length = entityMetadata.Value<int>("length");
@@ -192,7 +192,7 @@ namespace NLU.DevOps.Luis
             return json;
         }
 
-        private LabeledUtterance LuisResultToLabeledUtterance(SpeechPredictionResponse speechPredictionResponse)
+        private ILabeledUtterance LuisResultToLabeledUtterance(SpeechPredictionResponse speechPredictionResponse)
         {
             if (speechPredictionResponse == null)
             {

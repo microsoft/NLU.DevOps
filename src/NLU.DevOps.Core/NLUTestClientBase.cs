@@ -16,7 +16,7 @@ namespace NLU.DevOps.Core
     public abstract class NLUTestClientBase<TQuery> : INLUTestClient
     {
         /// <inheritdoc />
-        public Task<LabeledUtterance> TestAsync(JToken query, CancellationToken cancellationToken)
+        public Task<ILabeledUtterance> TestAsync(JToken query, CancellationToken cancellationToken)
         {
             if (query == null)
             {
@@ -28,7 +28,7 @@ namespace NLU.DevOps.Core
         }
 
         /// <inheritdoc />
-        public Task<LabeledUtterance> TestSpeechAsync(string speechFile, JToken query, CancellationToken cancellationToken)
+        public Task<ILabeledUtterance> TestSpeechAsync(string speechFile, JToken query, CancellationToken cancellationToken)
         {
             if (speechFile == null)
             {
@@ -57,7 +57,7 @@ namespace NLU.DevOps.Core
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        protected abstract Task<LabeledUtterance> TestAsync(TQuery query, CancellationToken cancellationToken);
+        protected abstract Task<ILabeledUtterance> TestAsync(TQuery query, CancellationToken cancellationToken);
 
         /// <summary>
         /// Tests the NLU model using speech.
@@ -66,7 +66,7 @@ namespace NLU.DevOps.Core
         /// <param name="speechFile">Speech file to test on.</param>
         /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        protected abstract Task<LabeledUtterance> TestSpeechAsync(string speechFile, TQuery query, CancellationToken cancellationToken);
+        protected abstract Task<ILabeledUtterance> TestSpeechAsync(string speechFile, TQuery query, CancellationToken cancellationToken);
 
         /// <summary>
         /// Disposes the NLU client.

@@ -64,7 +64,7 @@ namespace NLU.DevOps.Luis
 
         /// <inheritdoc />
         public async Task TrainAsync(
-            IEnumerable<Models.LabeledUtterance> utterances,
+            IEnumerable<ILabeledUtterance> utterances,
             CancellationToken cancellationToken)
         {
             try
@@ -165,7 +165,7 @@ namespace NLU.DevOps.Luis
                 && statusCode != HttpStatusCode.NotImplemented);
         }
 
-        private LuisApp CreateLuisApp(IEnumerable<Models.LabeledUtterance> utterances)
+        private LuisApp CreateLuisApp(IEnumerable<ILabeledUtterance> utterances)
         {
             var luisApp = this.CreateLuisAppTemplate();
 

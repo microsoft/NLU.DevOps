@@ -55,7 +55,7 @@ namespace NLU.DevOps.Dialogflow
 
         private string SessionId => this.GetConfigurationValue(DialogflowSessionIdConfigurationKey, true);
 
-        protected override async Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
+        protected override async Task<ILabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
             var sessionId = this.SessionId ?? Guid.NewGuid().ToString();
             var sessionName = new SessionName(this.ProjectId, sessionId);
@@ -85,7 +85,7 @@ namespace NLU.DevOps.Dialogflow
                 .ConfigureAwait(false);
         }
 
-        protected override async Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        protected override async Task<ILabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             var sessionId = this.SessionId ?? Guid.NewGuid().ToString();
             var sessionName = new SessionName(this.ProjectId, sessionId);

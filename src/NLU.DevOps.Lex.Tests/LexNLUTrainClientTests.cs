@@ -12,6 +12,7 @@ namespace NLU.DevOps.Lex.Tests
     using System.Threading.Tasks;
     using Amazon.LexModelBuildingService;
     using Amazon.LexModelBuildingService.Model;
+    using Core;
     using FluentAssertions;
     using Models;
     using Moq;

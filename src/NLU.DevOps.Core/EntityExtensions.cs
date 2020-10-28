@@ -17,7 +17,7 @@ namespace NLU.DevOps.Models
         /// <returns>The start <code>char</code> index.</returns>
         /// <param name="entity">Entity.</param>
         /// <param name="text">Text.</param>
-        public static int StartCharIndexInText(this Entity entity, string text)
+        public static int StartCharIndexInText(this IEntity entity, string text)
         {
             var match = Regex.Match(text, entity.MatchText);
             for (var i = 0; i < entity.MatchIndex; ++i)

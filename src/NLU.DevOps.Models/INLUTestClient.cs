@@ -19,7 +19,7 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<LabeledUtterance> TestAsync(
+        Task<ILabeledUtterance> TestAsync(
             JToken query,
             CancellationToken cancellationToken);
 
@@ -30,7 +30,7 @@ namespace NLU.DevOps.Models
         /// <param name="speechFile">Speech file to test on.</param>
         /// <param name="query">Query to test.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        Task<LabeledUtterance> TestSpeechAsync(
+        Task<ILabeledUtterance> TestSpeechAsync(
             string speechFile,
             JToken query,
             CancellationToken cancellationToken);

@@ -29,8 +29,8 @@ namespace NLU.DevOps.ModelPerformance
             string utteranceId,
             ConfusionMatrixResultKind resultKind,
             ComparisonTargetKind targetKind,
-            LabeledUtterance expectedUtterance,
-            LabeledUtterance actualUtterance,
+            ILabeledUtterance expectedUtterance,
+            ILabeledUtterance actualUtterance,
             double? score,
             string group,
             string testName,
@@ -77,12 +77,12 @@ namespace NLU.DevOps.ModelPerformance
         /// <summary>
         /// Gets the expected utterance.
         /// </summary>
-        public LabeledUtterance ExpectedUtterance { get; }
+        public ILabeledUtterance ExpectedUtterance { get; }
 
         /// <summary>
         /// Gets the actual utterance.
         /// </summary>
-        public LabeledUtterance ActualUtterance { get; }
+        public ILabeledUtterance ActualUtterance { get; }
 
         /// <summary>
         /// Gets the confidence score.

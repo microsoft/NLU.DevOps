@@ -66,7 +66,7 @@ namespace NLU.DevOps.Lex
         private ILexTestClient LexClient { get; }
 
         /// <inheritdoc />
-        protected override async Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
+        protected override async Task<ILabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken)
         {
             if (utterance == null)
             {
@@ -92,7 +92,7 @@ namespace NLU.DevOps.Lex
         }
 
         /// <inheritdoc />
-        protected override async Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
+        protected override async Task<ILabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken)
         {
             if (speechFile == null)
             {
