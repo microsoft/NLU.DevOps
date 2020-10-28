@@ -18,7 +18,7 @@ namespace NLU.DevOps.Core
         /// <param name="text">Text of the utterance.</param>
         /// <param name="intent">Intent of the utterance.</param>
         /// <param name="entities">Entities referenced in the utterance.</param>
-        public JsonLabeledUtterance(string text, string intent, IReadOnlyList<Entity> entities)
+        public JsonLabeledUtterance(string text, string intent, IReadOnlyList<IEntity> entities)
             : base(text, intent, entities)
         {
         }

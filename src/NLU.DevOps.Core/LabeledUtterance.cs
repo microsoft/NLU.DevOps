@@ -1,14 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.Models
+namespace NLU.DevOps.Core
 {
     using System.Collections.Generic;
+    using Models;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Labeled utterance.
     /// </summary>
-    public class LabeledUtterance
+    public class LabeledUtterance : ILabeledUtterance
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LabeledUtterance"/> class.
@@ -16,7 +18,21 @@ namespace NLU.DevOps.Models
         /// <param name="text">Text of the utterance.</param>
         /// <param name="intent">Intent of the utterance.</param>
         /// <param name="entities">Entities referenced in the utterance.</param>
-        public LabeledUtterance(string text, string intent, IReadOnlyList<Entity> entities)
+        public LabeledUtterance(string text, string intent, IReadOnlyList<IEntity> entities)
+        {
+            this.Text = text;
+            this.Intent = intent;
+            this.Entities = entities;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LabeledUtterance"/> class.
+        /// </summary>
+        /// <param name="text">Text of the utterance.</param>
+        /// <param name="intent">Intent of the utterance.</param>
+        /// <param name="entities">Entities referenced in the utterance.</param>
+        [JsonConstructor]
+        private LabeledUtterance(string text, string intent, IReadOnlyList<Entity> entities)
         {
             this.Text = text;
             this.Intent = intent;
@@ -36,6 +52,6 @@ namespace NLU.DevOps.Models
         /// <summary>
         /// Gets the entities referenced in the utterance.
         /// </summary>
-        public IReadOnlyList<Entity> Entities { get; }
+        public IReadOnlyList<IEntity> Entities { get; }
     }
 }

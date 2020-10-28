@@ -19,7 +19,7 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the training operation.</returns>
         /// <param name="instance">NLU training client instance.</param>
         /// <param name="utterances">Labeled utterances to train on.</param>
-        public static Task TrainAsync(this INLUTrainClient instance, IEnumerable<LabeledUtterance> utterances)
+        public static Task TrainAsync(this INLUTrainClient instance, IEnumerable<ILabeledUtterance> utterances)
         {
             return instance.TrainAsync(utterances, CancellationToken.None);
         }
@@ -40,7 +40,7 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">NLU testing client instance.</param>
         /// <param name="query">Query to test.</param>
-        public static Task<LabeledUtterance> TestAsync(this INLUTestClient instance, JToken query)
+        public static Task<ILabeledUtterance> TestAsync(this INLUTestClient instance, JToken query)
         {
             return instance.TestAsync(query, CancellationToken.None);
         }
@@ -51,7 +51,7 @@ namespace NLU.DevOps.Models
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="instance">NLU testing client instance.</param>
         /// <param name="speechFile">Speech file.</param>
-        public static Task<LabeledUtterance> TestSpeechAsync(this INLUTestClient instance, string speechFile)
+        public static Task<ILabeledUtterance> TestSpeechAsync(this INLUTestClient instance, string speechFile)
         {
             return instance.TestSpeechAsync(speechFile, null);
         }
@@ -63,7 +63,7 @@ namespace NLU.DevOps.Models
         /// <param name="instance">NLU testing client instance.</param>
         /// <param name="speechFile">Speech file.</param>
         /// <param name="query">Query to test.</param>
-        public static Task<LabeledUtterance> TestSpeechAsync(this INLUTestClient instance, string speechFile, JToken query)
+        public static Task<ILabeledUtterance> TestSpeechAsync(this INLUTestClient instance, string speechFile, JToken query)
         {
             return instance.TestSpeechAsync(speechFile, query, CancellationToken.None);
         }

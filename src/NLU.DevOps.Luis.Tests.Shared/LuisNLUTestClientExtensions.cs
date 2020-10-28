@@ -9,7 +9,7 @@ namespace NLU.DevOps.Luis.Tests
 
     internal static class LuisNLUTestClientExtensions
     {
-        public static Task<LabeledUtterance> TestAsync(this LuisNLUTestClient service, string utterance)
+        public static Task<ILabeledUtterance> TestAsync(this LuisNLUTestClient service, string utterance)
         {
             return service.TestAsync(new JObject { { "text", utterance } });
         }

@@ -15,17 +15,17 @@ namespace NLU.DevOps.ModelPerformance
         private const string StrictEntitiesPropertyName = "strictEntities";
         private const string UtteranceIdPropertyName = "utteranceId";
 
-        public static IReadOnlyList<string> GetIgnoreEntities(this LabeledUtterance utterance)
+        public static IReadOnlyList<string> GetIgnoreEntities(this ILabeledUtterance utterance)
         {
             return utterance.GetProperty<JArray>(IgnoreEntitiesPropertyName)?.ToObject<string[]>() ?? Array.Empty<string>();
         }
 
-        public static IReadOnlyList<string> GetStrictEntities(this LabeledUtterance utterance)
+        public static IReadOnlyList<string> GetStrictEntities(this ILabeledUtterance utterance)
         {
             return utterance.GetProperty<JArray>(StrictEntitiesPropertyName)?.ToObject<string[]>() ?? Array.Empty<string>();
         }
 
-        public static string GetUtteranceId(this LabeledUtterance utterance)
+        public static string GetUtteranceId(this ILabeledUtterance utterance)
         {
             return utterance.GetProperty<string>(UtteranceIdPropertyName);
         }

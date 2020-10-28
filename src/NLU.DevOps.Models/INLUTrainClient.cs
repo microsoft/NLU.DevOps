@@ -20,7 +20,7 @@ namespace NLU.DevOps.Models
         /// <param name="utterances">Labeled utterances to train on.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task TrainAsync(
-            IEnumerable<LabeledUtterance> utterances,
+            IEnumerable<ILabeledUtterance> utterances,
             CancellationToken cancellationToken);
 
         /// <summary>

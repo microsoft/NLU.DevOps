@@ -790,7 +790,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
             return json != null ? JToken.Parse(json) : null;
         }
 
-        private static TestCaseSource.LabeledUtteranceTestInput CreatePair(params LabeledUtterance[] pair)
+        private static TestCaseSource.LabeledUtteranceTestInput CreatePair(params ILabeledUtterance[] pair)
         {
             return new TestCaseSource.LabeledUtteranceTestInput(string.Empty, pair[0], pair[1], GetDefaultTestSettings());
         }

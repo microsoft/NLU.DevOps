@@ -9,6 +9,7 @@ namespace NLU.DevOps.Luis.Tests
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Core;
     using FluentAssertions;
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Authoring.Models;
     using Microsoft.Extensions.Configuration;
@@ -39,7 +40,7 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = new LuisNLUTrainClientBuilder().Build())
             {
                 Func<Task> nullUtterances = () => luis.TrainAsync(null);
-                Func<Task> nullUtterance = () => luis.TrainAsync(new Models.LabeledUtterance[] { null });
+                Func<Task> nullUtterance = () => luis.TrainAsync(new Core.LabeledUtterance[] { null });
                 nullUtterances.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("utterances");
                 nullUtterance.Should().Throw<ArgumentException>().And.ParamName.Should().Be("utterances");
             }
@@ -52,7 +53,7 @@ namespace NLU.DevOps.Luis.Tests
             builder.AppVersion = Guid.NewGuid().ToString();
             using (var luis = builder.Build())
             {
-                var utterances = Array.Empty<Models.LabeledUtterance>();
+                var utterances = Array.Empty<ILabeledUtterance>();
                 await luis.TrainAsync(utterances).ConfigureAwait(false);
 
                 // Assert correct import request
@@ -85,8 +86,8 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var utterances = new[]
                 {
-                    new Models.LabeledUtterance("Book me a flight.", "BookFlight", Array.Empty<Entity>()),
-                    new Models.LabeledUtterance("Cancel my flight.", "CancelFlight", Array.Empty<Entity>())
+                    new Core.LabeledUtterance("Book me a flight.", "BookFlight", Array.Empty<Entity>()),
+                    new Core.LabeledUtterance("Cancel my flight.", "CancelFlight", Array.Empty<Entity>())
                 };
 
                 await luis.TrainAsync(utterances).ConfigureAwait(false);
@@ -125,11 +126,11 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var utterances = new[]
                 {
-                    new Models.LabeledUtterance(
+                    new Core.LabeledUtterance(
                         "Book me a flight.",
                         "BookFlight",
                         new[] { new Entity("Name", null, "me", 0) }),
-                    new Models.LabeledUtterance(
+                    new Core.LabeledUtterance(
                         "Cancel my flight.",
                         "CancelFlight",
                         new[] { new Entity("Subject", null, "flight", 0) })
@@ -225,7 +226,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>()).ConfigureAwait(false);
+                await luis.TrainAsync(Array.Empty<ILabeledUtterance>()).ConfigureAwait(false);
 
                 // Ensure correct number of training status requests are made.
                 builder.MockLuisTrainClient.Invocations.Where(request => request.Method.Name == nameof(ILuisTrainClient.GetTrainingStatusAsync))
@@ -260,7 +261,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<Models.LabeledUtterance>());
+                Func<Task> trainAsync = () => luis.TrainAsync(Array.Empty<ILabeledUtterance>());
                 trainAsync.Should().Throw<InvalidOperationException>().And.Message.Should().Contain(failureReason);
             }
         }
@@ -279,7 +280,7 @@ namespace NLU.DevOps.Luis.Tests
 
             using (var luis = builder.Build())
             {
-                await luis.TrainAsync(Array.Empty<Models.LabeledUtterance>()).ConfigureAwait(false);
+                await luis.TrainAsync(Array.Empty<ILabeledUtterance>()).ConfigureAwait(false);
                 luis.LuisAppId.Should().Be(appId);
             }
         }
@@ -309,7 +310,7 @@ namespace NLU.DevOps.Luis.Tests
             builder.LuisTemplate = appTemplate;
             using (var luis = builder.Build())
             {
-                var utterance = new Models.LabeledUtterance(null, intentName, null);
+                var utterance = new Core.LabeledUtterance(null, intentName, null);
                 await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // Ensure LUIS app intent still has role
@@ -344,7 +345,7 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var entity1 = new Entity("number", null, text, 0);
                 var entity2 = new Entity("count", null, text, 0);
-                var utterance = new Models.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
+                var utterance = new Core.LabeledUtterance(text, string.Empty, new[] { entity1, entity2 });
                 await luis.TrainAsync(new[] { utterance }).ConfigureAwait(false);
 
                 // Ensure LUIS app intent still has role

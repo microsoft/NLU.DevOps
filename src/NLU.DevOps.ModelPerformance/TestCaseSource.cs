@@ -48,8 +48,8 @@ namespace NLU.DevOps.ModelPerformance
         /// <param name="actualUtterances">Actual utterances.</param>
         /// <param name="testSettings">Test settings.</param>
         public static NLUCompareResults GetNLUCompareResults(
-            IReadOnlyList<LabeledUtterance> expectedUtterances,
-            IReadOnlyList<LabeledUtterance> actualUtterances,
+            IReadOnlyList<ILabeledUtterance> expectedUtterances,
+            IReadOnlyList<ILabeledUtterance> actualUtterances,
             TestSettings testSettings)
         {
             if (expectedUtterances == null)
@@ -72,7 +72,7 @@ namespace NLU.DevOps.ModelPerformance
                 throw new InvalidOperationException("Expected the same number of utterances in the expected and actual sources.");
             }
 
-            string getUtteranceId(LabeledUtterance utterance, int index)
+            string getUtteranceId(ILabeledUtterance utterance, int index)
             {
                 return utterance.GetUtteranceId() ?? index.ToString(CultureInfo.InvariantCulture);
             }
@@ -260,21 +260,21 @@ namespace NLU.DevOps.ModelPerformance
                 yield break;
             }
 
-            bool isEntityMatch(Entity expectedEntity, Entity actualEntity)
+            bool isEntityMatch(IEntity expectedEntity, IEntity actualEntity)
             {
                 return expectedEntity.EntityType == actualEntity.EntityType
                     && (isEntityTextMatch(expectedEntity, actualEntity)
                     || isEntityValueMatch(expectedEntity, actualEntity));
             }
 
-            bool isEntityTextMatch(Entity expectedEntity, Entity actualEntity)
+            bool isEntityTextMatch(IEntity expectedEntity, IEntity actualEntity)
             {
                 return expectedEntity.MatchText != null
                     && EqualsNormalized(expectedEntity.MatchText, actualEntity.MatchText)
                     && expectedEntity.MatchIndex == actualEntity.MatchIndex;
             }
 
-            bool isEntityValueMatch(Entity expectedEntity, Entity actualEntity)
+            bool isEntityValueMatch(IEntity expectedEntity, IEntity actualEntity)
             {
                 /* Required case to support NLU providers that do not specify matched text */
                 return actualEntity.MatchText == null
@@ -384,7 +384,7 @@ namespace NLU.DevOps.ModelPerformance
 
         private static bool IsStrictEntity(
             string entityType,
-            LabeledUtterance expectedUtterance,
+            ILabeledUtterance expectedUtterance,
             TestSettings testSettings)
         {
             var localIgnoreEntities = expectedUtterance.GetIgnoreEntities();
@@ -561,8 +561,8 @@ namespace NLU.DevOps.ModelPerformance
         private static TestCase TruePositive(
             string utteranceId,
             ComparisonTargetKind targetKind,
-            LabeledUtterance expectedUtterance,
-            LabeledUtterance actualUtterance,
+            ILabeledUtterance expectedUtterance,
+            ILabeledUtterance actualUtterance,
             double? score,
             string group,
             string[] args,
@@ -585,8 +585,8 @@ namespace NLU.DevOps.ModelPerformance
         private static TestCase TrueNegative(
             string utteranceId,
             ComparisonTargetKind targetKind,
-            LabeledUtterance expectedUtterance,
-            LabeledUtterance actualUtterance,
+            ILabeledUtterance expectedUtterance,
+            ILabeledUtterance actualUtterance,
             double? score,
             string group,
             string[] args,
@@ -609,8 +609,8 @@ namespace NLU.DevOps.ModelPerformance
         private static TestCase FalsePositive(
             string utteranceId,
             ComparisonTargetKind targetKind,
-            LabeledUtterance expectedUtterance,
-            LabeledUtterance actualUtterance,
+            ILabeledUtterance expectedUtterance,
+            ILabeledUtterance actualUtterance,
             double? score,
             string group,
             string[] args,
@@ -633,8 +633,8 @@ namespace NLU.DevOps.ModelPerformance
         private static TestCase FalseNegative(
             string utteranceId,
             ComparisonTargetKind targetKind,
-            LabeledUtterance expectedUtterance,
-            LabeledUtterance actualUtterance,
+            ILabeledUtterance expectedUtterance,
+            ILabeledUtterance actualUtterance,
             double? score,
             string group,
             string[] args,
@@ -658,8 +658,8 @@ namespace NLU.DevOps.ModelPerformance
             string utteranceId,
             ConfusionMatrixResultKind resultKind,
             ComparisonTargetKind targetKind,
-            LabeledUtterance expectedUtterance,
-            LabeledUtterance actualUtterance,
+            ILabeledUtterance expectedUtterance,
+            ILabeledUtterance actualUtterance,
             double? score,
             string group,
             string[] args,
@@ -689,8 +689,8 @@ namespace NLU.DevOps.ModelPerformance
         {
             public LabeledUtteranceTestInput(
                 string utteranceId,
-                LabeledUtterance expected,
-                LabeledUtterance actual,
+                ILabeledUtterance expected,
+                ILabeledUtterance actual,
                 TestSettings testSettings)
             {
                 this.UtteranceId = utteranceId;
@@ -701,9 +701,9 @@ namespace NLU.DevOps.ModelPerformance
 
             public string UtteranceId { get; }
 
-            public LabeledUtterance Expected { get; }
+            public ILabeledUtterance Expected { get; }
 
-            public LabeledUtterance Actual { get; }
+            public ILabeledUtterance Actual { get; }
 
             public TestSettings TestSettings { get; }
         }

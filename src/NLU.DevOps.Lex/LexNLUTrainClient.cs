@@ -86,7 +86,7 @@ namespace NLU.DevOps.Lex
         private ILexTrainClient LexClient { get; }
 
         /// <inheritdoc />
-        public async Task TrainAsync(IEnumerable<LabeledUtterance> utterances, CancellationToken cancellationToken)
+        public async Task TrainAsync(IEnumerable<ILabeledUtterance> utterances, CancellationToken cancellationToken)
         {
             // Validate arguments
             if (utterances == null)
@@ -138,7 +138,7 @@ namespace NLU.DevOps.Lex
             this.LexClient.Dispose();
         }
 
-        private static JToken CreateIntent(string intent, IEnumerable<LabeledUtterance> utterances)
+        private static JToken CreateIntent(string intent, IEnumerable<ILabeledUtterance> utterances)
         {
             // Create a new intent with the given name
             var intentJson = ImportBotTemplates.IntentJson;
@@ -149,7 +149,7 @@ namespace NLU.DevOps.Lex
             // Currently, the algorithm only adds slots that
             // exist in the training set for the given intent.
             var slots = utterances
-                .SelectMany(utterance => utterance.Entities ?? Array.Empty<Entity>())
+                .SelectMany(utterance => utterance.Entities ?? Array.Empty<IEntity>())
                 .Select(entity => entity.EntityType)
                 .Distinct()
                 .Select(slot =>
@@ -173,7 +173,7 @@ namespace NLU.DevOps.Lex
             return intentJson;
         }
 
-        private static string CreateSampleUtterance(LabeledUtterance utterance)
+        private static string CreateSampleUtterance(ILabeledUtterance utterance)
         {
             var text = utterance.Text;
             if (utterance.Entities != null)
@@ -261,7 +261,7 @@ namespace NLU.DevOps.Lex
             return this.LexClient.PutBotAsync(putBotRequest, cancellationToken);
         }
 
-        private JToken CreateImportJson(IEnumerable<LabeledUtterance> utterances)
+        private JToken CreateImportJson(IEnumerable<ILabeledUtterance> utterances)
         {
             // Add name to imports JSON template
             var importJson = ImportBotTemplates.ImportJson;

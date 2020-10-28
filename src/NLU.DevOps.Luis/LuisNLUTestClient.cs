@@ -38,7 +38,7 @@ namespace NLU.DevOps.Luis
         private ILuisTestClient LuisClient { get; }
 
         /// <inheritdoc />
-        protected override async Task<LabeledUtterance> TestAsync(
+        protected override async Task<ILabeledUtterance> TestAsync(
             string utterance,
             CancellationToken cancellationToken)
         {
@@ -63,7 +63,7 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        protected override async Task<LabeledUtterance> TestSpeechAsync(
+        protected override async Task<ILabeledUtterance> TestSpeechAsync(
             string speechFile,
             CancellationToken cancellationToken)
         {
@@ -77,14 +77,14 @@ namespace NLU.DevOps.Luis
             this.LuisClient.Dispose();
         }
 
-        private static LabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
+        private static ILabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
         {
             if (speechLuisResult == null)
             {
                 return new LabeledUtterance(null, null, null);
             }
 
-            Entity getEntity(EntityModel entity)
+            IEntity getEntity(EntityModel entity)
             {
                 var entityType = entity.Type;
                 if (entity.AdditionalProperties != null &&

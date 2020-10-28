@@ -10,7 +10,7 @@ namespace NLU.DevOps.Lex.Tests
 
     internal static class LexNLUClientExtensions
     {
-        public static Task<LabeledUtterance> TestAsync(this LexNLUTestClient client, string utterance)
+        public static Task<ILabeledUtterance> TestAsync(this LexNLUTestClient client, string utterance)
         {
             return client.TestAsync(new JObject { { "text", utterance } });
         }

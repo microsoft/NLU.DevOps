@@ -14,7 +14,7 @@ namespace NLU.DevOps.Core
     public abstract class DefaultNLUTestClient : NLUTestClientBase<DefaultQuery>
     {
         /// <inheritdoc />
-        protected sealed override Task<LabeledUtterance> TestAsync(DefaultQuery query, CancellationToken cancellationToken)
+        protected sealed override Task<ILabeledUtterance> TestAsync(DefaultQuery query, CancellationToken cancellationToken)
         {
             return this.TestAsync(query.Text, cancellationToken);
         }
@@ -25,10 +25,10 @@ namespace NLU.DevOps.Core
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="utterance">Unlabeled utterance to test on.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        protected abstract Task<LabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken);
+        protected abstract Task<ILabeledUtterance> TestAsync(string utterance, CancellationToken cancellationToken);
 
         /// <inheritdoc />
-        protected sealed override Task<LabeledUtterance> TestSpeechAsync(string speechFile, DefaultQuery query, CancellationToken cancellationToken)
+        protected sealed override Task<ILabeledUtterance> TestSpeechAsync(string speechFile, DefaultQuery query, CancellationToken cancellationToken)
         {
             return this.TestSpeechAsync(speechFile, cancellationToken);
         }
@@ -39,6 +39,6 @@ namespace NLU.DevOps.Core
         /// <returns>Task to await the resulting labeled utterance.</returns>
         /// <param name="speechFile">Speech files to test on.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        protected abstract Task<LabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken);
+        protected abstract Task<ILabeledUtterance> TestSpeechAsync(string speechFile, CancellationToken cancellationToken);
     }
 }

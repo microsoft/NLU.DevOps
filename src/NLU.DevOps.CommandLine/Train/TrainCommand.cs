@@ -6,6 +6,7 @@ namespace NLU.DevOps.CommandLine.Train
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Core;
     using Models;
     using Newtonsoft.Json;
     using static Serializer;

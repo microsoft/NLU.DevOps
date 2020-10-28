@@ -10,9 +10,9 @@ namespace NLU.DevOps.Luis
 
     internal static class LabeledUtteranceExtensions
     {
-        public static JSONUtterance ToJSONUtterance(this Models.LabeledUtterance utterance, LuisApp luisApp)
+        public static JSONUtterance ToJSONUtterance(this ILabeledUtterance utterance, LuisApp luisApp)
         {
-            JSONEntity toJSONEntity(Entity entity)
+            JSONEntity toJSONEntity(IEntity entity)
             {
                 var startPos = entity.StartCharIndexInText(utterance.Text);
                 var endPos = startPos + entity.MatchText.Length - 1;

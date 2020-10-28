@@ -1,14 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.Models
+namespace NLU.DevOps.Core
 {
+    using Models;
     using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Entity appearing in utterance.
     /// </summary>
-    public class Entity
+    public class Entity : IEntity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Entity"/> class.
