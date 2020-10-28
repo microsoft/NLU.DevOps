@@ -633,7 +633,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         public static void UsesInputUtteranceId()
         {
             var utteranceId = Guid.NewGuid().ToString();
-            var expectedUtterance = new JsonLabeledUtterance(null, "Greeting", null);
+            var expectedUtterance = new LabeledUtterance(null, "Greeting", null);
             expectedUtterance.AdditionalProperties.Add("utteranceId", utteranceId);
             var actualUtterance = new LabeledUtterance(null, "Greeting", null);
             var compareResults = TestCaseSource.GetNLUCompareResults(

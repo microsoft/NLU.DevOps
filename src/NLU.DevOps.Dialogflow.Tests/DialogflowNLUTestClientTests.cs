@@ -303,7 +303,6 @@ namespace NLU.DevOps.Dialogflow.Tests
             var speechFile = Path.Combine("Assets", "test.txt");
             var result = await client.TestSpeechAsync(speechFile).ConfigureAwait(false);
             result.Intent.Should().Be(intentName);
-            result.Should().BeOfType<JsonLabeledUtterance>();
             result.GetScore().Should().BeApproximately(0.5, Epsilon);
             result.GetTextScore().Should().BeApproximately(0.42, Epsilon);
         }

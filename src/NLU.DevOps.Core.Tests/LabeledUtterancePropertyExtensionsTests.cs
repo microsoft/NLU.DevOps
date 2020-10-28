@@ -17,7 +17,7 @@ namespace NLU.DevOps.Core.Tests
         [Test]
         public static void ThrowsArgumentNull()
         {
-            Action nullUtterance = () => LabeledUtterancePropertyExtensions.WithTextScore(null, null);
+            Action nullUtterance = () => JsonExtensionExtensions.WithTextScore(null, null);
             nullUtterance.Should().Throw<ArgumentNullException>().And.ParamName.Should().Be("instance");
         }
 
@@ -34,7 +34,7 @@ namespace NLU.DevOps.Core.Tests
         [Test]
         public static void DoesNotCreateNewInstance()
         {
-            var expected = new JsonEntity(string.Empty, null, string.Empty, 0);
+            var expected = new Entity(string.Empty, null, string.Empty, 0);
             var actual = expected.WithScore(0.1);
             actual.Should().BeSameAs(expected);
             expected.AdditionalProperties.ContainsKey("score").Should().BeTrue();
@@ -70,7 +70,7 @@ namespace NLU.DevOps.Core.Tests
         {
             var entity = new Entity(null, null, null, 0)
                 .WithScore(0.42);
-            var roundtrip = JToken.FromObject(entity).ToObject<JsonEntity>();
+            var roundtrip = JToken.FromObject(entity).ToObject<Entity>();
             roundtrip.GetScore().Should().BeApproximately(entity.GetScore(), Epsilon);
         }
     }

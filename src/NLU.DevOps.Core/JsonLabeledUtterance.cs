@@ -10,35 +10,41 @@ namespace NLU.DevOps.Core
     /// <summary>
     /// Labeled utterance with any additional JSON properties.
     /// </summary>
-    public class JsonLabeledUtterance : LabeledUtterance, IJsonExtension
+    public class JsonLabeledUtterance : ILabeledUtterance, IJsonExtension
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonLabeledUtterance"/> class.
         /// </summary>
-        /// <param name="text">Text of the utterance.</param>
-        /// <param name="intent">Intent of the utterance.</param>
         /// <param name="entities">Entities referenced in the utterance.</param>
-        public JsonLabeledUtterance(string text, string intent, IReadOnlyList<IEntity> entities)
-            : base(text, intent, entities)
+        public JsonLabeledUtterance(IReadOnlyList<Entity> entities)
         {
+            this.Entities = entities;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonLabeledUtterance"/> class.
-        /// </summary>
-        /// <param name="text">Text of the utterance.</param>
-        /// <param name="intent">Intent of the utterance.</param>
-        /// <param name="entities">Entities referenced in the utterance.</param>
-        [JsonConstructor]
-        private JsonLabeledUtterance(string text, string intent, IReadOnlyList<JsonEntity> entities)
-            : base(text, intent, entities)
-        {
-        }
+        /// <inheritdoc />
+        public string Text => this.Value<string>("text", "query");
 
-        /// <summary>
-        /// Gets the additional properties for the labeled utterance.
-        /// </summary>
+        /// <inheritdoc />
+        public string Intent => this.Value<string>("intent");
+
+        /// <inheritdoc />
+        public IReadOnlyList<IEntity> Entities { get; }
+
+        /// <inheritdoc />
         [JsonExtensionData]
         public IDictionary<string, object> AdditionalProperties { get; } = new Dictionary<string, object>();
+
+        private T Value<T>(params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                if (this.AdditionalProperties.TryGetValue(propertyName, out var value))
+                {
+                    return (T)value;
+                }
+            }
+
+            return default;
+        }
     }
 }
