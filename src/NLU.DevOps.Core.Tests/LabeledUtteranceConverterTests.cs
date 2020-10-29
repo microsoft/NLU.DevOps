@@ -7,7 +7,6 @@ namespace NLU.DevOps.Core.Tests
     using System.Collections.Generic;
     using System.Linq;
     using FluentAssertions;
-    using Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;

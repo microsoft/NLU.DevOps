@@ -10,7 +10,7 @@ namespace NLU.DevOps.Core
     /// <summary>
     /// Enable standard data extensions for <see cref="LabeledUtterance"/>.
     /// </summary>
-    public static class LabeledUtterancePropertyExtensions
+    public static class JsonExtensionExtensions
     {
         private const string ScorePropertyName = "score";
         private const string TextScorePropertyName = "textScore";
@@ -24,7 +24,7 @@ namespace NLU.DevOps.Core
         /// <returns>Labeled utterance with intent confidence score.</returns>
         public static ILabeledUtterance WithScore(this ILabeledUtterance instance, double? score)
         {
-            return instance.WithProperty(ScorePropertyName, score, ToJsonLabeledUtterance);
+            return instance.WithProperty(ScorePropertyName, score);
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace NLU.DevOps.Core
         /// <returns>Labeled utterance with transcription confidence score.</returns>
         public static ILabeledUtterance WithTextScore(this ILabeledUtterance instance, double? textScore)
         {
-            return instance.WithProperty(TextScorePropertyName, textScore, ToJsonLabeledUtterance);
+            return instance.WithProperty(TextScorePropertyName, textScore);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace NLU.DevOps.Core
         /// <returns>Labeled utterance with timestamp.</returns>
         public static ILabeledUtterance WithTimestamp(this ILabeledUtterance instance, DateTimeOffset? timestamp)
         {
-            return instance.WithProperty(TimestampPropertyName, timestamp, ToJsonLabeledUtterance);
+            return instance.WithProperty(TimestampPropertyName, timestamp);
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace NLU.DevOps.Core
         /// <returns>Labeled utterance with additional property.</returns>
         public static ILabeledUtterance WithProperty(this ILabeledUtterance instance, string propertyName, object propertyValue)
         {
-            return instance.WithProperty(propertyName, propertyValue, ToJsonLabeledUtterance);
+            return instance.WithProperty(propertyName, propertyValue, ToJsonExtension);
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace NLU.DevOps.Core
         /// <returns>Entity with confidence score.</returns>
         public static IEntity WithScore(this IEntity instance, double? score)
         {
-            return instance.WithProperty(ScorePropertyName, score, ToJsonEntity);
+            return instance.WithProperty(ScorePropertyName, score, ToJsonExtension);
         }
 
         /// <summary>
@@ -134,13 +134,30 @@ namespace NLU.DevOps.Core
             return instance.GetPropertyCore<double?>(ScorePropertyName);
         }
 
-        private static T WithProperty<T, TResult>(
+        /// <summary>
+        /// Checks if a property is present in the JSON object.
+        /// </summary>
+        /// <param name="labeledUtterance">Labeled utterance.</param>
+        /// <param name="propertyName">Property name.</param>
+        /// <returns>
+        /// <code>true</code> if the property is present, otherwise <code>false</code>.
+        /// </returns>
+        public static bool HasProperty(this ILabeledUtterance labeledUtterance, string propertyName)
+        {
+            if (labeledUtterance is IJsonExtension jsonExtension)
+            {
+                return jsonExtension.AdditionalProperties.TryGetValue(propertyName, out var unused);
+            }
+
+            throw new InvalidOperationException("Property existence cannot be checked.");
+        }
+
+        private static T WithProperty<T>(
                 this T instance,
                 string propertyName,
                 object value,
-                Func<T, TResult> extensionSelector)
+                Func<T, T> extensionSelector)
             where T : class
-            where TResult : T, IJsonExtension
         {
             if (instance == null)
             {
@@ -153,22 +170,22 @@ namespace NLU.DevOps.Core
             }
 
             var extension = extensionSelector(instance);
-            extension.AdditionalProperties[propertyName] = value;
+            ((IJsonExtension)extension).AdditionalProperties[propertyName] = value;
             return extension;
         }
 
-        private static JsonLabeledUtterance ToJsonLabeledUtterance(this ILabeledUtterance utterance)
+        private static ILabeledUtterance ToJsonExtension(this ILabeledUtterance utterance)
         {
-            return utterance is JsonLabeledUtterance jsonUtterance
-                ? jsonUtterance
-                : new JsonLabeledUtterance(utterance.Text, utterance.Intent, utterance.Entities);
+            return utterance is IJsonExtension
+                ? utterance
+                : new LabeledUtterance(utterance.Text, utterance.Intent, utterance.Entities);
         }
 
-        private static JsonEntity ToJsonEntity(this IEntity entity)
+        private static IEntity ToJsonExtension(this IEntity entity)
         {
-            return entity is JsonEntity jsonEntity
-                ? jsonEntity
-                : new JsonEntity(entity.EntityType, entity.EntityValue, entity.MatchText, entity.MatchIndex);
+            return entity is IJsonExtension
+                ? entity
+                : new Entity(entity.EntityType, entity.EntityValue, entity.MatchText, entity.MatchIndex);
         }
 
         private static T GetPropertyCore<T>(this object instance, string propertyName)
@@ -180,7 +197,7 @@ namespace NLU.DevOps.Core
                     : (T)value;
             }
 
-            return default(T);
+            return default;
         }
 
         private static double? GetNumericProperty(this object instance, string propertyName)

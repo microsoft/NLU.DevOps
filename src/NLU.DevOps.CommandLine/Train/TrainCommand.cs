@@ -30,8 +30,8 @@ namespace NLU.DevOps.CommandLine.Train
                 }
 
                 var trainingUtterances = this.Options.UtterancesPath != null
-                    ? Read<IList<TrainLabeledUtterance>>(this.Options.UtterancesPath)
-                    : Array.Empty<TrainLabeledUtterance>();
+                    ? Read<IList<LabeledUtterance>>(this.Options.UtterancesPath)
+                    : Array.Empty<LabeledUtterance>();
                 await this.NLUTrainClient.TrainAsync(trainingUtterances).ConfigureAwait(false);
             }
             finally
@@ -48,18 +48,6 @@ namespace NLU.DevOps.CommandLine.Train
         protected override INLUTrainClient CreateNLUTrainClient()
         {
             return NLUClientFactory.CreateTrainInstance(this.Options, this.Configuration, this.Options.SettingsPath);
-        }
-
-        private class TrainLabeledUtterance : LabeledUtterance
-        {
-            public TrainLabeledUtterance(string text, string intent, IReadOnlyList<Entity> entities)
-                : base(text, intent, entities)
-            {
-                this.AdditionalProperties = new Dictionary<string, object>();
-            }
-
-            [JsonExtensionData]
-            public IDictionary<string, object> AdditionalProperties { get; }
         }
     }
 }

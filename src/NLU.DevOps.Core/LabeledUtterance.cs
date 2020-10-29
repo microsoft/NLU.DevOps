@@ -10,7 +10,7 @@ namespace NLU.DevOps.Core
     /// <summary>
     /// Labeled utterance.
     /// </summary>
-    public class LabeledUtterance : ILabeledUtterance
+    public class LabeledUtterance : ILabeledUtterance, IJsonExtension
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LabeledUtterance"/> class.
@@ -53,5 +53,11 @@ namespace NLU.DevOps.Core
         /// Gets the entities referenced in the utterance.
         /// </summary>
         public IReadOnlyList<IEntity> Entities { get; }
+
+        /// <summary>
+        /// Gets the additional properties for the labeled utterance.
+        /// </summary>
+        [JsonExtensionData]
+        public IDictionary<string, object> AdditionalProperties { get; } = new Dictionary<string, object>();
     }
 }
