@@ -8,37 +8,45 @@ namespace NLU.DevOps.Core
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Labeled utterance with any additional JSON properties.
+    /// Raw JSON labeled utterance.
     /// </summary>
-    public class JsonLabeledUtterance : LabeledUtterance, IJsonExtension
+    public sealed class JsonLabeledUtterance : ILabeledUtterance, IJsonExtension
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonLabeledUtterance"/> class.
         /// </summary>
-        /// <param name="text">Text of the utterance.</param>
-        /// <param name="intent">Intent of the utterance.</param>
-        /// <param name="entities">Entities referenced in the utterance.</param>
-        public JsonLabeledUtterance(string text, string intent, IReadOnlyList<IEntity> entities)
-            : base(text, intent, entities)
+        /// <param name="jsonEntities">Utterance JSON with only entities parsed.</param>
+        public JsonLabeledUtterance(JsonEntities jsonEntities)
         {
+            this.JsonEntities = jsonEntities;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonLabeledUtterance"/> class.
-        /// </summary>
-        /// <param name="text">Text of the utterance.</param>
-        /// <param name="intent">Intent of the utterance.</param>
-        /// <param name="entities">Entities referenced in the utterance.</param>
-        [JsonConstructor]
-        private JsonLabeledUtterance(string text, string intent, IReadOnlyList<JsonEntity> entities)
-            : base(text, intent, entities)
-        {
-        }
+        /// <inheritdoc />
+        public string Text => this.Value<string>("text", "query");
 
-        /// <summary>
-        /// Gets the additional properties for the labeled utterance.
-        /// </summary>
+        /// <inheritdoc />
+        public string Intent => this.Value<string>("intent");
+
+        /// <inheritdoc />
+        public IReadOnlyList<IEntity> Entities => this.JsonEntities.Entities;
+
+        /// <inheritdoc />
         [JsonExtensionData]
-        public IDictionary<string, object> AdditionalProperties { get; } = new Dictionary<string, object>();
+        public IDictionary<string, object> AdditionalProperties => this.JsonEntities.AdditionalProperties;
+
+        private JsonEntities JsonEntities { get; }
+
+        private T Value<T>(params string[] propertyNames)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                if (this.AdditionalProperties.TryGetValue(propertyName, out var value))
+                {
+                    return (T)value;
+                }
+            }
+
+            return default;
+        }
     }
 }

@@ -70,7 +70,6 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType<JsonLabeledUtterance>();
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -117,7 +116,6 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestSpeechAsync(testFile).ConfigureAwait(false);
-                result.Should().BeOfType<JsonLabeledUtterance>();
                 result.Text.Should().Be(test);
                 result.Intent.Should().Be("intent");
                 result.Entities.Count.Should().Be(1);
@@ -226,7 +224,6 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType(typeof(JsonLabeledUtterance));
                 result.GetScore().Should().Be(0.42);
             }
         }
@@ -264,7 +261,7 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(1);
-                result.Entities[0].Should().BeOfType(typeof(Entity));
+                result.Entities[0].GetScore().Should().BeNull();
             }
         }
 
@@ -305,7 +302,6 @@ namespace NLU.DevOps.Luis.Tests
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
                 result.Entities.Count.Should().Be(1);
-                result.Entities[0].Should().BeOfType(typeof(JsonEntity));
                 result.Entities[0].GetScore().Should().Be(0.42);
             }
         }
@@ -337,7 +333,6 @@ namespace NLU.DevOps.Luis.Tests
             using (var luis = builder.Build())
             {
                 var result = await luis.TestAsync(test).ConfigureAwait(false);
-                result.Should().BeOfType(typeof(JsonLabeledUtterance));
                 var serializer = JsonSerializer.CreateDefault();
                 serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
                 var intents = JArray.FromObject(result.GetProperty<object>("intents"), serializer);

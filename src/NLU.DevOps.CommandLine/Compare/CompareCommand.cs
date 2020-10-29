@@ -35,7 +35,7 @@ namespace NLU.DevOps.CommandLine.Compare
         private static int RunJson(CompareOptions options)
         {
             var expectedUtterances = Read<List<JsonLabeledUtterance>>(options.ExpectedUtterancesPath);
-            var actualUtterances = Read<List<JsonLabeledUtterance>>(options.ActualUtterancesPath);
+            var actualUtterances = Read<List<LabeledUtterance>>(options.ActualUtterancesPath);
             var testSettings = new TestSettings(options.TestSettingsPath, options.UnitTestMode);
             var compareResults = TestCaseSource.GetNLUCompareResults(expectedUtterances, actualUtterances, testSettings);
 

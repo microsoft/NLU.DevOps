@@ -6,7 +6,6 @@ namespace NLU.DevOps.CommandLine
     using System.IO;
     using System.Text;
     using Core;
-    using ModelPerformance;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Serialization;
@@ -17,6 +16,7 @@ namespace NLU.DevOps.CommandLine
         {
             var serializer = JsonSerializer.CreateDefault();
             serializer.Converters.Add(new LabeledUtteranceConverter());
+            serializer.Converters.Add(new JsonLabeledUtteranceConverter());
             using (var jsonReader = new JsonTextReader(File.OpenText(path)))
             {
                 return serializer.Deserialize<T>(jsonReader);

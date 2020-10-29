@@ -10,7 +10,6 @@ namespace NLU.DevOps.ModelPerformance
     using System.Linq;
     using System.Text.RegularExpressions;
     using Core;
-    using Microsoft.Extensions.Configuration;
     using Models;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -145,7 +144,9 @@ namespace NLU.DevOps.ModelPerformance
                     "Utterances have matching text.",
                     "Text");
             }
-            else if (!testInput.TestSettings.UnitTestMode)
+            else if (!testInput.TestSettings.UnitTestMode
+                || testInput.Expected.HasProperty("text")
+                || testInput.Expected.HasProperty("query"))
             {
                 yield return FalsePositive(
                     testInput.UtteranceId,
@@ -221,7 +222,9 @@ namespace NLU.DevOps.ModelPerformance
                     "Intent");
             }
 
-            if (!isNoneIntent(actual) && !testInput.TestSettings.UnitTestMode)
+            if (!isNoneIntent(actual)
+                && (!testInput.TestSettings.UnitTestMode
+                || testInput.Expected.HasProperty("intent")))
             {
                 yield return FalsePositive(
                     testInput.UtteranceId,
@@ -456,6 +459,7 @@ namespace NLU.DevOps.ModelPerformance
         {
             var serializer = JsonSerializer.CreateDefault();
             serializer.Converters.Add(new LabeledUtteranceConverter());
+            serializer.Converters.Add(new JsonLabeledUtteranceConverter());
             using (var jsonReader = new JsonTextReader(File.OpenText(path)))
             {
                 return serializer.Deserialize<List<JsonLabeledUtterance>>(jsonReader);

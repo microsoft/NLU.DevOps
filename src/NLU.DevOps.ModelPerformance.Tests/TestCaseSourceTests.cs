@@ -633,7 +633,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         public static void UsesInputUtteranceId()
         {
             var utteranceId = Guid.NewGuid().ToString();
-            var expectedUtterance = new JsonLabeledUtterance(null, "Greeting", null);
+            var expectedUtterance = new LabeledUtterance(null, "Greeting", null);
             expectedUtterance.AdditionalProperties.Add("utteranceId", utteranceId);
             var actualUtterance = new LabeledUtterance(null, "Greeting", null);
             var compareResults = TestCaseSource.GetNLUCompareResults(
@@ -711,7 +711,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void NoFalsePositiveIntentsUnitTestMode()
         {
-            var expectedUtterance = new LabeledUtterance(null, null, null);
+            var expectedUtterance = new JsonLabeledUtterance(new JsonEntities(Array.Empty<Entity>()));
             var actualUtterance = new LabeledUtterance(null, "foo", null);
             var testSettings = new TestSettings(default(string), true);
 
@@ -723,6 +723,32 @@ namespace NLU.DevOps.ModelPerformance.Tests
             compareResults.Statistics.Intent.TruePositive.Should().Be(0);
             compareResults.Statistics.Intent.TrueNegative.Should().Be(0);
             compareResults.Statistics.Intent.FalsePositive.Should().Be(0);
+            compareResults.Statistics.Intent.FalseNegative.Should().Be(0);
+        }
+
+        [Test]
+        public static void HasFalsePositiveIntentsUnitTestMode()
+        {
+            var jsonEntities = new JsonEntities(Array.Empty<Entity>())
+            {
+                AdditionalProperties =
+                {
+                    { "intent", null },
+                },
+            };
+
+            var expectedUtterance = new JsonLabeledUtterance(jsonEntities);
+            var actualUtterance = new LabeledUtterance(null, "foo", null);
+            var testSettings = new TestSettings(default(string), true);
+
+            var compareResults = TestCaseSource.GetNLUCompareResults(
+                new[] { expectedUtterance },
+                new[] { actualUtterance },
+                testSettings);
+
+            compareResults.Statistics.Intent.TruePositive.Should().Be(0);
+            compareResults.Statistics.Intent.TrueNegative.Should().Be(0);
+            compareResults.Statistics.Intent.FalsePositive.Should().Be(1);
             compareResults.Statistics.Intent.FalseNegative.Should().Be(0);
         }
 

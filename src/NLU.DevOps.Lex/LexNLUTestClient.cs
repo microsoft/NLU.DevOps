@@ -118,7 +118,7 @@ namespace NLU.DevOps.Lex
                         .ToArray()
                     : null;
 
-                return new JsonLabeledUtterance(postContentResponse.InputTranscript, postContentResponse.IntentName, slots)
+                return new LabeledUtterance(postContentResponse.InputTranscript, postContentResponse.IntentName, slots)
                     .WithTimestamp(DateTimeOffset.Now);
             }
         }

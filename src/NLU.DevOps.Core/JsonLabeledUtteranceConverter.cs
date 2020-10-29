@@ -10,38 +10,31 @@ namespace NLU.DevOps.Core
     /// <summary>
     /// JSON converter for <see cref="LabeledUtterance"/> to recognize LUIS batch test format.
     /// </summary>
-    public class LabeledUtteranceConverter : JsonConverter<LabeledUtterance>
+    public class JsonLabeledUtteranceConverter : JsonConverter<JsonLabeledUtterance>
     {
         /// <inheritdoc />
         public override bool CanWrite => false;
 
         /// <inheritdoc />
-        public override LabeledUtterance ReadJson(JsonReader reader, Type objectType, LabeledUtterance existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override JsonLabeledUtterance ReadJson(JsonReader reader, Type objectType, JsonLabeledUtterance existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             var jsonObject = JObject.Load(reader);
-            if (jsonObject.ContainsKey("query") && !jsonObject.ContainsKey("text"))
-            {
-                jsonObject.Add("text", jsonObject.Value<string>("query"));
-                jsonObject.Remove("query");
-            }
-
-            var utterance = jsonObject.Value<string>("text");
+            var utterance = jsonObject.Value<string>("text") ?? jsonObject.Value<string>("query");
             var entityConverter = new EntityConverter(utterance);
-            serializer.Converters.Remove(this);
             serializer.Converters.Add(entityConverter);
             try
             {
-                return (LabeledUtterance)jsonObject.ToObject(objectType, serializer);
+                var jsonEntities = jsonObject.ToObject<JsonEntities>(serializer);
+                return new JsonLabeledUtterance(jsonEntities);
             }
             finally
             {
-                serializer.Converters.Add(this);
                 serializer.Converters.Remove(entityConverter);
             }
         }
 
         /// <inheritdoc />
-        public override void WriteJson(JsonWriter writer, LabeledUtterance value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, JsonLabeledUtterance value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
         }

@@ -3,13 +3,15 @@
 
 namespace NLU.DevOps.Core
 {
+    using System.Collections.Generic;
     using Models;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Entity appearing in utterance.
     /// </summary>
-    public class Entity : IEntity
+    public class Entity : IEntity, IJsonExtension
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Entity"/> class.
@@ -26,24 +28,20 @@ namespace NLU.DevOps.Core
             this.MatchIndex = matchIndex;
         }
 
-        /// <summary>
-        /// Gets the entity type name.
-        /// </summary>
+        /// <inheritdoc />
         public string EntityType { get; }
 
-        /// <summary>
-        /// Gets the entity value, generally a canonical form of the entity.
-        /// </summary>
+        /// <inheritdoc />
         public JToken EntityValue { get; }
 
-        /// <summary>
-        /// Gets the matching text in the utterance.
-        /// </summary>
+        /// <inheritdoc />
         public string MatchText { get; }
 
-        /// <summary>
-        /// Gets the occurrence index of matching token in the utterance.
-        /// </summary>
+        /// <inheritdoc />
         public int MatchIndex { get; }
+
+        /// <inheritdoc />
+        [JsonExtensionData]
+        public IDictionary<string, object> AdditionalProperties { get; } = new Dictionary<string, object>();
     }
 }
