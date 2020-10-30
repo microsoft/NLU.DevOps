@@ -39,18 +39,17 @@ steps:
     configuration: Release
 
 - task: DotNetCoreCLI@2
-  displayName: Install dotnet-nlu-mock
+  displayName: Restore .NET Core CLI tools
   inputs:
     command: custom
     custom: tool
-    arguments: install dotnet-nlu-mock --add-source $(Build.ArtifactStagingDirectory) --tool-path $(Agent.TempDirectory)/.dotnet
+    arguments: restore --add-source $(Build.ArtifactStagingDirectory) --configfile $(Build.SourcesDirectory)/.nuget/NuGet.config
 
 - task: NLUTrain@0
   displayName: Train NLU model
   inputs:
     service: mock
     utterances: models/utterances.json
-    nupkgPath: $(Build.ArtifactStagingDirectory)
 
 - task: NLUTest@0
   displayName: Test NLU model
@@ -58,7 +57,6 @@ steps:
     service: mock
     utterances: models/tests.json
     speechDirectory: models/speech_files
-    nupkgPath: $(Build.ArtifactStagingDirectory)
     publishTestResults: true
     publishNLUResults: true
 
@@ -66,4 +64,3 @@ steps:
   displayName: Cleanup the NLU service
   inputs:
     service: mock
-    nupkgPath: $(Build.ArtifactStagingDirectory)

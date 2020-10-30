@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-nlu-mock": {
+      "version": "0.8.0",
+      "commands": [
+        "dotnet-nlu-mock"
+      ]
+    },
+    "dotnet-nlu": {
+      "version": "0.8.0",
+      "commands": [
+        "dotnet-nlu"
+      ]
+    }
+  }
+}
