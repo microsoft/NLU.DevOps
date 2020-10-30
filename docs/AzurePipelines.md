@@ -59,6 +59,50 @@ Add the following task to your Azure Pipeline:
 
 The `--tool-path` flag will install the CLI tool to `$(Agent.TempDirectory)/bin`. To allow the .NET Core CLI to discover the extension in future calls, we added the `task.prependpath` task to add the tool folder to the path. We'll uninstall the tool when we are finished using it in [Uninstall the CLI tool on the host](#uninstall-the-cli-tool-on-the-host).
 
+#### Installing NLU providers
+
+Some NLU providers are not available by default to the NLU.DevOps CLI. For example, if you create a [custom NLU provider for your NLU service](CliExtensions.md), you will need to [install that extension](CliExtensions.md#installing-the-extension) in the same way the NLU.DevOps CLI is installed (or supply the path via the [--include](Test.md#-i---include) option). For example, we use a mock provider for some aspects of integration. Here's how you would install the `dotnet-nlu-mock` NLU provider:
+
+```yaml
+- task: DotNetCoreCLI@2
+  displayName: Install dotnet-nlu-mock
+  inputs:
+    command: custom
+    custom: tool
+    arguments: install dotnet-nlu-mock --tool-path $(Agent.TempDirectory)/bin
+```
+
+
+#### Install the CLI tool for local access
+
+.NET Core CLI tools can be installed globally, to a specific tool path, or [locally from a tools manifest](https://docs.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use#create-a-manifest-file). This latter approach of using a tools manifest is useful in CI environments, as you can configure the specific packages and versions you want to take a dependency on and commit it to your source control for others to use as well. Here's how you might use the tools manifest in your pipeline:
+
+Given a tools manifest file at relative path `.config/dotnet-tools.json`: 
+```json
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-nlu": {
+      "version": "0.8.0",
+      "commands": [
+        "dotnet-nlu"
+      ]
+    }
+  }
+}
+```
+
+You could replace the "Install dotnet-nlu" pipeline step above with:
+```yaml
+- task: DotNetCoreCLI@2
+  displayName: Restore .NET Core CLI tools
+  inputs:
+    command: custom
+    custom: tool
+    arguments: restore
+```
+
 ### Retrieve an ARM Token
 One optional feature you may want to consider is the ability to assign an Azure LUIS resource to the LUIS app you create with the CLI tool. The primary reason for assigning an Azure resource to the LUIS app is to avoid the quota encountered when testing with the [`luisAuthoringKey`](LuisEnd.md#luisauthoringkey).
 

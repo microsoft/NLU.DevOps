@@ -127,7 +127,123 @@ thresholds:
 
 ### Unit Test Mode
 
-Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. Similarly, false positive results will not be generated for intents. This flag also configures the command to return a non-zero exit code if any false positive or false negative results are detected.
+Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. This flag configures the command to return a non-zero exit code if any false positive or false negative results are detected. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. Similarly, false positive results will only be generated for intents when an explicit negative intent (e.g., "None") is included in the expected results. For example:
+
+#### Example: False positive entity is not generated
+If the expected JSON is:
+```json
+{
+  "text": "Play two songs",
+  "intent": "PlayMusic"
+}
+```
+
+And the results JSON includes an entity with no matching expected entity:
+```json
+{
+  "text": "Play two songs",
+  "intent": "PlayMusic",
+  "entities": [
+    {
+      "entityType": "count",
+      "matchText": "two",
+      "entityValue": 2
+    }
+  ]
+}
+```
+A false positive entity **will not** be generated in unit test mode.
+
+#### Example: False positive entity is generated
+If the expected JSON sets strict behavior for an entity type:
+```json
+{
+  "text": "Play rock music",
+  "intent": "PlayMusic",
+  "strictEntities": [ "celebrity" ],
+  "entities": [
+    {
+      "entityType": "genre",
+      "matchText": "rock"
+    }
+  ]
+}
+```
+
+And the results JSON includes that entity type with no matching expected entity:
+```json
+{
+  "text": "Play rock music",
+  "intent": "PlayMusic",
+  "entities": [
+    {
+      "entityType": "genre",
+      "matchText": "rock"
+    },
+    {
+      "entityType": "celebrity",
+      "matchText": "rock",
+      "entityValue": "Dwayne Johnson"
+    },
+  ]
+}
+```
+
+A false positive entity **will** be generated in unit test mode.
+
+#### Example: False positive intent is not generated
+If the expected JSON does not include an intent:
+```json
+{
+  "text": "What is jazz?",
+  "entities": [
+    {
+      "entityType": "genre",
+      "matchText": "jazz"
+    },
+  ]
+}
+```
+
+And the results JSON does include an intent:
+```json
+{
+  "text": "What is jazz?",
+  "intent": "PlayMusic",
+  "entities": [
+    {
+      "entityType": "genre",
+      "matchText": "jazz"
+    }
+  ]
+}
+```
+A false positive intent **will not** be generated in unit test mode.
+
+### False positive intent is generated
+
+If the expected JSON explicitly declares a negative intent:
+```json
+{
+  "text": "What is jazz?",
+  "intent": "None"
+}
+```
+
+And the results JSON has a positive intent:
+```json
+{
+  "text": "What is jazz?",
+  "intent": "PlayMusic",
+  "entities": [
+    {
+      "entityType": "genre",
+      "matchText": "jazz"
+    }
+  ]
+}
+```
+A false positive intent **will** be generated in unit test mode.
 
 ## Configuring test settings
 
