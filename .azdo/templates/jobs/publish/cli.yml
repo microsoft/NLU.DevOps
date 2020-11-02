@@ -1,0 +1,42 @@
+parameters:
+  environment: '' # The name of the AzDO Environment targeted by this deployment.
+
+jobs:
+- deployment: PublishCLI
+  variables:
+  - template: /.azdo/templates/variables/build.yml
+  - template: /.azdo/templates/variables/cli.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+  environment: ${{ parameters.environment }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - download: none
+
+        - template: /.azdo/templates/steps/get-artifact-name.yml
+          parameters:
+            componentName: $(nuget.componentName)
+            outputVariables:
+              artifactName: artifactName
+
+        - task: DownloadPipelineArtifact@2
+          displayName: Download NuGet packages
+          inputs:
+            artifact: $(artifactName)
+            path: $(Agent.TempDirectory)
+
+        - task: NuGetAuthenticate@0
+          displayName: NuGet Authenticate
+          condition: and(succeeded(), ne('${{ parameters.environment }}', 'master'))
+
+        - task: NuGetCommand@2
+          displayName: NuGet push
+          inputs:
+            allowPackageConflicts: true
+            command: push
+            publishFeedCredentials: NuGetConnection
+            nuGetFeedType: $(nuget.feedType)
+            packagesToPush: $(Agent.TempDirectory)/**/*.nupkg
+            publishVstsFeed: $(nuget.vstsFeed)

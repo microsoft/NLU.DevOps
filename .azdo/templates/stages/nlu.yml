@@ -1,0 +1,7 @@
+stages:
+- stage: NLUPerformance
+  pool: Hosted VS2017
+  displayName: NLU Performance
+  jobs:
+  - template: /.azdo/templates/jobs/nlu/cli.yml
+  - template: /.azdo/templates/jobs/nlu/extension.yml

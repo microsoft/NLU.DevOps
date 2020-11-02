@@ -1,0 +1,32 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /.azdo
+    - /extensions
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /.azdo
+    - /extensions
+    
+stages:
+- template: /.azdo/templates/stages/build.yml
+  parameters:
+    target: extension
+- template: /.azdo/templates/stages/publish.yml
+  parameters:
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    environment: ci
+    target: extension
+- template: /.azdo/templates/stages/publish.yml
+  parameters:
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    environment: master
+    target: extension

@@ -1,0 +1,29 @@
+jobs:
+- job: NLUPerformanceAzDOExtension
+  variables:
+  - template: /.azdo/templates/variables/build.yml
+  steps:
+  # Extensions install from NuGet by default, only use if installing from local build
+  - template: /.azdo/templates/steps/install-dotnet-nlu.yml
+    parameters:
+      service: mock
+
+  - task: NLUTrain@0
+    displayName: Train NLU model
+    inputs:
+      service: mock
+      utterances: models/utterances.json
+
+  - task: NLUTest@0
+    displayName: Test NLU model
+    inputs:
+      service: mock
+      utterances: models/tests.json
+      speechDirectory: models/speech_files
+      publishTestResults: true
+      publishNLUResults: true
+
+  - task: NLUClean@0
+    displayName: Cleanup the NLU service
+    inputs:
+      service: mock

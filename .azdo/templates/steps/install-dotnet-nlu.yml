@@ -1,0 +1,40 @@
+parameters:
+  service: '' # NLU provider moniker to install
+
+steps:
+# Note: only required when building dotnet-nlu from source
+- template: /.azdo/templates/steps/get-artifact-name.yml
+  parameters:
+    componentName: $(nuget.componentName.prerelease)
+    outputVariables:
+      artifactName: artifactName
+  
+# Note: only required when building dotnet-nlu from source
+- task: DownloadPipelineArtifact@2
+  displayName: Download NuGet packages
+  inputs:
+    artifact: $(artifactName)
+
+# Note: only --add-source required when building dotnet-nlu from source
+- task: DotNetCoreCLI@2
+  displayName: Install dotnet-nlu
+  inputs:
+    command: custom
+    custom: tool
+    arguments: install dotnet-nlu
+      --add-source $(Pipeline.Workspace)
+      --tool-path $(Agent.TempDirectory)/bin
+
+# Note: only --add-source required when building dotnet-nlu from source
+- task: DotNetCoreCLI@2
+  displayName: Install NLU provider
+  condition: ne('${{ parameters.service }}', '')
+  inputs:
+    command: custom
+    custom: tool
+    arguments: install dotnet-nlu-${{ parameters.service }}
+      --add-source $(Pipeline.Workspace)
+      --tool-path $(Agent.TempDirectory)/bin
+
+- bash: echo "##vso[task.prependpath]$(Agent.TempDirectory)/bin"
+  displayName: Prepend .NET Core CLI tool path
