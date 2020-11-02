@@ -125,6 +125,42 @@ thresholds:
   threshold: 0.1
 ```
 
+#### Example
+
+While it's useful to set up the performance regression testing in a CI environment, you can also run the tools locally. Here's an end-to-end example for running a performance regression test.
+
+The assumptions are that you have the following:
+1. An existing NLU endpoint (in this case, for LUIS).
+2. Environment variables or app settings pointing to the correct LUIS application to query and update.
+3. A set of changes to the NLU training utterances to evaluate (`utterances.json`).
+4. A test set that can be used to evaluate the endpoint (`tests.json`).
+
+Here is the end-to-end:
+```sh
+# Get predictions from the current endpoint
+dotnet nlu test -s luis -u tests.json -o baselineResults.json
+# Generate the confusion matrix statistics for the results
+dotnet nlu compare -e tests.json -a baselineResults.json -o baseline
+# Train a new version of the model
+dotnet nlu train -s luis -u utterances.json -a
+# Get predictions from the new endpoint
+dotnet nlu test -s luis -u tests.json -o latestResults.json
+# Create a regression threshold for the overall intent F1 score
+echo -e "thresholds:\n\
+- type: intent\n\
+- threshold: 0.1\n" > \
+thresholds.yml
+# Generate the confusion matrix statistics for the results and validate regression thresholds
+dotnet nlu compare \
+-e tests.json \
+-a latestResults.json \
+-o latest \
+-b baseline/statistics.json \
+-t thresholds.yml
+```
+
+If the F<sub>1</sub> score for overall intents has not dropped more than 0.1, the exit code for the final command will be 0, otherwise it will be 1 (or, more generally, the number of regression threshold tests failed).
+
 ### Unit Test Mode
 
 Unit test mode can be enabled using the [`--unit-test`](#-u---unit-test) flag. This flag configures the command to return a non-zero exit code if any false positive or false negative results are detected. When in unit test mode, false positive results for entities are only generated for entity types included in the `strictEntities` configuration from `--test-settings` or the labeled test utterance. Similarly, false positive results will only be generated for intents when an explicit negative intent (e.g., "None") is included in the expected results. For example:
