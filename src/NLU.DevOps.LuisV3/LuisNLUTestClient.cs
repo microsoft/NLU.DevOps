@@ -19,13 +19,16 @@ namespace NLU.DevOps.Luis
     /// Test a LUIS model with text and speech.
     /// Implementation of <see cref="INLUTestClient"/>
     /// </summary>
-    public sealed class LuisNLUTestClient : INLUTestClient
+    public sealed class LuisNLUTestClient : LuisNLUBatchTestClientBase
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
+        /// <param name="luisConfiguration">LUIS configuration.</param>
         /// <param name="luisClient">LUIS client.</param>
-        public LuisNLUTestClient(ILuisTestClient luisClient)
+        /// <param name="luisBatchTestClient">LUIS batch test client.</param>
+        public LuisNLUTestClient(ILuisConfiguration luisConfiguration, ILuisTestClient luisClient, ILuisBatchTestClient luisBatchTestClient)
+            : base(luisConfiguration, luisBatchTestClient)
         {
             this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
         }
@@ -37,7 +40,7 @@ namespace NLU.DevOps.Luis
         private ILuisTestClient LuisClient { get; }
 
         /// <inheritdoc />
-        public async Task<ILabeledUtterance> TestAsync(
+        public override async Task<ILabeledUtterance> TestAsync(
             JToken query,
             CancellationToken cancellationToken)
         {
@@ -69,7 +72,7 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        public async Task<ILabeledUtterance> TestSpeechAsync(
+        public override async Task<ILabeledUtterance> TestSpeechAsync(
             string speechFile,
             JToken query,
             CancellationToken cancellationToken)
@@ -90,9 +93,12 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.LuisClient.Dispose();
+            if (disposing)
+            {
+                this.LuisClient.Dispose();
+            }
         }
 
         private static IEnumerable<IEntity> GetEntities(string utterance, IDictionary<string, object> entities)

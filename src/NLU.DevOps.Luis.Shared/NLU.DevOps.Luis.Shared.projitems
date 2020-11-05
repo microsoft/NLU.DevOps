@@ -18,5 +18,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)ILuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JSONEntityWithRole.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisNLUBatchTestClientBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisBatchTestClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ILuisBatchTestClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisConfigurationExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Retry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OperationResponse.Generic.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OperationResponse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuisBatchStatusInfo.cs" />
   </ItemGroup>
 </Project>

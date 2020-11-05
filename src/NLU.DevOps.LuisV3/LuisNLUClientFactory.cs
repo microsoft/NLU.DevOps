@@ -47,7 +47,8 @@ namespace NLU.DevOps.Luis
 
             var luisConfiguration = new TestLuisConfiguration(configuration);
             var luisClient = new LuisTestClient(luisConfiguration);
-            return new LuisNLUTestClient(luisClient);
+            var luisBatchTestClient = new LuisBatchTestClient(luisConfiguration);
+            return new LuisNLUTestClient(luisConfiguration, luisClient, luisBatchTestClient);
         }
     }
 }

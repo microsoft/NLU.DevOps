@@ -1,15 +1,46 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace NLU.DevOps.CommandLine
+namespace NLU.DevOps.Core
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
-    internal static class EnumerableExtensions
+    /// <summary>
+    /// Extensions to the <see cref="IEnumerable{T}"/> interface.
+    /// </summary>
+    public static class EnumerableExtensions
     {
+        /// <summary>
+        /// Creates a higher order <see cref="IEnumerable{T}"/> of batches of items.
+        /// </summary>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="items">Collection of items.</param>
+        /// <param name="batchSize">Batch size.</param>
+        /// <returns>Batched collection.</returns>
+        public static IEnumerable<IEnumerable<T>> Batch<T>(this IEnumerable<T> items, int batchSize)
+        {
+            var skip = 0;
+            var batch = items.Skip(skip).Take(batchSize);
+            while (batch.Any())
+            {
+                yield return batch;
+                skip += batchSize;
+                batch = items.Skip(skip).Take(batchSize);
+            }
+        }
+
+        /// <summary>
+        /// Runs map operations in parallel.
+        /// </summary>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <typeparam name="TResult">Result type.</typeparam>
+        /// <param name="items">Collection of items.</param>
+        /// <param name="selector">Map operation.</param>
+        /// <param name="degreeOfParallelism">Degree of parallelism.</param>
+        /// <returns>A task to await the mapped collection.</returns>
         public static async Task<IEnumerable<TResult>> SelectAsync<T, TResult>(this IEnumerable<T> items, Func<T, Task<TResult>> selector, int degreeOfParallelism)
         {
             if (degreeOfParallelism < 1)

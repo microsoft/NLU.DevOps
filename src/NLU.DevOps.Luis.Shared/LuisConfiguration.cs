@@ -30,6 +30,8 @@ namespace NLU.DevOps.Luis
         private const string LuisVersionIdConfigurationKey = "luisVersionId";
         private const string LuisVersionPrefixConfigurationKey = "luisVersionPrefix";
         private const string LuisIsStagingConfigurationKey = "luisIsStaging";
+        private const string LuisBatchEndpointConfigurationKey = "luisBatchEndpointExperimental";
+        private const string LuisEnableBatchConfigurationKey = "luisUseBatchExperimental";
         private const string SpeechKeyConfigurationKey = "speechKey";
         private const string SpeechRegionConfigurationKey = "speechRegion";
         private const string CustomSpeechAppIdConfigurationKey = "customSpeechAppId";
@@ -119,17 +121,23 @@ namespace NLU.DevOps.Luis
         public bool UseSpeechEndpoint =>
             this.GetConfigurationBoolean(LuisUseSpeechEndpointConfigurationKey) ||
             this.CustomSpeechAppId != null;
-
 #endif
-#if LUIS_V3
 
         /// <inheritdoc />
-        public string SlotName => this.Configuration[LuisSlotNameConfigurationKey]
-            ?? (this.IsStaging ? "Staging" : "Production");
+        public string SlotName =>
+#if LUIS_V3
+            this.Configuration[LuisSlotNameConfigurationKey] ??
 #endif
+            this.DefaultSlotName;
 
         /// <inheritdoc />
         public bool DirectVersionPublish => this.GetConfigurationBoolean(LuisDirectVersionPublishConfigurationKey);
+
+        /// <inheritdoc />
+        public string BatchEndpoint => this.Configuration[LuisBatchEndpointConfigurationKey];
+
+        /// <inheritdoc />
+        public bool IsBatchEnabled => this.GetConfigurationBoolean(LuisEnableBatchConfigurationKey);
 
         /// <inheritdoc />
         public string AzureResourceGroup => this.Configuration[AzureResourceGroupConfigurationKey];
@@ -145,6 +153,8 @@ namespace NLU.DevOps.Luis
         private Lazy<string> LazyAppName { get; }
 
         private string CustomSpeechAppId => this.Configuration[CustomSpeechAppIdConfigurationKey];
+
+        private string DefaultSlotName => this.IsStaging ? "Staging" : "Production";
 
         /// <summary>
         /// Gets a non-null configuration value, or throws.

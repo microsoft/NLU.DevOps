@@ -68,7 +68,7 @@ namespace NLU.DevOps.Luis
                         .ConfigureAwait(false);
                 }
                 catch (ErrorException ex)
-                when (IsTransientStatusCode(ex.Response.StatusCode))
+                when (Retry.IsTransientStatusCode(ex.Response.StatusCode))
                 {
                     Logger.LogTrace($"Received HTTP {(int)ex.Response.StatusCode} result from Cognitive Services. Retrying.");
                     await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
@@ -110,7 +110,7 @@ namespace NLU.DevOps.Luis
                     }
                 }
                 catch (WebException ex)
-                when (ex.Response is HttpWebResponse response && IsTransientStatusCode(response.StatusCode))
+                when (ex.Response is HttpWebResponse response && Retry.IsTransientStatusCode(response.StatusCode))
                 {
                     Logger.LogTrace($"Received HTTP {(int)response.StatusCode} result from Cognitive Services. Retrying.");
                     await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
@@ -141,14 +141,6 @@ namespace NLU.DevOps.Luis
         public void Dispose()
         {
             this.RuntimeClient.Dispose();
-        }
-
-        private static bool IsTransientStatusCode(HttpStatusCode statusCode)
-        {
-            return statusCode == HttpStatusCode.TooManyRequests
-                || (statusCode >= HttpStatusCode.InternalServerError
-                && statusCode != HttpStatusCode.HttpVersionNotSupported
-                && statusCode != HttpStatusCode.NotImplemented);
         }
 
         private void TraceQueryTarget()

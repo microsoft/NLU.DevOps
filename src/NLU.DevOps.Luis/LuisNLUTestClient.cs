@@ -20,31 +20,40 @@ namespace NLU.DevOps.Luis
     /// Test a LUIS model with text or speech.
     /// Implementation of <see cref="INLUTestClient"/>
     /// </summary>
-    public sealed class LuisNLUTestClient : DefaultNLUTestClient
+    public sealed class LuisNLUTestClient : LuisNLUBatchTestClientBase
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LuisNLUTestClient"/> class.
         /// </summary>
-        /// <param name="luisClient">LUIS test client.</param>
-        public LuisNLUTestClient(ILuisTestClient luisClient)
+        /// <param name="luisConfiguration">LUIS configuration.</param>
+        /// <param name="luisTestClient">LUIS test client.</param>
+        /// <param name="luisBatchTestClient">LUIS batch test client.</param>
+        public LuisNLUTestClient(ILuisConfiguration luisConfiguration, ILuisTestClient luisTestClient, ILuisBatchTestClient luisBatchTestClient)
+            : base(luisConfiguration, luisBatchTestClient)
         {
-            this.LuisClient = luisClient ?? throw new ArgumentNullException(nameof(luisClient));
+            this.LuisTestClient = luisTestClient ?? throw new ArgumentNullException(nameof(luisTestClient));
         }
 
         private static ILogger Logger => LazyLogger.Value;
 
         private static Lazy<ILogger> LazyLogger { get; } = new Lazy<ILogger>(() => ApplicationLogger.LoggerFactory.CreateLogger<LuisNLUTestClient>());
 
-        private ILuisTestClient LuisClient { get; }
+        private ILuisTestClient LuisTestClient { get; }
 
         /// <inheritdoc />
-        protected override async Task<ILabeledUtterance> TestAsync(
-            string utterance,
+        public override async Task<ILabeledUtterance> TestAsync(
+            JToken query,
             CancellationToken cancellationToken)
         {
+            if (query == null)
+            {
+                throw new ArgumentNullException(nameof(query));
+            }
+
             try
             {
-                var luisResult = await this.LuisClient.QueryAsync(utterance, cancellationToken).ConfigureAwait(false);
+                var text = query.Value<string>("text");
+                var luisResult = await this.LuisTestClient.QueryAsync(text, cancellationToken).ConfigureAwait(false);
                 return LuisResultToLabeledUtterance(new SpeechLuisResult(luisResult, 0));
             }
             catch (APIErrorException ex)
@@ -63,18 +72,24 @@ namespace NLU.DevOps.Luis
         }
 
         /// <inheritdoc />
-        protected override async Task<ILabeledUtterance> TestSpeechAsync(
+        public override async Task<ILabeledUtterance> TestSpeechAsync(
             string speechFile,
+            JToken query,
             CancellationToken cancellationToken)
         {
-            var luisResult = await this.LuisClient.RecognizeSpeechAsync(speechFile, cancellationToken).ConfigureAwait(false);
+            if (speechFile == null)
+            {
+                throw new ArgumentNullException(nameof(speechFile));
+            }
+
+            var luisResult = await this.LuisTestClient.RecognizeSpeechAsync(speechFile, cancellationToken).ConfigureAwait(false);
             return LuisResultToLabeledUtterance(luisResult);
         }
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            this.LuisClient.Dispose();
+            this.LuisTestClient.Dispose();
         }
 
         private static ILabeledUtterance LuisResultToLabeledUtterance(SpeechLuisResult speechLuisResult)
