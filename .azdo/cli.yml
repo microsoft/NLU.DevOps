@@ -1,0 +1,39 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /.azdo
+    - /.config
+    - /models
+    - /src
+pr:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - /.azdo
+    - /.config
+    - /models
+    - /src
+    
+stages:
+- template: /.azdo/templates/stages/build.yml
+  parameters:
+    target: cli
+- template: /.azdo/templates/stages/nlu.yml
+  parameters:
+    target: cli
+- template: /.azdo/templates/stages/publish.yml
+  parameters:
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    environment: ci
+    target: cli
+- template: /.azdo/templates/stages/publish.yml
+  parameters:
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    environment: master
+    target: cli

@@ -1,0 +1,7 @@
+variables:
+  nuget.version.majorMinor: 0.8
+  nuget.version.build: 1
+  nuget.version.release: $(nuget.version.majorMinor).$(nuget.version.build)
+  nuget.version.prerelease: $(nuget.version.release)-rc.$(Build.BuildId)
+  nuget.componentName.release: NuGetRelease
+  nuget.componentName.prerelease: NuGetPrerelease

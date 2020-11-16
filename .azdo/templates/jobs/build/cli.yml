@@ -1,0 +1,87 @@
+jobs:
+- job: BuildCLI
+  pool: Hosted VS2017
+  variables:
+  - template: /.azdo/templates/variables/build.yml
+  steps:
+  - template: /.azdo/templates/steps/get-artifact-name.yml
+    parameters:
+      componentName: $(nuget.componentName.release)
+      outputVariables:
+        artifactName: artifactNameRelease
+
+  - template: /.azdo/templates/steps/get-artifact-name.yml
+    parameters:
+      componentName: $(nuget.componentName.prerelease)
+      outputVariables:
+        artifactName: artifactNamePrerelease
+
+  - task: DotNetCoreCLI@2
+    displayName: Build solution
+    inputs:
+      projects: src/NLU.DevOps.sln
+      arguments:
+        --configuration Release
+        /warnaserror
+        /p:AssemblyVersion=$(nuget.version.majorMinor).0
+
+  - task: DotNetCoreCLI@2
+    displayName: Run tests
+    inputs:
+      command: test
+      projects: '**/*[Tt]ests/*.csproj'
+      configuration: Release
+      arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:Exclude=[NUnit3.TestAdapter]*'
+
+  - task: DotNetCoreCLI@2
+    displayName: Create NuGet packages
+    inputs:
+      command: pack
+      packagesToPack: '**/*.csproj'
+      configuration: Release
+      versioningScheme: byEnvVar
+      versionEnvVar: NUGET_VERSION_RELEASE
+      packDirectory: $(Build.ArtifactStagingDirectory)/release
+
+  - task: DotNetCoreCLI@2
+    displayName: Create NuGet packages
+    inputs:
+      command: pack
+      packagesToPack: '**/*.csproj'
+      configuration: Release
+      versioningScheme: byEnvVar
+      versionEnvVar: NUGET_VERSION_PRERELEASE
+      packDirectory: $(Build.ArtifactStagingDirectory)/prerelease
+
+  - task: DotNetCoreCLI@2
+    displayName: Install .NET Core CLI tools
+    inputs:
+      command: custom
+      custom: tool
+      arguments: restore
+
+  - task: DotNetCoreCLI@2
+    displayName: Generate code coverage report
+    inputs:
+      command: custom
+      custom: reportgenerator
+      arguments: '"-reports:$(Build.SourcesDirectory)\**\NLU.DevOps*\coverage.cobertura.xml" "-targetdir:benchcovrepresults" "-reporttypes:HTMLInline;HTMLChart"'
+
+  - task: PublishCodeCoverageResults@1
+    displayName: Publish code coverage results
+    inputs:
+      codeCoverageTool: cobertura
+      reportDirectory: $(Build.SourcesDirectory)/**/benchcovrepresults
+      summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Release NuGet packages
+    inputs:
+      artifactName: $(artifactNameRelease)
+      targetPath: $(Build.ArtifactStagingDirectory)/release
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Prerelease NuGet packages
+    inputs:
+      artifactName: $(artifactNamePrerelease)
+      targetPath: $(Build.ArtifactStagingDirectory)/prerelease

@@ -1,0 +1,12 @@
+parameters:
+  environment: '' # The name of the AzDO Environment targeted by this deployment.
+
+variables:
+  ${{ if ne(parameters.environment, 'master') }}:
+    nuget.componentName: $(nuget.componentName.prerelease)
+    nuget.feedType: internal
+    nuget.vstsFeed: NLU.DevOps/NLU.DevOps
+  ${{ if eq(parameters.environment, 'master') }}:
+    nuget.componentName: $(nuget.componentName.release)
+    nuget.feedType: external
+    nuget.vstsFeed: null

@@ -1,0 +1,101 @@
+jobs:
+- job: NLUPerformanceCLI
+  variables:
+  - template: /.azdo/templates/variables/build.yml
+  steps:
+  - template: /.azdo/templates/steps/install-dotnet-nlu.yml
+  
+  - task: AzurePowerShell@4
+    displayName: Get ARM token for Azure
+    inputs:
+      azureSubscription: $(azureSubscription)
+      azurePowerShellVersion: latestVersion
+      scriptType: inlineScript
+      inline: |
+        $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+        $currentAzureContext = Get-AzContext
+        $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
+        $token = $profileClient.AcquireAccessToken($currentAzureContext.Tenant.TenantId)
+        $setVariableMessage = "##vso[task.setvariable variable=arm_token]{0}" -f $token.AccessToken 
+        echo $setVariableMessage
+
+  - task: DotNetCoreCLI@2
+    displayName: Train the NLU service
+    inputs:
+      command: custom
+      custom: nlu
+      arguments: train
+        --service luis
+        --utterances models/utterances.json
+        --model-settings models/settings.luis.json
+        --save-appsettings
+
+  - task: DotNetCoreCLI@2
+    displayName: Test the NLU model with text
+    inputs:
+      command: custom
+      custom: nlu
+      arguments: test
+        --service luis
+        --utterances models/tests.json
+        --speech-directory models/speech_files
+        --output $(Build.ArtifactStagingDirectory)/results.json
+
+  - task: DotNetCoreCLI@2
+    displayName: Cleanup the NLU model
+    condition: always()
+    inputs:
+      command: custom
+      custom: nlu
+      arguments: clean
+        --service luis
+        --delete-appsettings
+
+  - task: DownloadBuildArtifacts@0
+    condition: ne(variables['skipCompare'], 'true')
+    displayName: Download test results from master
+    inputs:
+      buildType: specific
+      project: $(System.TeamProject)
+      pipeline: $(Build.DefinitionName)
+      buildVersionToDownload: latestFromBranch
+      branchName: refs/heads/master
+      artifactName: statistics
+
+  - task: DotNetCoreCLI@2
+    condition: ne(variables['skipCompare'], 'true')
+    displayName: Compare the NLU text results with baseline
+    inputs:
+      command: custom
+      custom: nlu
+      arguments: compare
+        --expected models/tests.json
+        --actual $(Build.ArtifactStagingDirectory)/results.json
+        --test-settings models/compare.yml
+        --baseline $(System.ArtifactsDirectory)/$(nluResults)/statistics.json
+        --output-folder $(Build.ArtifactStagingDirectory)
+
+  - task: DotNetCoreCLI@2
+    condition: eq(variables['skipCompare'], 'true')
+    displayName: Compare the NLU text results without baseline
+    inputs:
+      command: custom
+      custom: nlu
+      arguments: compare
+        --expected models/tests.json
+        --actual $(Build.ArtifactStagingDirectory)/results.json
+        --test-settings models/compare.yml
+        --output-folder $(Build.ArtifactStagingDirectory)      
+
+  - task: PublishTestResults@2
+    displayName: Publish test results
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: NUnit
+      testResultsFiles: $(Build.ArtifactStagingDirectory)/**/TestResult.xml
+
+  - task: PublishBuildArtifacts@1
+    displayName: Publish build artifacts
+    condition: succeededOrFailed()
+    inputs:
+      artifactName: statistics

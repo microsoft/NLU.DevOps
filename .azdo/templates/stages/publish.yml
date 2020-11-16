@@ -1,0 +1,14 @@
+parameters:
+  target: '' # Target to build (one of: cli, extension)
+  condition: '' # Flag that signals whether the stage should run
+  environment: '' # The name of the AzDO Environment targeted by this deployment.
+
+stages:
+- stage: PublishArtifacts_${{ parameters.environment }}
+  pool: Hosted VS2017
+  condition: ${{ parameters.condition }}
+  displayName: Publish Artifacts for Environment (${{ parameters.environment }})
+  jobs:
+  - template: /.azdo/templates/jobs/publish/${{ parameters.target }}.yml
+    parameters:
+      environment: ${{ parameters.environment }}

@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "nlu-devops",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "name": "NLU.DevOps",
     "description": "A collection of tasks and results tabs for NLU.DevOps",
     "publisher": "NLUDevOps",

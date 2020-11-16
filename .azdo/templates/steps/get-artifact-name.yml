@@ -1,0 +1,49 @@
+# ================================================================================
+# Given the name of a component, calculates artifact names based on convention.
+#
+# Use it in a build job to determine the artifact names that should be used when
+# uploading build artifacts. Use it in another job to figure out the names of that
+# build job's artifacts by passing the same component name.
+#
+# Outputs (to the current environment):
+# artifactName
+#   The name to use for an artifact.
+# ================================================================================
+parameters:
+  componentName: '' # Pipeline artifact ID
+  outputsVariables:
+    artifactName: '' # Pipeline output variable name
+
+steps:
+- bash: |
+    # Pre-condition: assert that component name is just a combination of letters and numbers.
+    # This can probably be relaxed.
+    wordRegex="^[a-zA-Z0-9]+$"
+    if ! [[ ${{ parameters.componentName }} =~ $wordRegex ]] ; then
+      echo "Component name invalid! Exiting..." >&2
+      exit 1
+    fi
+
+    # Select version as Git tag or build number if not tagged.
+    if [[ $(Build.SourceBranch) == refs/tags/* ]] ; then
+      regex="^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$"
+      source=$(Build.SourceBranch)
+      ver=${source:10}
+      if ! [[ $ver =~ $regex ]];
+      then
+      echo "Tag format incorrect. Please use semantic versioning (semver.org) to generate release artifacts. Exiting..." >&2
+      exit 1
+      fi
+    else
+      ver=$(Build.BuildNumber)
+    fi
+
+    # Artifact Drop: convention is to lowercase the component name and append tag
+    if [ -n "${{ parameters.outputVariables.artifactName }}" ]; then
+      artifactName="$(echo ${{ parameters.componentName }} | tr '[:upper:]' '[:lower:]')-$ver"
+      echo "Artifact name is $artifactName"
+      echo "##vso[task.setvariable variable=${{ parameters.outputVariables.artifactName }}]$artifactName"
+    fi
+  
+  failOnStderr: true
+  displayName: Determine artifact information for ${{ parameters.componentName }}

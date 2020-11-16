@@ -1,0 +1,11 @@
+parameters:
+  environment: '' # The name of the AzDO Environment targeted by this deployment.
+
+variables:
+  vsix.version: 0.1.$(Build.BuildId)
+  ${{ if ne(parameters.environment, 'master') }}:
+    vsix.extensionId: nlu-devops-ci
+    vsix.visibility: private
+  ${{ if eq(parameters.environment, 'master') }}:
+    vsix.extensionId: nlu-devops
+    vsix.visibility: public

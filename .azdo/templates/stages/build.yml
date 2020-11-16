@@ -1,0 +1,8 @@
+parameters:
+  target: '' # Target to build (one of: cli, extension)
+
+stages:
+- stage: BuildAndTest
+  displayName: Build and Test
+  jobs:
+  - template: /.azdo/templates/jobs/build/${{ parameters.target }}.yml

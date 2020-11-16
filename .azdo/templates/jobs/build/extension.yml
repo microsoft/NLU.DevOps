@@ -1,0 +1,50 @@
+jobs:
+- job: BuildAzDOExtension
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - template: /.azdo/templates/steps/get-artifact-name.yml
+    parameters:
+      componentName: AzDOExtension
+      outputVariables:
+        artifactName: artifactName
+
+  - task: NPM@1
+    displayName: npm install
+    inputs:
+      command: install
+      workingDir: extensions
+
+  - task: NPM@1
+    displayName: npm run lint
+    inputs:
+      command: custom
+      customCommand: run lint
+      workingDir: extensions
+
+  - task: NPM@1
+    displayName: npm run test
+    inputs:
+      command: custom
+      customCommand: run test
+      workingDir: extensions
+
+  - task: NPM@1
+    displayName: npm run build
+    inputs:
+      command: custom
+      customCommand: run build
+      workingDir: extensions
+
+  - task: CopyFiles@2
+    displayName: Stage extension artifact for publish
+    inputs:
+      sourceFolder: extensions
+      contents: '**/*.vsix'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  
+  - task: PublishPipelineArtifact@1
+    displayName: Publish extension packages
+    inputs:
+      artifactName: $(artifactName)
+      targetPath: $(Build.ArtifactStagingDirectory)

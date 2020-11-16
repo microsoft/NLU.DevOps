@@ -1,0 +1,40 @@
+parameters:
+  environment: '' # The name of the AzDO Environment targeted by this deployment.
+
+jobs:
+- deployment: PublishAzDOExtension
+  variables:
+  - template: /.azdo/templates/variables/extension.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+  environment: ${{ parameters.environment }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - download: none
+
+        - template: /.azdo/templates/steps/get-artifact-name.yml
+          parameters:
+            componentName: AzDOExtension
+            outputVariables:
+              artifactName: artifactName
+
+        - task: DownloadPipelineArtifact@2
+          displayName: Download AzDO extension packages
+          inputs:
+            artifactName: $(artifactName)
+            path: $(Agent.TempDirectory)
+
+        - task: TfxInstaller@2
+          displayName: Use Node CLI for Azure DevOps
+
+        - task: PublishAzureDevOpsExtension@2
+          displayName: Publish Extension
+          inputs:
+            connectedServiceName: marketplaceConnection
+            fileType: vsix
+            vsixFile: $(Agent.TempDirectory)/**/*.vsix
+            extensionId: $(vsix.extensionId)
+            extensionVersion: $(vsix.version)
+            extensionVisibility: $(vsix.visibility)
