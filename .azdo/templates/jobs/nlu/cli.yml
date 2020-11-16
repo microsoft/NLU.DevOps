@@ -63,7 +63,7 @@ jobs:
       artifactName: statistics
 
   - task: DotNetCoreCLI@2
-    condition: ne(variables['skipCompare'], 'true')
+    condition: and(eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], 'true'))
     displayName: Compare the NLU text results with baseline
     inputs:
       command: custom
@@ -76,7 +76,7 @@ jobs:
         --output-folder $(Build.ArtifactStagingDirectory)
 
   - task: DotNetCoreCLI@2
-    condition: eq(variables['skipCompare'], 'true')
+    condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['skipCompare'], 'true'))
     displayName: Compare the NLU text results without baseline
     inputs:
       command: custom
