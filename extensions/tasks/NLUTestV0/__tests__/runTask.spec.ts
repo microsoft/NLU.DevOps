@@ -25,7 +25,6 @@ describe("NLUTest", () => {
     let commandStub: sinon.SinonStub<any[], any>;
     let warningStub: sinon.SinonStub<any[], any>;
     let addAttachmentStub: sinon.SinonStub<any[], any>;
-    let addBuildTagStub: sinon.SinonStub<any[], any>;
     let getBuildStatisticsStub: sinon.SinonStub<any[], any>;
     let downloadBuildStatisticsStub: sinon.SinonStub<any[], any>;
     let writeFileSyncStub: sinon.SinonStub<any[], any>;
@@ -40,7 +39,6 @@ describe("NLUTest", () => {
         commandStub = ImportMock.mockFunction(tl, "command");
         warningStub = ImportMock.mockFunction(tl, "warning");
         addAttachmentStub = ImportMock.mockFunction(tl, "addAttachment");
-        addBuildTagStub = ImportMock.mockFunction(tl, "addBuildTag");
         getBuildStatisticsStub = ImportMock.mockFunction(artifacts, "getBuildStatistics");
         downloadBuildStatisticsStub = ImportMock.mockFunction(artifacts, "downloadBuildStatistics");
         writeFileSyncStub = ImportMock.mockFunction(fs, "writeFileSync");
@@ -58,7 +56,6 @@ describe("NLUTest", () => {
         commandStub.restore();
         warningStub.restore();
         addAttachmentStub.restore();
-        addBuildTagStub.restore();
         writeFileSyncStub.restore();
         getBuildStatisticsStub.restore();
         downloadBuildStatisticsStub.restore();
@@ -90,7 +87,6 @@ describe("NLUTest", () => {
         commandStub.reset();
         warningStub.reset();
         addAttachmentStub.reset();
-        addBuildTagStub.reset();
         getBuildStatisticsStub.reset();
         downloadBuildStatisticsStub.reset();
         writeFileSyncStub.reset();
@@ -297,41 +293,6 @@ describe("NLUTest", () => {
         const metadataPath = path.join(".nlu", "metadata.json");
         expect(addAttachmentStub.calledWith("nlu.devops", "metadata.json", metadataPath)).to.be.ok;
         expect(addAttachmentStub.calledWith("nlu.devops", "statistics.json", allStatisticsPath)).to.be.ok;
-    });
-
-    it("always publishes statistics from any build", async () => {
-        // stub exec
-        const execStub = toolMock.mock("exec");
-        execStub.onCall(0).returns(0);
-        execStub.onCall(1).returns(0);
-
-        // stub inputs
-        const service = "foo";
-        const utterances = "bar";
-        getInputStub.withArgs("service").returns(service);
-        getInputStub.withArgs("utterances").returns(utterances);
-        getBoolInputStub.withArgs("publishNLUResults").returns(true);
-
-        // stub previous build results
-        getBuildStatisticsStub.returns([]);
-        downloadBuildStatisticsStub.returns([]);
-
-        // run test
-        await run();
-
-        // assert publishes artifact
-        const statisticsPath = path.join(".nlu", "statistics.json");
-        const publishData = {
-            artifactname: "statistics",
-            artifacttype: "container",
-            containerfolder: "statistics",
-            localpath: statisticsPath,
-        };
-
-        expect(commandStub.calledWith("artifact.upload", publishData, statisticsPath)).to.be.ok;
-
-        // assert tags build
-        expect(addBuildTagStub.calledWith("nlu.devops.statistics")).to.be.ok;
     });
 
     it("uses provided output folder for compare results", async () => {

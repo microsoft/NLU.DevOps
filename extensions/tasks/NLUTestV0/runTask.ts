@@ -171,7 +171,6 @@ async function publishNLUResults() {
     };
 
     tl.command("artifact.upload", publishData, statisticsPath);
-    tl.addBuildTag("nlu.devops.statistics");
 }
 
 function getOutputPath() {
