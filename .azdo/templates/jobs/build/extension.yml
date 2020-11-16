@@ -43,8 +43,5 @@ jobs:
       contents: '**/*.vsix'
       targetFolder: $(Build.ArtifactStagingDirectory)
   
-  - task: PublishPipelineArtifact@1
-    displayName: Publish extension packages
-    inputs:
-      artifactName: $(artifactName)
-      targetPath: $(Build.ArtifactStagingDirectory)
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: $(artifactName)
