@@ -34,17 +34,7 @@ jobs:
       arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:Exclude=[NUnit3.TestAdapter]*'
 
   - task: DotNetCoreCLI@2
-    displayName: Create NuGet packages
-    inputs:
-      command: pack
-      packagesToPack: '**/*.csproj'
-      configuration: Release
-      versioningScheme: byEnvVar
-      versionEnvVar: NUGET_VERSION_RELEASE
-      packDirectory: $(Build.ArtifactStagingDirectory)/release
-
-  - task: DotNetCoreCLI@2
-    displayName: Create NuGet packages
+    displayName: Create prerelease NuGet packages
     inputs:
       command: pack
       packagesToPack: '**/*.csproj'
@@ -52,6 +42,17 @@ jobs:
       versioningScheme: byEnvVar
       versionEnvVar: NUGET_VERSION_PRERELEASE
       packDirectory: $(Build.ArtifactStagingDirectory)/prerelease
+
+  - task: DotNetCoreCLI@2
+    displayName: Create release NuGet packages
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    inputs:
+      command: pack
+      packagesToPack: '**/*.csproj'
+      configuration: Release
+      versioningScheme: byEnvVar
+      versionEnvVar: NUGET_VERSION_RELEASE
+      packDirectory: $(Build.ArtifactStagingDirectory)/release
 
   - task: DotNetCoreCLI@2
     displayName: Install .NET Core CLI tools
@@ -75,13 +76,14 @@ jobs:
       summaryFileLocation: '$(Build.SourcesDirectory)/**/coverage.cobertura.xml'
 
   - task: PublishPipelineArtifact@1
-    displayName: Publish Release NuGet packages
-    inputs:
-      artifactName: $(artifactNameRelease)
-      targetPath: $(Build.ArtifactStagingDirectory)/release
-
-  - task: PublishPipelineArtifact@1
-    displayName: Publish Prerelease NuGet packages
+    displayName: Publish prerelease NuGet packages
     inputs:
       artifactName: $(artifactNamePrerelease)
       targetPath: $(Build.ArtifactStagingDirectory)/prerelease
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish release NuGet packages
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    inputs:
+      artifactName: $(artifactNameRelease)
+      targetPath: $(Build.ArtifactStagingDirectory)/release
