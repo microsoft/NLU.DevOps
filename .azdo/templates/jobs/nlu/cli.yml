@@ -72,7 +72,7 @@ jobs:
         --expected models/tests.json
         --actual $(Build.ArtifactStagingDirectory)/results.json
         --test-settings models/compare.yml
-        --baseline $(Pipeline.Workspace)/nlu/statistics.json
+        --baseline $(Pipeline.Workspace)/statistics.json
         --output-folder $(Build.ArtifactStagingDirectory)
 
   - task: DotNetCoreCLI@2
