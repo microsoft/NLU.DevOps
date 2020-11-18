@@ -12,19 +12,19 @@ See the Azure DevOps extension [overview](../extensions/overview.md) for more de
 
 The motivating user story for this continuous integration (CI) guide for LUIS is as follows:
 
-> As a LUIS model developer, I need to validate that changes I've made to my NLU model have not regressed performance on a given set of test cases, so that I can ensure changes made to the model improve user experience.
+> As a LUIS model developer, I need to validate that changes I've made to my NLU model have not regressed performance on a given set of test utterances, so that I can ensure changes made to the model improve user experience.
 
 This user story can be broken down into the following tasks:
-- [Install the CLI tool on the host](#install-the-cli-tool-on-the-host)
-- [Retrieve an ARM token](#retrieve-an-arm-token)
-- [Train the LUIS model](#train-the-luis-model)
-- [Query LUIS for results from test utterances](#query-luis-for-results-from-test-utterances)
-- [Cleanup the LUIS model](#cleanup-the-luis-model)
-- [Compare the LUIS results against the test utterances](#compare-the-luis-results-against-the-test-utterances)
-- [Uninstall the CLI tool on the host](#uninstall-the-cli-tool-on-the-host)
-- [Publish the test results for build failure analyis](#publish-the-test-results-for-build-failure-analysis)
-- [Publish a baseline for LUIS model performance](#publish-a-baseline-for-luis-model-performance)
-- [Compare the current test results with the results from master](#compare-the-current-test-results-with-the-results-from-master)
+- [Install CLI tool ](#install-cli-tool)
+- [Retrieve ARM token](#retrieve-arm-token)
+- [Train LUIS model](#train-luis-model)
+- [Get LUIS predictions for test utterances](#get-luis-predictions-for-test-utterances)
+- [Cleanup LUIS model](#cleanup-luis-model)
+- [Download baseline performance results](#download-baseline-performance-results)
+- [Compare performance against baseline results](#compare-performance-against-baseline-results)
+- [Uninstall CLI tool](#uninstall-cli-tool)
+- [Publish unit test results](#publish-unit-test-results)
+- [Publish model performance results](#publish-model-performance-results)
 
 ### Source Control Files
 We're going to be using the same music player scenario used in the [Training an NLU model](Train.md#getting-started) and [Testing an NLU model](Test.md#getting-started) getting started sections. We assume our source control already has the following files:
@@ -32,17 +32,15 @@ We're going to be using the same music player scenario used in the [Training an 
 ```bash
 > ls -1R .
 ./models:
+compare.yml
 settings.json
 tests.json
 utterances.json
-
-./scripts:
-compare.py
 ```
 
-Where `utterances.json` contains training utterances, `tests.json` contains test utterances, `settings.json` contains the LUIS model configuration, and `compare.py` contains the Python script used to determine whether NLU model performance has improved in changes from a pull request.
+Where `utterances.json` contains training utterances, `tests.json` contains test utterances, `settings.json` contains the LUIS model configuration, and `compare.yml` contains the constraints used for performance regression testing.
 
-### Install the CLI tool on the host
+### Install CLI tool
 
 Add the following task to your Azure Pipeline:
 ```yaml
@@ -59,6 +57,8 @@ Add the following task to your Azure Pipeline:
 
 The `--tool-path` flag will install the CLI tool to `$(Agent.TempDirectory)/bin`. To allow the .NET Core CLI to discover the extension in future calls, we added the `task.prependpath` task to add the tool folder to the path. We'll uninstall the tool when we are finished using it in [Uninstall the CLI tool on the host](#uninstall-the-cli-tool-on-the-host).
 
+We also have a [reusable template](https://github.com/microsoft/NLU.DevOps/blob/master/.azdo/templates/steps/install-dotnet-nlu.yml) that installs `dotnet-nlu`, bear in mind though that the template installs from a local NuGet package built from source.
+
 #### Installing NLU providers
 
 Some NLU providers are not available by default to the NLU.DevOps CLI. For example, if you create a [custom NLU provider for your NLU service](CliExtensions.md), you will need to [install that extension](CliExtensions.md#installing-the-extension) in the same way the NLU.DevOps CLI is installed (or supply the path via the [--include](Test.md#-i---include) option). For example, we use a mock provider for some aspects of integration. Here's how you would install the `dotnet-nlu-mock` NLU provider:
@@ -72,8 +72,7 @@ Some NLU providers are not available by default to the NLU.DevOps CLI. For examp
     arguments: install dotnet-nlu-mock --tool-path $(Agent.TempDirectory)/bin
 ```
 
-
-#### Install the CLI tool for local access
+#### Install CLI tool for local access
 
 .NET Core CLI tools can be installed globally, to a specific tool path, or [locally from a tools manifest](https://docs.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use#create-a-manifest-file). This latter approach of using a tools manifest is useful in CI environments, as you can configure the specific packages and versions you want to take a dependency on and commit it to your source control for others to use as well. Here's how you might use the tools manifest in your pipeline:
 
@@ -88,6 +87,12 @@ Given a tools manifest file at relative path `.config/dotnet-tools.json`:
       "commands": [
         "dotnet-nlu"
       ]
+    },
+    "dotnet-nlu-mock": {
+      "version": "0.8.0",
+      "commands": [
+        "dotnet-nlu-mock"
+      ]
     }
   }
 }
@@ -96,35 +101,40 @@ Given a tools manifest file at relative path `.config/dotnet-tools.json`:
 You could replace the "Install dotnet-nlu" pipeline step above with:
 ```yaml
 - task: DotNetCoreCLI@2
-  displayName: Restore .NET Core CLI tools
+  displayName: Restore .NET tools
   inputs:
     command: custom
     custom: tool
     arguments: restore
 ```
 
-### Retrieve an ARM Token
-One optional feature you may want to consider is the ability to assign an Azure LUIS resource to the LUIS app you create with the CLI tool. The primary reason for assigning an Azure resource to the LUIS app is to avoid the quota encountered when testing with the [`luisAuthoringKey`](LuisEnd.md#luisauthoringkey).
+### Retrieve ARM Token
+One optional feature you may want to consider is the ability to assign an Azure LUIS prediction resource to the LUIS app you create with the CLI tool. The primary reason for assigning an Azure resource to the LUIS app is to avoid the quota encountered when testing with the [`luisAuthoringKey`](LuisEnd.md#luisauthoringkey).
 
 To add an Azure resource to the LUIS app you create, a valid ARM token is required. ARM tokens are generally valid for a short period of time, so you will need to configure your pipeline to retrieve a fresh ARM token for each build.
 
 Add the following task to your Azure Pipeline:
 ```yaml
-- task: AzureCLI@1
-  displayName: 'Get ARM token for Azure'
-  inputs:
-    azureSubscription: $(azureSubscription)
-    scriptLocation: inlineScript
-    inlineScript: |
-     ACCESS_TOKEN="$(az account get-access-token --query accessToken -o tsv)";
-     echo "##vso[task.setvariable variable=arm_token]${ACCESS_TOKEN}"
+  - task: AzurePowerShell@4
+    displayName: Get ARM token for Azure
+    inputs:
+      azureSubscription: $(azureSubscription)
+      azurePowerShellVersion: latestVersion
+      scriptType: inlineScript
+      inline: |
+        $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+        $currentAzureContext = Get-AzContext
+        $profileClient = New-Object Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient($azProfile)
+        $token = $profileClient.AcquireAccessToken($currentAzureContext.Tenant.TenantId)
+        $setVariableMessage = "##vso[task.setvariable variable=arm_token]{0}" -f $token.AccessToken 
+        echo $setVariableMessage
 ```
 
 You'll need to configure an Azure service principal as a [service connection](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=vsts) and set the name of the service connection to the `azureSubscription` variable.
 
 Also be sure to set the [`azureSubscriptionId`](LuisEndpointConfiguration.md#azuresubscriptionid), [`azureResourceGroup`](LuisEndpointConfiguration.md#azureresourcegroup), [`luisPredictionResourceName`](LuisEndpointConfiguration.md#luisPredictionResourceName), and [`luisEndpointKey`](LuisEndpointConfiguration.md#luisendpointkey).
 
-### Train the LUIS model
+### Train LUIS model
 
 Add the following task to your Azure Pipeline:
 ```yaml
@@ -146,17 +156,15 @@ Our file system now looks like the following:
 appsettings.luis.json
 
 ./models:
+compare.yml
 settings.json
 tests.json
 utterances.json
-
-./scripts:
-compare.py
 ```
 
 The NLU.DevOps CLI tool will load configuration variables from `$"appsettings.{service}.json"`, so the output from using the `--save-appsettings` option will be picked up automatically by subsequent commands.
 
-### Query LUIS for results from test utterances
+### Get LUIS predictions for test utterances
 
 Add the following task to your Azure Pipeline:
 ```yaml
@@ -167,18 +175,18 @@ Add the following task to your Azure Pipeline:
     custom: nlu
     arguments: test
       --service luis
-      --utterances mdoels/tests.json
+      --utterances models/tests.json
       --model-settings models/settings.json
-      --output $(Agent.TempDirectory)/results.json
+      --output $(Build.ArtifactStagingDirectory)/results.json
 ```
 
 Our file system now looks like the following:
 ```bash
-> ls -1 $AGENT_TEMPDIRECTORY
+> ls -1 $BUILD_ARTIFACTSTAGINGDIRECTORY
 results.json
 ```
 
-### Cleanup the LUIS model
+### Cleanup LUIS model
 
 Add the following task to your Azure Pipeline:
 ```yaml
@@ -199,17 +207,45 @@ Our file system now looks like the following:
 ```bash
 > ls -1R .
 ./models:
+compare.yml
 settings.json
 tests.json
 utterances.json
-
-./scripts:
-compare.py
 ```
 
 The `appsettings.luis.json` file has been removed, so subsequent calls to `train` for LUIS will not inadvertently use the app that was just deleted.
 
-### Compare the LUIS results against the test utterances
+### Download baseline performance results
+
+In order to compare the results against a baseline performance (e.g., from the latest run on the master branch), we need to download a previous build artifact.
+
+Add the following task to your Azure Pipeline:
+```yaml
+- task: DownloadBuildArtifacts@0
+  displayName: Download test results from master
+  inputs:
+    buildType: specific
+    project: $(System.TeamProject)
+    pipeline: $(Build.DefinitionName)
+    buildVersionToDownload: latestFromBranch
+    branchName: refs/heads/master
+    artifactName: nluResults
+```
+
+Assuming there was a test result to pull from master, our file system now looks like the following:
+```bash
+> ls -1 $SYSTEM_ARTIFACTSDIRECTORY
+metadata.json
+results.json
+statistics.json
+TestResult.xml
+```
+
+### Compare performance against baseline results
+
+The [`compare`](Analyze.md) command allows you to set regression thresholds for intents and entity types to ensure that a metric (e.g., precision, recall or f-measure) has not regressed more than a given value. In order for this to work, you need to supply the `--baseline` option to provide a path to confusion matrix results for a previous run and a `--test-settings` option to provide a path to a configuration file for the regression thresholds. You can find more details about these options [here](Analyze.md#performance-test-mode).
+
+Here, we will configure the `compare` command with our expected utterances from `./models/tests.json`, the actual NLU predictions in the `results.json` file produced by the `test` command, the test settings containing the performance regression thresholds in `./models/compare.yml`, the baseline confusion matrix results downloaded from a previous build, and the output folder of the comparison results.
 
 Add the following task to your Azure Pipeline:
 ```yaml
@@ -219,109 +255,62 @@ Add the following task to your Azure Pipeline:
     command: custom
     custom: nlu
     arguments: compare
-      --expected models/tests.json
-      --actual $(Agent.TempDirectory)/results.json
-      --output-folder $(Build.ArtifactStagingDirectory)
+        --expected models/tests.json
+        --actual $(Build.ArtifactStagingDirectory)/results.json
+        --test-settings models/compare.yml
+        --baseline $(System.ArtifactsDirectory)/statistics.json
+        --output-folder $(Build.ArtifactStagingDirectory)
 ```
 
-We write the test results to the `$(Build.ArtifactStagingDirectory)` for a future step that will publish the test results on the `master` branch. That folder now looks like the following:
+We write the comparison results to the `$(Build.ArtifactStagingDirectory)` for a future step that will publish the test results on the `master` branch. That folder now looks like the following:
 ```bash
 > ls -1 $BUILD_ARTIFACTSTAGINGDIRECTORY
+results.json
+metadata.json
+statistics.json
 TestResult.xml
 ```
 
-The `TestResult.xml` file that is created contains the sensitivity and specifity results in NUnit format, where true positives and true negatives are passing tests and false positives and false negatives are failing tests. See [Analyzing NLU model results](Analyze.md) for more details.
+If any of the metrics drop below the thresholds specified in `./models/compare.yml`, a non-zero exit code will be returned and, in most CI environments (including Azure Pipelines), the build will fail.
 
-### Uninstall the CLI tool on the host
+### Uninstall CLI tool
 
-Add the following task to your Azure Pipeline:
+Add the following task to your Azure Pipeline (optional):
 ```yaml
 - task: DotNetCoreCLI@2
   displayName: Uninstall dotnet-nlu
   inputs:
     command: custom
     custom: tool
-    arguments: uninstall dotnet-nlu --tool-path .
+    arguments: uninstall dotnet-nlu --tool-path $(Agent.TempDirectory)/bin
 ```
 
-### Publish the test results for build failure analysis
+### Publish unit test results
+
+You may publish the NLU results in unit test format, where any false positive or false negative results are rendered as failing tests, and any true positive and true negative results are rendered as passing. This is useful for getting a quick overview of unexpected results in test cases.
 
 Add the following task to your Azure Pipeline:
 ```yaml
 - task: PublishTestResults@2
   displayName: Publish test results
+  condition: succeededOrFailed()
   inputs:
     testResultsFormat: NUnit
     testResultsFiles: $(Build.ArtifactStagingDirectory)/TestResult.xml
 ```
 
-### Publish a baseline for LUIS model performance
+### Publish model performance results
 
-When we start iterating on the model, we need to have results to compare against from what is currently checked into master. We can publish the NUnit test results generated from the [Compare the LUIS results against the supplied test utterances](#compare-the-luis-results-against-the-supplied-test-utterances) section for this comparison.
+In order for results to be downloaded for comparison in a future CI run, we need to publish them.
 
 Add the following task to your Azure Pipeline:
 ```yaml
 - task: PublishBuildArtifacts@1
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish build artifacts
+  condition: succeededOrFailed()
   inputs:
-    pathToPublish: $(Build.ArtifactStagingDirectory)
-    artifactName: drop
+    artifactName: nluResults
     artifactType: container
-```
-
-We only need to publish the test results as a build artifact for the `master` branch, so we added `condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))` to only run this step for `master` builds.
-
-### Compare the current test results with the results from master
-
-To ensure that we're making a net improvement in terms of NLU model performance, we want to compare the test results generated from pull requests with the latest results in master. The implementation will require multiple Azure Pipelines steps:
-- Download the latest test results from master
-- Use a domain-specific tool to establish whether performance has improved
-
-#### Download the latest test results from master
-
-In [Publish a baseline for LUIS model performance](#publish-a-baseline-for-luis-model-performance), we published the test results as a build artifact. We'll now need to download this build artifact to use for model performance comparisons in pull request builds.
-
-Add the following task to your Azure Pipeline:
-```yaml
-- task: DownloadBuildArtifacts@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-  displayName: Download test results from master
-  inputs:
-    buildType: specific
-    project: $(System.TeamProject)
-    pipeline: $(Build.DefinitionName)
-    buildVersionToDownload: latestFromBranch
-    branchName: refs/heads/master
-    downloadType: single
-    artifactName: drop
-    downloadPath: $(Agent.TempDirectory)
-```
-
-Our file system now looks like the following:
-```bash
-> ls -1 $AGENT_TEMPDIRECTORY/drop
-TestResult.xml
-```
-
-#### Use a domain-specific tool to establish whether performance has improved
-
-Whether model performance has improved is likely a domain-specific calculation. You may want to weight false negative intents more highly than false negative entities, or you may want to use an F-score to compute some harmonic mean over precision and recall. We've provided a [sample Python script](../scripts/compare.py) which takes the most naïve approach - comparing the percentage of failing tests in the pull request against the percentage of failing tests in master. The Python script will fail, and thus fail the CI build, if the percentage of failing tests is higher in the pull request than in master.
-
-Add the following task to your Azure Pipeline:
-```yaml
-- task: UsePythonVersion@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-  displayName: Set correct Python version
-  inputs:
-    versionSpec: '>= 3.5'   
-
-- task: PythonScript@0
-  condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-  displayName: Check for performance regression
-  inputs:
-    scriptPath: compare.py
-    arguments: $(Agent.TempDirectory)/drop/TestResult.xml $(Build.ArtifactStagingDirectory)/TestResult.xml
 ```
 
 ## Continuous deployment
@@ -334,7 +323,7 @@ This user story can be broken down into the following tasks:
 - Install the CLI tool to the host
 - Train the LUIS model
 
-We can use the same tasks for installing the CLI tool and training the LUIS model as found in [Install the CLI tool on the host](#install-the-cli-tool-on-the-host) and [Train the LUIS model](#train-the-luis-model).
+We can use the same tasks for installing the CLI tool and training the LUIS model as found in [Install CLI tool](#install-cli-tool) and [Train LUIS model](#train-luis-model).
 
 If you wish to use the same Azure Pipelines YAML for continuous integration and deployment, you can add an externally configured build variable to skip the steps that are irrelevant for deployment. E.g., you could add the following condition to tasks that are not relevant to continuous deployment:
 ```yaml
@@ -369,19 +358,15 @@ For example, if you wish to train and test on both LUIS and Lex, the file system
 ```bash
 > ls -1R .
 ./models:
+compare.yml
 settings.lex.json
 settings.luis.json
 tests.json
 utterances.json
-
-./scripts:
-compare.py
 ```
 
 Keep in mind that the `settings.luis.json` and `settings.lex.json` must each by configured to support all entity types that occur in the `utterances.json` file.
 
 ## Putting it together
 
-The generalized version of the tasks above have been incorporated into the [`nlu.yml`](../pipelines/nlu.yml) file we have checked into this repository.
-
-To use this pipeline for LUIS, set `$(nlu.service)` to `luis`, or `lex` for Lex. To run this pipeline for continuous deployment from `master`, set `$(nlu.ci)` to `false`.
+The generalized version of the tasks above have been incorporated into [a template used by this repository](https://github.com/microsoft/NLU.DevOps/blob/master/.azdo/templates/jobs/nlu/cli.yml) file we have checked into this repository.
