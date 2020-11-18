@@ -51,19 +51,19 @@ jobs:
         --service luis
         --delete-appsettings
 
-  - task: DownloadBuildArtifacts@0
-    condition: ne(variables['skipCompare'], 'true')
-    displayName: Download test results from master
+  - task: DownloadPipelineArtifact@2
+    condition: and(succeeded(), ne(variables['skipCompare'], 'true'))
+    displayName: Download NLU results from master
     inputs:
-      buildType: specific
+      source: specific
       project: $(System.TeamProject)
       pipeline: $(Build.DefinitionName)
-      buildVersionToDownload: latestFromBranch
-      branchName: refs/heads/master
-      artifactName: statistics
+      runVersion: latestFromBranch
+      runBranch: refs/heads/master
+      artifact: nlu
 
   - task: DotNetCoreCLI@2
-    condition: and(eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], 'true'))
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'), ne(variables['skipCompare'], 'true'))
     displayName: Compare the NLU text results with baseline
     inputs:
       command: custom
@@ -72,11 +72,11 @@ jobs:
         --expected models/tests.json
         --actual $(Build.ArtifactStagingDirectory)/results.json
         --test-settings models/compare.yml
-        --baseline $(System.ArtifactsDirectory)/$(nluResults)/statistics.json
+        --baseline $(Pipeline.Workspace)/nlu/statistics.json
         --output-folder $(Build.ArtifactStagingDirectory)
 
   - task: DotNetCoreCLI@2
-    condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['skipCompare'], 'true'))
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['skipCompare'], 'true')))
     displayName: Compare the NLU text results without baseline
     inputs:
       command: custom
@@ -94,8 +94,6 @@ jobs:
       testResultsFormat: NUnit
       testResultsFiles: $(Build.ArtifactStagingDirectory)/**/TestResult.xml
 
-  - task: PublishBuildArtifacts@1
-    displayName: Publish build artifacts
-    condition: succeededOrFailed()
-    inputs:
-      artifactName: statistics
+  - publish: $(Build.ArtifactStagingDirectory)
+    displayName: Publish NLU results
+    artifact: nlu
