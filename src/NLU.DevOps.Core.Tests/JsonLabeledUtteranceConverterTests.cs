@@ -4,9 +4,9 @@
 namespace NLU.DevOps.Core.Tests
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using FluentAssertions;
+    using FluentAssertions.Json;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
@@ -85,6 +85,63 @@ namespace NLU.DevOps.Core.Tests
             actual.Entities[0].EntityType.Should().Be(entityType);
             actual.Entities[0].MatchText.Should().Be("foo");
             actual.Entities[0].MatchIndex.Should().Be(2);
+        }
+
+        [Test]
+        public static void ConvertsUtteranceWithNestedEntities()
+        {
+            var text = "foo bar baz";
+
+            var leafEntity = new JObject
+            {
+                { "entity", "baz" },
+                { "startPos", 8 },
+                { "endPos", 10 },
+                { "foo", new JArray(42) },
+                { "bar", null },
+                { "baz", 42 },
+                { "qux", JValue.CreateUndefined() },
+            };
+
+            var midEntity = new JObject
+            {
+                { "entityType", "bar" },
+                { "matchText", "bar baz" },
+                { "children", new JArray { leafEntity } },
+                { "entityValue", new JObject { { "bar", "qux" } } },
+            };
+
+            var entity = new JObject
+            {
+                { "entity", "foo" },
+                { "startPos", 0 },
+                { "endPos", 10 },
+                { "children", new JArray { midEntity } },
+            };
+
+            var json = new JObject
+            {
+                { "text", text },
+                { "entities", new JArray { entity } },
+            };
+
+            var serializer = CreateSerializer();
+            var actual = json.ToObject<JsonLabeledUtterance>(serializer);
+            actual.Text.Should().Be(text);
+            actual.Entities.Count.Should().Be(3);
+            actual.Entities[0].EntityType.Should().Be("foo");
+            actual.Entities[0].MatchText.Should().Be(text);
+            actual.Entities[1].EntityType.Should().Be("foo::bar");
+            actual.Entities[1].MatchText.Should().Be("bar baz");
+            actual.Entities[1].EntityValue.Should().BeEquivalentTo(new JObject { { "bar", "qux" } });
+            actual.Entities[2].EntityType.Should().Be("foo::bar::baz");
+            actual.Entities[2].MatchText.Should().Be("baz");
+
+            var additionalProperties = actual.Entities[2].As<Entity>().AdditionalProperties;
+            additionalProperties["foo"].As<JToken>().Should().BeEquivalentTo(new JArray(42));
+            additionalProperties["bar"].Should().BeNull();
+            additionalProperties["baz"].Should().Be(42);
+            additionalProperties["qux"].Should().BeNull();
         }
 
         private static JsonSerializer CreateSerializer()

@@ -711,7 +711,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void NoFalsePositiveIntentsUnitTestMode()
         {
-            var expectedUtterance = new JsonLabeledUtterance(new JsonEntities(Array.Empty<Entity>()));
+            var expectedUtterance = new JsonLabeledUtterance(new JsonEntities(Array.Empty<HierarchicalEntity>()));
             var actualUtterance = new LabeledUtterance(null, "foo", null);
             var testSettings = new TestSettings(default(string), true);
 
@@ -729,7 +729,7 @@ namespace NLU.DevOps.ModelPerformance.Tests
         [Test]
         public static void HasFalsePositiveIntentsUnitTestMode()
         {
-            var jsonEntities = new JsonEntities(Array.Empty<Entity>())
+            var jsonEntities = new JsonEntities(Array.Empty<HierarchicalEntity>())
             {
                 AdditionalProperties =
                 {
