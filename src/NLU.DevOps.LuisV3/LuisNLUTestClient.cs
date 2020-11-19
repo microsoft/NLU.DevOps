@@ -102,7 +102,7 @@ namespace NLU.DevOps.Luis
                 return null;
             }
 
-            IEnumerable<IEntity> getEntitiesForType(string type, object instances, JToken metadata)
+            IEnumerable<IEntity> getEntitiesForType(string prefix, string type, object instances, JToken metadata)
             {
                 if (instances is JArray instancesJson)
                 {
@@ -111,14 +111,14 @@ namespace NLU.DevOps.Luis
                         .Zip(
                             typeMetadata,
                             (instance, instanceMetadata) =>
-                                getEntitiesRecursive(type, instance, instanceMetadata))
+                                getEntitiesRecursive(prefix, type, instance, instanceMetadata))
                         .SelectMany(e => e);
                 }
 
                 return Array.Empty<IEntity>();
             }
 
-            IEnumerable<IEntity> getEntitiesRecursive(string entityType, JToken entityJson, JToken entityMetadata)
+            IEnumerable<IEntity> getEntitiesRecursive(string prefix, string entityType, JToken entityJson, JToken entityMetadata)
             {
                 var startIndex = entityMetadata.Value<int>("startIndex");
                 var length = entityMetadata.Value<int>("length");
@@ -136,7 +136,7 @@ namespace NLU.DevOps.Luis
                 if (entityJson is JObject entityJsonObject && entityJsonObject.TryGetValue("$instance", out var innerMetadata))
                 {
                     var children = ((IDictionary<string, JToken>)entityJsonObject)
-                        .SelectMany(pair => getEntitiesForType(pair.Key, pair.Value, innerMetadata));
+                        .SelectMany(pair => getEntitiesForType($"{prefix}{entityType}::", pair.Key, pair.Value, innerMetadata));
 
                     foreach (var child in children)
                     {
@@ -144,7 +144,7 @@ namespace NLU.DevOps.Luis
                     }
                 }
 
-                yield return new Entity(entityType, entityValue, matchText, matchIndex)
+                yield return new Entity($"{prefix}{entityType}", entityValue, matchText, matchIndex)
                     .WithScore(score);
             }
 
@@ -159,7 +159,7 @@ namespace NLU.DevOps.Luis
             }
 
             return entities.SelectMany(pair =>
-                getEntitiesForType(pair.Key, pair.Value, globalMetadata));
+                getEntitiesForType(string.Empty, pair.Key, pair.Value, globalMetadata));
         }
 
         private static JToken PruneMetadata(JToken json)

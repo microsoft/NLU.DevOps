@@ -4,6 +4,7 @@
 namespace NLU.DevOps.Core
 {
     using System;
+    using System.Diagnostics;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -18,6 +19,8 @@ namespace NLU.DevOps.Core
         /// <inheritdoc />
         public override JsonLabeledUtterance ReadJson(JsonReader reader, Type objectType, JsonLabeledUtterance existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
+            Debug.Assert(!hasExistingValue, "Utterance instance can only be constructor initialized.");
+
             var jsonObject = JObject.Load(reader);
             var utterance = jsonObject.Value<string>("text") ?? jsonObject.Value<string>("query");
             var entityConverter = new EntityConverter(utterance);
