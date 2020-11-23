@@ -61,9 +61,10 @@ namespace NLU.DevOps.Luis
             return this.AuthoringClient.Versions.DeleteAsync(Guid.Parse(appId), versionId, cancellationToken);
         }
 
-        public Task<IList<ModelTrainingInfo>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
+        public async Task<OperationResponse<IList<ModelTrainingInfo>>> GetTrainingStatusAsync(string appId, string versionId, CancellationToken cancellationToken)
         {
-            return this.AuthoringClient.Train.GetStatusAsync(Guid.Parse(appId), versionId, cancellationToken);
+            var operationResponse = await this.AuthoringClient.Train.GetStatusWithHttpMessagesAsync(Guid.Parse(appId), versionId, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return OperationResponse.Create(operationResponse.Body, operationResponse.Response);
         }
 
         public Task ImportVersionAsync(string appId, string versionId, LuisApp luisApp, CancellationToken cancellationToken)

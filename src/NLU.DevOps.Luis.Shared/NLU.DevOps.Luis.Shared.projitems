@@ -18,5 +18,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)ILuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TestLuisConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)JSONEntityWithRole.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Retry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OperationResponse.Generic.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OperationResponse.cs" />
   </ItemGroup>
 </Project>

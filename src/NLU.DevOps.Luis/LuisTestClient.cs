@@ -21,8 +21,6 @@ namespace NLU.DevOps.Luis
 
     internal sealed class LuisTestClient : ILuisTestClient
     {
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
-
         public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
@@ -42,27 +40,15 @@ namespace NLU.DevOps.Luis
 
         private LUISRuntimeClient RuntimeClient { get; }
 
-        public async Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken)
+        public Task<LuisResult> QueryAsync(string text, CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                try
-                {
-                    return await this.RuntimeClient.Prediction.ResolveAsync(
-                            this.LuisConfiguration.AppId,
-                            text,
-                            staging: this.LuisConfiguration.IsStaging,
-                            log: false,
-                            cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (APIErrorException ex)
-                when (IsTransientStatusCode(ex.Response.StatusCode))
-                {
-                    Logger.LogTrace($"Received HTTP {(int)ex.Response.StatusCode} result from Cognitive Services. Retrying.");
-                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                }
-            }
+            return Retry.With(cancellationToken).OnTransientErrorAsync(() =>
+                this.RuntimeClient.Prediction.ResolveAsync(
+                    this.LuisConfiguration.AppId,
+                    text,
+                    staging: this.LuisConfiguration.IsStaging,
+                    log: false,
+                    cancellationToken: cancellationToken));
         }
 
         public Task<SpeechLuisResult> RecognizeSpeechAsync(string speechFile, CancellationToken cancellationToken)
@@ -75,14 +61,6 @@ namespace NLU.DevOps.Luis
         public void Dispose()
         {
             this.RuntimeClient.Dispose();
-        }
-
-        private static bool IsTransientStatusCode(HttpStatusCode statusCode)
-        {
-            return statusCode == HttpStatusCode.TooManyRequests
-                || (statusCode >= HttpStatusCode.InternalServerError
-                && statusCode != HttpStatusCode.NotImplemented
-                && statusCode != HttpStatusCode.HttpVersionNotSupported);
         }
 
         private async Task<SpeechLuisResult> RecognizeSpeechWithIntentRecognizerAsync(string speechFile)
@@ -136,32 +114,22 @@ namespace NLU.DevOps.Luis
             request.Accept = "application/json";
             request.Headers.Add("Ocp-Apim-Subscription-Key", this.LuisConfiguration.SpeechKey);
 
-            JObject responseJson;
-            while (true)
-            {
-                try
-                {
-                    using (var fileStream = File.OpenRead(speechFile))
-                    using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
+            var jsonPayload = await Retry.With(cancellationToken).OnTransientWebExceptionAsync(async () =>
                     {
-                        await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
-                        using (var response = await request.GetResponseAsync().ConfigureAwait(false))
-                        using (var streamReader = new StreamReader(response.GetResponseStream()))
+                        using (var fileStream = File.OpenRead(speechFile))
+                        using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
                         {
-                            var responseText = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-                            responseJson = JObject.Parse(responseText);
-                            break;
+                            await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
+                            using (var response = await request.GetResponseAsync().ConfigureAwait(false))
+                            using (var streamReader = new StreamReader(response.GetResponseStream()))
+                            {
+                                return await streamReader.ReadToEndAsync().ConfigureAwait(false);
+                            }
                         }
-                    }
-                }
-                catch (WebException ex)
-                when (ex.Response is HttpWebResponse response && IsTransientStatusCode(response.StatusCode))
-                {
-                    Logger.LogTrace($"Received HTTP {(int)response.StatusCode} result from Cognitive Services. Retrying.");
-                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                }
-            }
+                    })
+                .ConfigureAwait(false);
 
+            var responseJson = JObject.Parse(jsonPayload);
             if (responseJson.Value<string>("RecognitionStatus") != "Success")
             {
                 throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");

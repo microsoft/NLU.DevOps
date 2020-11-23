@@ -215,13 +215,14 @@ namespace NLU.DevOps.Luis.Tests
                     It.Is<string>(appId => appId == builder.AppId),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult<IList<ModelTrainingInfo>>(new[]
-                {
-                    new ModelTrainingInfo
+                .Returns(() => Task.FromResult(
+                    OperationResponse.Create<IList<ModelTrainingInfo>>(new[]
                     {
-                        Details = new ModelTrainingDetails { Status = statusArray[count++] }
-                    }
-                }))
+                        new ModelTrainingInfo
+                        {
+                            Details = new ModelTrainingDetails { Status = statusArray[count++] }
+                        }
+                    })))
                 .Callback(() => timestamps[count - 1] = DateTimeOffset.Now);
 
             using (var luis = builder.Build())
@@ -251,13 +252,14 @@ namespace NLU.DevOps.Luis.Tests
                     It.Is<string>(appId => appId == builder.AppId),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
-                .Returns(() => Task.FromResult<IList<ModelTrainingInfo>>(new[]
-                {
-                    new ModelTrainingInfo
+                .Returns(() => Task.FromResult(
+                    OperationResponse.Create<IList<ModelTrainingInfo>>(new[]
                     {
-                        Details = new ModelTrainingDetails { Status = "Fail", FailureReason = failureReason }
-                    }
-                }));
+                        new ModelTrainingInfo
+                        {
+                            Details = new ModelTrainingDetails { Status = "Fail", FailureReason = failureReason }
+                        }
+                    })));
 
             using (var luis = builder.Build())
             {
@@ -377,8 +379,9 @@ namespace NLU.DevOps.Luis.Tests
             public LuisNLUTrainClient Build()
             {
                 this.MockLuisTrainClient.SetReturnsDefault(
-                    Task.FromResult<IList<ModelTrainingInfo>>(
-                        Array.Empty<ModelTrainingInfo>()));
+                    Task.FromResult(
+                        OperationResponse.Create<IList<ModelTrainingInfo>>(
+                            Array.Empty<ModelTrainingInfo>())));
 
                 var luisConfiguration = new LuisConfiguration(new ConfigurationBuilder()
                     .AddInMemoryCollection(new Dictionary<string, string>
