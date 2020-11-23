@@ -17,8 +17,6 @@ namespace NLU.DevOps.Luis
 
     internal sealed class LuisTestClient : ILuisTestClient
     {
-        private static readonly TimeSpan ThrottleQueryDelay = TimeSpan.FromMilliseconds(100);
-
         public LuisTestClient(ILuisConfiguration luisConfiguration)
         {
             this.LuisConfiguration = luisConfiguration ?? throw new ArgumentNullException(nameof(luisConfiguration));
@@ -39,41 +37,25 @@ namespace NLU.DevOps.Luis
 
         private bool QueryTargetTraced { get; set; }
 
-        public async Task<PredictionResponse> QueryAsync(PredictionRequest predictionRequest, CancellationToken cancellationToken)
+        public Task<PredictionResponse> QueryAsync(PredictionRequest predictionRequest, CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                try
-                {
-                    this.TraceQueryTarget();
-                    if (this.LuisConfiguration.DirectVersionPublish)
-                    {
-                        return await this.RuntimeClient.Prediction.GetVersionPredictionAsync(
-                                Guid.Parse(this.LuisConfiguration.AppId),
-                                this.LuisConfiguration.VersionId,
-                                predictionRequest,
-                                verbose: true,
-                                log: false,
-                                cancellationToken: cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-
-                    return await this.RuntimeClient.Prediction.GetSlotPredictionAsync(
+            this.TraceQueryTarget();
+            return Retry.With(cancellationToken).OnTransientErrorAsync(() =>
+                this.LuisConfiguration.DirectVersionPublish
+                    ? this.RuntimeClient.Prediction.GetVersionPredictionAsync(
+                        Guid.Parse(this.LuisConfiguration.AppId),
+                        this.LuisConfiguration.VersionId,
+                        predictionRequest,
+                        verbose: true,
+                        log: false,
+                        cancellationToken: cancellationToken)
+                    : this.RuntimeClient.Prediction.GetSlotPredictionAsync(
                             Guid.Parse(this.LuisConfiguration.AppId),
                             this.LuisConfiguration.SlotName,
                             predictionRequest,
                             verbose: true,
                             log: false,
-                            cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (ErrorException ex)
-                when (IsTransientStatusCode(ex.Response.StatusCode))
-                {
-                    Logger.LogTrace($"Received HTTP {(int)ex.Response.StatusCode} result from Cognitive Services. Retrying.");
-                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                }
-            }
+                            cancellationToken: cancellationToken));
         }
 
         public async Task<SpeechPredictionResponse> RecognizeSpeechAsync(string speechFile, PredictionRequest predictionRequest, CancellationToken cancellationToken)
@@ -91,32 +73,22 @@ namespace NLU.DevOps.Luis
             request.Accept = "application/json";
             request.Headers.Add("Ocp-Apim-Subscription-Key", this.LuisConfiguration.SpeechKey);
 
-            JObject responseJson;
-            while (true)
-            {
-                try
-                {
-                    using (var fileStream = File.OpenRead(speechFile))
-                    using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
+            var jsonPayload = await Retry.With(cancellationToken).OnTransientWebExceptionAsync(async () =>
                     {
-                        await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
-                        using (var response = await request.GetResponseAsync().ConfigureAwait(false))
-                        using (var streamReader = new StreamReader(response.GetResponseStream()))
+                        using (var fileStream = File.OpenRead(speechFile))
+                        using (var requestStream = await request.GetRequestStreamAsync().ConfigureAwait(false))
                         {
-                            var responseText = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-                            responseJson = JObject.Parse(responseText);
-                            break;
+                            await fileStream.CopyToAsync(requestStream).ConfigureAwait(false);
+                            using (var response = await request.GetResponseAsync().ConfigureAwait(false))
+                            using (var streamReader = new StreamReader(response.GetResponseStream()))
+                            {
+                                return await streamReader.ReadToEndAsync().ConfigureAwait(false);
+                            }
                         }
-                    }
-                }
-                catch (WebException ex)
-                when (ex.Response is HttpWebResponse response && IsTransientStatusCode(response.StatusCode))
-                {
-                    Logger.LogTrace($"Received HTTP {(int)response.StatusCode} result from Cognitive Services. Retrying.");
-                    await Task.Delay(ThrottleQueryDelay, cancellationToken).ConfigureAwait(false);
-                }
-            }
+                    })
+                .ConfigureAwait(false);
 
+            var responseJson = JObject.Parse(jsonPayload);
             if (responseJson.Value<string>("RecognitionStatus") != "Success")
             {
                 throw new InvalidOperationException($"Received error from LUIS speech service: {responseJson}");
@@ -141,14 +113,6 @@ namespace NLU.DevOps.Luis
         public void Dispose()
         {
             this.RuntimeClient.Dispose();
-        }
-
-        private static bool IsTransientStatusCode(HttpStatusCode statusCode)
-        {
-            return statusCode == HttpStatusCode.TooManyRequests
-                || (statusCode >= HttpStatusCode.InternalServerError
-                && statusCode != HttpStatusCode.HttpVersionNotSupported
-                && statusCode != HttpStatusCode.NotImplemented);
         }
 
         private void TraceQueryTarget()
