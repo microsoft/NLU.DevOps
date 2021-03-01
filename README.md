@@ -46,6 +46,7 @@ Detailed information on the CLI tool sub-commands and arguments can be found in 
 - [Dialogflow endpoint configuration](docs/DialogflowEndpointConfiguration.md)
 - [Configuring LUIS CI/CD with Azure Pipelines](docs/AzurePipelines.md)
 - [Extending the CLI to new NLU providers](docs/CliExtensions.md)
+- [GitHub Actions workflow using NLU.DevOps cli tool](docs/NLUGitHubActions.md)
 
 ## Contributing
 

@@ -1,0 +1,50 @@
+name: CINLU
+
+on: [pull_request]
+
+jobs:
+  build:
+    name: NLU workflow
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 2.2.108
+
+    - name: Install dotnet-nlu
+      run: dotnet tool install -g dotnet-nlu
+
+    - name: Path
+      run: echo "::add-path::$HOME/.dotnet/tools"
+
+    - name: Train Luis model
+      run: dotnet nlu train -s luis -u utterances.json --save-appsettings
+      env: 
+        luisAuthoringRegion: ${{  secrets.luisAuthoringRegion  }} 
+        luisAuthoringKey: ${{  secrets.luisAuthoringKey  }}
+
+    - name: Test Luis model
+      run: dotnet nlu test -s luis -u utterancesTest.json -o results.json
+      env: 
+        luisAuthoringRegion: ${{  secrets.luisAuthoringRegion  }} 
+        luisAuthoringKey: ${{  secrets.luisAuthoringKey  }}
+
+    - name: Compare Luis model
+      run: dotnet nlu compare -e utterancesTest.json -a results.json
+
+    - name: Archive TestResult
+      uses: actions/upload-artifact@v1
+      with:
+        name: TestResult
+        path: TestResult.xml
+
+    - name: Delete Luis model
+      run: dotnet nlu clean -s luis
+      env: 
+        luisAuthoringRegion: ${{  secrets.luisAuthoringRegion  }} 
+        luisAuthoringKey: ${{  secrets.luisAuthoringKey  }}
+  
