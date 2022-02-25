@@ -2,13 +2,12 @@
   <Import Project="..\CodeAnalysis.props" />
   <Import Project="..\CodeCoverage.props" />
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
-  <Target Name="PublishProviders"
-          BeforeTargets="CoreBuild">
+  <Target Name="PublishProviders" BeforeTargets="CoreBuild">
     <ItemGroup>
       <PluginProject Include="..\NLU.DevOps.Luis\NLU.DevOps.Luis.csproj" />
       <PluginProject Include="..\NLU.DevOps.LuisV3\NLU.DevOps.LuisV3.csproj" />
@@ -16,9 +15,7 @@
       <PluginProject Include="..\NLU.DevOps.Dialogflow\NLU.DevOps.Dialogflow.csproj" />
     </ItemGroup>
 
-    <MSBuild Projects="@(PluginProject)"
-             Targets="Publish"
-             Properties="Configuration=$(Configuration);PublishDir=$(TargetDir)providers\%(FileName)\" />
+    <MSBuild Projects="@(PluginProject)" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(TargetDir)providers\%(FileName)\" />
   </Target>
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.5.3" />
