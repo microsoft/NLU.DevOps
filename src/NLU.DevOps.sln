@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.757
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLU.DevOps.Models", "NLU.DevOps.Models\NLU.DevOps.Models.csproj", "{6B6B7069-F43F-43AD-87EB-7F0B7583404E}"
 EndProject
@@ -42,7 +42,11 @@ EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		NLU.DevOps.Luis.Shared\NLU.DevOps.Luis.Shared.projitems*{03cc905a-48d1-466c-a816-e19bf944a7ee}*SharedItemsImports = 13
+		NLU.DevOps.Luis.Tests.Shared\NLU.DevOps.Luis.Tests.Shared.projitems*{280b55da-272d-44d5-ae73-8730ca96ec0b}*SharedItemsImports = 5
+		NLU.DevOps.Luis.Shared\NLU.DevOps.Luis.Shared.projitems*{874c5d08-0dd9-4385-878a-0fb7cd6a4314}*SharedItemsImports = 5
+		NLU.DevOps.Luis.Shared\NLU.DevOps.Luis.Shared.projitems*{b52ddc83-32c8-4dca-8c39-8dbd0a550382}*SharedItemsImports = 5
 		NLU.DevOps.Luis.Tests.Shared\NLU.DevOps.Luis.Tests.Shared.projitems*{d7f8ef09-9289-432d-9255-677844f96a5b}*SharedItemsImports = 13
+		NLU.DevOps.Luis.Tests.Shared\NLU.DevOps.Luis.Tests.Shared.projitems*{f5ce52e9-c95f-4601-9575-c654c619a767}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

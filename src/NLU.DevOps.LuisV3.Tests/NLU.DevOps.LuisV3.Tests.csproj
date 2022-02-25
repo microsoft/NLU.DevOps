@@ -3,7 +3,7 @@
   <Import Project="..\CodeCoverage.props" />
   <Import Project="..\CodeAnalysis.props" />
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <DefineConstants>$(DefineConstants);LUIS_V3</DefineConstants>
   </PropertyGroup>
 
